@@ -21,6 +21,13 @@ public class UpdatePolicyTest {
   check(!UpdatePolicy.validDigest("sha256:"+"z".repeat(64)));
   check(UpdatePolicy.validAssetUrl("owner/project","v1.0.0","BerryGram-1.0.0-arm64-v8a.apk","https://github.com/owner/project/releases/download/v1.0.0/BerryGram-1.0.0-arm64-v8a.apk"));
   check(!UpdatePolicy.validAssetUrl("owner/project","v1.0.0","BerryGram-1.0.0-arm64-v8a.apk","https://github.com.evil.test/a"));
+  String url="https://github.com/owner/project/releases/download/v1.2.3/BerryGram-1.2.3-arm64-v8a.apk";
+  String digest="a".repeat(64);
+  check(UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, digest, 100));
+  check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.2.3", url, digest, 100));
+  check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, digest, 0));
+  check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", "https://evil.test/file", digest, 100));
+  check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, "invalid", 100));
   System.out.println("UpdatePolicyTest passed");
  }
  static void check(boolean v){if(!v) throw new AssertionError();}

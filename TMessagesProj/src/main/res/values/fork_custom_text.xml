@@ -149,4 +149,11 @@
     <string name="ForkVoiceCustom">Custom</string>
     <string name="ForkVoiceBitrate">Opus bitrate</string>
     <string name="ForkVoiceInfo">Voice messages use mono 48 kHz audio and software Opus encoding. Automatic mode reduces bitrate on slow connections or low-performance devices. Changes apply to new recordings.</string>
+    <string name="ForkUpdatePanel">BerryGram updates</string>
+    <string name="ForkUpdateLastChecked">Last checked: %1$s</string>
+    <string name="ForkUpdateInterrupted">The update operation was interrupted. Please try again.</string>
+    <string name="ForkVideoSubtitle">Camera and recording quality</string>
+    <string name="ForkVoiceSubtitle">Recording mode and bitrate</string>
+    <string name="ForkTextSubtitle">Personal names, phrases and statuses</string>
+    <string name="ForkUpdatePermissionInfo">To install a verified update, allow Android to install apps from BerryGram. Return here and tap Install again.</string>
 </resources>

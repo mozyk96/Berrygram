@@ -149,4 +149,11 @@
     <string name="ForkVoiceCustom">Користувацька</string>
     <string name="ForkVoiceBitrate">Бітрейт Opus</string>
     <string name="ForkVoiceInfo">Голосові записуються в моно з частотою 48 кГц і програмним кодуванням Opus. Автоматичний режим зменшує бітрейт за повільної мережі або на слабкому пристрої. Зміни застосовуються до нових записів.</string>
+    <string name="ForkUpdatePanel">Оновлення BerryGram</string>
+    <string name="ForkUpdateLastChecked">Остання перевірка: %1$s</string>
+    <string name="ForkUpdateInterrupted">Операцію оновлення перервано. Спробуйте ще раз.</string>
+    <string name="ForkVideoSubtitle">Камера та якість запису</string>
+    <string name="ForkVoiceSubtitle">Режим і бітрейт запису</string>
+    <string name="ForkTextSubtitle">Власні назви, фрази та статуси</string>
+    <string name="ForkUpdatePermissionInfo">Щоб установити перевірене оновлення, дозвольте Android встановлення з BerryGram. Поверніться сюди та натисніть «Установити» ще раз.</string>
 </resources>

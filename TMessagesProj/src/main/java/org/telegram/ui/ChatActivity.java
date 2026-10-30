@@ -31366,7 +31366,7 @@ public class ChatActivity extends BaseFragment implements
 
             popupLayout.setBackground(scrimBlur3Factory.create(popupLayout, true)
                 .setColorProvider(BlurredBackgroundProviderImpl.messageMenuBackground(resourceProvider))
-                .setRadius(dp(12))
+                .setRadius(dp(org.telegram.messenger.fork.panels.ForkPanelSettings.enabled() ? 18 : 12))
                 .setPadding(dp(8)));
 
             boolean addGap = false;
@@ -45688,10 +45688,11 @@ public class ChatActivity extends BaseFragment implements
             }
 
             scrimPopupContainerLayout.setClipToOutline(true);
-            scrimPopupContainerLayout.setOutlineProvider(ViewOutlineProviderImpl.boundsWithPaddingRoundRect(dp(8), dp(12)));
+            int forkScrimRadius = dp(org.telegram.messenger.fork.panels.ForkPanelSettings.enabled() ? 18 : 12);
+            scrimPopupContainerLayout.setOutlineProvider(ViewOutlineProviderImpl.boundsWithPaddingRoundRect(dp(8), forkScrimRadius));
             scrimPopupContainerLayout.setBackground(scrimBlur3Factory.create(scrimPopupContainerLayout, true)
                 .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourceProvider))
-                .setRadius(dp(12))
+                .setRadius(forkScrimRadius)
                 .setPadding(dp(8))
                 .setHasPadding(true));
 

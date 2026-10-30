@@ -417,12 +417,7 @@ public class ActionBarMenuItem extends FrameLayout {
         location = new int[2];
         popupLayout = new ActionBarPopupWindow.ActionBarPopupWindowLayout(getContext(), R.drawable.popup_fixed_alert4, resourcesProvider, ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK);
 
-        if (subMenuFactory != null) {
-            popupLayout.setBackground(subMenuFactory.create(popupLayout, true)
-                    .setColorProvider(subMenuProvider)
-                    .setRadius(dp(12))
-                    .setPadding(dp(8)));
-        }
+        updateForkMenuBlur();
 
         popupLayout.setOnTouchListener((v, event) -> {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
@@ -753,16 +748,24 @@ public class ActionBarMenuItem extends FrameLayout {
 
     private BlurredBackgroundDrawableViewFactory subMenuFactory;
     private BlurredBackgroundProvider subMenuProvider;
+    private Boolean forkMenuGlassApplied;
+
+    private void updateForkMenuBlur() {
+        if (popupLayout == null || subMenuFactory == null) return;
+        boolean enabled = org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
+        if (forkMenuGlassApplied != null && forkMenuGlassApplied == enabled) return;
+        popupLayout.setBackground(subMenuFactory.create(popupLayout, true)
+                .setColorProvider(subMenuProvider)
+                .setRadius(dp(enabled ? 18 : 12))
+                .setPadding(dp(8)));
+        forkMenuGlassApplied = enabled;
+    }
 
     public void setBlurredBackgroundFactory(BlurredBackgroundDrawableViewFactory subMenuFactory, BlurredBackgroundProvider subMenuProvider) {
         this.subMenuFactory = subMenuFactory;
         this.subMenuProvider = subMenuProvider;
-        if (popupLayout != null && subMenuFactory != null) {
-            popupLayout.setBackground(subMenuFactory.create(popupLayout, true)
-                    .setColorProvider(subMenuProvider)
-                    .setRadius(dp(12))
-                    .setPadding(dp(8)));
-        }
+        forkMenuGlassApplied = null;
+        updateForkMenuBlur();
     }
 
     public void toggleSubMenu(View topView, View fromView) {
@@ -772,6 +775,7 @@ public class ActionBarMenuItem extends FrameLayout {
         if (popupLayout == null || parentMenu != null && parentMenu.isActionMode && parentMenu.parentActionBar != null && !parentMenu.parentActionBar.isActionModeShowed()) {
             return;
         }
+        updateForkMenuBlur();
         if (showMenuRunnable != null) {
             AndroidUtilities.cancelRunOnUIThread(showMenuRunnable);
             showMenuRunnable = null;
@@ -816,7 +820,7 @@ public class ActionBarMenuItem extends FrameLayout {
                 if (subMenuFactory != null) {
                     frameLayout.setBackground(subMenuFactory.create(popupLayout, true)
                         .setColorProvider(subMenuProvider)
-                        .setRadius(dp(12))
+                        .setRadius(dp(org.telegram.messenger.fork.panels.ForkPanelSettings.enabled() ? 18 : 12))
                         .setPadding(dp(8))
                         .setHasPadding(true));
                 } else {

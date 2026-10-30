@@ -132,6 +132,10 @@ public class ActionBarPopupWindow extends PopupWindow {
 
         private int backgroundColor = Color.WHITE;
         protected Drawable backgroundDrawable;
+        private boolean forkGlassBackground;
+        private boolean forkStyleEligible;
+        private Drawable forkStockBackground;
+        private Drawable forkExperimentalBackground;
 
         private boolean fitItems;
         private final Theme.ResourcesProvider resourcesProvider;
@@ -162,10 +166,16 @@ public class ActionBarPopupWindow extends PopupWindow {
             this.resourcesProvider = resourcesProvider;
 
             if (resId != 0) {
-                if (resId == R.drawable.popup_fixed_alert2 && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled()) {
-                    backgroundDrawable = Theme.createRoundRectDrawable(dp(16), Color.WHITE);
+                // Menus in the action bar use alert4, while chat/context menus also use
+                // alert and alert2. Leave custom/transparent popup surfaces untouched.
+                forkStyleEligible = resId == R.drawable.popup_fixed_alert || resId == R.drawable.popup_fixed_alert2 || resId == R.drawable.popup_fixed_alert4;
+                forkStockBackground = getResources().getDrawable(resId).mutate();
+                forkGlassBackground = forkStyleEligible && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
+                if (forkGlassBackground) {
+                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(18), Color.WHITE);
+                    backgroundDrawable = forkExperimentalBackground;
                 } else {
-                    backgroundDrawable = getResources().getDrawable(resId).mutate();
+                    backgroundDrawable = forkStockBackground;
                 }
                 setPadding(dp(8), dp(8), dp(8), dp(8));
             }
@@ -454,6 +464,18 @@ public class ActionBarPopupWindow extends PopupWindow {
 
         @Override
         protected void dispatchDraw(Canvas canvas) {
+            // Action-bar popup layouts are cached, so refresh the surface when the
+            // preference changes instead of requiring the whole screen to reopen.
+            boolean glass = forkStyleEligible && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
+            if (forkStyleEligible && glass != forkGlassBackground) {
+                forkGlassBackground = glass;
+                if (glass && forkExperimentalBackground == null) {
+                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(18), Color.WHITE);
+                }
+                backgroundDrawable = glass ? forkExperimentalBackground : forkStockBackground;
+                backgroundDrawable.getPadding(bgPaddings);
+                backgroundDrawable.setColorFilter(new PorterDuffColorFilter(backgroundColor, PorterDuff.Mode.MULTIPLY));
+            }
             if (swipeBackGravityRight) {
                 setTranslationX(getMeasuredWidth() * (1f - backScaleX));
                 if (topView != null) {
@@ -491,7 +513,7 @@ public class ActionBarPopupWindow extends PopupWindow {
                         canvas.save();
                         canvas.clipRect(0, bgPaddings.top, getMeasuredWidth(), getMeasuredHeight());
                     }
-                    backgroundDrawable.setAlpha(applyAlpha ? backAlpha : 255);
+                    backgroundDrawable.setAlpha(org.telegram.messenger.fork.panels.PanelPolicy.popupAlpha(applyAlpha ? backAlpha : 255, forkGlassBackground));
                     if (shownFromBottom) {
                         final int height = getMeasuredHeight();
                         AndroidUtilities.rectTmp2.set(0, (int) (height * (1.0f - backScaleY)), (int) (getMeasuredWidth() * backScaleX), height);

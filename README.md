@@ -14,17 +14,17 @@ Android 6.0 (API 23) or newer. Current development APKs target `arm64-v8a`. Inst
 
 ## Build from source
 
-Use JDK 17, Android SDK 36, NDK 27.2.12479018 and the checked-in Gradle 8.13 wrapper. Initialize recursive submodules. Set `FORK_TELEGRAM_API_ID` and `FORK_TELEGRAM_API_HASH` in the local build environment using your own Telegram API credentials; never commit them. A locally configured signing key is required for Release. Firebase requires your own application-specific configuration if push notifications are needed. Google Maps and SafetyNet use optional `FORK_MAPS_API_KEY` and `FORK_SAFETYNET_API_KEY` build environment variables. Without suitable fork-owned configuration, maps or some login-verification paths may not work; those scenarios require testing.
+Use JDK 17, Android SDK 36, NDK 27.2.12479018 and the checked-in Gradle 8.13 wrapper. Initialize recursive submodules. Set `FORK_TELEGRAM_API_ID` and `FORK_TELEGRAM_API_HASH` in the local build environment using your own Telegram API credentials; never commit them. A locally configured signing key is required for Release. Firebase requires your own application-specific configuration if push notifications are needed.
 
 ```sh
 git submodule update --init --recursive
 ./gradlew :TMessagesProj_App:assembleAfatDebug -PforkAbi=arm64-v8a
 ```
 
-Build requirements and signing instructions must be independently rechecked before publication. See [roadmap](ROADMAP.md) for the planned development sequence and current limitations.
+Build requirements and signing instructions must be independently rechecked before publication. See [roadmap](ROADMAP.md) for current evidence and limitations.
 
 ## License and credits
 
 The upstream [GPL version 2 license](LICENSE), copyright notices and third-party component notices are retained. See the [original upstream README](docs/UPSTREAM-README.md) and each dependency's license. Telegram and the Telegram logo are trademarks of their respective owners; BerryGram is not affiliated with Telegram.
 
-Do not publish the existing Git history: it contains signing material. A separate publication-safe source and history audit is required before any public push.
+The public source history is prepared separately from the original local development history, which contains signing material. Release builds require private credentials supplied locally; never commit them.

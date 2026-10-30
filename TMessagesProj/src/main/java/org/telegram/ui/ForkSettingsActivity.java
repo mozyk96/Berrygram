@@ -17,10 +17,11 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
-import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Cells.TextDetailSettingsCell;
 
-/** The four BerryGram 1.0 settings, using Telegram's theme-aware cells. */
+/** BerryGram settings use Telegram's theme-aware, compact list components. */
 public final class ForkSettingsActivity extends BaseFragment {
+    private ForkUpdaterPanel updater;
     @Override public View createView(Context context) {
         actionBar.setTitle(context.getString(R.string.ForkSettingsTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
@@ -30,13 +31,13 @@ public final class ForkSettingsActivity extends BaseFragment {
         LinearLayout rows = new LinearLayout(context);
         rows.setOrientation(LinearLayout.VERTICAL);
         rows.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-        TextSettingsCell video = new TextSettingsCell(context);
-        video.setText(context.getString(R.string.ForkVideoTitle), true); video.setIcon(R.drawable.msg_video);
+        TextDetailSettingsCell video = new TextDetailSettingsCell(context);
+        video.setTextAndValueAndIcon(context.getString(R.string.ForkVideoTitle), context.getString(R.string.ForkVideoSubtitle), R.drawable.msg_video, true);
         video.setOnClickListener(v -> presentFragment(new ForkVideoSettingsActivity())); rows.addView(video);
-        TextSettingsCell voice = new TextSettingsCell(context);
-        voice.setText(context.getString(R.string.ForkVoiceTitle), true); voice.setIcon(R.drawable.msg_filled_data_voice);
+        TextDetailSettingsCell voice = new TextDetailSettingsCell(context);
+        voice.setTextAndValueAndIcon(context.getString(R.string.ForkVoiceTitle), context.getString(R.string.ForkVoiceSubtitle), R.drawable.msg_filled_data_voice, true);
         voice.setOnClickListener(v -> presentFragment(new ForkVoiceSettingsActivity())); rows.addView(voice);
-        TextCheckCell panels = new TextCheckCell(context, 58);
+        TextCheckCell panels = new TextCheckCell(context, 71);
         ImageView panelIcon = new ImageView(context);
         panelIcon.setImageResource(R.drawable.msg_palette);
         panelIcon.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.MULTIPLY));
@@ -44,12 +45,14 @@ public final class ForkSettingsActivity extends BaseFragment {
         panels.setTextAndCheck(context.getString(R.string.ForkPanelsTitle), ForkPanelSettings.enabled(), true);
         panels.setOnClickListener(v -> { boolean enabled = !ForkPanelSettings.enabled(); ForkPanelSettings.setEnabled(enabled); panels.setChecked(enabled); });
         rows.addView(panels);
-        TextSettingsCell text = new TextSettingsCell(context);
-        text.setText(context.getString(R.string.ForkCustomTextTitle), false); text.setIcon(R.drawable.msg_edit);
-        text.setOnClickListener(v -> presentFragment(new ForkCustomTextActivity())); rows.addView(text);
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
         info.setText(context.getString(R.string.ForkPanelsInfo)); rows.addView(info);
+        TextDetailSettingsCell text = new TextDetailSettingsCell(context);
+        text.setTextAndValueAndIcon(context.getString(R.string.ForkCustomTextTitle), context.getString(R.string.ForkTextSubtitle), R.drawable.msg_edit, false);
+        text.setOnClickListener(v -> presentFragment(new ForkCustomTextActivity())); rows.addView(text);
+        updater = new ForkUpdaterPanel(context, this); rows.addView(updater);
         ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(rows);
         fragmentView = scroll; return scroll;
     }
+    @Override public void onFragmentDestroy() { if (updater != null) updater.dispose(); updater = null; super.onFragmentDestroy(); }
 }

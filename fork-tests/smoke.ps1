@@ -17,12 +17,12 @@ $sources = @(
     'text\CustomTextValidator.java', 'text\CustomTextPackValidator.java', 'text\LocalAliasPolicy.java',
     'text\CustomTextResolution.java', 'text\CustomTextContext.java', 'text\CustomTextScopePolicy.java',
     'text\CustomTextPackKeys.java', 'camera\RoundCameraPolicy.java', 'camera\RoundVideoQualityPolicy.java',
-    'voice\VoiceQualityPolicy.java', 'panels\PanelPolicy.java'
+    'voice\VoiceQualityPolicy.java', 'panels\PanelPolicy.java', 'updater\UpdatePolicy.java'
 ) | ForEach-Object { Join-Path $base $_ }
 $tests = @('AuthDiagnosticsTest', 'BackendPolicyTest', 'SessionCredentialsTest', 'CustomTextValidatorTest',
     'CustomTextPackValidatorTest', 'CustomTextFormatTest', 'CustomTextSafetyTest', 'LocalAliasPolicyTest',
     'CustomTextResolutionTest', 'CustomTextContextTest', 'CustomTextScopePolicyTest', 'CustomTextOriginalTest',
-    'CustomTextPackKeysTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'VoiceQualityPolicyTest', 'PanelPolicyTest')
+    'CustomTextPackKeysTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'VoiceQualityPolicyTest', 'PanelPolicyTest', 'UpdatePolicyTest')
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 & $javac -encoding UTF-8 -d $buildDir @sources @testFiles
 if ($LASTEXITCODE -ne 0) { throw 'Smoke-test compilation failed' }
