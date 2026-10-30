@@ -21,7 +21,7 @@ git submodule update --init --recursive
 ./gradlew :TMessagesProj_App:assembleAfatDebug -PforkAbi=arm64-v8a
 ```
 
-Build requirements and signing instructions must be independently rechecked before publication. See [roadmap](ROADMAP.md) for the planned development sequence and current limitations.
+See [build and Actions configuration](docs/BUILDING.md) for signing, optional service keys and known limitations. Build requirements must be independently rechecked before publication. See [roadmap](ROADMAP.md) for the planned development sequence and current limitations.
 
 ## License and credits
 
