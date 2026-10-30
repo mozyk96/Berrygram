@@ -38,9 +38,37 @@ jobs:
       - name: Run isolated tests
         shell: pwsh
         run: ./fork-tests/smoke.ps1
+  android_debug:
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android dependencies
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.2.12479018' 'cmake;3.22.1'
+      - name: Create disposable debug signing key
+        run: |
+          mkdir -p .fork-local
+          keytool -genkeypair -keystore .fork-local/debug.keystore -storetype PKCS12 -storepass android -keypass android -alias forkdebug -keyalg RSA -keysize 2048 -validity 1 -dname 'CN=BerryGram CI Debug' -noprompt
+      - name: Compile Android debug APK without credentials
+        run: chmod +x gradlew && ./gradlew :TMessagesProj_App:assembleAfatDebug -PforkAbi=arm64-v8a --no-daemon
+      - name: Validate debug artifact
+        shell: bash
+        run: |
+          apk=$(find TMessagesProj_App/build -type f -name '*.apk' -print -quit)
+          test -n "$apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$apk"
+          version=$(python -c "from pathlib import Path; print(next(x.split('=',1)[1].strip() for x in Path('gradle.properties').read_text().splitlines() if x.startswith('APP_VERSION_NAME=')))")
+          python fork-tests/verify_apk.py "$apk" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt" --package org.example.forkclient.beta --version "$version"
   release:
     if: github.event_name == 'workflow_dispatch' && inputs.build_release
-    needs: checks
+    needs: [checks, android_debug]
     runs-on: ubuntu-latest
     env:
       FORK_TELEGRAM_API_ID: ${{ secrets.FORK_TELEGRAM_API_ID }}
@@ -83,8 +111,5 @@ jobs:
           version=$(python -c "from pathlib import Path; print(next(x.split('=',1)[1].strip() for x in Path('gradle.properties').read_text().splitlines() if x.startswith('APP_VERSION_NAME=')))")
           python fork-tests/verify_apk.py "$apk" --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" --package org.example.forkclient --version "$version"
           sha256sum "$apk"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: BerryGram-release-candidate
-          path: TMessagesProj_App/build/intermediates/apk/afat/release/*.apk
-          if-no-files-found: error
+      - name: Keep credential-bearing build local to the runner
+        run: echo 'Release artifact is not uploaded while API credential publication is unresolved.'
