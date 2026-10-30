@@ -6,7 +6,7 @@ The latest instruction allows independent 1.0.1 implementation while 1.0.0 manua
 
 - Finish and verify each of the four areas on Android, including light/dark UI and persistence.
 - Verify normal authentication, messages, calls, media and notifications with owner-operated accounts, without automated access to a real account.
-- Run local checks, build Debug, exercise the available device, fix defects, and then build a signed Release with the existing identity. Check package/signature compatibility before any install; never uninstall or clear data. Publish only after the release and public source/history pass the requested checks.
+- Run local checks and validate the signed Release with the new isolated signing identity. Do not install or modify anything on the owner’s phone without new explicit permission. Publish only after release, source/history and credential checks pass.
 
 Deferred work is preserved on branch `berrygram-pre-scope-20261030`; it is not active in 1.0.0. Gesture/menu editors, reactions, player changes, archive, updater, STT, translation, OCR, plugins, theme engine, extra search and experimental caching are outside this release.
 
@@ -33,3 +33,4 @@ Deferred work is preserved on branch `berrygram-pre-scope-20261030`; it is not a
 Backlog for 1.7.0 and later: photo OCR, local archive of ordinary messages, plugins, full theme engine, keyboard layout fix, external SRT/ASS subtitles, video-frame copying and saving, per-chat cache control, gesture-based multi-selection, crash protection, theme and phrase-pack catalogs, further optimizations and a future desktop client. Compatibility, privacy and platform rules require review before implementation.
 
 A large feature receives its own minor version; any number of patch releases can follow. Do not start the next minor version without the owner's explicit decision. The music player, standard photo sending and a separate iOS shell are out of scope.
+
