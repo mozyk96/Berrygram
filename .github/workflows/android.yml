@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -45,6 +46,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -73,6 +75,8 @@ jobs:
     env:
       FORK_TELEGRAM_API_ID: ${{ secrets.FORK_TELEGRAM_API_ID }}
       FORK_TELEGRAM_API_HASH: ${{ secrets.FORK_TELEGRAM_API_HASH }}
+      FORK_MAPS_API_KEY: ${{ secrets.FORK_MAPS_API_KEY }}
+      FORK_SAFETYNET_API_KEY: ${{ secrets.FORK_SAFETYNET_API_KEY }}
       BERRYGRAM_KEYSTORE_BASE64: ${{ secrets.BERRYGRAM_KEYSTORE_BASE64 }}
       BERRYGRAM_RELEASE_STORE_PASSWORD: ${{ secrets.BERRYGRAM_STORE_PASSWORD }}
       BERRYGRAM_RELEASE_KEY_ALIAS: ${{ secrets.BERRYGRAM_KEY_ALIAS }}
@@ -81,6 +85,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -113,3 +118,4 @@ jobs:
           sha256sum "$apk"
       - name: Keep credential-bearing build local to the runner
         run: echo 'Release artifact is not uploaded while API credential publication is unresolved.'
+
