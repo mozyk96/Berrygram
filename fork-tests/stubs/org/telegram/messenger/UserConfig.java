@@ -1,0 +1,1 @@
+package org.telegram.messenger; public class UserConfig { private final long id; private UserConfig(long id){this.id=id;} public static UserConfig getInstance(int account){return new UserConfig(account==0?100:200);} public long getClientUserId(){return id;} }

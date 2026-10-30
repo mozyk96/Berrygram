@@ -1,0 +1,1 @@
+package org.telegram.messenger; public class MessagesController { public static android.content.SharedPreferences getEmojiSettings(int account){return ApplicationLoader.applicationContext.getSharedPreferences("emoji",0);} }

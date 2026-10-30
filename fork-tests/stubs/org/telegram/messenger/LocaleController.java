@@ -1,0 +1,1 @@
+package org.telegram.messenger; public class LocaleController { public static String getOriginalForkString(String key,int res){return "online";} public static String getOriginalForkString(String key,String fallback,int res){return "online";} }

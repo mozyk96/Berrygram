@@ -1,0 +1,90 @@
+name: Android checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_release:
+        description: Build a signed release artifact with configured secrets
+        required: false
+        default: false
+        type: boolean
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Validate version tags
+        shell: python
+        run: |
+          import os, pathlib
+          props = dict(line.split('=', 1) for line in pathlib.Path('gradle.properties').read_text().splitlines() if '=' in line and not line.lstrip().startswith('#'))
+          tag = os.environ.get('GITHUB_REF_NAME', '')
+          if os.environ.get('GITHUB_REF_TYPE') == 'tag' and tag != 'v' + props['APP_VERSION_NAME'].strip():
+              raise SystemExit('Tag does not match APP_VERSION_NAME')
+      - name: Verify submodule revisions
+        shell: bash
+        run: |
+          git submodule status --recursive > submodule-status.txt
+          if grep -Eq '^[+-U]' submodule-status.txt; then echo 'Submodule revision mismatch'; exit 1; fi
+      - name: Run isolated tests
+        shell: pwsh
+        run: ./fork-tests/smoke.ps1
+  release:
+    if: github.event_name == 'workflow_dispatch' && inputs.build_release
+    needs: checks
+    runs-on: ubuntu-latest
+    env:
+      FORK_TELEGRAM_API_ID: ${{ secrets.FORK_TELEGRAM_API_ID }}
+      FORK_TELEGRAM_API_HASH: ${{ secrets.FORK_TELEGRAM_API_HASH }}
+      BERRYGRAM_KEYSTORE_BASE64: ${{ secrets.BERRYGRAM_KEYSTORE_BASE64 }}
+      BERRYGRAM_RELEASE_STORE_PASSWORD: ${{ secrets.BERRYGRAM_STORE_PASSWORD }}
+      BERRYGRAM_RELEASE_KEY_ALIAS: ${{ secrets.BERRYGRAM_KEY_ALIAS }}
+      BERRYGRAM_RELEASE_KEY_PASSWORD: ${{ secrets.BERRYGRAM_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android dependencies
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0' 'ndk;27.2.12479018' 'cmake;3.22.1'
+      - name: Configure signing locally
+        shell: python
+        run: |
+          import os, base64, pathlib
+          names = ['FORK_TELEGRAM_API_ID', 'FORK_TELEGRAM_API_HASH', 'BERRYGRAM_KEYSTORE_BASE64', 'BERRYGRAM_RELEASE_STORE_PASSWORD', 'BERRYGRAM_RELEASE_KEY_ALIAS', 'BERRYGRAM_RELEASE_KEY_PASSWORD']
+          if any(not os.environ.get(n) for n in names):
+              raise SystemExit('Release secrets are not configured')
+          key = pathlib.Path('.fork-local/release.keystore').resolve()
+          key.parent.mkdir(parents=True, exist_ok=True)
+          key.write_bytes(base64.b64decode(os.environ['BERRYGRAM_KEYSTORE_BASE64'], validate=True))
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
+              output.write('BERRYGRAM_RELEASE_KEYSTORE=' + str(key) + '\n')
+      - name: Build signed ARM64 APK
+        run: chmod +x gradlew && ./gradlew :TMessagesProj_App:assembleAfatRelease -PforkAbi=arm64-v8a --no-daemon
+      - name: Verify artifact
+        shell: bash
+        run: |
+          apk=$(find TMessagesProj_App/build -type f -name '*.apk' -print -quit)
+          test -n "$apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
+          version=$(python -c "from pathlib import Path; print(next(x.split('=',1)[1].strip() for x in Path('gradle.properties').read_text().splitlines() if x.startswith('APP_VERSION_NAME=')))")
+          python fork-tests/verify_apk.py "$apk" --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" --package org.example.forkclient --version "$version"
+          sha256sum "$apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BerryGram-release-candidate
+          path: TMessagesProj_App/build/intermediates/apk/afat/release/*.apk
+          if-no-files-found: error
