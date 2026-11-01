@@ -108,6 +108,7 @@
     <string name="ForkUpdateVerified">APK integrity, package, version and signing certificate verified.</string>
     <string name="ForkUpdateFailure">Update failed: %1$s</string>
     <string name="ForkUpdateLatest">The installed version is up to date.</string>
+    <string name="ForkUpdateNoStableRelease">No stable release was found, or the repository is unavailable.</string>
     <string name="ForkLongPress">Long-press message</string>
     <string name="ForkLongPressChat">Long-press for a chat</string>
     <string name="ForkLongStandard">Telegram default</string>

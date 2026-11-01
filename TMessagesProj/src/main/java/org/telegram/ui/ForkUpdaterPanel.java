@@ -142,6 +142,10 @@ public final class ForkUpdaterPanel extends LinearLayout {
         });
     }
     private void fail(Exception e) {
+        if (e instanceof GithubUpdateClient.NoStableReleaseException) {
+            AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = getContext().getString(R.string.ForkUpdateNoStableRelease); render(false); });
+            return;
+        }
         String message = e.getMessage();
         final String detail = message == null || message.isEmpty() || message.length() > 160
                 ? e.getClass().getSimpleName() : message;

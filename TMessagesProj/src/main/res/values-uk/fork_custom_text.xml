@@ -108,6 +108,7 @@
     <string name="ForkUpdateVerified">Цілісність APK, пакет, версію та сертифікат підпису перевірено.</string>
     <string name="ForkUpdateFailure">Помилка оновлення: %1$s</string>
     <string name="ForkUpdateLatest">Встановлено актуальну версію.</string>
+    <string name="ForkUpdateNoStableRelease">Стабільного релізу не знайдено або репозиторій недоступний.</string>
     <string name="ForkLongPress">Тривале натискання повідомлення</string>
     <string name="ForkLongPressChat">Тривале натискання для чату</string>
     <string name="ForkLongStandard">Стандарт Telegram</string>

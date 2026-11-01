@@ -24,6 +24,9 @@ public final class GithubUpdateClient {
     private static final long MAX_APK = 512L * 1024 * 1024;
     private static final int MAX_METADATA = 1024 * 1024;
     public interface Progress { void update(long received, long total); }
+    public static final class NoStableReleaseException extends java.io.IOException {
+        public NoStableReleaseException() { super("No stable release found or repository unavailable"); }
+    }
     public static final class Release {
         public String version, notes, url, digest;
         public long size;
@@ -45,7 +48,11 @@ public final class GithubUpdateClient {
                 if (next==null) throw new java.io.IOException("Missing redirect");
                 url=new URL(url,next); continue;
             }
-            if (code!=200) { connection.disconnect(); throw new java.io.IOException("Update server HTTP " + code); }
+            if (code!=200) {
+                connection.disconnect();
+                if (code == 404 && "api.github.com".equalsIgnoreCase(url.getHost()) && url.getPath().endsWith("/releases/latest")) throw new NoStableReleaseException();
+                throw new java.io.IOException("Update server HTTP " + code);
+            }
             return connection;
         }
         throw new java.io.IOException("Too many redirects");

@@ -7,12 +7,12 @@ import org.telegram.messenger.fork.updater.GithubUpdateClient;
 
 /** Runs updater network/file logic using an in-process URL handler and mock PackageManager. */
 public final class UpdaterDownloadFixtureTest {
- static byte[] body; static String metadata; static boolean redirect;
+ static byte[] body; static String metadata; static boolean redirect, missingRelease;
  static final String ASSET="https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-arm64-v8a.apk";
  static final class Handler extends URLStreamHandler {
   protected URLConnection openConnection(URL url) { return new HttpURLConnection(url) {
    public void disconnect(){} public boolean usingProxy(){return false;} public void connect(){}
-   public int getResponseCode(){return redirect && url.toString().equals(ASSET)?302:200;}
+   public int getResponseCode(){return missingRelease && url.getHost().equals("api.github.com") ? 404 : redirect && url.toString().equals(ASSET)?302:200;}
    public String getHeaderField(String name){return "Location".equals(name) && redirect ? "https://evil.invalid/payload.apk" : null;}
    public InputStream getInputStream(){return new ByteArrayInputStream(url.getHost().equals("api.github.com") ? metadata.getBytes(java.nio.charset.StandardCharsets.UTF_8) : body);}
   }; }
@@ -28,6 +28,11 @@ public final class UpdaterDownloadFixtureTest {
   byte[] valid=Files.readAllBytes(UpdaterPackageFixtureTest.apk(true).toPath());body=valid;
   metadata="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.0.1\",\"body\":\"Test\",\"assets\":[{\"name\":\"BerryGram-1.0.1-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":"+valid.length+",\"digest\":\"sha256:"+sha(valid)+"\",\"browser_download_url\":\""+ASSET+"\"}]}";
   GithubUpdateClient.Release release=GithubUpdateClient.latest("example/project");
+  missingRelease=true;
+  try { GithubUpdateClient.latest("example/project"); throw new AssertionError("Missing release accepted"); }
+  catch (IOException expected) {
+   if (!"No stable release found or repository unavailable".equals(expected.getMessage())) throw new AssertionError("Missing release should be explained", expected);
+  } finally { missingRelease=false; }
   UpdaterPackageFixtureTest.Ctx c=new UpdaterPackageFixtureTest.Ctx();
   c.pm.installed=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.0",100,0,1);
   c.pm.candidate=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.1",101,0,1);
