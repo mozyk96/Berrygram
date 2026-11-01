@@ -60,6 +60,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         if (animate && isAttachedToWindow()) TransitionManager.beginDelayedTransition(this);
         removeAllViews(); Context c = getContext();
         TextSettingsCell header = new TextSettingsCell(c);
+        header.setBackground(Theme.getSelectorDrawable(false));
         String headerValue = version + (release != null ? "  •  " + release.version + " ↑" : "") + (expanded ? "  ▴" : "  ▾");
         header.setTextAndValue(c.getString(R.string.ForkUpdatePanel), headerValue, expanded);
         header.setIcon(R.drawable.msg_download);
@@ -80,6 +81,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
     }
     private void addAction(int label, Runnable action, boolean divider) {
         TextSettingsCell cell = new TextSettingsCell(getContext()); cell.setText(getContext().getString(label), divider);
+        cell.setBackground(Theme.getSelectorDrawable(false));
         cell.setOnClickListener(v -> action.run()); addView(cell);
     }
     private void updateDetails() {

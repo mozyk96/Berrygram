@@ -16,5 +16,5 @@ In the repository, open Settings, then Secrets and variables, then Actions. The 
 
 The debug CI build uses no Telegram credentials. The optional release job validates the APK locally in the runner and does not upload it while credential publication is unresolved. GitHub does not display stored secret values. A GitHub billing lock currently prevents the workflows from starting, so CI has not been verified remotely.
 
-**APK credential visibility:** the current Telegram client implementation embeds the configured API hash in APK bytecode. Actions Secrets protect the build-time inputs, but do not make an APK containing those inputs secret. Do not publish an APK while the owner prohibits publishing that hash. A shared client credential retrieved from a server can also be extracted by a client.
+**APK credential visibility:** the current Telegram client implementation embeds the configured API hash in APK bytecode. Actions Secrets protect the build-time inputs, but do not make an APK containing those inputs secret. The owner permits this exposure in an authorized release APK, but not publishing credentials in source files, logs or release notes. A shared client credential retrieved from a server can also be extracted by a client.
 

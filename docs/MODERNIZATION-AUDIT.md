@@ -20,7 +20,7 @@ This is an engineering assessment, not evidence of device acceptance or a comple
 
 ## Release and CI constraints
 
-Sanitized source has been published on separate Git history. Actions could not start because GitHub reported an account billing lock. The configured Telegram API hash was found inside local APKs and the owner prohibits its publication; CI secrets only protect input storage and do not make a hash embedded in an APK secret. No APK containing it may be uploaded. The emulator cannot currently start because host hardware acceleration is unavailable; the owner's phone must not be touched. Authentication, calls, notifications, media, update installation and UI acceptance remain unverified.
+Sanitized source has been published on separate Git history. Actions could not start because GitHub reported an account billing lock. The configured Telegram API hash was found inside local APKs; CI secrets protect build inputs but do not make a hash embedded in an APK secret. The owner subsequently permitted that exposure in an authorized release APK while prohibiting credentials in source or logs. Hardware emulator acceleration is unavailable; software emulation is being evaluated. The owner's phone must not be touched. Authentication, calls, notifications, media, update installation and UI acceptance remain unverified.
 
 ## References
 
