@@ -18,17 +18,19 @@ public final class ForkVoiceSettingsActivity extends BaseFragment {
     @Override public View createView(Context c) {
         actionBar.setTitle(c.getString(R.string.ForkVoiceTitle)); actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { @Override public void onItemClick(int id) { if (id == -1) finishFragment(); } });
-        rows = new LinearLayout(c); rows.setOrientation(LinearLayout.VERTICAL); rows.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-        ScrollView scroll = new ScrollView(c); scroll.setFillViewport(true); scroll.addView(rows); fragmentView = scroll; render(); return scroll;
+        LinearLayout page = ForkSettingsLayout.page(c); rows = ForkSettingsLayout.section(c); ForkSettingsLayout.addSection(page, rows);
+        ScrollView scroll = new ScrollView(c); scroll.setFillViewport(true); scroll.addView(page); fragmentView = scroll; render(); return scroll;
     }
     private void render() {
         if (rows == null) return; Context c = rows.getContext(); rows.removeAllViews();
         String mode = VoiceQualitySettings.mode();
         int label = "auto".equals(mode) ? R.string.ForkVoiceAuto : "custom".equals(mode) ? R.string.ForkVoiceCustom : R.string.ForkVoiceStandard;
         TextSettingsCell modeCell = new TextSettingsCell(c); modeCell.setTextAndValue(c.getString(R.string.ForkVoiceMode), c.getString(label), true);
+        ForkSettingsLayout.interactive(modeCell);
         modeCell.setOnClickListener(v -> chooseMode()); rows.addView(modeCell);
         if ("custom".equals(mode)) {
             TextSettingsCell rate = new TextSettingsCell(c); rate.setTextAndValue(c.getString(R.string.ForkVoiceBitrate), (VoiceQualitySettings.customBitrate() / 1000) + " kbps", false);
+            ForkSettingsLayout.interactive(rate);
             rate.setOnClickListener(v -> chooseBitrate()); rows.addView(rate);
         }
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(c); info.setText(c.getString(R.string.ForkVoiceInfo)); rows.addView(info);

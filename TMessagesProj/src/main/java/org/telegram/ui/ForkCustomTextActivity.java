@@ -63,6 +63,7 @@ public class ForkCustomTextActivity extends BaseFragment {
         for (TextView tab : new TextView[] { globalTab, personalTab }) {
             tab.setGravity(android.view.Gravity.CENTER);
             tab.setTextSize(15);
+            ForkSettingsLayout.interactive(tab);
             tabs.addView(tab, new LinearLayout.LayoutParams(0, AndroidUtilities.dp(48), 1));
         }
         globalTab.setText(context.getString(R.string.ForkTextGlobalTab));
@@ -97,6 +98,8 @@ public class ForkCustomTextActivity extends BaseFragment {
         Context context = rows.getContext();
         rows.removeAllViews();
         String query = search.getText().toString().trim().toLowerCase(Locale.ROOT);
+        globalTab.setSelected(!personalMode);
+        personalTab.setSelected(personalMode);
         globalTab.setTextColor(Theme.getColor(personalMode ? Theme.key_windowBackgroundWhiteGrayText : Theme.key_windowBackgroundWhiteBlueHeader));
         personalTab.setTextColor(Theme.getColor(personalMode ? Theme.key_windowBackgroundWhiteBlueHeader : Theme.key_windowBackgroundWhiteGrayText));
         if (personalMode && selectedDialogId == 0) {

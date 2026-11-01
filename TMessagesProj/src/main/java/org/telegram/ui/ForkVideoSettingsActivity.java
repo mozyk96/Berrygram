@@ -15,15 +15,18 @@ public final class ForkVideoSettingsActivity extends BaseFragment {
     @Override public View createView(Context context) {
         actionBar.setTitle(context.getString(R.string.ForkVideoTitle)); actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { @Override public void onItemClick(int id) { if (id == -1) finishFragment(); } });
-        LinearLayout rows = new LinearLayout(context); rows.setOrientation(LinearLayout.VERTICAL);
-        rows.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        LinearLayout page = ForkSettingsLayout.page(context), rows = ForkSettingsLayout.section(context);
         camera = new TextSettingsCell(context);
+        ForkSettingsLayout.interactive(camera);
         camera.setOnClickListener(v -> ForkRoundCameraShortcuts.show(this, this::refreshValues)); rows.addView(camera);
         quality = new TextSettingsCell(context);
+        ForkSettingsLayout.interactive(quality);
         quality.setOnClickListener(v -> ForkRoundCameraShortcuts.showQuality(this, this::refreshValues)); rows.addView(quality);
         TextSettingsCell test = new TextSettingsCell(context); test.setText(context.getString(R.string.ForkCameraPreviewTitle), false);
+        ForkSettingsLayout.interactive(test);
         test.setOnClickListener(v -> presentFragment(new ForkCameraTestActivity())); rows.addView(test);
-        ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(rows); fragmentView = scroll; refreshValues(); return scroll;
+        ForkSettingsLayout.addSection(page, rows);
+        ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(page); fragmentView = scroll; refreshValues(); return scroll;
     }
     private void refreshValues() {
         if (camera == null || quality == null) return;
