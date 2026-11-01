@@ -7,10 +7,10 @@ import org.telegram.messenger.fork.updater.GithubUpdateClient;
 
 /** Runs updater network/file logic using an in-process URL handler and mock PackageManager. */
 public final class UpdaterDownloadFixtureTest {
- static byte[] body; static String metadata; static boolean redirect, missingRelease, breakStream, sawRange, ignoreRange, badRange;
+ static byte[] body; static String metadata; static boolean redirect, missingRelease, breakStream, sawRange, ignoreRange, badRange; static int assetRequests;
  static final String ASSET="https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-arm64-v8a.apk";
  static final class Handler extends URLStreamHandler {
-  protected URLConnection openConnection(URL url) { return new HttpURLConnection(url) {
+  protected URLConnection openConnection(URL url) { if(url.toString().equals(ASSET))assetRequests++; return new HttpURLConnection(url) {
    long offset;
    public void setRequestProperty(String key,String value){if ("Range".equals(key)){offset=Long.parseLong(value.substring(6,value.length()-1));sawRange=true;}}
    public void disconnect(){} public boolean usingProxy(){return false;} public void connect(){}
@@ -54,6 +54,11 @@ public final class UpdaterDownloadFixtureTest {
   ignoreRange=true;try { File restarted=GithubUpdateClient.downloadAndVerify(c,release,null); if(!java.util.Arrays.equals(valid,Files.readAllBytes(restarted.toPath())))throw new AssertionError("Full response was not restarted"); if(!restarted.delete())throw new AssertionError("Could not clean fixture file"); } finally {ignoreRange=false;}
   final long[] progress={0};File result=GithubUpdateClient.downloadAndVerify(c,release,(n,total)->progress[0]=n);
   if(!java.util.Arrays.equals(valid,Files.readAllBytes(result.toPath())) || progress[0]!=valid.length)throw new AssertionError("Download/progress mismatch");
+  int requestsBefore=assetRequests; File cached=GithubUpdateClient.downloadAndVerify(c,release,null);
+  if(assetRequests!=requestsBefore || !cached.equals(result))throw new AssertionError("Verified cached update should be revalidated without another transfer");
+  byte[] damaged=valid.clone(); damaged[0]^=1; Files.write(result.toPath(),damaged);
+  requestsBefore=assetRequests; result=GithubUpdateClient.downloadAndVerify(c,release,null);
+  if(assetRequests<=requestsBefore || !java.util.Arrays.equals(valid,Files.readAllBytes(result.toPath())))throw new AssertionError("Damaged cached update was not replaced");
   if(!result.delete())throw new AssertionError("Could not clean own fixture file");
   body=valid.clone();body[0]^=1;expectFailure(c,release);
   body=java.util.Arrays.copyOf(valid,valid.length-1);expectFailure(c,release);

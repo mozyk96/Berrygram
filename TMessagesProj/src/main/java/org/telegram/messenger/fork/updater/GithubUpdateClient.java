@@ -97,6 +97,11 @@ public final class GithubUpdateClient {
         HttpURLConnection connection=null;
         try {
             long offset=partial.isFile() ? partial.length() : 0;
+            if (offset == release.size && matchesDigest(partial, release.digest)) {
+                verifyPackage(context, partial, release.version);
+                complete=true;
+                return partial;
+            }
             if (offset >= release.size) offset=0;
             connection=open(release.url,offset);
             boolean append=offset>0 && connection.getResponseCode()==206;
@@ -126,6 +131,12 @@ public final class GithubUpdateClient {
             retainPartial=networkPhase && partial.isFile() && partial.length()>0 && partial.length()<release.size;
             throw e;
         } finally { if(connection!=null) connection.disconnect(); if(!complete && !retainPartial && partial.exists()) partial.delete(); }
+    }
+    private static boolean matchesDigest(File file, String expected) throws Exception {
+        MessageDigest hash=MessageDigest.getInstance("SHA-256");
+        try (InputStream in=new java.io.FileInputStream(file)) { byte[] buffer=new byte[32768]; int n; while((n=in.read(buffer))!=-1) hash.update(buffer,0,n); }
+        StringBuilder actual=new StringBuilder(); for(byte b:hash.digest()) actual.append(String.format(Locale.ROOT,"%02x",b & 255));
+        return MessageDigest.isEqual(actual.toString().getBytes("US-ASCII"),expected.getBytes("US-ASCII"));
     }
     private static Set<String> signers(PackageInfo info) throws Exception {
         Signature[] signatures=Build.VERSION.SDK_INT>=28 && info.signingInfo!=null ? info.signingInfo.getApkContentsSigners() : info.signatures;
