@@ -1,6 +1,12 @@
 # BerryGram roadmap
 
-The latest instruction allows independent 1.0.1 implementation while 1.0.0 manual testing continues; it supersedes older versioning and publication plans. BerryGram 1.0.0 includes exactly four custom areas: video-message camera and quality; voice-recording quality; an experimental panel toggle; and custom names, statuses and texts. Stock Telegram functionality remains available.
+The next planned release is 1.0.2. Retain Android API 23, existing identity and signing key, and the four established custom areas plus the updater. Prior 1.0.0 and 1.0.1 acceptance remains incomplete.
+
+## 1.0.2 — in development
+
+- Complete and visually validate video, voice and text settings, supported experimental menus and GitHub Updater.
+- Verify Android compilation, R8, signed ARM64 APK, installer and available Telegram flows. Record unavailable checks explicitly.
+- Publish only when release acceptance and credential requirements are satisfied.
 
 ## 1.0.0
 
@@ -21,7 +27,7 @@ Deferred work is preserved on branch `berrygram-pre-scope-20261030`; it is not a
 
 | Version | Planned focus |
 |---|---|
-| 1.0.2 and later patches | Bug fixes and small improvements, as needed |
+| Later 1.0.x patches | Bug fixes and small improvements, as needed |
 | 1.1.0 | CPU, GPU, RAM, cache, threads, startup and battery optimization |
 | 1.2.0 | Camera engine: zoom, lenses, exposure and flashlight |
 | 1.3.0 | Voice engine: quality modes, codecs and noise suppression |

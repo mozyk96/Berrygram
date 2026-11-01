@@ -7,14 +7,20 @@ import org.telegram.messenger.fork.updater.GithubUpdateClient;
 
 /** Runs updater network/file logic using an in-process URL handler and mock PackageManager. */
 public final class UpdaterDownloadFixtureTest {
- static byte[] body; static String metadata; static boolean redirect, missingRelease;
+ static byte[] body; static String metadata; static boolean redirect, missingRelease, breakStream, sawRange, ignoreRange, badRange;
  static final String ASSET="https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-arm64-v8a.apk";
  static final class Handler extends URLStreamHandler {
   protected URLConnection openConnection(URL url) { return new HttpURLConnection(url) {
+   long offset;
+   public void setRequestProperty(String key,String value){if ("Range".equals(key)){offset=Long.parseLong(value.substring(6,value.length()-1));sawRange=true;}}
    public void disconnect(){} public boolean usingProxy(){return false;} public void connect(){}
-   public int getResponseCode(){return missingRelease && url.getHost().equals("api.github.com") ? 404 : redirect && url.toString().equals(ASSET)?302:200;}
-   public String getHeaderField(String name){return "Location".equals(name) && redirect ? "https://evil.invalid/payload.apk" : null;}
-   public InputStream getInputStream(){return new ByteArrayInputStream(url.getHost().equals("api.github.com") ? metadata.getBytes(java.nio.charset.StandardCharsets.UTF_8) : body);}
+   public int getResponseCode(){return missingRelease && url.getHost().equals("api.github.com") ? 404 : redirect && url.toString().equals(ASSET)?302:offset>0 && !ignoreRange?206:200;}
+   public String getHeaderField(String name){return "Location".equals(name) && redirect ? "https://evil.invalid/payload.apk" : "Content-Range".equals(name) && offset>0 ? "bytes "+(offset+(badRange?1:0))+"-"+(body.length-1)+"/"+body.length : null;}
+   public InputStream getInputStream(){
+    if(url.getHost().equals("api.github.com"))return new ByteArrayInputStream(metadata.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    if(breakStream)return new InputStream(){int pos; public int read() throws IOException { if(pos>=body.length/2)throw new IOException("simulated disconnect");return body[pos++]&255; }};
+    int start=ignoreRange ? 0 : (int)offset; return new ByteArrayInputStream(body,start,body.length-start);
+   }
   }; }
  }
  static String sha(byte[] b) throws Exception { StringBuilder s=new StringBuilder();for(byte v:MessageDigest.getInstance("SHA-256").digest(b))s.append(String.format(Locale.ROOT,"%02x",v & 255));return s.toString(); }
@@ -36,6 +42,16 @@ public final class UpdaterDownloadFixtureTest {
   UpdaterPackageFixtureTest.Ctx c=new UpdaterPackageFixtureTest.Ctx();
   c.pm.installed=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.0",100,0,1);
   c.pm.candidate=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.1",101,0,1);
+  breakStream=true;
+  try { GithubUpdateClient.downloadAndVerify(c,release,null); throw new AssertionError("Interrupted transfer accepted"); }
+  catch (IOException expected) { } finally { breakStream=false; }
+  File resumed=GithubUpdateClient.downloadAndVerify(c,release,null);
+  if(!sawRange || !java.util.Arrays.equals(valid,Files.readAllBytes(resumed.toPath())))throw new AssertionError("Download did not resume correctly");
+  if(!resumed.delete())throw new AssertionError("Could not clean resumed fixture file");
+  breakStream=true;try { GithubUpdateClient.downloadAndVerify(c,release,null); throw new AssertionError("Interrupted transfer accepted"); } catch(IOException expected) { } finally {breakStream=false;}
+  badRange=true;try { expectFailure(c,release); } finally {badRange=false;}
+  breakStream=true;try { GithubUpdateClient.downloadAndVerify(c,release,null); throw new AssertionError("Interrupted transfer accepted"); } catch(IOException expected) { } finally {breakStream=false;}
+  ignoreRange=true;try { File restarted=GithubUpdateClient.downloadAndVerify(c,release,null); if(!java.util.Arrays.equals(valid,Files.readAllBytes(restarted.toPath())))throw new AssertionError("Full response was not restarted"); if(!restarted.delete())throw new AssertionError("Could not clean fixture file"); } finally {ignoreRange=false;}
   final long[] progress={0};File result=GithubUpdateClient.downloadAndVerify(c,release,(n,total)->progress[0]=n);
   if(!java.util.Arrays.equals(valid,Files.readAllBytes(result.toPath())) || progress[0]!=valid.length)throw new AssertionError("Download/progress mismatch");
   if(!result.delete())throw new AssertionError("Could not clean own fixture file");

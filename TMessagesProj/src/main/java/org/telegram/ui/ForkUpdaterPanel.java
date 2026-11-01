@@ -136,7 +136,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
                     status = getContext().getString(R.string.ForkUpdateDownloading, percent); updateDetails();
                     if (progress != null) { progress.setIndeterminate(false); progress.setProgress(percent); }
                 }));
-                AndroidUtilities.runOnUIThread(() -> { if (disposed) { file.delete(); return; } busy = false; preferences.edit().putBoolean("interrupted", false).apply(); verified = file;
+                AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); verified = file;
                     status = getContext().getString(R.string.ForkUpdateVerified); render(false); });
             } catch (Exception e) { fail(e); }
         });

@@ -23,7 +23,8 @@ for line in (root / 'gradle.properties').read_text(encoding='utf-8').splitlines(
         key, value = line.split('=', 1)
         if key in {'APP_VERSION_NAME', 'APP_VERSION_CODE', 'APP_PACKAGE'}:
             properties[key] = value.strip()
-assert properties.get('APP_VERSION_NAME') == '1.0.1'
+assert properties.get('APP_VERSION_NAME') == '1.0.2'
+assert int(properties['APP_VERSION_CODE']) > 7238
 assert int(properties.get('APP_VERSION_CODE', '0')) > 0
 assert properties.get('APP_PACKAGE') == 'org.example.forkclient'
 print('BerryGram backup, manifest and release metadata checks passed')

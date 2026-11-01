@@ -10,7 +10,8 @@ import org.telegram.ui.ActionBar.BaseFragment;
 /** Selects the initial camera used by Telegram video messages. */
 public final class ForkRoundCameraShortcuts {
     private ForkRoundCameraShortcuts() {}
-    public static void show(BaseFragment parent) {
+    public static void show(BaseFragment parent) { show(parent, null); }
+    public static void show(BaseFragment parent, Runnable onChanged) {
         Context context = parent.getParentActivity();
         if (context == null) return;
         String[] modes = {"standard", "front", "back", "last", "gesture"};
@@ -21,10 +22,11 @@ public final class ForkRoundCameraShortcuts {
         parent.showDialog(new AlertDialog.Builder(context)
             .setTitle(context.getString(R.string.ForkRoundCameraTitle))
             .setMessage(context.getString(R.string.ForkCameraFallback))
-            .setItems(labels, (dialog, index) -> RoundCameraSettings.setMode(modes[index]))
+            .setItems(labels, (dialog, index) -> { RoundCameraSettings.setMode(modes[index]); if (onChanged != null) onChanged.run(); })
             .setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
     }
-    public static void showQuality(BaseFragment parent) {
+    public static void showQuality(BaseFragment parent) { showQuality(parent, null); }
+    public static void showQuality(BaseFragment parent, Runnable onChanged) {
         Context context = parent.getParentActivity();
         if (context == null) return;
         String mode = RoundCameraSettings.qualityMode();
@@ -36,11 +38,11 @@ public final class ForkRoundCameraShortcuts {
         parent.showDialog(new AlertDialog.Builder(context).setTitle(context.getString(R.string.ForkVideoQualityTitle))
             .setMessage(context.getString(R.string.ForkVideoQualityDescription))
             .setItems(choices, (dialog, which) -> {
-                if (which != 2) { RoundCameraSettings.setQuality(modes[which], 0); return; }
+                if (which != 2) { RoundCameraSettings.setQuality(modes[which], 0); if (onChanged != null) onChanged.run(); return; }
                 int[] rates = {500000, 1000000, 1500000, 2500000, 4000000};
                 CharSequence[] items = {"0.5 Mbps", "1 Mbps", "1.5 Mbps", "2.5 Mbps", "4 Mbps"};
                 parent.showDialog(new AlertDialog.Builder(context).setTitle(context.getString(R.string.ForkVideoQualityBitrate))
-                    .setItems(items, (d, selected) -> RoundCameraSettings.setQuality("custom", rates[selected]))
+                    .setItems(items, (d, selected) -> { RoundCameraSettings.setQuality("custom", rates[selected]); if (onChanged != null) onChanged.run(); })
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
             }).setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
     }

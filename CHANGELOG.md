@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2 — in development
+
+- Added resumable updater downloads with range validation and full-file digest verification; Android installer and real release tests remain pending.
+- Display the selected camera and video quality in settings; visual and device validation remain pending.
+- Keep Android 6.0 / API 23 as the minimum supported version.
+
 ## 1.0.1 — in development
 
 - Began an expandable GitHub updater; its device, network and installation scenarios remain unverified.
