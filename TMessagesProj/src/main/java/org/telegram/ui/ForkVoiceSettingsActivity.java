@@ -8,6 +8,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.fork.voice.VoiceQualitySettings;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
@@ -39,12 +40,12 @@ public final class ForkVoiceSettingsActivity extends BaseFragment {
         Context c = getParentActivity(); if (c == null) return;
         String[] modes = {"standard", "auto", "custom"}; int[] names = {R.string.ForkVoiceStandard, R.string.ForkVoiceAuto, R.string.ForkVoiceCustom};
         CharSequence[] labels = new CharSequence[modes.length]; for (int i=0; i<modes.length; i++) labels[i] = (modes[i].equals(VoiceQualitySettings.mode()) ? "✓ " : "") + ForkLocale.get(names[i]);
-        showDialog(new AlertDialog.Builder(c).setTitle(ForkLocale.get(R.string.ForkVoiceMode)).setItems(labels, (d, i) -> { VoiceQualitySettings.setMode(modes[i]); render(); }).setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
+        showDialog(new BottomSheet.Builder(c).setTitle(ForkLocale.get(R.string.ForkVoiceMode)).setItems(labels, (d, i) -> { VoiceQualitySettings.setMode(modes[i]); render(); }).create());
     }
     private void chooseBitrate() {
         Context c = getParentActivity(); if (c == null) return;
         int[] rates = {24000, 32000, 48000, 64000}; CharSequence[] labels = {"24 kbps", "32 kbps", "48 kbps", "64 kbps"};
-        showDialog(new AlertDialog.Builder(c).setTitle(ForkLocale.get(R.string.ForkVoiceBitrate)).setItems(labels, (d, i) -> { VoiceQualitySettings.setCustomBitrate(rates[i]); render(); }).setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
+        showDialog(new BottomSheet.Builder(c).setTitle(ForkLocale.get(R.string.ForkVoiceBitrate)).setItems(labels, (d, i) -> { VoiceQualitySettings.setCustomBitrate(rates[i]); render(); }).create());
     }
     @Override public void onFragmentDestroy() { rows = null; super.onFragmentDestroy(); }
 }

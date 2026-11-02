@@ -20,7 +20,7 @@ public final class RoundCameraPolicy {
     }
     public static int gestureChoice(float x, float y, int width, int height) {
         if (width <= 0 || height <= 0 || Float.isNaN(x) || Float.isNaN(y) || x < 0 || x >= width || y < 0 || y >= height) return -1;
-        return x < width / 2f ? 0 : 1;
+        return y < height / 2f ? 0 : 1;
     }
     public static boolean explicit(String mode) {
         return "front".equals(mode) || "back".equals(mode) || "last".equals(mode) || "gesture".equals(mode);

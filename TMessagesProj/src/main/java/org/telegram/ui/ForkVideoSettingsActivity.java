@@ -9,6 +9,7 @@ import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Cells.TextInfoPrivacyCell;
 /** Compact entry points to the real round-video controls. */
 public final class ForkVideoSettingsActivity extends BaseFragment {
     private TextSettingsCell camera, quality;
@@ -26,6 +27,9 @@ public final class ForkVideoSettingsActivity extends BaseFragment {
         ForkSettingsLayout.interactive(test);
         test.setOnClickListener(v -> presentFragment(new ForkCameraTestActivity())); rows.addView(test);
         ForkSettingsLayout.addSection(page, rows);
+        TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
+        info.setText(ForkLocale.get(R.string.ForkCameraFallback) + "\n\n" + ForkLocale.get(R.string.ForkVideoQualityDescription));
+        page.addView(info);
         ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(page); fragmentView = scroll; refreshValues(); return scroll;
     }
     private void refreshValues() {

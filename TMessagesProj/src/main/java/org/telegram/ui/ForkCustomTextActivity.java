@@ -22,6 +22,8 @@ import org.telegram.messenger.fork.text.CustomTextValidator;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BottomSheet;
+import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextDetailSettingsCell;
@@ -283,7 +285,11 @@ public class ForkCustomTextActivity extends BaseFragment {
             hint.setText(ForkLocale.get(R.string.ForkTextActualHint));
             content.addView(hint);
         }
-        EditText input = new EditText(context);
+        EditTextBoldCursor input = new EditTextBoldCursor(context);
+        input.setTextSize(16);
+        input.setCursorColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
+        input.setCursorSize(AndroidUtilities.dp(20));
+        input.setCursorWidth(1.5f);
         input.setSingleLine(false);
         input.setHint(ForkLocale.get(R.string.ForkCustomTextHint));
         input.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
@@ -370,9 +376,9 @@ public class ForkCustomTextActivity extends BaseFragment {
             String id = ids.get(i);
             names[i] = (id.equals(CustomTextManager.activePack()) ? "✓ " : "") + ("custom".equals(id) ? ForkLocale.get(R.string.ForkTextDefaultPack) : CustomTextManager.packName(id));
         }
-        showDialog(new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkTextPacks))
+        showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkTextPacks))
             .setItems(names, (dialog, which) -> { CustomTextManager.activatePack(ids.get(which)); changed(); })
-            .setNegativeButton(getString(R.string.Cancel), null).create());
+            .create());
     }
     private void createPack() {
         Context context = getParentActivity();

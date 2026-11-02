@@ -5,6 +5,7 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.fork.camera.RoundCameraSettings;
 import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.BaseFragment;
 
 /** Selects the initial camera used by Telegram video messages. */
@@ -19,11 +20,10 @@ public final class ForkRoundCameraShortcuts {
         String current = RoundCameraSettings.mode();
         CharSequence[] labels = new CharSequence[modes.length];
         for (int i = 0; i < modes.length; i++) labels[i] = (modes[i].equals(current) ? "✓ " : "") + ForkLocale.get(names[i]);
-        parent.showDialog(new AlertDialog.Builder(context)
+        parent.showDialog(new BottomSheet.Builder(context)
             .setTitle(ForkLocale.get(R.string.ForkRoundCameraTitle))
-            .setMessage(ForkLocale.get(R.string.ForkCameraFallback))
             .setItems(labels, (dialog, index) -> { RoundCameraSettings.setMode(modes[index]); if (onChanged != null) onChanged.run(); })
-            .setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
+            .create());
     }
     public static void showQuality(BaseFragment parent) { showQuality(parent, null); }
     public static void showQuality(BaseFragment parent, Runnable onChanged) {
@@ -35,15 +35,14 @@ public final class ForkRoundCameraShortcuts {
         CharSequence[] choices = new CharSequence[modes.length];
         for (int i = 0; i < modes.length; i++) choices[i] = (modes[i].equals(mode) ? "✓ " : "") + ForkLocale.get(labels[i])
                 + ("custom".equals(modes[i]) && "custom".equals(mode) ? " (" + (RoundCameraSettings.customBitrate() / 1000) + " kbps)" : "");
-        parent.showDialog(new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkVideoQualityTitle))
-            .setMessage(ForkLocale.get(R.string.ForkVideoQualityDescription))
+        parent.showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkVideoQualityTitle))
             .setItems(choices, (dialog, which) -> {
                 if (which != 2) { RoundCameraSettings.setQuality(modes[which], 0); if (onChanged != null) onChanged.run(); return; }
                 int[] rates = {500000, 1000000, 1500000, 2500000, 4000000};
                 CharSequence[] items = {"0.5 Mbps", "1 Mbps", "1.5 Mbps", "2.5 Mbps", "4 Mbps"};
-                parent.showDialog(new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkVideoQualityBitrate))
+                org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> parent.showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkVideoQualityBitrate))
                     .setItems(items, (d, selected) -> { RoundCameraSettings.setQuality("custom", rates[selected]); if (onChanged != null) onChanged.run(); })
-                    .setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
-            }).setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
+                    .create()), 250);
+            }).create());
     }
 }

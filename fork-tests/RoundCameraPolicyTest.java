@@ -10,7 +10,8 @@ public class RoundCameraPolicyTest {
   check(RoundCameraPolicy.explicit("front"));
   check(!RoundCameraPolicy.explicit("standard"));
   check(RoundCameraPolicy.gestureChoice(10, 10, 100, 50)==0);
-  check(RoundCameraPolicy.gestureChoice(60, 10, 100, 50)==1);
+  check(RoundCameraPolicy.gestureChoice(60, 10, 100, 50)==0);
+  check(RoundCameraPolicy.gestureChoice(10, 30, 100, 50)==1);
   check(RoundCameraPolicy.gestureChoice(-1, 10, 100, 50)==-1);
   check(RoundCameraPolicy.gestureChoice(50, 51, 100, 50)==-1);
   check(RoundCameraPolicy.gestureChoice(Float.NaN, 10, 100, 50)==-1);

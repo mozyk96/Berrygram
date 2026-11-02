@@ -902,8 +902,8 @@ public class ChatActivityEnterView extends FrameLayout implements
         recordAudioVideoRunnableStarted = false;
         if (parentActivity == null || !isInVideoMode() || audioVideoButtonContainer == null || !audioVideoButtonContainer.isAttachedToWindow()) return;
         android.widget.LinearLayout content = new android.widget.LinearLayout(getContext());
-        content.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        content.setBackground(Theme.createRoundRectDrawable(dp(12), getThemedColor(Theme.key_windowBackgroundWhite)));
+        content.setOrientation(android.widget.LinearLayout.VERTICAL);
+        content.setBackground(Theme.createRoundRectDrawable(dp(18), getThemedColor(Theme.key_windowBackgroundWhite)));
         int[] labels = {R.string.ForkCameraFront, R.string.ForkCameraBack};
         for (int label : labels) {
             TextView text = new TextView(getContext());
@@ -911,13 +911,15 @@ public class ChatActivityEnterView extends FrameLayout implements
             text.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
             text.setGravity(Gravity.CENTER);
             text.setTextSize(14);
-            content.addView(text, new android.widget.LinearLayout.LayoutParams(dp(110), dp(56)));
+            text.setSingleLine(true);
+            text.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            content.addView(text, new android.widget.LinearLayout.LayoutParams(dp(160), dp(48)));
         }
         forkCameraPickerContent = content;
-        forkCameraPicker = new android.widget.PopupWindow(content, dp(220), dp(56), false);
+        forkCameraPicker = new android.widget.PopupWindow(content, dp(160), dp(96), false);
         forkCameraPicker.setTouchable(false);
         forkCameraPicker.setClippingEnabled(true);
-        forkCameraPicker.showAsDropDown(audioVideoButtonContainer, -dp(170), -audioVideoButtonContainer.getHeight() - dp(64));
+        forkCameraPicker.showAsDropDown(audioVideoButtonContainer, -dp(112), -audioVideoButtonContainer.getHeight() - dp(104));
     };
     private void dismissForkCameraPicker() {
         if (forkCameraPicker != null) forkCameraPicker.dismiss();
