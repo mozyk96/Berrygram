@@ -28,7 +28,7 @@
     <string name="ForkAppearanceSubtitle">Меню и скругление</string>
     <string name="ForkAppearanceRadius">Скругление меню</string>
     <string name="ForkAppearanceRadiusValue">%1$d dp</string>
-    <string name="ForkAppearanceRadiusInfo">Скругление применяется к поддерживаемым меню Blur и Liquid Glass. Откройте меню заново, чтобы увидеть изменение.</string>
+    <string name="ForkAppearanceRadiusInfo">Скругление применяется к поддерживаемым меню во всех трёх стилях. Откройте меню заново, чтобы увидеть изменение.</string>
     <string name="ForkSettingsTitle">Настройки BerryGram</string>
     <string name="ForkCustomTextTitle">Свои фразы</string>
     <string name="ForkCustomTextSearch">Поиск фраз</string>

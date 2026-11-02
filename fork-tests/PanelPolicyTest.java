@@ -19,6 +19,10 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(PanelPolicy.popupRadiusDp(false, 30) == 12);
  check(PanelPolicy.popupRadiusDp(true, 30) == 30);
  check(PanelPolicy.popupRadiusDp(true, 100) == 32);
+ check(PanelPolicy.surfaceRadiusDp("material", 30) == 30);
+ check(PanelPolicy.surfaceRadiusDp("blur", 8) == 12);
+ check(PanelPolicy.surfaceRadiusDp("liquid", 99) == 32);
+ check(PanelPolicy.surfaceRadiusDp("unknown", 30) == 12);
  check(PanelPolicy.effectStrength(-5) == 0);
  check(PanelPolicy.effectStrength(120) == 100);
  check(PanelPolicy.popupAnimationDuration("system", 180, true) == 180);

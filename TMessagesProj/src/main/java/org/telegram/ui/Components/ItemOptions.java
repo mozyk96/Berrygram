@@ -1216,12 +1216,13 @@ public class ItemOptions {
 
     public void setupSelectors() {
         if (layout == null) return;
-        final int radius = PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled(), ForkPanelSettings.radiusDp());
-
         for (int j = 0; j < layout.getChildCount(); ++j) {
             View child = j == layout.getChildCount() - 1 ? lastLayout : layout.getChildAt(j);
             if (child instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout) {
                 ActionBarPopupWindow.ActionBarPopupWindowLayout popupLayout = (ActionBarPopupWindow.ActionBarPopupWindowLayout) child;
+                final int radius = popupLayout.hasForkStyleBackground()
+                        ? PanelPolicy.surfaceRadiusDp(ForkPanelSettings.style(), ForkPanelSettings.radiusDp())
+                        : PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled(), ForkPanelSettings.radiusDp());
                 if (popupLayout.getItemsCount() <= 0)
                     continue;
                 final View first = popupLayout.getItemAt(0);

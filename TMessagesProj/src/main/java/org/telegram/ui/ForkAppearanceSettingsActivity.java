@@ -21,7 +21,7 @@ import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.ItemOptions;
 
-/** Controls the existing popup renderer; unfinished graphic modes are intentionally absent. */
+/** Controls the supported popup graphics and their preview. */
 public final class ForkAppearanceSettingsActivity extends BaseFragment {
     private SeekBar effectControl;
     @Override public View createView(Context context) {
@@ -44,7 +44,6 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         slider.setMax(20);
         slider.setProgress(ForkPanelSettings.radiusDp() - 12);
         slider.setContentDescription(ForkLocale.get(R.string.ForkAppearanceRadius));
-        slider.setEnabled(ForkPanelSettings.enabled());
         tint(slider, accent(context));
         int padding = AndroidUtilities.dp(20);
         slider.setPadding(padding, 0, padding, 0);
@@ -114,7 +113,6 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                     .setItems(labels, (dialog, index) -> {
                         ForkPanelSettings.setStyle(modes[index]);
                         style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
-                        slider.setEnabled(ForkPanelSettings.enabled());
                         effect.setEnabled(effectsAvailable());
                         ForkSettingsLayout.refreshSection(controls, false);
                         applyAccent(slider, effect, preview, accent(context));
