@@ -10,6 +10,11 @@ public class PanelSettingsTest {
   ForkPanelSettings.setRadiusDp(100); check(ForkPanelSettings.radiusDp() == 32);
   ForkPanelSettings.setRadiusDp(0); check(ForkPanelSettings.radiusDp() == 12);
   ForkPanelSettings.setStyle("liquid"); check(ForkPanelSettings.enabled() && "liquid".equals(ForkPanelSettings.style()));
+  java.lang.reflect.Field styleCache = ForkPanelSettings.class.getDeclaredField("cachedStyle");
+  java.lang.reflect.Field enabledCache = ForkPanelSettings.class.getDeclaredField("cached");
+  styleCache.setAccessible(true); enabledCache.setAccessible(true);
+  styleCache.set(null, null); enabledCache.set(null, null);
+  check(ForkPanelSettings.enabled() && "liquid".equals(ForkPanelSettings.style()));
   ForkPanelSettings.setStyle("material"); check(!ForkPanelSettings.enabled() && "material".equals(ForkPanelSettings.style()));
   ForkPanelSettings.setStyle("blur"); check(ForkPanelSettings.enabled() && "blur".equals(ForkPanelSettings.style()));
   boolean rejected=false; try { ForkPanelSettings.setStyle("invalid"); } catch (IllegalArgumentException expected) { rejected=true; }

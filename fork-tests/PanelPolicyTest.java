@@ -5,6 +5,11 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(!PanelPolicy.useGlass(true,true,33,true));
  check(!PanelPolicy.useGlass(true,false,32,true));
  check(!PanelPolicy.useGlass(true,false,33,false));
+ check("liquid".equals(PanelPolicy.effectiveStyle("liquid", false, 33, true)));
+ check("blur".equals(PanelPolicy.effectiveStyle("blur", false, 33, true)));
+ check("material".equals(PanelPolicy.effectiveStyle("liquid", true, 33, true)));
+ check("material".equals(PanelPolicy.effectiveStyle("liquid", false, 32, true)));
+ check("material".equals(PanelPolicy.effectiveStyle("invalid", false, 33, true)));
  check(PanelPolicy.popupRadiusDp(true) == 26);
  check(PanelPolicy.captureMenuGlass(true, false, 33, true, false, true));
  check(!PanelPolicy.captureMenuGlass(true, false, 33, true, true, true));

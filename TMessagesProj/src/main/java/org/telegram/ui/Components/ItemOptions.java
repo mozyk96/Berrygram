@@ -149,6 +149,7 @@ public class ItemOptions {
 
     public ActionBarPopupWindow actionBarPopupWindow;
     private BlurredBackgroundSourceBitmap scrimBlur3SourceBitmap;
+    private boolean forkRefractiveSource;
     private final float[] point = new float[2];
 
     private Runnable dismissListener;
@@ -1295,9 +1296,10 @@ public class ItemOptions {
         }
 
         if (blur || blurForMenu) {
-            boolean refract = !explicitBlurForMenu && blurForMenu && Build.VERSION.SDK_INT >= 33 && "liquid".equals(ForkPanelSettings.style());
-            if (scrimBlur3SourceBitmap == null || refract != (scrimBlur3SourceBitmap instanceof org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource)) {
+            boolean refract = !explicitBlurForMenu && blurForMenu && "liquid".equals(PanelPolicy.effectiveStyle(ForkPanelSettings.style(), !LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS), Build.VERSION.SDK_INT, !SharedConfig.deviceIsLow()));
+            if (scrimBlur3SourceBitmap == null || refract != forkRefractiveSource) {
                 scrimBlur3SourceBitmap = refract ? new org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource() : new BlurredBackgroundSourceBitmap();
+                forkRefractiveSource = refract;
             }
         }
 

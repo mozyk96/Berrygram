@@ -916,7 +916,8 @@ public class ActionBarMenuItem extends FrameLayout {
             forkMenuBitmap = capture[0];
             forkMenuOriginalBackground = popupLayout.getBackgroundDrawable();
             forkMenuOriginalColor = popupLayout.getBackgroundColor();
-            org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap source = Build.VERSION.SDK_INT >= 33 && "liquid".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())
+            org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap source = "liquid".equals(org.telegram.messenger.fork.panels.PanelPolicy.effectiveStyle(
+                    org.telegram.messenger.fork.panels.ForkPanelSettings.style(), !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS), Build.VERSION.SDK_INT, !org.telegram.messenger.SharedConfig.deviceIsLow()))
                     ? new org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource()
                     : new org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap();
             source.setBitmap(forkMenuBitmap);

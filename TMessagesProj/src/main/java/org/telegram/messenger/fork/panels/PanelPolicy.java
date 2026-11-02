@@ -18,6 +18,10 @@ public final class PanelPolicy {
     public static boolean useGlass(boolean enabled, boolean savingPower, int sdk, boolean capable) {
         return enabled && !savingPower && sdk >= 33 && capable;
     }
+    public static String effectiveStyle(String requested, boolean savingPower, int sdk, boolean capable) {
+        if (("liquid".equals(requested) || "blur".equals(requested)) && useGlass(true, savingPower, sdk, capable)) return requested;
+        return "material";
+    }
     public static boolean captureMenuGlass(boolean enabled, boolean savingPower, int sdk, boolean capable, boolean hasFactory, boolean eligible) {
         return !hasFactory && eligible && useGlass(enabled, savingPower, sdk, capable);
     }
