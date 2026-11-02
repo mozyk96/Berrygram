@@ -106,11 +106,16 @@ final class ForkHsvPicker extends LinearLayout {
             int w = getWidth(), h = getHeight();
             if (w <= 0 || h <= 0) return;
             int hueValue = Math.round(hsv[0]);
-            if (hueValue != cachedHue || w != cachedWidth || h != cachedHeight) {
-                cachedHue = hueValue; cachedWidth = w; cachedHeight = h;
+            if (w != cachedWidth || h != cachedHeight) {
+                cachedWidth = w;
+                cachedHeight = h;
+                valueGradient = new LinearGradient(0, 0, 0, h, Color.TRANSPARENT, Color.BLACK, Shader.TileMode.CLAMP);
+                cachedHue = -1;
+            }
+            if (hueValue != cachedHue) {
+                cachedHue = hueValue;
                 pure[0] = hsv[0];
                 saturationGradient = new LinearGradient(0, 0, w, 0, Color.WHITE, Color.HSVToColor(pure), Shader.TileMode.CLAMP);
-                valueGradient = new LinearGradient(0, 0, 0, h, Color.TRANSPARENT, Color.BLACK, Shader.TileMode.CLAMP);
             }
             paint.setShader(saturationGradient);
             canvas.drawRect(0, 0, w, h, paint);
