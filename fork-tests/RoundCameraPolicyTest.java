@@ -9,6 +9,10 @@ public class RoundCameraPolicyTest {
   check(RoundCameraPolicy.initial("invalid",false,true));
   check(RoundCameraPolicy.explicit("front"));
   check(!RoundCameraPolicy.explicit("standard"));
+  check(RoundCameraPolicy.fixedCamera("front"));
+  check(RoundCameraPolicy.fixedCamera("back"));
+  check(!RoundCameraPolicy.fixedCamera("gesture"));
+  check(!RoundCameraPolicy.fixedCamera("last"));
   check(RoundCameraPolicy.gestureChoice(10, 10, 100, 50)==0);
   check(RoundCameraPolicy.gestureChoice(60, 10, 100, 50)==0);
   check(RoundCameraPolicy.gestureChoice(10, 30, 100, 50)==1);

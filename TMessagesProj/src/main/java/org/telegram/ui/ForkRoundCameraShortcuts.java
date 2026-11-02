@@ -15,15 +15,27 @@ public final class ForkRoundCameraShortcuts {
     public static void show(BaseFragment parent, Runnable onChanged) {
         Context context = parent.getParentActivity();
         if (context == null) return;
-        String[] modes = {"standard", "front", "back", "last", "gesture"};
-        int[] names = {R.string.ForkCameraStandard, R.string.ForkCameraFront, R.string.ForkCameraBack, R.string.ForkCameraLast, R.string.ForkCameraGesture};
+        String[] modes = {"back", "front"};
+        int[] names = {R.string.ForkCameraBack, R.string.ForkCameraFront};
+        int[] icons = {R.drawable.msg_video, R.drawable.msg_photo_switch2};
         String current = RoundCameraSettings.mode();
         CharSequence[] labels = new CharSequence[modes.length];
         for (int i = 0; i < modes.length; i++) labels[i] = (modes[i].equals(current) ? "✓ " : "") + ForkLocale.get(names[i]);
         parent.showDialog(new BottomSheet.Builder(context)
-            .setTitle(ForkLocale.get(R.string.ForkRoundCameraTitle))
-            .setItems(labels, (dialog, index) -> { RoundCameraSettings.setMode(modes[index]); if (onChanged != null) onChanged.run(); })
+            .setTitle(ForkLocale.get(R.string.ForkCameraChoiceTitle))
+            .setItems(labels, icons, (dialog, index) -> { RoundCameraSettings.setMode(modes[index]); if (onChanged != null) onChanged.run(); })
             .create());
+    }
+    public static void showBehavior(BaseFragment parent, Runnable onChanged) {
+        Context context = parent.getParentActivity();
+        if (context == null) return;
+        String[] modes = {"standard", "last", "gesture"};
+        int[] names = {R.string.ForkCameraStandard, R.string.ForkCameraLast, R.string.ForkCameraGesture};
+        String current = RoundCameraSettings.mode();
+        CharSequence[] labels = new CharSequence[modes.length];
+        for (int i = 0; i < modes.length; i++) labels[i] = (modes[i].equals(current) ? "✓ " : "") + ForkLocale.get(names[i]);
+        parent.showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkCameraBehavior))
+                .setItems(labels, (dialog, index) -> { RoundCameraSettings.setMode(modes[index]); if (onChanged != null) onChanged.run(); }).create());
     }
     public static void showQuality(BaseFragment parent) { showQuality(parent, null); }
     public static void showQuality(BaseFragment parent, Runnable onChanged) {

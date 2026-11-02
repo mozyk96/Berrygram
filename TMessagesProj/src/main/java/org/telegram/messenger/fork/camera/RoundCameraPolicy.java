@@ -25,4 +25,5 @@ public final class RoundCameraPolicy {
     public static boolean explicit(String mode) {
         return "front".equals(mode) || "back".equals(mode) || "last".equals(mode) || "gesture".equals(mode);
     }
+    public static boolean fixedCamera(String mode) { return "front".equals(mode) || "back".equals(mode); }
 }

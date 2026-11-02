@@ -13,6 +13,7 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.ItemOptions;
 
 /** Controls the existing popup renderer; unfinished graphic modes are intentionally absent. */
 public final class ForkAppearanceSettingsActivity extends BaseFragment {
@@ -39,6 +40,14 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         int padding = AndroidUtilities.dp(20);
         slider.setPadding(padding, 0, padding, 0);
         controls.addView(slider, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, AndroidUtilities.dp(48)));
+        TextSettingsCell preview = new TextSettingsCell(context);
+        preview.setText(ForkLocale.get(R.string.ForkAppearancePreview), false);
+        preview.setIcon(R.drawable.msg_palette);
+        ForkSettingsLayout.interactive(preview);
+        preview.setOnClickListener(v -> ItemOptions.makeOptions(this, v)
+                .add(R.drawable.msg_check_s, ForkLocale.get(R.string.ForkAppearancePreviewItem), () -> { })
+                .show());
+        controls.addView(preview);
         panels.setOnClickListener(v -> {
             boolean enabled = !ForkPanelSettings.enabled();
             ForkPanelSettings.setEnabled(enabled);

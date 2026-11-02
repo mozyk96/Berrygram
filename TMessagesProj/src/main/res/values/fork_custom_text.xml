@@ -1,4 +1,10 @@
 <resources>
+    <string name="ForkCameraChoiceTitle">Camera</string>
+    <string name="ForkCameraBehavior">Starting behavior</string>
+    <string name="ForkCameraChoiceAuto">Based on behavior</string>
+    <string name="ForkCameraBehaviorFixed">Selected camera</string>
+    <string name="ForkAppearancePreview">Preview menu</string>
+    <string name="ForkAppearancePreviewItem">Done</string>
     <string name="ForkAppearanceTitle">Appearance &amp; Graphics</string>
     <string name="ForkAppearanceSubtitle">Menus and rounding</string>
     <string name="ForkAppearanceRadius">Menu rounding</string>

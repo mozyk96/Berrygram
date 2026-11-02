@@ -1,4 +1,10 @@
 <resources>
+    <string name="ForkCameraChoiceTitle">Камера</string>
+    <string name="ForkCameraBehavior">Початкова поведінка</string>
+    <string name="ForkCameraChoiceAuto">За режимом</string>
+    <string name="ForkCameraBehaviorFixed">Обрана камера</string>
+    <string name="ForkAppearancePreview">Переглянути меню</string>
+    <string name="ForkAppearancePreviewItem">Готово</string>
     <string name="ForkAppearanceTitle">Вигляд і графіка</string>
     <string name="ForkAppearanceSubtitle">Меню та заокруглення</string>
     <string name="ForkAppearanceRadius">Заокруглення меню</string>
