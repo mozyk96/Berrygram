@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0-beta.2 — public testing
+
+- Correct rectangular bitmap recording dimensions and downscale geometry.
+- Rebind the refraction shader when its source matrix changes.
+- Resume downloads after a short response and check available storage, with localized errors.
+- Main header and full glass integration remain unfinished; visual, device, account, call and media testing remain outstanding.
+
 ## 1.2.0-beta.1 — public testing
 
 - Add selectable popup styles, graphic preferences and a color picker; hardware rendering and broad component coverage remain unverified.

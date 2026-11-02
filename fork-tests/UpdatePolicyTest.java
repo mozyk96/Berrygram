@@ -22,6 +22,8 @@ public class UpdatePolicyTest {
   check(UpdatePolicy.compareVersions("1.2.0+build.1","1.2.0+build.2") == 0);
   check(UpdatePolicy.compareVersions("1.2.0-beta.01","1.2.0") == null);
   check(UpdatePolicy.validAsset("v1.2.0-beta.1","BerryGram-1.2.0-beta.1-arm64-v8a.apk"));
+  check(UpdatePolicy.validIdentity("app",72489,signer,"app",72499,signer));
+  check(UpdatePolicy.validSavedRelease("owner/project", "1.2.0-beta.2", "1.2.0-beta.1", "https://github.com/owner/project/releases/download/v1.2.0-beta.2/BerryGram-1.2.0-beta.2-arm64-v8a.apk", "a".repeat(64), 100));
   check(UpdatePolicy.validRepository("owner/project"));
   check(!UpdatePolicy.validRepository("owner/../other"));
   check(!UpdatePolicy.validRepository("https://github.com/owner/project"));
