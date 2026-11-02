@@ -136,6 +136,7 @@ public class ActionBarPopupWindow extends PopupWindow {
         private boolean forkStyleEligible;
         private Drawable forkStockBackground;
         private Drawable forkExperimentalBackground;
+        private int forkExperimentalRadius = -1;
 
         private boolean fitItems;
         private final Theme.ResourcesProvider resourcesProvider;
@@ -172,7 +173,8 @@ public class ActionBarPopupWindow extends PopupWindow {
                 forkStockBackground = getResources().getDrawable(resId).mutate();
                 forkGlassBackground = forkStyleEligible && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
                 if (forkGlassBackground) {
-                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true)), Color.WHITE);
+                    forkExperimentalRadius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
+                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(forkExperimentalRadius), Color.WHITE);
                     backgroundDrawable = forkExperimentalBackground;
                 } else {
                     backgroundDrawable = forkStockBackground;
@@ -467,10 +469,12 @@ public class ActionBarPopupWindow extends PopupWindow {
             // Action-bar popup layouts are cached, so refresh the surface when the
             // preference changes instead of requiring the whole screen to reopen.
             boolean glass = forkStyleEligible && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
-            if (forkStyleEligible && glass != forkGlassBackground) {
+            int radius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
+            if (forkStyleEligible && (glass != forkGlassBackground || (glass && radius != forkExperimentalRadius && (backgroundDrawable == forkExperimentalBackground || backgroundDrawable == forkStockBackground)))) {
                 forkGlassBackground = glass;
-                if (glass && forkExperimentalBackground == null) {
-                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true)), Color.WHITE);
+                if (glass && (forkExperimentalBackground == null || forkExperimentalRadius != radius)) {
+                    forkExperimentalRadius = radius;
+                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(radius), Color.WHITE);
                 }
                 backgroundDrawable = glass ? forkExperimentalBackground : forkStockBackground;
                 backgroundDrawable.getPadding(bgPaddings);
@@ -574,7 +578,7 @@ public class ActionBarPopupWindow extends PopupWindow {
                         } else {
                             path.rewind();
                         }
-                        float gapRadius = dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(forkGlassBackground));
+                        float gapRadius = dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(forkGlassBackground, radius));
                         path.addRoundRect(AndroidUtilities.rectTmp, gapRadius, gapRadius, Path.Direction.CW);
                         canvas.clipPath(path);
                         for (int i = 0; i < linearLayout.getChildCount(); i++) {

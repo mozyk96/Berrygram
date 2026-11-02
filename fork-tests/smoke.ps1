@@ -42,7 +42,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Custom Text manager test failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Round camera settings test compilation failed' }
 & $java -cp $managerDir RoundCameraSettingsTest
 if ($LASTEXITCODE -ne 0) { throw 'Round camera settings test failed' }
-& $javac -encoding UTF-8 -cp $managerDir -d $managerDir (Join-Path $base 'voice\VoiceQualityPolicy.java') (Join-Path $base 'voice\VoiceQualitySettings.java') (Join-Path $base 'panels\ForkPanelSettings.java') (Join-Path $PSScriptRoot 'VoiceQualitySettingsTest.java') (Join-Path $PSScriptRoot 'PanelSettingsTest.java')
+& $javac -encoding UTF-8 -cp $managerDir -d $managerDir (Join-Path $base 'voice\VoiceQualityPolicy.java') (Join-Path $base 'voice\VoiceQualitySettings.java') (Join-Path $base 'panels\PanelPolicy.java') (Join-Path $base 'panels\ForkPanelSettings.java') (Join-Path $PSScriptRoot 'VoiceQualitySettingsTest.java') (Join-Path $PSScriptRoot 'PanelSettingsTest.java')
 if ($LASTEXITCODE -ne 0) { throw 'Voice and panel settings test compilation failed' }
 & $java -cp $managerDir VoiceQualitySettingsTest
 if ($LASTEXITCODE -ne 0) { throw 'Voice settings test failed' }

@@ -1142,7 +1142,7 @@ public class ItemOptions {
                 .setColorProvider(colorProvider)
                 .setPadding(dp(8))
                 .setHasPadding(true)
-                .setRadius(dp(PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled()))));
+                .setRadius(dp(PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled(), ForkPanelSettings.radiusDp()))));
         }
         return this;
     }
@@ -1215,7 +1215,7 @@ public class ItemOptions {
 
     public void setupSelectors() {
         if (layout == null) return;
-        final int radius = PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled());
+        final int radius = PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled(), ForkPanelSettings.radiusDp());
 
         for (int j = 0; j < layout.getChildCount(); ++j) {
             View child = j == layout.getChildCount() - 1 ? lastLayout : layout.getChildAt(j);
@@ -1527,7 +1527,7 @@ public class ItemOptions {
                 .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider))
                 .setPadding(dp(8))
                 .setHasPadding(true)
-                .setRadius(dp(PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled())));
+                .setRadius(dp(PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled(), ForkPanelSettings.radiusDp())));
 
             bg.setSourceOffset(X + this.translateX, Y + this.translateY);
             if (!explicitBlurForMenu && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout) {

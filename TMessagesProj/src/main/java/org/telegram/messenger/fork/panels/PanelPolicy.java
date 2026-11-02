@@ -3,6 +3,7 @@ package org.telegram.messenger.fork.panels;
 public final class PanelPolicy {
     private PanelPolicy() { }
     public static int popupRadiusDp(boolean experimental) { return experimental ? 26 : 12; }
+    public static int popupRadiusDp(boolean experimental, int requested) { return experimental ? Math.max(12, Math.min(32, requested)) : 12; }
     public static int settingsRadiusDp() { return 18; }
     public static int settingsGapDp() { return 6; }
     public static int clampPopupOffset(int anchorX, int offset, int popupWidth, int left, int right, int margin) {

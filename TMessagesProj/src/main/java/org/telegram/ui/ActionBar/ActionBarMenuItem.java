@@ -749,6 +749,7 @@ public class ActionBarMenuItem extends FrameLayout {
     private BlurredBackgroundDrawableViewFactory subMenuFactory;
     private BlurredBackgroundProvider subMenuProvider;
     private Boolean forkMenuGlassApplied;
+    private int forkMenuRadiusApplied = -1;
     private android.graphics.Bitmap forkMenuBitmap;
     private Drawable forkMenuOriginalBackground;
     private int forkMenuOriginalColor;
@@ -768,12 +769,14 @@ public class ActionBarMenuItem extends FrameLayout {
     private void updateForkMenuBlur() {
         if (popupLayout == null || subMenuFactory == null) return;
         boolean enabled = org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
-        if (forkMenuGlassApplied != null && forkMenuGlassApplied == enabled) return;
+        int radius = org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(enabled, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp());
+        if (forkMenuGlassApplied != null && forkMenuGlassApplied == enabled && forkMenuRadiusApplied == radius) return;
         popupLayout.setBackground(subMenuFactory.create(popupLayout, true)
                 .setColorProvider(subMenuProvider)
-                .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(enabled)))
+                .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(enabled, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp())))
                 .setPadding(dp(8)));
         forkMenuGlassApplied = enabled;
+        forkMenuRadiusApplied = radius;
     }
 
     public void setBlurredBackgroundFactory(BlurredBackgroundDrawableViewFactory subMenuFactory, BlurredBackgroundProvider subMenuProvider) {
@@ -835,7 +838,7 @@ public class ActionBarMenuItem extends FrameLayout {
                 if (subMenuFactory != null) {
                     frameLayout.setBackground(subMenuFactory.create(popupLayout, true)
                         .setColorProvider(subMenuProvider)
-                        .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(org.telegram.messenger.fork.panels.ForkPanelSettings.enabled())))
+                        .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(org.telegram.messenger.fork.panels.ForkPanelSettings.enabled(), org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp())))
                         .setPadding(dp(8))
                         .setHasPadding(true));
                 } else {
@@ -922,7 +925,7 @@ public class ActionBarMenuItem extends FrameLayout {
             org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable bg = new BlurredBackgroundDrawableViewFactory(source)
                     .create(popupLayout, true).setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider))
                     .setPadding(dp(8)).setHasPadding(true)
-                    .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true)));
+                    .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp())));
             int[] location = new int[2];
             popupLayout.getLocationOnScreen(location);
             bg.setSourceOffset(location[0], location[1]);

@@ -1,4 +1,9 @@
 <resources>
+    <string name="ForkAppearanceTitle">Вигляд і графіка</string>
+    <string name="ForkAppearanceSubtitle">Меню та заокруглення</string>
+    <string name="ForkAppearanceRadius">Заокруглення меню</string>
+    <string name="ForkAppearanceRadiusValue">%1$d dp</string>
+    <string name="ForkAppearanceRadiusInfo">Заокруглення застосовується до підтримуваних меню, коли ввімкнено оновлені меню. Відкрийте меню знову, щоб побачити зміну.</string>
     <string name="ForkSettingsTitle">Налаштування BerryGram</string>
     <string name="ForkCustomTextTitle">Власні фрази</string>
     <string name="ForkCustomTextSearch">Пошук фраз</string>

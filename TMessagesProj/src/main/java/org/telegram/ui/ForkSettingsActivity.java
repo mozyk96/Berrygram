@@ -29,6 +29,11 @@ public final class ForkSettingsActivity extends BaseFragment {
             @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
         });
         LinearLayout content = ForkSettingsLayout.page(context);
+        TextDetailSettingsCell appearance = new TextDetailSettingsCell(context);
+        ForkSettingsLayout.interactive(appearance);
+        appearance.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkAppearanceTitle), ForkLocale.get(R.string.ForkAppearanceSubtitle), R.drawable.msg_palette, false);
+        appearance.setOnClickListener(v -> presentFragment(new ForkAppearanceSettingsActivity()));
+        ForkSettingsLayout.addCard(content, appearance);
         TextDetailSettingsCell video = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(video);
         video.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkVideoTitle), ForkLocale.get(R.string.ForkVideoSubtitle), R.drawable.msg_video, false);
@@ -37,17 +42,6 @@ public final class ForkSettingsActivity extends BaseFragment {
         ForkSettingsLayout.interactive(voice);
         voice.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkVoiceTitle), ForkLocale.get(R.string.ForkVoiceSubtitle), R.drawable.msg_filled_data_voice, false);
         voice.setOnClickListener(v -> presentFragment(new ForkVoiceSettingsActivity())); ForkSettingsLayout.addCard(content, voice);
-        TextCheckCell panels = new TextCheckCell(context, 71);
-        ForkSettingsLayout.interactive(panels);
-        ImageView panelIcon = new ImageView(context);
-        panelIcon.setImageResource(R.drawable.msg_palette);
-        panelIcon.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.MULTIPLY));
-        panels.addView(panelIcon, LayoutHelper.createFrame(24, 24, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL, 17, 0, 17, 0));
-        panels.setTextAndCheck(ForkLocale.get(R.string.ForkPanelsTitle), ForkPanelSettings.enabled(), false);
-        panels.setOnClickListener(v -> { boolean enabled = !ForkPanelSettings.enabled(); ForkPanelSettings.setEnabled(enabled); panels.setChecked(enabled); });
-        ForkSettingsLayout.addCard(content, panels);
-        TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
-        info.setText(ForkLocale.get(R.string.ForkPanelsInfo)); content.addView(info);
         TextDetailSettingsCell text = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(text);
         text.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkCustomTextTitle), ForkLocale.get(R.string.ForkTextSubtitle), R.drawable.msg_edit, false);
