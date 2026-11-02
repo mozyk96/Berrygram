@@ -32,5 +32,14 @@ final class ForkSettingsLayout {
         params.setMargins(margin, margin, margin, 0);
         page.addView(section, params);
     }
+    static void addCard(LinearLayout page, View child) {
+        LinearLayout card = section(page.getContext());
+        card.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(org.telegram.messenger.fork.panels.PanelPolicy.settingsRadiusDp()), Theme.getColor(Theme.key_windowBackgroundWhite)));
+        card.addView(child);
+        int margin = AndroidUtilities.dp(MARGIN_DP);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(margin, AndroidUtilities.dp(org.telegram.messenger.fork.panels.PanelPolicy.settingsGapDp()), margin, 0);
+        page.addView(card, params);
+    }
     static void interactive(View view) { view.setBackground(Theme.getSelectorDrawable(false)); }
 }

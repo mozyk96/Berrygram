@@ -11,6 +11,8 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(!PanelPolicy.captureMenuGlass(true, false, 33, true, false, false));
  check(!PanelPolicy.captureMenuGlass(true, true, 33, true, false, true));
  check(PanelPolicy.popupRadiusDp(false) == 12);
+ check(PanelPolicy.settingsRadiusDp() == 18);
+ check(PanelPolicy.settingsGapDp() == 6);
  check(PanelPolicy.popupAlpha(255, true) == 240);
  check(PanelPolicy.popupAlpha(128, true) == 120);
  check(PanelPolicy.popupAlpha(255, false) == 255);

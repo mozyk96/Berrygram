@@ -81,6 +81,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
     }
     private void addAction(int label, Runnable action, boolean divider) {
         TextSettingsCell cell = new TextSettingsCell(getContext()); cell.setText(ForkLocale.get(label), divider);
+        cell.setIcon(label == R.string.ForkUpdateCheck ? R.drawable.msg_retry : label == R.string.ForkUpdateDownload ? R.drawable.msg_download : R.drawable.msg_check_s);
         cell.setBackground(Theme.getSelectorDrawable(false));
         cell.setOnClickListener(v -> action.run()); addView(cell);
     }
