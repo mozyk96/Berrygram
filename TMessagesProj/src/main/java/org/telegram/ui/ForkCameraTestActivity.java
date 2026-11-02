@@ -73,8 +73,8 @@ public final class ForkCameraTestActivity extends BaseFragment {
         android.widget.ScrollView scroll = new android.widget.ScrollView(c);
         scroll.setFillViewport(true);
         scroll.addView(content);
-        fragmentView = scroll;
-        return scroll;
+        fragmentView = ForkFloatingHeader.wrap(c, actionBar, scroll, ForkLocale.get(R.string.ForkCameraPreviewTitle), this::finishFragment);
+        return fragmentView;
     }
     @Override public void onResume() { super.onResume(); resumed = true; if (startAfterResume) { startAfterResume = false; startPreview(); } }
     private void startPreview() {

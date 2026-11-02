@@ -43,7 +43,7 @@ public final class ForkAboutActivity extends BaseFragment {
         details.setPadding(0, AndroidUtilities.dp(12), 0, 0);
         content.addView(details);
         scroll.addView(content);
-        fragmentView = scroll;
+        fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkAboutTitle), this::finishFragment);
         return fragmentView;
     }
 }

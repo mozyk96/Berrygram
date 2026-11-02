@@ -134,8 +134,8 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         ScrollView scroll = new ScrollView(context);
         scroll.setFillViewport(true);
         scroll.addView(page);
-        fragmentView = scroll;
-        return scroll;
+        fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkAppearanceTitle), this::finishFragment);
+        return fragmentView;
     }
 
     private static String accentLabel() {

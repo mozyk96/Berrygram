@@ -20,7 +20,9 @@ import org.telegram.messenger.fork.text.CustomTextManager;
 import org.telegram.messenger.fork.text.CustomTextRegistry;
 import org.telegram.messenger.fork.text.CustomTextValidator;
 import org.telegram.ui.ActionBar.ActionBar;
-import org.telegram.ui.ActionBar.ActionBarMenuItem;
+import android.widget.ImageView;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.Components.EditTextBoldCursor;
@@ -50,7 +52,7 @@ public class ForkCustomTextActivity extends BaseFragment {
     private long selectedDialogId;
     private TextView globalTab;
     private TextView personalTab;
-    private ActionBarMenuItem resetButton;
+    private ImageView resetButton;
     @Override public View createView(Context context) {
         actionBar.setTitle(ForkLocale.get(R.string.ForkCustomTextTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
@@ -60,7 +62,11 @@ public class ForkCustomTextActivity extends BaseFragment {
                 else if (id == 1) confirmReset();
             }
         });
-        resetButton = actionBar.createMenu().addItem(1, R.drawable.msg_reset);
+        resetButton = new ImageView(context);
+        resetButton.setImageResource(R.drawable.msg_reset);
+        resetButton.setScaleType(ImageView.ScaleType.CENTER);
+        resetButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.MULTIPLY));
+        resetButton.setOnClickListener(v -> confirmReset());
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
@@ -97,9 +103,11 @@ public class ForkCustomTextActivity extends BaseFragment {
             public void onTextChanged(CharSequence s, int start, int before, int count) { renderRows(); }
             public void afterTextChanged(Editable e) {}
         });
-        fragmentView = root;
+        fragmentView = ForkFloatingHeader.wrap(context, actionBar, root, ForkLocale.get(R.string.ForkCustomTextTitle), () -> {
+            if (onBackPressed(true)) finishFragment();
+        }, resetButton);
         renderRows();
-        return root;
+        return fragmentView;
     }
     private void renderRows() {
         if (rows == null) return;

@@ -33,7 +33,7 @@ public final class ForkVideoSettingsActivity extends BaseFragment {
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
         info.setText(ForkLocale.get(R.string.ForkCameraFallback) + "\n\n" + ForkLocale.get(R.string.ForkVideoQualityDescription));
         page.addView(info);
-        ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(page); fragmentView = scroll; refreshValues(); return scroll;
+        ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(page); fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkVideoTitle), this::finishFragment); refreshValues(); return fragmentView;
     }
     private void refreshValues() {
         if (camera == null || behavior == null || quality == null) return;

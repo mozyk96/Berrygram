@@ -55,7 +55,7 @@ public final class ForkSettingsActivity extends BaseFragment {
         updater = new ForkUpdaterPanel(context, this); updates.addView(updater);
         ForkSettingsLayout.addSection(content, updates);
         ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(content);
-        fragmentView = scroll; return scroll;
+        fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkSettingsTitle), this::finishFragment); return fragmentView;
     }
     private void updateAccent(Context context) {
         if (accentCells == null) return;

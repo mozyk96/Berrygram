@@ -20,7 +20,7 @@ public final class ForkVoiceSettingsActivity extends BaseFragment {
         actionBar.setTitle(ForkLocale.get(R.string.ForkVoiceTitle)); actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() { @Override public void onItemClick(int id) { if (id == -1) finishFragment(); } });
         LinearLayout page = ForkSettingsLayout.page(c); rows = ForkSettingsLayout.section(c); ForkSettingsLayout.addSection(page, rows);
-        ScrollView scroll = new ScrollView(c); scroll.setFillViewport(true); scroll.addView(page); fragmentView = scroll; render(); return scroll;
+        ScrollView scroll = new ScrollView(c); scroll.setFillViewport(true); scroll.addView(page); fragmentView = ForkFloatingHeader.wrap(c, actionBar, scroll, ForkLocale.get(R.string.ForkVoiceTitle), this::finishFragment); render(); return fragmentView;
     }
     private void render() {
         if (rows == null) return; Context c = rows.getContext(); rows.removeAllViews();
