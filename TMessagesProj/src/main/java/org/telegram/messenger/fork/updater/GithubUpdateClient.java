@@ -145,8 +145,8 @@ public final class GithubUpdateClient {
                 }
                 out.getFD().sync();
             }
+            if(received<release.size) throw new java.io.IOException("Update download ended early");
             networkPhase=false;
-            if(received!=release.size) throw new SecurityException("Update size mismatch");
             StringBuilder actual=new StringBuilder(); for(byte b:hash.digest()) actual.append(String.format(Locale.ROOT,"%02x",b & 255));
             if(!MessageDigest.isEqual(actual.toString().getBytes("US-ASCII"),release.digest.getBytes("US-ASCII"))) throw new SecurityException("Update digest mismatch");
             verifyPackage(context,partial,release.version);

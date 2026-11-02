@@ -7,7 +7,7 @@ import org.telegram.messenger.fork.updater.GithubUpdateClient;
 
 /** Runs updater network/file logic using an in-process URL handler and mock PackageManager. */
 public final class UpdaterDownloadFixtureTest {
- static byte[] body; static String metadata; static boolean redirect, missingRelease, breakStream, sawRange, ignoreRange, badRange; static int assetRequests;
+ static byte[] body; static String metadata; static boolean redirect, missingRelease, breakStream, shortStream, sawRange, ignoreRange, badRange; static int assetRequests;
  static final String ASSET="https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-arm64-v8a.apk";
  static final class Handler extends URLStreamHandler {
   protected URLConnection openConnection(URL url) { if(url.toString().equals(ASSET))assetRequests++; return new HttpURLConnection(url) {
@@ -18,6 +18,7 @@ public final class UpdaterDownloadFixtureTest {
    public String getHeaderField(String name){return "Location".equals(name) && redirect ? "https://evil.invalid/payload.apk" : "Content-Range".equals(name) && offset>0 ? "bytes "+(offset+(badRange?1:0))+"-"+(body.length-1)+"/"+body.length : null;}
    public InputStream getInputStream(){
     if(url.getHost().equals("api.github.com"))return new ByteArrayInputStream(metadata.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    if(shortStream && offset == 0)return new ByteArrayInputStream(body,0,body.length/2);
     if(breakStream)return new InputStream(){int pos; public int read() throws IOException { if(pos>=body.length/2)throw new IOException("simulated disconnect");return body[pos++]&255; }};
     int start=ignoreRange ? 0 : (int)offset; return new ByteArrayInputStream(body,start,body.length-start);
    }
@@ -43,6 +44,13 @@ public final class UpdaterDownloadFixtureTest {
   UpdaterPackageFixtureTest.Ctx c=new UpdaterPackageFixtureTest.Ctx();
   c.pm.installed=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.0",100,0,1);
   c.pm.candidate=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.1",101,0,1);
+  shortStream=true;
+  try { GithubUpdateClient.downloadAndVerify(c,release,null); throw new AssertionError("Short response accepted"); }
+  catch (IOException expected) { } finally { shortStream=false; }
+  sawRange=false;
+  File shortResumed=GithubUpdateClient.downloadAndVerify(c,release,null);
+  if(!sawRange || !java.util.Arrays.equals(valid,Files.readAllBytes(shortResumed.toPath())))throw new AssertionError("Short response did not resume");
+  if(!shortResumed.delete())throw new AssertionError("Could not clean fixture file");
   breakStream=true;
   try { GithubUpdateClient.downloadAndVerify(c,release,null); throw new AssertionError("Interrupted transfer accepted"); }
   catch (IOException expected) { } finally { breakStream=false; }
@@ -62,7 +70,10 @@ public final class UpdaterDownloadFixtureTest {
   if(assetRequests<=requestsBefore || !java.util.Arrays.equals(valid,Files.readAllBytes(result.toPath())))throw new AssertionError("Damaged cached update was not replaced");
   if(!result.delete())throw new AssertionError("Could not clean own fixture file");
   body=valid.clone();body[0]^=1;expectFailure(c,release);
-  body=java.util.Arrays.copyOf(valid,valid.length-1);expectFailure(c,release);
+  body=java.util.Arrays.copyOf(valid,valid.length-1);
+  try { GithubUpdateClient.downloadAndVerify(c,release,null); throw new AssertionError("Truncated update accepted"); } catch(IOException expected) { }
+  File truncated=new File(new File(c.cache,"berrygram-updates"),"berrygram-"+release.digest+".apk");
+  if(!truncated.delete())throw new AssertionError("Could not clean truncated fixture file");
   body=java.util.Arrays.copyOf(valid,valid.length+1);expectFailure(c,release);
   body=valid;c.pm.candidate=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.1",101,0,2);expectFailure(c,release);
   c.pm.candidate=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.1",101,0,1);
