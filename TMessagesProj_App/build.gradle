@@ -44,7 +44,7 @@ android {
 
     androidResources {
         noCompress += "pack"
-        localeFilters += ["zz", "uk"]
+        localeFilters += ["zz", "uk", "ru"]
     }
 
     signingConfigs {

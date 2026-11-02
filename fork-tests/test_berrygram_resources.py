@@ -24,7 +24,7 @@ for line in (root / 'gradle.properties').read_text(encoding='utf-8').splitlines(
         key, value = line.split('=', 1)
         if key in {'APP_VERSION_NAME', 'APP_VERSION_CODE', 'APP_PACKAGE'}:
             properties[key] = value.strip()
-assert properties.get('APP_VERSION_NAME') == '1.1.3'
+assert properties.get('APP_VERSION_NAME') == '1.1.4'
 assert int(properties['APP_VERSION_CODE']) > 7240
 assert int(properties.get('APP_VERSION_CODE', '0')) > 0
 assert properties.get('APP_PACKAGE') == 'org.example.forkclient'
@@ -33,8 +33,18 @@ def strings(path):
     return {item.attrib['name']: ''.join(item.itertext()) for item in ET.parse(path).getroot() if item.tag == 'string'}
 english = strings(resources / 'values/fork_custom_text.xml')
 ukrainian = strings(resources / 'values-uk/fork_custom_text.xml')
+russian = strings(resources / 'values-ru/fork_custom_text.xml')
+for key in ('ForkSettingsTitle', 'ForkVideoTitle', 'ForkVoiceTitle', 'ForkPanelsTitle', 'ForkCustomTextTitle', 'ForkUpdatePanel'):
+    assert key in russian, f'Missing Russian setting: {key}'
 assert english.keys() == ukrainian.keys(), 'Ukrainian BerryGram translations are incomplete'
 format_arg = re.compile(r'%(?:\d+\$)?[-#+ 0,(]*\d*(?:\.\d+)?[a-zA-Z%]')
 for key in english:
     assert sorted(format_arg.findall(english[key])) == sorted(format_arg.findall(ukrainian[key])), key
+for key, value in russian.items():
+    assert key in english and sorted(format_arg.findall(english[key])) == sorted(format_arg.findall(value)), key
+active = set()
+for source in (root / 'TMessagesProj/src/main/java/org/telegram/ui').glob('Fork*.java'):
+    active.update(re.findall(r'R\.string\.(Fork\w+)', source.read_text(encoding='utf-8')))
+missing = (active & english.keys()) - russian.keys()
+assert not missing, 'Missing Russian strings used by BerryGram UI: ' + ', '.join(sorted(missing))
 print('BerryGram backup, manifest and release metadata checks passed')
