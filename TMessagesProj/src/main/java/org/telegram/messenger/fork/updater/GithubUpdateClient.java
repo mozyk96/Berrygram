@@ -30,6 +30,7 @@ public final class GithubUpdateClient {
     public static final class Release {
         public String version, notes, url, digest;
         public long size;
+        public boolean prerelease;
     }
     private GithubUpdateClient() {}
     private static boolean allowedHost(String host) {
@@ -59,19 +60,21 @@ public final class GithubUpdateClient {
         }
         throw new java.io.IOException("Too many redirects");
     }
-    public static Release latest(String repo) throws Exception {
+    public static Release latest(String repo) throws Exception { return latest(repo, true); }
+    public static Release latest(String repo, boolean includePrereleases) throws Exception {
         if (!UpdatePolicy.validRepository(repo)) throw new IllegalArgumentException("Invalid repository");
         HttpURLConnection connection=open("https://api.github.com/repos/"+repo+"/releases?per_page=30");
         try (InputStream in=connection.getInputStream(); ByteArrayOutputStream out=new ByteArrayOutputStream()) {
             byte[] buffer=new byte[8192]; int count,total=0;
             while ((count=in.read(buffer))!=-1) { total+=count; if(total>MAX_METADATA) throw new java.io.IOException("Release metadata too large"); out.write(buffer,0,count); }
-            return parseReleaseList(repo,out.toString("UTF-8"));
+            return parseReleaseList(repo,out.toString("UTF-8"), includePrereleases);
         } finally { connection.disconnect(); }
     }
     public static Release parseRelease(String repo, String metadata) throws Exception {
         return parseRelease(repo, metadata, false);
     }
-    public static Release parseReleaseList(String repo, String metadata) throws Exception {
+    public static Release parseReleaseList(String repo, String metadata) throws Exception { return parseReleaseList(repo, metadata, true); }
+    public static Release parseReleaseList(String repo, String metadata, boolean includePrereleases) throws Exception {
         if (!UpdatePolicy.validRepository(repo) || metadata == null || metadata.length() > MAX_METADATA) throw new IllegalArgumentException("Invalid release metadata");
         JSONArray releases = new JSONArray(metadata);
         Release best = null;
@@ -79,7 +82,7 @@ public final class GithubUpdateClient {
             JSONObject item = releases.optJSONObject(i);
             if (item == null) continue;
             try {
-                Release candidate = parseRelease(repo, item.toString(), true);
+                Release candidate = parseRelease(repo, item.toString(), includePrereleases);
                 if (best == null || UpdatePolicy.compareVersions(candidate.version, best.version) > 0) best = candidate;
             } catch (SecurityException | java.io.IOException | IllegalArgumentException ignored) {
                 // Ignore drafts and releases without a valid, trusted ARM64 asset.
@@ -93,6 +96,8 @@ public final class GithubUpdateClient {
         JSONObject json=new JSONObject(metadata);
         if (json.optBoolean("draft",true) || (!includePrereleases && json.optBoolean("prerelease",true)) || !json.has("prerelease")) throw new SecurityException("Not an eligible release");
         String tag=json.optString("tag_name",""); JSONArray assets=json.optJSONArray("assets");
+        String releaseVersion = tag.startsWith("v") ? tag.substring(1) : tag;
+        if (!includePrereleases && UpdatePolicy.isPrerelease(releaseVersion)) throw new SecurityException("Not a stable version");
         if (assets==null) throw new java.io.IOException("Release has no assets");
         Release result=null;
         for(int i=0;i<assets.length();i++) {
@@ -100,7 +105,7 @@ public final class GithubUpdateClient {
             String name=asset.optString("name", ""), url=asset.optString("browser_download_url", ""), digest=asset.optString("digest", ""); long size=asset.optLong("size",0);
             if (!UpdatePolicy.validAsset(tag,name)) continue;
             if(result!=null || !UpdatePolicy.validAssetUrl(repo,tag,name,url) || !UpdatePolicy.validDigest(digest) || size<=0 || size>MAX_APK || !"uploaded".equals(asset.optString("state"))) throw new SecurityException("Invalid release asset");
-            result=new Release(); result.version=tag.startsWith("v") ? tag.substring(1) : tag; result.url=url; result.digest=digest.substring(7).toLowerCase(Locale.ROOT); result.size=size;
+            result=new Release(); result.prerelease=json.optBoolean("prerelease", true); result.version=releaseVersion; result.url=url; result.digest=digest.substring(7).toLowerCase(Locale.ROOT); result.size=size;
             String notes=json.optString("body", ""); result.notes=notes.length()>12000 ? notes.substring(0,12000) : notes;
         }
         if(result==null) throw new java.io.IOException("No verified ARM64 APK asset");

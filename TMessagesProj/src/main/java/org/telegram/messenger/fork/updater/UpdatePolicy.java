@@ -9,20 +9,47 @@ public final class UpdatePolicy {
         return installedPackage != null && installedPackage.equals(candidatePackage) && candidateVersion > installedVersion
             && installedSigners != null && !installedSigners.isEmpty() && installedSigners.equals(candidateSigners);
     }
-    public static Integer compareVersions(String a, String b) {
-        if (a == null || b == null || !a.matches("[0-9]{1,9}\\.[0-9]{1,9}\\.[0-9]{1,9}") || !b.matches("[0-9]{1,9}\\.[0-9]{1,9}\\.[0-9]{1,9}")) return null;
-        String[] left=a.split("\\."), right=b.split("\\.");
-        for(int i=0;i<3;i++) { int comparison=Long.compare(Long.parseLong(left[i]),Long.parseLong(right[i])); if(comparison!=0) return comparison; }
-        return 0;
+    private static final String VERSION = "(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?";
+    private static final java.util.regex.Pattern VERSION_PATTERN = java.util.regex.Pattern.compile(VERSION);
+    private static java.util.regex.Matcher version(String value) {
+        if (value == null || value.length() > 128) return null;
+        java.util.regex.Matcher m = VERSION_PATTERN.matcher(value);
+        if (!m.matches()) return null;
+        if (m.group(4) != null) for (String id : m.group(4).split("\\.")) {
+            if (id.matches("[0-9]+") && id.length() > 1 && id.charAt(0) == '0') return null;
+        }
+        return m;
     }
+    public static Integer compareVersions(String a, String b) {
+        java.util.regex.Matcher left = version(a), right = version(b);
+        if (left == null || right == null) return null;
+        for (int i = 1; i <= 3; i++) {
+            int c = Long.compare(Long.parseLong(left.group(i)), Long.parseLong(right.group(i)));
+            if (c != 0) return c;
+        }
+        String l = left.group(4), r = right.group(4);
+        if (l == null || r == null) return l == r ? 0 : l == null ? 1 : -1;
+        String[] ls = l.split("\\."), rs = r.split("\\.");
+        for (int i = 0; i < Math.min(ls.length, rs.length); i++) {
+            boolean ln = ls[i].matches("[0-9]+"), rn = rs[i].matches("[0-9]+");
+            int c;
+            if (ln && rn) { c = Integer.compare(ls[i].length(), rs[i].length()); if (c == 0) c = ls[i].compareTo(rs[i]); }
+            else if (ln != rn) c = ln ? -1 : 1;
+            else c = ls[i].compareTo(rs[i]);
+            if (c != 0) return c;
+        }
+        return Integer.compare(ls.length, rs.length);
+    }
+    public static boolean isPrerelease(String value) { java.util.regex.Matcher m = version(value); return m != null && m.group(4) != null; }
     public static boolean validRepository(String value) {
         if (value == null || value.length() > 140 || !value.matches("[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}")) return false;
         String repo=value.substring(value.indexOf('/')+1);
         return !repo.equals(".") && !repo.equals("..") && !repo.toLowerCase(Locale.ROOT).endsWith(".git");
     }
     public static boolean validAsset(String tag, String name) {
-        if (tag == null || !tag.matches("v?[0-9]{1,9}\\.[0-9]{1,9}\\.[0-9]{1,9}")) return false;
+        if (tag == null) return false;
         String version=tag.startsWith("v") ? tag.substring(1) : tag;
+        if (version(version) == null) return false;
         return ("BerryGram-"+version+"-arm64-v8a.apk").equals(name);
     }
     public static boolean validDigest(String digest) { return digest != null && digest.matches("sha256:[0-9a-fA-F]{64}"); }

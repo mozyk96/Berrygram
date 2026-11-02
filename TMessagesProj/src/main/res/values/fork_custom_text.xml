@@ -188,4 +188,7 @@
     <string name="ForkVoiceSubtitle">Recording mode and bitrate</string>
     <string name="ForkTextSubtitle">Personal names, phrases and statuses</string>
     <string name="ForkUpdatePermissionInfo">To install a verified update, allow Android to install apps from BerryGram. Return here and tap Install again.</string>
+    <string name="ForkUpdateChannel">Update channel</string>
+    <string name="ForkUpdateChannelStable">Stable</string>
+    <string name="ForkUpdateChannelBeta">Beta</string>
 </resources>

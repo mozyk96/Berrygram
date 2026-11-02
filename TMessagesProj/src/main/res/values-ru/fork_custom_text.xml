@@ -141,4 +141,7 @@
     <string name="ForkVoiceSubtitle">Режим и битрейт записи</string>
     <string name="ForkTextSubtitle">Свои названия, фразы и статусы</string>
     <string name="ForkUpdatePermissionInfo">Чтобы установить проверенное обновление, разрешите Android установку из BerryGram. Вернитесь сюда и нажмите «Установить» ещё раз.</string>
+    <string name="ForkUpdateChannel">Канал обновлений</string>
+    <string name="ForkUpdateChannelStable">Стабильный</string>
+    <string name="ForkUpdateChannelBeta">Бета</string>
 </resources>

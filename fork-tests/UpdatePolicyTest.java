@@ -11,11 +11,17 @@ public class UpdatePolicyTest {
   check(UpdatePolicy.compareVersions("1.10.0","1.9.9")>0);
   check(UpdatePolicy.compareVersions("2.0.0","3.0.0")<0);
   check(UpdatePolicy.compareVersions("unknown","1.0.0")==null);
+  check(UpdatePolicy.compareVersions("1.2.0-beta.1","1.2.0-beta.2") < 0);
+  check(UpdatePolicy.compareVersions("1.2.0-beta.10","1.2.0-beta.2") > 0);
+  check(UpdatePolicy.compareVersions("1.2.0-beta.3","1.2.0") < 0);
+  check(UpdatePolicy.compareVersions("1.2.0+build.1","1.2.0+build.2") == 0);
+  check(UpdatePolicy.compareVersions("1.2.0-beta.01","1.2.0") == null);
+  check(UpdatePolicy.validAsset("v1.2.0-beta.1","BerryGram-1.2.0-beta.1-arm64-v8a.apk"));
   check(UpdatePolicy.validRepository("owner/project"));
   check(!UpdatePolicy.validRepository("owner/../other"));
   check(!UpdatePolicy.validRepository("https://github.com/owner/project"));
   check(UpdatePolicy.validAsset("v1.0.0","BerryGram-1.0.0-arm64-v8a.apk"));
-  check(!UpdatePolicy.validAsset("v1.0.0-beta","BerryGram-1.0.0-beta-arm64-v8a.apk"));
+  check(!UpdatePolicy.validAsset("v1.0.0-beta.01","BerryGram-1.0.0-beta.01-arm64-v8a.apk"));
   check(!UpdatePolicy.validAsset("v1.0.0","BerryGram-1.0.1-arm64-v8a.apk"));
   check(UpdatePolicy.validDigest("sha256:"+"a".repeat(64)));
   check(!UpdatePolicy.validDigest("sha256:"+"z".repeat(64)));

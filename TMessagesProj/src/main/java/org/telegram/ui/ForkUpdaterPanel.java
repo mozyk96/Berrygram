@@ -25,6 +25,7 @@ import org.telegram.messenger.fork.updater.GithubUpdateClient;
 import org.telegram.messenger.fork.updater.UpdatePolicy;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextSettingsCell;
 
@@ -74,6 +75,17 @@ public final class ForkUpdaterPanel extends LinearLayout {
         LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1);
         textParams.setMarginStart(AndroidUtilities.dp(12)); summary.addView(details, textParams);
         addView(summary); updateDetails();
+        TextSettingsCell channel = new TextSettingsCell(c);
+        boolean beta = preferences.getBoolean("beta_channel", true);
+        channel.setTextAndValue(ForkLocale.get(R.string.ForkUpdateChannel), ForkLocale.get(beta ? R.string.ForkUpdateChannelBeta : R.string.ForkUpdateChannelStable), false);
+        channel.setEnabled(!busy);
+        channel.setBackground(Theme.getSelectorDrawable(false));
+        channel.setOnClickListener(v -> parent.showDialog(new BottomSheet.Builder(c).setTitle(ForkLocale.get(R.string.ForkUpdateChannel))
+            .setItems(new CharSequence[]{ForkLocale.get(R.string.ForkUpdateChannelStable), ForkLocale.get(R.string.ForkUpdateChannelBeta)}, (dialog, index) -> {
+                preferences.edit().putBoolean("beta_channel", index == 1).apply();
+                release = null; verified = null; saveRelease(null); status = ""; render(false);
+            }).create()));
+        addView(channel);
         if (busy) { progress = new ProgressBar(c, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(true); addView(progress); return; }
         addAction(R.string.ForkUpdateCheck, this::check, release != null || verified != null);
         if (release != null && verified == null) addAction(R.string.ForkUpdateDownload, this::download, false);
@@ -102,26 +114,28 @@ public final class ForkUpdaterPanel extends LinearLayout {
         String url = preferences.getString("release_url", "");
         String digest = preferences.getString("release_digest", "");
         long size = preferences.getLong("release_size", 0);
-        if (!UpdatePolicy.validSavedRelease(REPOSITORY, v, version, url, digest, size)) return null;
+        boolean prerelease = preferences.getBoolean("release_prerelease", true);
+        if ((!preferences.getBoolean("beta_channel", true) && (prerelease || UpdatePolicy.isPrerelease(v))) || !UpdatePolicy.validSavedRelease(REPOSITORY, v, version, url, digest, size)) return null;
         GithubUpdateClient.Release result = new GithubUpdateClient.Release();
-        result.version = v; result.url = url; result.digest = digest; result.size = size;
+        result.version = v; result.url = url; result.digest = digest; result.size = size; result.prerelease = prerelease;
         result.notes = preferences.getString("release_notes", ""); return result;
     }
     private void saveRelease(GithubUpdateClient.Release candidate) {
         SharedPreferences.Editor edit = preferences.edit();
         if (candidate == null) {
-            edit.remove("release_version").remove("release_url").remove("release_digest").remove("release_size").remove("release_notes");
+            edit.remove("release_version").remove("release_url").remove("release_digest").remove("release_size").remove("release_notes").remove("release_prerelease");
         } else {
             edit.putString("release_version", candidate.version).putString("release_url", candidate.url)
-                .putString("release_digest", candidate.digest).putLong("release_size", candidate.size).putString("release_notes", candidate.notes);
+                .putString("release_digest", candidate.digest).putLong("release_size", candidate.size).putString("release_notes", candidate.notes).putBoolean("release_prerelease", candidate.prerelease);
         }
         edit.apply();
     }
     private void check() {
         busy = true; preferences.edit().putBoolean("interrupted", true).apply(); release = null; verified = null; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
+        final boolean betaChannel = preferences.getBoolean("beta_channel", true);
         worker.execute(() -> {
             try {
-                GithubUpdateClient.Release found = GithubUpdateClient.latest(REPOSITORY);
+                GithubUpdateClient.Release found = GithubUpdateClient.latest(REPOSITORY, betaChannel);
                 Integer comparison = UpdatePolicy.compareVersions(found.version, version);
                 if (comparison == null) throw new SecurityException("Invalid release version");
                 AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); release = comparison > 0 ? found : null;

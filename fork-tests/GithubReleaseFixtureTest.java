@@ -15,6 +15,13 @@ public class GithubReleaseFixtureTest {
   String valid=fixture("uploaded",false,"sha256:"+digest,url);
   String prerelease=valid.replace("\"prerelease\":false", "\"prerelease\":true");
   check(GithubUpdateClient.parseReleaseList("example/project", "["+prerelease+"]").version.equals("1.2.3"));
+  String beta=prerelease.replace("1.2.3", "1.3.0-beta.1");
+  String beta2=beta.replace("beta.1", "beta.2");
+  String stable=valid.replace("1.2.3", "1.3.0");
+  check(GithubUpdateClient.parseReleaseList("example/project", "["+valid+","+beta+","+beta2+"]", true).version.equals("1.3.0-beta.2"));
+  check(GithubUpdateClient.parseReleaseList("example/project", "["+valid+","+beta2+"]", false).version.equals("1.2.3"));
+  check(GithubUpdateClient.parseReleaseList("example/project", "["+beta2+","+stable+"]", true).version.equals("1.3.0"));
+  check(GithubUpdateClient.parseReleaseList("example/project", "["+valid+","+beta.replace("\"prerelease\":true", "\"prerelease\":false")+"]", false).version.equals("1.2.3"));
   String newer=prerelease.replace("1.2.3", "1.10.0");
   check(GithubUpdateClient.parseReleaseList("example/project", "["+valid+","+newer+"]").version.equals("1.10.0"));
   String draft=newer.replace("\"draft\":false", "\"draft\":true");
