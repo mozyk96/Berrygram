@@ -1373,7 +1373,7 @@ public class ItemOptions {
                 dimAnimator.setDuration(380);
                 dimAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
             } else {
-                dimAnimator.setDuration(150);
+                dimAnimator.setDuration(PanelPolicy.popupAnimationDuration(ForkPanelSettings.animationMode(), 150, AndroidUtilities.getAnimatorDurationScale() > 0f));
             }
             dimAnimator.start();
         }
@@ -1420,7 +1420,7 @@ public class ItemOptions {
         actionBarPopupWindow.setOutsideTouchable(true);
         actionBarPopupWindow.setFocusable(!dontFocus);
         actionBarPopupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        actionBarPopupWindow.setAnimationStyle(R.style.PopupContextAnimation);
+        actionBarPopupWindow.setAnimationStyle("minimal".equals(ForkPanelSettings.animationMode()) || AndroidUtilities.getAnimatorDurationScale() <= 0f ? 0 : R.style.PopupContextAnimation);
         if (allowShowingOnTopOfKeyboard) {
             actionBarPopupWindow.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
             actionBarPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED);
@@ -1834,7 +1834,7 @@ public class ItemOptions {
             dimAnimator.setDuration(380);
             dimAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
         } else {
-            dimAnimator.setDuration(150);
+            dimAnimator.setDuration(PanelPolicy.popupAnimationDuration(ForkPanelSettings.animationMode(), 150, AndroidUtilities.getAnimatorDurationScale() > 0f));
         }
         dimAnimator.start();
     }

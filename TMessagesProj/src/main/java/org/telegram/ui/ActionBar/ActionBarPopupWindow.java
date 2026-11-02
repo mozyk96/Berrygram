@@ -769,6 +769,12 @@ public class ActionBarPopupWindow extends PopupWindow {
         animationEnabled = value;
     }
 
+    private static int forkPopupDuration(int duration) {
+        return org.telegram.messenger.fork.panels.PanelPolicy.popupAnimationDuration(
+                org.telegram.messenger.fork.panels.ForkPanelSettings.animationMode(), duration,
+                AndroidUtilities.getAnimatorDurationScale() > 0f);
+    }
+
     @SuppressWarnings("PrivateAPI")
     public void setLayoutInScreen(boolean value) {
         try {
@@ -948,7 +954,7 @@ public class ActionBarPopupWindow extends PopupWindow {
                 ObjectAnimator.ofInt(content, "backAlpha", 0, 255),
                 childtranslations
         );
-        windowAnimatorSet.setDuration(150 + 16 * visibleCount);
+        windowAnimatorSet.setDuration(forkPopupDuration(150 + 16 * visibleCount));
         windowAnimatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -1017,7 +1023,7 @@ public class ActionBarPopupWindow extends PopupWindow {
             windowAnimatorSet.playTogether(
                     ObjectAnimator.ofFloat(content, "backScaleY", 0.0f, finalScaleY),
                     ObjectAnimator.ofInt(content, "backAlpha", 0, 255));
-            windowAnimatorSet.setDuration(150 + 16 * visibleCount);
+            windowAnimatorSet.setDuration(forkPopupDuration(150 + 16 * visibleCount));
             windowAnimatorSet.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {

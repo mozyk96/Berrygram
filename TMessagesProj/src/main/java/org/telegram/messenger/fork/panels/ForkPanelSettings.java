@@ -7,6 +7,7 @@ public final class ForkPanelSettings {
     private static volatile Integer cachedRadius;
     private static volatile String cachedStyle;
     private static volatile Integer cachedStrength;
+    private static volatile String cachedAnimation;
     private ForkPanelSettings() { }
     public static boolean enabled() {
         Boolean value = cached;
@@ -87,5 +88,22 @@ public final class ForkPanelSettings {
         int value = PanelPolicy.effectStrength(requested);
         ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("effect_strength", Integer.toString(value)).apply();
         cachedStrength = value;
+    }
+    public static String animationMode() {
+        String value = cachedAnimation;
+        if (value == null) synchronized (ForkPanelSettings.class) {
+            value = cachedAnimation;
+            if (value == null) {
+                value = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).getString("animation", "system");
+                if (!"system".equals(value) && !"smooth".equals(value) && !"minimal".equals(value)) value = "system";
+                cachedAnimation = value;
+            }
+        }
+        return value;
+    }
+    public static synchronized void setAnimationMode(String value) {
+        if (!"system".equals(value) && !"smooth".equals(value) && !"minimal".equals(value)) throw new IllegalArgumentException("Invalid animation mode");
+        ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("animation", value).apply();
+        cachedAnimation = value;
     }
 }

@@ -1,4 +1,8 @@
 <resources>
+    <string name="ForkGraphicsAnimations">Анімації меню</string>
+    <string name="ForkAnimationSystem">Системні</string>
+    <string name="ForkAnimationSmooth">Плавні</string>
+    <string name="ForkAnimationMinimal">Мінімальні</string>
     <string name="ForkGraphicsIntensity">Інтенсивність ефектів</string>
     <string name="ForkGraphicsIntensityValue">%1$d%%</string>
     <string name="ForkGraphicsInfo">Стилі застосовуються до підтримуваних меню. Якщо пристрій або режим енергозбереження не підтримує ефекти, використовується простіша поверхня.</string>

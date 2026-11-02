@@ -7,6 +7,11 @@ public final class PanelPolicy {
     public static int settingsRadiusDp() { return 18; }
     public static int settingsGapDp() { return 6; }
     public static int effectStrength(int value) { return Math.max(0, Math.min(100, value)); }
+    public static int popupAnimationDuration(String mode, int base, boolean systemAnimations) {
+        if (!systemAnimations || "minimal".equals(mode)) return 0;
+        int bounded = Math.max(0, base);
+        return "smooth".equals(mode) ? Math.min(300, bounded + 40) : bounded;
+    }
     public static int clampPopupOffset(int anchorX, int offset, int popupWidth, int left, int right, int margin) {
         int min = left + margin;
         int max = Math.max(min, right - margin - popupWidth);

@@ -21,6 +21,10 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(PanelPolicy.popupRadiusDp(true, 100) == 32);
  check(PanelPolicy.effectStrength(-5) == 0);
  check(PanelPolicy.effectStrength(120) == 100);
+ check(PanelPolicy.popupAnimationDuration("system", 180, true) == 180);
+ check(PanelPolicy.popupAnimationDuration("smooth", 180, true) == 220);
+ check(PanelPolicy.popupAnimationDuration("minimal", 180, true) == 0);
+ check(PanelPolicy.popupAnimationDuration("smooth", 180, false) == 0);
  check(PanelPolicy.settingsRadiusDp() == 18);
  check(PanelPolicy.settingsGapDp() == 6);
  check(PanelPolicy.popupAlpha(255, true) == 240);

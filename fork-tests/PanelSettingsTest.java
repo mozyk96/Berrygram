@@ -14,6 +14,10 @@ public class PanelSettingsTest {
   java.lang.reflect.Field strengthCache = ForkPanelSettings.class.getDeclaredField("cachedStrength");
   strengthCache.setAccessible(true); strengthCache.set(null, null);
   check(ForkPanelSettings.effectStrength() == 100);
+  check("system".equals(ForkPanelSettings.animationMode()));
+  ForkPanelSettings.setAnimationMode("minimal"); check("minimal".equals(ForkPanelSettings.animationMode()));
+  boolean invalidAnimation=false; try { ForkPanelSettings.setAnimationMode("bad"); } catch (IllegalArgumentException expected) { invalidAnimation=true; }
+  check(invalidAnimation && "minimal".equals(ForkPanelSettings.animationMode()));
   ForkPanelSettings.setStyle("liquid"); check(ForkPanelSettings.enabled() && "liquid".equals(ForkPanelSettings.style()));
   java.lang.reflect.Field styleCache = ForkPanelSettings.class.getDeclaredField("cachedStyle");
   java.lang.reflect.Field enabledCache = ForkPanelSettings.class.getDeclaredField("cached");

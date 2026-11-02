@@ -69,6 +69,19 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
             @Override public void onStartTrackingTouch(SeekBar bar) { }
             @Override public void onStopTrackingTouch(SeekBar bar) { }
         });
+        TextSettingsCell animations = new TextSettingsCell(context);
+        animations.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsAnimations), animationLabel(), false);
+        ForkSettingsLayout.interactive(animations);
+        animations.setOnClickListener(v -> {
+            String[] modes = {"system", "smooth", "minimal"};
+            CharSequence[] labels = {ForkLocale.get(R.string.ForkAnimationSystem), ForkLocale.get(R.string.ForkAnimationSmooth), ForkLocale.get(R.string.ForkAnimationMinimal)};
+            showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkGraphicsAnimations))
+                    .setItems(labels, (dialog, index) -> {
+                        ForkPanelSettings.setAnimationMode(modes[index]);
+                        animations.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsAnimations), animationLabel(), false);
+                    }).create());
+        });
+        controls.addView(animations);
         TextSettingsCell color = new TextSettingsCell(context);
         color.setTextAndValue(ForkLocale.get(R.string.ForkColorTitle), accentLabel(), false);
         color.setIcon(R.drawable.msg_palette);
@@ -124,6 +137,10 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
     private static String styleLabel() {
         String style = ForkPanelSettings.style();
         return ForkLocale.get("liquid".equals(style) ? R.string.ForkGraphicsLiquid : "blur".equals(style) ? R.string.ForkGraphicsBlur : R.string.ForkGraphicsMaterial);
+    }
+    private static String animationLabel() {
+        String mode = ForkPanelSettings.animationMode();
+        return ForkLocale.get("minimal".equals(mode) ? R.string.ForkAnimationMinimal : "smooth".equals(mode) ? R.string.ForkAnimationSmooth : R.string.ForkAnimationSystem);
     }
     static int accent(Context context) {
         Integer custom = GraphicsColorPolicy.parseHex(ForkPanelSettings.customAccent());

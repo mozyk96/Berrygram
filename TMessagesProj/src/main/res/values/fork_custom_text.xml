@@ -1,4 +1,8 @@
 <resources>
+    <string name="ForkGraphicsAnimations">Menu animations</string>
+    <string name="ForkAnimationSystem">System</string>
+    <string name="ForkAnimationSmooth">Smooth</string>
+    <string name="ForkAnimationMinimal">Minimal</string>
     <string name="ForkGraphicsIntensity">Effect intensity</string>
     <string name="ForkGraphicsIntensityValue">%1$d%%</string>
     <string name="ForkGraphicsInfo">Styles apply to supported menus. Blur and refraction use a simpler surface when the device or power settings do not support them.</string>
