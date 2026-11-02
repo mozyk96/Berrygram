@@ -82,6 +82,16 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                     }).create());
         });
         controls.addView(animations);
+        TextCheckCell adaptive = new TextCheckCell(context);
+        adaptive.setTextAndCheck(ForkLocale.get(R.string.ForkGraphicsAdaptive), ForkPanelSettings.adaptiveEffects(), false);
+        ForkSettingsLayout.interactive(adaptive);
+        adaptive.setOnClickListener(v -> {
+            boolean enabled = !ForkPanelSettings.adaptiveEffects();
+            ForkPanelSettings.setAdaptiveEffects(enabled);
+            adaptive.setChecked(enabled);
+            effect.setEnabled(effectsAvailable());
+        });
+        controls.addView(adaptive);
         TextSettingsCell color = new TextSettingsCell(context);
         color.setTextAndValue(ForkLocale.get(R.string.ForkColorTitle), accentLabel(), false);
         color.setIcon(R.drawable.msg_palette);
@@ -157,8 +167,8 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
     }
     private static boolean effectsAvailable() {
         return org.telegram.messenger.fork.panels.PanelPolicy.useGlass(ForkPanelSettings.enabled(),
-                !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS),
-                Build.VERSION.SDK_INT, !org.telegram.messenger.SharedConfig.deviceIsLow());
+                !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS) || ForkGraphicsSurface.systemPowerSaver(),
+                Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()));
     }
     private static void applyAccent(SeekBar slider, SeekBar effect, TextSettingsCell preview, int color) {
         int background = Theme.getColor(Theme.key_windowBackgroundWhite);

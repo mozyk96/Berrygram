@@ -25,6 +25,9 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(PanelPolicy.popupAnimationDuration("smooth", 180, true) == 220);
  check(PanelPolicy.popupAnimationDuration("minimal", 180, true) == 0);
  check(PanelPolicy.popupAnimationDuration("smooth", 180, false) == 0);
+ check(!PanelPolicy.graphicsCapable(false, true));
+ check(PanelPolicy.graphicsCapable(false, false));
+ check(PanelPolicy.graphicsCapable(true, true));
  check(PanelPolicy.settingsRadiusDp() == 18);
  check(PanelPolicy.settingsGapDp() == 6);
  check(PanelPolicy.popupAlpha(255, true) == 240);

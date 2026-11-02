@@ -18,6 +18,9 @@ public class PanelSettingsTest {
   ForkPanelSettings.setAnimationMode("minimal"); check("minimal".equals(ForkPanelSettings.animationMode()));
   boolean invalidAnimation=false; try { ForkPanelSettings.setAnimationMode("bad"); } catch (IllegalArgumentException expected) { invalidAnimation=true; }
   check(invalidAnimation && "minimal".equals(ForkPanelSettings.animationMode()));
+  check(ForkPanelSettings.adaptiveEffects());
+  ForkPanelSettings.setAdaptiveEffects(false); check(!ForkPanelSettings.adaptiveEffects());
+  ForkPanelSettings.setAdaptiveEffects(true); check(ForkPanelSettings.adaptiveEffects());
   ForkPanelSettings.setStyle("liquid"); check(ForkPanelSettings.enabled() && "liquid".equals(ForkPanelSettings.style()));
   java.lang.reflect.Field styleCache = ForkPanelSettings.class.getDeclaredField("cachedStyle");
   java.lang.reflect.Field enabledCache = ForkPanelSettings.class.getDeclaredField("cached");

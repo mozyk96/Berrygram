@@ -15,4 +15,10 @@ public final class ForkGraphicsSurface {
         }
         return fallback;
     }
+    public static boolean systemPowerSaver() {
+        Context context = org.telegram.messenger.ApplicationLoader.applicationContext;
+        if (context == null) return false;
+        android.os.PowerManager power = (android.os.PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        return power != null && power.isPowerSaveMode();
+    }
 }

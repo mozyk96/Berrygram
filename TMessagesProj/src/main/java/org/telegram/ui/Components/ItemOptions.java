@@ -1269,7 +1269,7 @@ public class ItemOptions {
         }
         blurForMenu = explicitBlurForMenu || (fragment != null && scrimView != null && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout
                 && lastLayout.hasForkStyleBackground()
-                && PanelPolicy.useGlass(ForkPanelSettings.enabled(), !LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS), Build.VERSION.SDK_INT, !SharedConfig.deviceIsLow()));
+                && PanelPolicy.useGlass(ForkPanelSettings.enabled(), !LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) || org.telegram.ui.ForkGraphicsSurface.systemPowerSaver(), Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!SharedConfig.deviceIsLow())));
         setupSelectors();
 
         if (fixedWidthDp > 0) {
@@ -1296,7 +1296,7 @@ public class ItemOptions {
         }
 
         if (blur || blurForMenu) {
-            boolean refract = !explicitBlurForMenu && blurForMenu && "liquid".equals(PanelPolicy.effectiveStyle(ForkPanelSettings.style(), !LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS), Build.VERSION.SDK_INT, !SharedConfig.deviceIsLow()));
+            boolean refract = !explicitBlurForMenu && blurForMenu && "liquid".equals(PanelPolicy.effectiveStyle(ForkPanelSettings.style(), !LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) || org.telegram.ui.ForkGraphicsSurface.systemPowerSaver(), Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!SharedConfig.deviceIsLow())));
             if (scrimBlur3SourceBitmap == null || refract != forkRefractiveSource) {
                 scrimBlur3SourceBitmap = refract ? new org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource() : new BlurredBackgroundSourceBitmap();
                 forkRefractiveSource = refract;

@@ -8,6 +8,7 @@ public final class ForkPanelSettings {
     private static volatile String cachedStyle;
     private static volatile Integer cachedStrength;
     private static volatile String cachedAnimation;
+    private static volatile Boolean cachedAdaptive;
     private ForkPanelSettings() { }
     public static boolean enabled() {
         Boolean value = cached;
@@ -106,4 +107,17 @@ public final class ForkPanelSettings {
         ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("animation", value).apply();
         cachedAnimation = value;
     }
+    public static boolean adaptiveEffects() {
+        Boolean value = cachedAdaptive;
+        if (value == null) synchronized (ForkPanelSettings.class) {
+            value = cachedAdaptive;
+            if (value == null) cachedAdaptive = value = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).getBoolean("adaptive", true);
+        }
+        return value;
+    }
+    public static synchronized void setAdaptiveEffects(boolean value) {
+        ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putBoolean("adaptive", value).apply();
+        cachedAdaptive = value;
+    }
+    public static boolean deviceAllowsEffects(boolean deviceCapable) { return PanelPolicy.graphicsCapable(deviceCapable, adaptiveEffects()); }
 }

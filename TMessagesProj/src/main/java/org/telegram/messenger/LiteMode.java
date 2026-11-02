@@ -154,7 +154,7 @@ public class LiteMode {
         int active = getValue();
         if (flag == FLAG_LIQUID_GLASS && org.telegram.messenger.fork.panels.PanelPolicy.useGlass(
                 org.telegram.messenger.fork.panels.ForkPanelSettings.enabled(), lastPowerSaverApplied,
-                Build.VERSION.SDK_INT, SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE)) {
+                Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE))) {
             return true;
         }
         return (active & preprocessFlag(flag)) > 0;

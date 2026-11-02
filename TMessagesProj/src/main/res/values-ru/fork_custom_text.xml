@@ -1,4 +1,5 @@
 <resources>
+    <string name="ForkGraphicsAdaptive">Адаптировать эффекты к устройству</string>
     <string name="ForkGraphicsAnimations">Анимация меню</string>
     <string name="ForkAnimationSystem">Системная</string>
     <string name="ForkAnimationSmooth">Плавная</string>

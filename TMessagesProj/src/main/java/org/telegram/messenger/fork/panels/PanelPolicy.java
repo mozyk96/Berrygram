@@ -7,6 +7,7 @@ public final class PanelPolicy {
     public static int settingsRadiusDp() { return 18; }
     public static int settingsGapDp() { return 6; }
     public static int effectStrength(int value) { return Math.max(0, Math.min(100, value)); }
+    public static boolean graphicsCapable(boolean deviceCapable, boolean adaptive) { return deviceCapable || !adaptive; }
     public static int popupAnimationDuration(String mode, int base, boolean systemAnimations) {
         if (!systemAnimations || "minimal".equals(mode)) return 0;
         int bounded = Math.max(0, base);

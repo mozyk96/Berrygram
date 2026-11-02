@@ -907,8 +907,8 @@ public class ActionBarMenuItem extends FrameLayout {
         final android.graphics.Bitmap[] capture = {null};
         boolean captureGlass = org.telegram.messenger.fork.panels.PanelPolicy.captureMenuGlass(
                 org.telegram.messenger.fork.panels.ForkPanelSettings.enabled(),
-                !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS),
-                Build.VERSION.SDK_INT, !org.telegram.messenger.SharedConfig.deviceIsLow(), subMenuFactory != null,
+                !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS) || org.telegram.ui.ForkGraphicsSurface.systemPowerSaver(),
+                Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()), subMenuFactory != null,
                 topView == null && popupLayout.hasForkStyleBackground());
         if (captureGlass) AndroidUtilities.makeGlobalBlurBitmap(bitmap -> capture[0] = bitmap, 15);
         updateOrShowPopup(true, container.getMeasuredWidth() == 0);
@@ -917,7 +917,7 @@ public class ActionBarMenuItem extends FrameLayout {
             forkMenuOriginalBackground = popupLayout.getBackgroundDrawable();
             forkMenuOriginalColor = popupLayout.getBackgroundColor();
             org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap source = "liquid".equals(org.telegram.messenger.fork.panels.PanelPolicy.effectiveStyle(
-                    org.telegram.messenger.fork.panels.ForkPanelSettings.style(), !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS), Build.VERSION.SDK_INT, !org.telegram.messenger.SharedConfig.deviceIsLow()))
+                    org.telegram.messenger.fork.panels.ForkPanelSettings.style(), !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS) || org.telegram.ui.ForkGraphicsSurface.systemPowerSaver(), Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow())))
                     ? new org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource()
                     : new org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap();
             source.setBitmap(forkMenuBitmap);
