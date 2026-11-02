@@ -38,7 +38,7 @@ public final class ForkCameraTestActivity extends BaseFragment {
     private final Runnable onTimeout = () -> {
         if (!resumed || status == null) return;
         stopPreview();
-        status.setText(R.string.ForkCameraPreviewWaiting);
+        status.setText(ForkLocale.get(R.string.ForkCameraPreviewWaiting));
     };
     @Override public View createView(Context c) {
         actionBar.setTitle(ForkLocale.get(R.string.ForkCameraPreviewTitle));
@@ -63,7 +63,7 @@ public final class ForkCameraTestActivity extends BaseFragment {
         status.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         status.setGravity(Gravity.CENTER);
         status.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(8), AndroidUtilities.dp(16), AndroidUtilities.dp(8));
-        status.setText(R.string.ForkCameraPreviewInfo);
+        status.setText(ForkLocale.get(R.string.ForkCameraPreviewInfo));
         content.addView(status);
         start = new TextSettingsCell(c); start.setCanDisable(true); start.setText(ForkLocale.get(R.string.ForkCameraPreviewStart), true);
         start.setOnClickListener(v -> startPreview()); content.addView(start);
@@ -83,8 +83,8 @@ public final class ForkCameraTestActivity extends BaseFragment {
             getParentActivity().requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION);
             return;
         }
-        if (!CameraView.isCameraAllowed()) { status.setText(R.string.ForkCameraPreviewUnavailable); return; }
-        status.setText(R.string.ForkCameraPreviewLoading);
+        if (!CameraView.isCameraAllowed()) { status.setText(ForkLocale.get(R.string.ForkCameraPreviewUnavailable)); return; }
+        status.setText(ForkLocale.get(R.string.ForkCameraPreviewLoading));
         start.setEnabled(false);
         cameraInitRequested = true;
         CameraController controller = CameraController.getInstance();
@@ -100,10 +100,10 @@ public final class ForkCameraTestActivity extends BaseFragment {
             if (info.isFrontface()) availableFront = true; else availableBack = true;
         }
         int facing = RoundCameraPolicy.previewFacing(true, availableFront, availableBack);
-        if (facing < 0) { AndroidUtilities.cancelRunOnUIThread(onTimeout); start.setEnabled(true); status.setText(R.string.ForkCameraPreviewUnavailable); return; }
+        if (facing < 0) { AndroidUtilities.cancelRunOnUIThread(onTimeout); start.setEnabled(true); status.setText(ForkLocale.get(R.string.ForkCameraPreviewUnavailable)); return; }
         camera = new CameraView(preview.getContext(), facing == 1);
         CameraView activeCamera = camera;
-        camera.setDelegate(() -> { if (camera != activeCamera || !resumed) return; AndroidUtilities.cancelRunOnUIThread(onTimeout); if (status != null) status.setText(R.string.ForkCameraPreviewInfo); });
+        camera.setDelegate(() -> { if (camera != activeCamera || !resumed) return; AndroidUtilities.cancelRunOnUIThread(onTimeout); if (status != null) status.setText(ForkLocale.get(R.string.ForkCameraPreviewInfo)); });
         preview.addView(camera, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         flip.setEnabled(availableFront && availableBack);
     }
@@ -111,7 +111,7 @@ public final class ForkCameraTestActivity extends BaseFragment {
         if (requestCode == CAMERA_PERMISSION && results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) {
             if (resumed) startPreview(); else startAfterResume = true;
         }
-        else if (requestCode == CAMERA_PERMISSION && status != null) status.setText(R.string.ForkCameraPreviewPermission);
+        else if (requestCode == CAMERA_PERMISSION && status != null) status.setText(ForkLocale.get(R.string.ForkCameraPreviewPermission));
     }
     private void stopPreview() {
         AndroidUtilities.cancelRunOnUIThread(onTimeout);

@@ -907,7 +907,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         int[] labels = {R.string.ForkCameraFront, R.string.ForkCameraBack};
         for (int label : labels) {
             TextView text = new TextView(getContext());
-            text.setText(label);
+            text.setText(org.telegram.ui.ForkLocale.get(label));
             text.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
             text.setGravity(Gravity.CENTER);
             text.setTextSize(14);
