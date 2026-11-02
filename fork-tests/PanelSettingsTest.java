@@ -9,6 +9,11 @@ public class PanelSettingsTest {
   check(ForkPanelSettings.radiusDp() == 18);
   ForkPanelSettings.setRadiusDp(100); check(ForkPanelSettings.radiusDp() == 32);
   ForkPanelSettings.setRadiusDp(0); check(ForkPanelSettings.radiusDp() == 12);
+  check(ForkPanelSettings.effectStrength() == 50);
+  ForkPanelSettings.setEffectStrength(200); check(ForkPanelSettings.effectStrength() == 100);
+  java.lang.reflect.Field strengthCache = ForkPanelSettings.class.getDeclaredField("cachedStrength");
+  strengthCache.setAccessible(true); strengthCache.set(null, null);
+  check(ForkPanelSettings.effectStrength() == 100);
   ForkPanelSettings.setStyle("liquid"); check(ForkPanelSettings.enabled() && "liquid".equals(ForkPanelSettings.style()));
   java.lang.reflect.Field styleCache = ForkPanelSettings.class.getDeclaredField("cachedStyle");
   java.lang.reflect.Field enabledCache = ForkPanelSettings.class.getDeclaredField("cached");

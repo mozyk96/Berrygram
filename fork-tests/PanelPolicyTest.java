@@ -19,6 +19,8 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(PanelPolicy.popupRadiusDp(false, 30) == 12);
  check(PanelPolicy.popupRadiusDp(true, 30) == 30);
  check(PanelPolicy.popupRadiusDp(true, 100) == 32);
+ check(PanelPolicy.effectStrength(-5) == 0);
+ check(PanelPolicy.effectStrength(120) == 100);
  check(PanelPolicy.settingsRadiusDp() == 18);
  check(PanelPolicy.settingsGapDp() == 6);
  check(PanelPolicy.popupAlpha(255, true) == 240);

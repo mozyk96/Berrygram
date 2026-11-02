@@ -6,6 +6,7 @@ public final class PanelPolicy {
     public static int popupRadiusDp(boolean experimental, int requested) { return experimental ? Math.max(12, Math.min(32, requested)) : 12; }
     public static int settingsRadiusDp() { return 18; }
     public static int settingsGapDp() { return 6; }
+    public static int effectStrength(int value) { return Math.max(0, Math.min(100, value)); }
     public static int clampPopupOffset(int anchorX, int offset, int popupWidth, int left, int right, int margin) {
         int min = left + margin;
         int max = Math.max(min, right - margin - popupWidth);

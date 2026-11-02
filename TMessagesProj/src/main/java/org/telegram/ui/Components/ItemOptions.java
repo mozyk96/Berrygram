@@ -1529,7 +1529,7 @@ public class ItemOptions {
             setGapBackgroundColor(Theme.multAlpha(Theme.getColor(Theme.key_actionBarDefaultSubmenuItem, resourcesProvider), 0.06f));
             BlurredBackgroundDrawable bg = new BlurredBackgroundDrawableViewFactory(scrimBlur3SourceBitmap)
                 .create(layout, true)
-                .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider))
+                .setColorProvider(explicitBlurForMenu ? BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider) : org.telegram.ui.ForkGlassSurface.provider(resourcesProvider))
                 .setPadding(dp(8))
                 .setHasPadding(true)
                 .setRadius(dp(PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled(), ForkPanelSettings.radiusDp())));

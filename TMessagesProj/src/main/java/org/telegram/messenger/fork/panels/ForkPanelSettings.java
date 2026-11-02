@@ -6,6 +6,7 @@ public final class ForkPanelSettings {
     private static volatile Boolean cached;
     private static volatile Integer cachedRadius;
     private static volatile String cachedStyle;
+    private static volatile Integer cachedStrength;
     private ForkPanelSettings() { }
     public static boolean enabled() {
         Boolean value = cached;
@@ -69,5 +70,22 @@ public final class ForkPanelSettings {
             editor.putString("accent", GraphicsColorPolicy.formatHex(color));
         }
         editor.apply();
+    }
+    public static int effectStrength() {
+        Integer value = cachedStrength;
+        if (value == null) synchronized (ForkPanelSettings.class) {
+            value = cachedStrength;
+            if (value == null) {
+                String stored = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).getString("effect_strength", "50");
+                try { value = Integer.parseInt(stored); } catch (NumberFormatException | NullPointerException ignored) { value = 50; }
+                cachedStrength = value = PanelPolicy.effectStrength(value);
+            }
+        }
+        return value;
+    }
+    public static synchronized void setEffectStrength(int requested) {
+        int value = PanelPolicy.effectStrength(requested);
+        ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("effect_strength", Integer.toString(value)).apply();
+        cachedStrength = value;
     }
 }

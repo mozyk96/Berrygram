@@ -1,4 +1,6 @@
 <resources>
+    <string name="ForkGraphicsIntensity">Інтенсивність ефектів</string>
+    <string name="ForkGraphicsIntensityValue">%1$d%%</string>
     <string name="ForkGraphicsInfo">Стилі застосовуються до підтримуваних меню. Якщо пристрій або режим енергозбереження не підтримує ефекти, використовується простіша поверхня.</string>
     <string name="ForkGraphicsStyle">Стиль меню</string>
     <string name="ForkGraphicsMaterial">Material</string>
@@ -21,7 +23,7 @@
     <string name="ForkAppearanceSubtitle">Меню та заокруглення</string>
     <string name="ForkAppearanceRadius">Заокруглення меню</string>
     <string name="ForkAppearanceRadiusValue">%1$d dp</string>
-    <string name="ForkAppearanceRadiusInfo">Заокруглення застосовується до підтримуваних меню, коли ввімкнено оновлені меню. Відкрийте меню знову, щоб побачити зміну.</string>
+    <string name="ForkAppearanceRadiusInfo">Заокруглення застосовується до підтримуваних меню Blur і Liquid Glass. Відкрийте меню знову, щоб побачити зміну.</string>
     <string name="ForkSettingsTitle">Налаштування BerryGram</string>
     <string name="ForkCustomTextTitle">Власні фрази</string>
     <string name="ForkCustomTextSearch">Пошук фраз</string>

@@ -12,12 +12,12 @@ import androidx.annotation.RequiresApi;
 @RequiresApi(33)
 public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap {
     private static final String PROGRAM =
-            "uniform shader backdrop; uniform float4 bounds;" +
+            "uniform shader backdrop; uniform float4 bounds; uniform float strength;" +
             "half4 main(float2 p) {" +
             " float2 halfSize = max((bounds.zw-bounds.xy)*0.5, float2(1.0));" +
             " float2 d = (p-(bounds.xy+bounds.zw)*0.5)/halfSize;" +
             " float edge = smoothstep(0.55, 1.0, max(abs(d.x), abs(d.y)));" +
-            " return backdrop.eval(p + d*edge*3.0);" +
+            " return backdrop.eval(p + d*edge*6.0*strength);" +
             "}";
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private RuntimeShader shader;
@@ -41,6 +41,7 @@ public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap
             }
             bitmapShader.setLocalMatrix(getMatrix());
             shader.setFloatUniform("bounds", left, top, right, bottom);
+            shader.setFloatUniform("strength", org.telegram.messenger.fork.panels.ForkPanelSettings.effectStrength() / 100f);
             canvas.drawRect(left, top, right, bottom, paint);
         } catch (RuntimeException e) {
             unavailable = true;

@@ -926,7 +926,7 @@ public class ActionBarMenuItem extends FrameLayout {
                     (float) (AndroidUtilities.displaySize.y + AndroidUtilities.statusBarHeight + AndroidUtilities.navigationBarHeight) / forkMenuBitmap.getHeight());
             source.setMatrix(matrix);
             org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable bg = new BlurredBackgroundDrawableViewFactory(source)
-                    .create(popupLayout, true).setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider))
+                    .create(popupLayout, true).setColorProvider(org.telegram.ui.ForkGlassSurface.provider(resourcesProvider))
                     .setPadding(dp(8)).setHasPadding(true)
                     .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp())));
             int[] location = new int[2];
