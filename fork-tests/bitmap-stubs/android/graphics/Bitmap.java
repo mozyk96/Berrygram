@@ -1,0 +1,1 @@
+package android.graphics; public class Bitmap { public enum Config { ARGB_8888 } private final int w,h; public Bitmap(int w,int h){this.w=w;this.h=h;} public static Bitmap createBitmap(int w,int h,Config c){return new Bitmap(w,h);} public int getWidth(){return w;} public int getHeight(){return h;} public boolean isRecycled(){return false;} public void eraseColor(int c){} }

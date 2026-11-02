@@ -1,0 +1,1 @@
+package android.graphics; public class Canvas { public final Bitmap bitmap; public float scaleX=1,scaleY=1; public Canvas(Bitmap b){bitmap=b;} public void scale(float x,float y){scaleX=x;scaleY=y;} public void drawRect(float l,float t,float r,float b,Paint p){} }

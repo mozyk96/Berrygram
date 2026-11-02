@@ -1,0 +1,1 @@
+package org.telegram.ui.Components.blur3.drawable; import org.telegram.ui.Components.blur3.source.BlurredBackgroundSource; public class BlurredBackgroundDrawableSource implements BlurredBackgroundDrawable { public BlurredBackgroundDrawableSource(BlurredBackgroundSource s){} }

@@ -82,15 +82,15 @@ public class BlurredBackgroundSourceBitmap implements BlurredBackgroundSource {
 
     public Canvas beginRecording(int width, int height, float scale) {
         final int bitmapWidth = Math.round(width / scale);
-        final int bitmapHeight = Math.round(width / scale);
-        if (bitmapInternal == null || bitmapInternal.isRecycled() || bitmapInternal.getWidth() != bitmapHeight || bitmapInternal.getHeight() != bitmapHeight) {
+        final int bitmapHeight = Math.round(height / scale);
+        if (bitmapInternal == null || bitmapInternal.isRecycled() || bitmapInternal.getWidth() != bitmapWidth || bitmapInternal.getHeight() != bitmapHeight) {
             bitmapInternal = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
         } else {
             bitmapInternal.eraseColor(0);
         }
 
         final Canvas canvas = new Canvas(bitmapInternal);
-        canvas.scale((float) width / bitmapWidth, (float) height / bitmapHeight);
+        canvas.scale((float) bitmapWidth / width, (float) bitmapHeight / height);
         return canvas;
     }
 
