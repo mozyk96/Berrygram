@@ -368,6 +368,10 @@ public class ScrimOptions extends Dialog {
     }
 
     public static void makeGlobalBlurBitmaps(View cutToContainer, Utilities.Callback2<Bitmap, Bitmap> bitmaps) {
+        makeGlobalBlurBitmaps(cutToContainer, true, bitmaps);
+    }
+
+    public static void makeGlobalBlurBitmaps(View cutToContainer, boolean includeBackground, Utilities.Callback2<Bitmap, Bitmap> bitmaps) {
         if (cutToContainer == null) {
             makeGlobalBlurBitmaps(bitmaps);
             return;
@@ -385,11 +389,14 @@ public class ScrimOptions extends Dialog {
                 }
             }
 
-            final ColorMatrix colorMatrixBg = new ColorMatrix();
-            AndroidUtilities.adjustSaturationColorMatrix(colorMatrixBg, Theme.isCurrentThemeDark() ? .04f : +.25f);
-            AndroidUtilities.adjustBrightnessColorMatrix(colorMatrixBg, Theme.isCurrentThemeDark() ? -.04f : -.07f);
-            final Bitmap bitmapBg = AndroidUtilities.applyColorMatrix(bitmap, colorMatrixBg);
-            bitmapBg.setHasAlpha(false);
+            Bitmap bitmapBg = null;
+            if (includeBackground) {
+                final ColorMatrix colorMatrixBg = new ColorMatrix();
+                AndroidUtilities.adjustSaturationColorMatrix(colorMatrixBg, Theme.isCurrentThemeDark() ? .04f : +.25f);
+                AndroidUtilities.adjustBrightnessColorMatrix(colorMatrixBg, Theme.isCurrentThemeDark() ? -.04f : -.07f);
+                bitmapBg = AndroidUtilities.applyColorMatrix(bitmap, colorMatrixBg);
+                bitmapBg.setHasAlpha(false);
+            }
 
             final ColorMatrix colorMatrixOptions = new ColorMatrix();
             colorMatrixOptions.setSaturation(Theme.isCurrentThemeDark() ? 2 : 3);

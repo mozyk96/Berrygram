@@ -2042,7 +2042,7 @@ public class ItemOptions {
                 blurPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
                 final float originalScrimAlpha = scrimView.getAlpha();
                 scrimView.setAlpha(0.0f);
-                ScrimOptions.makeGlobalBlurBitmaps(pointContainer, (bitmapBg, bitmapOptions) -> {
+                ScrimOptions.makeGlobalBlurBitmaps(pointContainer, blur, (bitmapBg, bitmapOptions) -> {
                     scrimView.setAlpha(originalScrimAlpha);
                     if (blur) blurBitmap = bitmapBg;
                     else if (bitmapBg != null && !bitmapBg.isRecycled()) bitmapBg.recycle();
