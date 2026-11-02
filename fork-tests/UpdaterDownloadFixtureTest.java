@@ -33,11 +33,12 @@ public final class UpdaterDownloadFixtureTest {
   URL.setURLStreamHandlerFactory(protocol -> protocol.equals("https") ? new Handler() : null);
   byte[] valid=Files.readAllBytes(UpdaterPackageFixtureTest.apk(true).toPath());body=valid;
   metadata="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.0.1\",\"body\":\"Test\",\"assets\":[{\"name\":\"BerryGram-1.0.1-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":"+valid.length+",\"digest\":\"sha256:"+sha(valid)+"\",\"browser_download_url\":\""+ASSET+"\"}]}";
+  metadata="["+metadata+"]";
   GithubUpdateClient.Release release=GithubUpdateClient.latest("example/project");
   missingRelease=true;
   try { GithubUpdateClient.latest("example/project"); throw new AssertionError("Missing release accepted"); }
   catch (IOException expected) {
-   if (!"No stable release found or repository unavailable".equals(expected.getMessage())) throw new AssertionError("Missing release should be explained", expected);
+   if (!"No compatible release found or repository unavailable".equals(expected.getMessage())) throw new AssertionError("Missing release should be explained", expected);
   } finally { missingRelease=false; }
   UpdaterPackageFixtureTest.Ctx c=new UpdaterPackageFixtureTest.Ctx();
   c.pm.installed=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.0",100,0,1);

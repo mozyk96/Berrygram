@@ -19,13 +19,13 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-/** Network and signature verification for explicit, user-initiated stable releases. */
+/** Network and signature verification for explicit, user-initiated releases. */
 public final class GithubUpdateClient {
     private static final long MAX_APK = 512L * 1024 * 1024;
     private static final int MAX_METADATA = 1024 * 1024;
     public interface Progress { void update(long received, long total); }
     public static final class NoStableReleaseException extends java.io.IOException {
-        public NoStableReleaseException() { super("No stable release found or repository unavailable"); }
+        public NoStableReleaseException() { super("No compatible release found or repository unavailable"); }
     }
     public static final class Release {
         public String version, notes, url, digest;
@@ -52,7 +52,7 @@ public final class GithubUpdateClient {
             }
             if (code!=200 && !(offset > 0 && code == 206)) {
                 connection.disconnect();
-                if (code == 404 && "api.github.com".equalsIgnoreCase(url.getHost()) && url.getPath().endsWith("/releases/latest")) throw new NoStableReleaseException();
+                if (code == 404 && "api.github.com".equalsIgnoreCase(url.getHost()) && url.getPath().endsWith("/releases")) throw new NoStableReleaseException();
                 throw new java.io.IOException("Update server HTTP " + code);
             }
             return connection;
@@ -61,17 +61,37 @@ public final class GithubUpdateClient {
     }
     public static Release latest(String repo) throws Exception {
         if (!UpdatePolicy.validRepository(repo)) throw new IllegalArgumentException("Invalid repository");
-        HttpURLConnection connection=open("https://api.github.com/repos/"+repo+"/releases/latest");
+        HttpURLConnection connection=open("https://api.github.com/repos/"+repo+"/releases?per_page=30");
         try (InputStream in=connection.getInputStream(); ByteArrayOutputStream out=new ByteArrayOutputStream()) {
             byte[] buffer=new byte[8192]; int count,total=0;
             while ((count=in.read(buffer))!=-1) { total+=count; if(total>MAX_METADATA) throw new java.io.IOException("Release metadata too large"); out.write(buffer,0,count); }
-            return parseRelease(repo,out.toString("UTF-8"));
+            return parseReleaseList(repo,out.toString("UTF-8"));
         } finally { connection.disconnect(); }
     }
     public static Release parseRelease(String repo, String metadata) throws Exception {
+        return parseRelease(repo, metadata, false);
+    }
+    public static Release parseReleaseList(String repo, String metadata) throws Exception {
+        if (!UpdatePolicy.validRepository(repo) || metadata == null || metadata.length() > MAX_METADATA) throw new IllegalArgumentException("Invalid release metadata");
+        JSONArray releases = new JSONArray(metadata);
+        Release best = null;
+        for (int i = 0; i < releases.length(); i++) {
+            JSONObject item = releases.optJSONObject(i);
+            if (item == null) continue;
+            try {
+                Release candidate = parseRelease(repo, item.toString(), true);
+                if (best == null || UpdatePolicy.compareVersions(candidate.version, best.version) > 0) best = candidate;
+            } catch (SecurityException | java.io.IOException | IllegalArgumentException ignored) {
+                // Ignore drafts and releases without a valid, trusted ARM64 asset.
+            }
+        }
+        if (best == null) throw new NoStableReleaseException();
+        return best;
+    }
+    private static Release parseRelease(String repo, String metadata, boolean includePrereleases) throws Exception {
         if (!UpdatePolicy.validRepository(repo) || metadata == null || metadata.length() > MAX_METADATA) throw new IllegalArgumentException("Invalid release metadata");
         JSONObject json=new JSONObject(metadata);
-        if (json.optBoolean("draft",true) || json.optBoolean("prerelease",true)) throw new SecurityException("Not a stable release");
+        if (json.optBoolean("draft",true) || (!includePrereleases && json.optBoolean("prerelease",true)) || !json.has("prerelease")) throw new SecurityException("Not an eligible release");
         String tag=json.optString("tag_name",""); JSONArray assets=json.optJSONArray("assets");
         if (assets==null) throw new java.io.IOException("Release has no assets");
         Release result=null;

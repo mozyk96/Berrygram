@@ -13,6 +13,15 @@ public class GithubReleaseFixtureTest {
   reject(fixture("uploaded",false,"sha256:"+digest,"https://evil.test/a"));
   reject(fixture("pending",false,"sha256:"+digest,url));
   String valid=fixture("uploaded",false,"sha256:"+digest,url);
+  String prerelease=valid.replace("\"prerelease\":false", "\"prerelease\":true");
+  check(GithubUpdateClient.parseReleaseList("example/project", "["+prerelease+"]").version.equals("1.2.3"));
+  String newer=prerelease.replace("1.2.3", "1.10.0");
+  check(GithubUpdateClient.parseReleaseList("example/project", "["+valid+","+newer+"]").version.equals("1.10.0"));
+  String draft=newer.replace("\"draft\":false", "\"draft\":true");
+  check(GithubUpdateClient.parseReleaseList("example/project", "["+draft+","+valid+"]").version.equals("1.2.3"));
+  String unsafe=newer.replace("example/project", "example/other");
+  check(GithubUpdateClient.parseReleaseList("example/project", "["+unsafe+","+valid+"]").version.equals("1.2.3"));
+  try { GithubUpdateClient.parseReleaseList("example/project", "[]"); throw new AssertionError("Empty list accepted"); } catch (GithubUpdateClient.NoStableReleaseException expected) { }
   reject(valid.replace("\"prerelease\":false", "\"prerelease\":true"));
   reject(valid.replace("\"size\":1234", "\"size\":0"));
   reject(valid.replace("\"size\":1234", "\"size\":536870913"));
