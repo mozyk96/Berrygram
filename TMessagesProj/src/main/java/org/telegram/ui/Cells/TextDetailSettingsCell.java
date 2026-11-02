@@ -114,6 +114,10 @@ public class TextDetailSettingsCell extends FrameLayout {
         setWillNotDraw(!divider);
     }
 
+    public void setIconColor(int color) {
+        imageView.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY));
+    }
+
     public void setValue(CharSequence value) {
         valueTextView.setText(value);
     }

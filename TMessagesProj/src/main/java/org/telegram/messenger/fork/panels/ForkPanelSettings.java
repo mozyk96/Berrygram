@@ -55,4 +55,19 @@ public final class ForkPanelSettings {
         ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("radius", Integer.toString(value)).apply();
         cachedRadius = value;
     }
+    public static String customAccent() {
+        String value = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).getString("accent", null);
+        Integer color = GraphicsColorPolicy.parseHex(value);
+        return color == null ? null : GraphicsColorPolicy.formatHex(color);
+    }
+    public static void setCustomAccent(String value) {
+        android.content.SharedPreferences.Editor editor = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit();
+        if (value == null) editor.remove("accent");
+        else {
+            Integer color = GraphicsColorPolicy.parseHex(value);
+            if (color == null) throw new IllegalArgumentException("Invalid accent color");
+            editor.putString("accent", GraphicsColorPolicy.formatHex(color));
+        }
+        editor.apply();
+    }
 }

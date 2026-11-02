@@ -1,4 +1,11 @@
 <resources>
+    <string name="ForkColorTitle">Accent color</string>
+    <string name="ForkColorSystem">System color</string>
+    <string name="ForkColorSquare">Saturation and brightness</string>
+    <string name="ForkColorHue">Hue</string>
+    <string name="ForkColorHex">Hexadecimal color</string>
+    <string name="ForkColorPreview">Preview</string>
+    <string name="ForkColorInvalid">Enter a six-digit hexadecimal color.</string>
     <string name="ForkCameraChoiceTitle">Camera</string>
     <string name="ForkCameraBehavior">Starting behavior</string>
     <string name="ForkCameraChoiceAuto">Based on behavior</string>

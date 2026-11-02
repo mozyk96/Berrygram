@@ -22,6 +22,7 @@ import org.telegram.ui.Cells.TextDetailSettingsCell;
 /** BerryGram settings use Telegram's theme-aware, compact list components. */
 public final class ForkSettingsActivity extends BaseFragment {
     private ForkUpdaterPanel updater;
+    private TextDetailSettingsCell[] accentCells;
     @Override public View createView(Context context) {
         actionBar.setTitle(ForkLocale.get(R.string.ForkSettingsTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
@@ -46,11 +47,19 @@ public final class ForkSettingsActivity extends BaseFragment {
         ForkSettingsLayout.interactive(text);
         text.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkCustomTextTitle), ForkLocale.get(R.string.ForkTextSubtitle), R.drawable.msg_edit, false);
         text.setOnClickListener(v -> presentFragment(new ForkCustomTextActivity())); ForkSettingsLayout.addCard(content, text);
+        accentCells = new TextDetailSettingsCell[]{appearance, video, voice, text};
+        updateAccent(context);
         LinearLayout updates = ForkSettingsLayout.section(context);
         updater = new ForkUpdaterPanel(context, this); updates.addView(updater);
         ForkSettingsLayout.addSection(content, updates);
         ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(content);
         fragmentView = scroll; return scroll;
     }
-    @Override public void onFragmentDestroy() { if (updater != null) updater.dispose(); updater = null; super.onFragmentDestroy(); }
+    private void updateAccent(Context context) {
+        if (accentCells == null) return;
+        int color = org.telegram.messenger.fork.panels.GraphicsColorPolicy.readableAccent(ForkAppearanceSettingsActivity.accent(context), Theme.getColor(Theme.key_windowBackgroundWhite));
+        for (TextDetailSettingsCell cell : accentCells) cell.setIconColor(color);
+    }
+    @Override public void onResume() { super.onResume(); if (fragmentView != null) updateAccent(fragmentView.getContext()); }
+    @Override public void onFragmentDestroy() { if (updater != null) updater.dispose(); updater = null; accentCells = null; super.onFragmentDestroy(); }
 }

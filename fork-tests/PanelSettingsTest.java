@@ -19,6 +19,12 @@ public class PanelSettingsTest {
   ForkPanelSettings.setStyle("blur"); check(ForkPanelSettings.enabled() && "blur".equals(ForkPanelSettings.style()));
   boolean rejected=false; try { ForkPanelSettings.setStyle("invalid"); } catch (IllegalArgumentException expected) { rejected=true; }
   check(rejected && "blur".equals(ForkPanelSettings.style()));
+  check(ForkPanelSettings.customAccent() == null);
+  ForkPanelSettings.setCustomAccent("#15aBcd");
+  check("#15ABCD".equals(ForkPanelSettings.customAccent()));
+  rejected=false; try { ForkPanelSettings.setCustomAccent("#zzzzzz"); } catch (IllegalArgumentException expected) { rejected=true; }
+  check(rejected && "#15ABCD".equals(ForkPanelSettings.customAccent()));
+  ForkPanelSettings.setCustomAccent(null); check(ForkPanelSettings.customAccent() == null);
   ForkPanelSettings.setEnabled(false); check(!ForkPanelSettings.enabled()); System.out.println("PanelSettingsTest passed");
  }
  static void check(boolean v){if(!v)throw new AssertionError();}

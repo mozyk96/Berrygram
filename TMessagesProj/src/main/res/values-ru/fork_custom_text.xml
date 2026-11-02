@@ -1,4 +1,11 @@
 <resources>
+    <string name="ForkColorTitle">Акцентный цвет</string>
+    <string name="ForkColorSystem">Системный цвет</string>
+    <string name="ForkColorSquare">Насыщенность и яркость</string>
+    <string name="ForkColorHue">Оттенок</string>
+    <string name="ForkColorHex">Цвет в формате HEX</string>
+    <string name="ForkColorPreview">Предпросмотр</string>
+    <string name="ForkColorInvalid">Введите шесть шестнадцатеричных символов.</string>
     <string name="ForkCameraChoiceTitle">Камера</string>
     <string name="ForkCameraBehavior">Начальное поведение</string>
     <string name="ForkCameraChoiceAuto">По режиму</string>
