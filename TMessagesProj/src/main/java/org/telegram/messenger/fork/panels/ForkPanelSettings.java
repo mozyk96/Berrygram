@@ -5,6 +5,7 @@ import org.telegram.messenger.ApplicationLoader;
 public final class ForkPanelSettings {
     private static volatile Boolean cached;
     private static volatile Integer cachedRadius;
+    private static volatile String cachedStyle;
     private ForkPanelSettings() { }
     public static boolean enabled() {
         Boolean value = cached;
@@ -15,8 +16,27 @@ public final class ForkPanelSettings {
         return value;
     }
     public static synchronized void setEnabled(boolean value) {
-        ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putBoolean("enabled", value).apply();
-        cached = value;
+        setStyle(value ? "blur" : "material");
+    }
+    public static String style() {
+        String value = cachedStyle;
+        if (value == null) synchronized (ForkPanelSettings.class) {
+            value = cachedStyle;
+            if (value == null) {
+                android.content.SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE);
+                value = prefs.getString("style", prefs.getBoolean("enabled", false) ? "blur" : "material");
+                if (!"material".equals(value) && !"blur".equals(value) && !"liquid".equals(value)) value = "material";
+                cachedStyle = value;
+            }
+        }
+        return value;
+    }
+    public static synchronized void setStyle(String value) {
+        if (!"material".equals(value) && !"blur".equals(value) && !"liquid".equals(value)) throw new IllegalArgumentException("Invalid graphics style");
+        boolean active = !"material".equals(value);
+        ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("style", value).putBoolean("enabled", active).apply();
+        cached = active;
+        cachedStyle = value;
     }
     public static int radiusDp() {
         Integer value = cachedRadius;

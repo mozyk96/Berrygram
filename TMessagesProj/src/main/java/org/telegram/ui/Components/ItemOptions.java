@@ -1294,8 +1294,11 @@ public class ItemOptions {
             }
         }
 
-        if ((blur || blurForMenu) && scrimBlur3SourceBitmap == null) {
-            scrimBlur3SourceBitmap = new BlurredBackgroundSourceBitmap();
+        if (blur || blurForMenu) {
+            boolean refract = !explicitBlurForMenu && blurForMenu && Build.VERSION.SDK_INT >= 33 && "liquid".equals(ForkPanelSettings.style());
+            if (scrimBlur3SourceBitmap == null || refract != (scrimBlur3SourceBitmap instanceof org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource)) {
+                scrimBlur3SourceBitmap = refract ? new org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource() : new BlurredBackgroundSourceBitmap();
+            }
         }
 
         ViewGroup container = pointContainer = this.container == null ? fragment.getParentLayout().getOverlayContainerView() : this.container;
