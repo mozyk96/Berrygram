@@ -23,6 +23,7 @@ import org.telegram.ui.Cells.TextDetailSettingsCell;
 public final class ForkSettingsActivity extends BaseFragment {
     private ForkUpdaterPanel updater;
     private TextDetailSettingsCell[] accentCells;
+    private LinearLayout settingsPage;
     @Override public View createView(Context context) {
         actionBar.setTitle(ForkLocale.get(R.string.ForkSettingsTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
@@ -30,6 +31,7 @@ public final class ForkSettingsActivity extends BaseFragment {
             @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
         });
         LinearLayout content = ForkSettingsLayout.page(context);
+        settingsPage = content;
         TextDetailSettingsCell appearance = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(appearance);
         appearance.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkAppearanceTitle), ForkLocale.get(R.string.ForkAppearanceSubtitle), R.drawable.msg_palette, false);
@@ -57,9 +59,11 @@ public final class ForkSettingsActivity extends BaseFragment {
     }
     private void updateAccent(Context context) {
         if (accentCells == null) return;
-        int color = org.telegram.messenger.fork.panels.GraphicsColorPolicy.readableAccent(ForkAppearanceSettingsActivity.accent(context), Theme.getColor(Theme.key_windowBackgroundWhite));
+        int background = Theme.getColor(Theme.key_windowBackgroundWhite);
+        if ("material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())) background = ForkGraphicsSurface.materialColor(context, background);
+        int color = org.telegram.messenger.fork.panels.GraphicsColorPolicy.readableAccent(ForkAppearanceSettingsActivity.accent(context), background);
         for (TextDetailSettingsCell cell : accentCells) cell.setIconColor(color);
     }
-    @Override public void onResume() { super.onResume(); if (fragmentView != null) updateAccent(fragmentView.getContext()); }
-    @Override public void onFragmentDestroy() { if (updater != null) updater.dispose(); updater = null; accentCells = null; super.onFragmentDestroy(); }
+    @Override public void onResume() { super.onResume(); if (settingsPage != null) { ForkSettingsLayout.refreshPage(settingsPage); updateAccent(settingsPage.getContext()); } }
+    @Override public void onFragmentDestroy() { if (updater != null) updater.dispose(); updater = null; accentCells = null; settingsPage = null; super.onFragmentDestroy(); }
 }

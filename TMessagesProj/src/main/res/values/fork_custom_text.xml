@@ -1,4 +1,9 @@
 <resources>
+    <string name="ForkGraphicsInfo">Styles apply to supported menus. Blur and refraction use a simpler surface when the device or power settings do not support them.</string>
+    <string name="ForkGraphicsStyle">Menu style</string>
+    <string name="ForkGraphicsMaterial">Material</string>
+    <string name="ForkGraphicsBlur">Blur</string>
+    <string name="ForkGraphicsLiquid">Liquid Glass (experimental)</string>
     <string name="ForkColorTitle">Accent color</string>
     <string name="ForkColorSystem">System color</string>
     <string name="ForkColorSquare">Saturation and brightness</string>

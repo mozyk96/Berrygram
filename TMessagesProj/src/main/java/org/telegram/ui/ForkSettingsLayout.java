@@ -22,24 +22,38 @@ final class ForkSettingsLayout {
     static LinearLayout section(Context context) {
         LinearLayout section = new LinearLayout(context);
         section.setOrientation(LinearLayout.VERTICAL);
-        section.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(RADIUS_DP), Theme.getColor(Theme.key_windowBackgroundWhite)));
+        refreshSection(section, false);
         section.setClipToOutline(true);
         return section;
+    }
+    static void refreshSection(LinearLayout section, boolean card) {
+        int background = Theme.getColor(Theme.key_windowBackgroundWhite);
+        if ("material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())) background = ForkGraphicsSurface.materialColor(section.getContext(), background);
+        int radius = card ? org.telegram.messenger.fork.panels.PanelPolicy.settingsRadiusDp() : RADIUS_DP;
+        section.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(radius), background));
     }
     static void addSection(LinearLayout page, View section) {
         int margin = AndroidUtilities.dp(MARGIN_DP);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        section.setTag(Boolean.FALSE);
         params.setMargins(margin, margin, margin, 0);
         page.addView(section, params);
     }
     static void addCard(LinearLayout page, View child) {
         LinearLayout card = section(page.getContext());
-        card.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(org.telegram.messenger.fork.panels.PanelPolicy.settingsRadiusDp()), Theme.getColor(Theme.key_windowBackgroundWhite)));
+        refreshSection(card, true);
+        card.setTag(Boolean.TRUE);
         card.addView(child);
         int margin = AndroidUtilities.dp(MARGIN_DP);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(margin, AndroidUtilities.dp(org.telegram.messenger.fork.panels.PanelPolicy.settingsGapDp()), margin, 0);
         page.addView(card, params);
+    }
+    static void refreshPage(LinearLayout page) {
+        for (int i = 0; i < page.getChildCount(); i++) {
+            View child = page.getChildAt(i);
+            if (child instanceof LinearLayout && child.getTag() instanceof Boolean) refreshSection((LinearLayout) child, (Boolean) child.getTag());
+        }
     }
     static void interactive(View view) { view.setBackground(Theme.getSelectorDrawable(false)); }
 }

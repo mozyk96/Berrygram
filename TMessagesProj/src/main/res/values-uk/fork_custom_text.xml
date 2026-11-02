@@ -1,4 +1,9 @@
 <resources>
+    <string name="ForkGraphicsInfo">Стилі застосовуються до підтримуваних меню. Якщо пристрій або режим енергозбереження не підтримує ефекти, використовується простіша поверхня.</string>
+    <string name="ForkGraphicsStyle">Стиль меню</string>
+    <string name="ForkGraphicsMaterial">Material</string>
+    <string name="ForkGraphicsBlur">Розмиття</string>
+    <string name="ForkGraphicsLiquid">Liquid Glass (експериментально)</string>
     <string name="ForkColorTitle">Акцентний колір</string>
     <string name="ForkColorSystem">Системний колір</string>
     <string name="ForkColorSquare">Насиченість і яскравість</string>

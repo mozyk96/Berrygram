@@ -136,6 +136,9 @@ public class ActionBarPopupWindow extends PopupWindow {
         private boolean forkStyleEligible;
         private Drawable forkStockBackground;
         private Drawable forkExperimentalBackground;
+        private Drawable forkMaterialBackground;
+        private boolean forkMaterialApplied;
+        private int forkMaterialColor;
         private int forkExperimentalRadius = -1;
 
         private boolean fitItems;
@@ -177,7 +180,9 @@ public class ActionBarPopupWindow extends PopupWindow {
                     forkExperimentalBackground = Theme.createRoundRectDrawable(dp(forkExperimentalRadius), Color.WHITE);
                     backgroundDrawable = forkExperimentalBackground;
                 } else {
-                    backgroundDrawable = forkStockBackground;
+                    forkMaterialApplied = forkStyleEligible && "material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
+                    if (forkMaterialApplied) forkMaterialBackground = Theme.createRoundRectDrawable(dp(18), Color.WHITE);
+                    backgroundDrawable = forkMaterialApplied ? forkMaterialBackground : forkStockBackground;
                 }
                 setPadding(dp(8), dp(8), dp(8), dp(8));
             }
@@ -310,6 +315,7 @@ public class ActionBarPopupWindow extends PopupWindow {
         public void setBackgroundColor(int color) {
             if (backgroundColor != color && backgroundDrawable != null) {
                 backgroundDrawable.setColorFilter(new PorterDuffColorFilter(backgroundColor = color, PorterDuff.Mode.MULTIPLY));
+                forkMaterialColor = 0;
             }
         }
 
@@ -469,16 +475,28 @@ public class ActionBarPopupWindow extends PopupWindow {
             // Action-bar popup layouts are cached, so refresh the surface when the
             // preference changes instead of requiring the whole screen to reopen.
             boolean glass = forkStyleEligible && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
+            boolean material = forkStyleEligible && !glass && "material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
             int radius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
-            if (forkStyleEligible && (glass != forkGlassBackground || (glass && radius != forkExperimentalRadius && (backgroundDrawable == forkExperimentalBackground || backgroundDrawable == forkStockBackground)))) {
+            boolean ownsSurface = backgroundDrawable == forkExperimentalBackground || backgroundDrawable == forkStockBackground || backgroundDrawable == forkMaterialBackground;
+            if (forkStyleEligible && ownsSurface && (glass != forkGlassBackground || material != forkMaterialApplied || (glass && radius != forkExperimentalRadius))) {
                 forkGlassBackground = glass;
+                forkMaterialApplied = material;
                 if (glass && (forkExperimentalBackground == null || forkExperimentalRadius != radius)) {
                     forkExperimentalRadius = radius;
                     forkExperimentalBackground = Theme.createRoundRectDrawable(dp(radius), Color.WHITE);
                 }
-                backgroundDrawable = glass ? forkExperimentalBackground : forkStockBackground;
+                if (material && forkMaterialBackground == null) forkMaterialBackground = Theme.createRoundRectDrawable(dp(18), Color.WHITE);
+                backgroundDrawable = glass ? forkExperimentalBackground : material ? forkMaterialBackground : forkStockBackground;
+                forkMaterialColor = 0;
                 backgroundDrawable.getPadding(bgPaddings);
                 backgroundDrawable.setColorFilter(new PorterDuffColorFilter(backgroundColor, PorterDuff.Mode.MULTIPLY));
+            }
+            if (material && backgroundDrawable == forkMaterialBackground) {
+                int tint = org.telegram.ui.ForkGraphicsSurface.materialColor(getContext(), backgroundColor);
+                if (tint != forkMaterialColor) {
+                    forkMaterialColor = tint;
+                    backgroundDrawable.setColorFilter(new PorterDuffColorFilter(tint, PorterDuff.Mode.MULTIPLY));
+                }
             }
             if (swipeBackGravityRight) {
                 setTranslationX(getMeasuredWidth() * (1f - backScaleX));
@@ -621,7 +639,7 @@ public class ActionBarPopupWindow extends PopupWindow {
         }
 
         public boolean hasForkStyleBackground() {
-            return forkStyleEligible && backgroundDrawable != null && (backgroundDrawable == forkStockBackground || backgroundDrawable == forkExperimentalBackground);
+            return forkStyleEligible && backgroundDrawable != null && (backgroundDrawable == forkStockBackground || backgroundDrawable == forkExperimentalBackground || backgroundDrawable == forkMaterialBackground);
         }
 
         public int getItemsCount() {

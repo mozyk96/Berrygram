@@ -14,6 +14,7 @@ import org.telegram.messenger.fork.panels.GraphicsColorPolicy;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
@@ -30,10 +31,11 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         });
         LinearLayout page = ForkSettingsLayout.page(context);
         LinearLayout controls = ForkSettingsLayout.section(context);
-        TextCheckCell panels = new TextCheckCell(context);
-        panels.setTextAndCheck(ForkLocale.get(R.string.ForkPanelsTitle), ForkPanelSettings.enabled(), false);
-        ForkSettingsLayout.interactive(panels);
-        controls.addView(panels);
+        TextSettingsCell style = new TextSettingsCell(context);
+        style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
+        style.setIcon(R.drawable.msg_palette);
+        ForkSettingsLayout.interactive(style);
+        controls.addView(style);
         TextSettingsCell radius = new TextSettingsCell(context);
         radius.setTextAndValue(ForkLocale.get(R.string.ForkAppearanceRadius), ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
         controls.addView(radius);
@@ -61,11 +63,17 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         controls.addView(preview);
         applyAccent(slider, preview, accent(context));
         color.setOnClickListener(v -> chooseAccent(context, slider, color, preview));
-        panels.setOnClickListener(v -> {
-            boolean enabled = !ForkPanelSettings.enabled();
-            ForkPanelSettings.setEnabled(enabled);
-            panels.setChecked(enabled);
-            slider.setEnabled(enabled);
+        style.setOnClickListener(v -> {
+            String[] modes = {"material", "blur", "liquid"};
+            CharSequence[] labels = {ForkLocale.get(R.string.ForkGraphicsMaterial), ForkLocale.get(R.string.ForkGraphicsBlur), ForkLocale.get(R.string.ForkGraphicsLiquid)};
+            showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkGraphicsStyle))
+                    .setItems(labels, (dialog, index) -> {
+                        ForkPanelSettings.setStyle(modes[index]);
+                        style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
+                        slider.setEnabled(ForkPanelSettings.enabled());
+                        ForkSettingsLayout.refreshSection(controls, false);
+                        applyAccent(slider, preview, accent(context));
+                    }).create());
         });
         slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
@@ -78,7 +86,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         });
         ForkSettingsLayout.addSection(page, controls);
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
-        info.setText(ForkLocale.get(R.string.ForkPanelsInfo) + "\n\n" + ForkLocale.get(R.string.ForkAppearanceRadiusInfo));
+        info.setText(ForkLocale.get(R.string.ForkGraphicsInfo) + "\n\n" + ForkLocale.get(R.string.ForkAppearanceRadiusInfo));
         page.addView(info);
         ScrollView scroll = new ScrollView(context);
         scroll.setFillViewport(true);
@@ -90,6 +98,10 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
     private static String accentLabel() {
         String value = ForkPanelSettings.customAccent();
         return value == null ? ForkLocale.get(R.string.ForkColorSystem) : value;
+    }
+    private static String styleLabel() {
+        String style = ForkPanelSettings.style();
+        return ForkLocale.get("liquid".equals(style) ? R.string.ForkGraphicsLiquid : "blur".equals(style) ? R.string.ForkGraphicsBlur : R.string.ForkGraphicsMaterial);
     }
     static int accent(Context context) {
         Integer custom = GraphicsColorPolicy.parseHex(ForkPanelSettings.customAccent());
@@ -105,7 +117,9 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         slider.setThumbTintList(tint);
     }
     private static void applyAccent(SeekBar slider, TextSettingsCell preview, int color) {
-        int readable = GraphicsColorPolicy.readableAccent(color, Theme.getColor(Theme.key_windowBackgroundWhite));
+        int background = Theme.getColor(Theme.key_windowBackgroundWhite);
+        if ("material".equals(ForkPanelSettings.style())) background = ForkGraphicsSurface.materialColor(slider.getContext(), background);
+        int readable = GraphicsColorPolicy.readableAccent(color, background);
         tint(slider, readable);
         preview.getTextView().setTextColor(readable);
     }
