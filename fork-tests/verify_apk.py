@@ -2,6 +2,7 @@
 import argparse
 import subprocess
 import sys
+import re
 
 parser = argparse.ArgumentParser()
 parser.add_argument('apk')
@@ -22,4 +23,12 @@ checks = ["name='" + args.package + "'" in package,
 if not all(checks):
     print('APK identity, label, version or ARM64 ABI did not match.', file=sys.stderr)
     sys.exit(1)
+xml = subprocess.run([args.aapt, 'dump', 'xmltree', args.apk, 'AndroidManifest.xml'], text=True, capture_output=True, errors='replace')
+if xml.returncode:
+    print('APK manifest inspection failed.', file=sys.stderr)
+    sys.exit(1)
+for attribute in ('testOnly', 'debuggable'):
+    if re.search(r'android:' + attribute + r'\([^\n]+\)=\(type 0x12\)0x(?:1|ffffffff)\b', xml.stdout, re.IGNORECASE):
+        print('Release APK has android:' + attribute + '=true.', file=sys.stderr)
+        sys.exit(1)
 print('APK manifest resources, identity, version and ARM64 ABI passed.')

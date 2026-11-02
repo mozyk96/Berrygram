@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3 — in development
+
+- Correct the test-only build configuration that caused normal Android installers to reject 1.0.2.
+- Verify release APKs are neither test-only nor debuggable before distribution.
+
 ## 1.0.2 — in development
 
 - Added resumable updater downloads with range validation and full-file digest verification; Android installer and real release tests remain pending.

@@ -40,7 +40,7 @@ try {
     $env:GRADLE_USER_HOME = $gradleHome
     Push-Location $PSScriptRoot
     try {
-        & $java -classpath 'gradle/wrapper/gradle-wrapper.jar' org.gradle.wrapper.GradleWrapperMain ':TMessagesProj_App:assembleAfatDebug' '-Pandroid.injected.build.abi=arm64-v8a' '-PforkAbi=arm64-v8a' '--no-daemon' '--max-workers=2' '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g'
+        & $java -classpath 'gradle/wrapper/gradle-wrapper.jar' org.gradle.wrapper.GradleWrapperMain ':TMessagesProj_App:assembleAfatDebug' '-PforkAbi=arm64-v8a' '--no-daemon' '--max-workers=2' '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g'
         if ($LASTEXITCODE -ne 0) { throw 'Gradle build failed; see the error above.' }
         $built = Join-Path $PSScriptRoot 'TMessagesProj_App\build\intermediates\apk\afat\debug\app.apk'
         if (-not (Test-Path $built)) { throw 'Gradle reported success but the APK was not found.' }
