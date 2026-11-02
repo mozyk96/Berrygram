@@ -54,6 +54,9 @@ import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
+import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.fork.panels.ForkPanelSettings;
+import org.telegram.messenger.fork.panels.PanelPolicy;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
@@ -155,6 +158,10 @@ public class ItemOptions {
 
     private boolean blur;
     private boolean blurForMenu;
+    private boolean explicitBlurForMenu;
+    private Drawable forkOriginalMenuBackground;
+    private Drawable forkAppliedMenuBackground;
+    private boolean forkOwnedMenuBlur;
     private boolean longPressSelectionEnabled = true;
 
     public ItemOptions setLongPressSelectionEnabled(boolean enabled) {
@@ -165,12 +172,14 @@ public class ItemOptions {
     public ItemOptions setBlur(boolean blur, boolean blurForMenu) {
         this.blur = blur;
         this.blurForMenu = blurForMenu;
+        this.explicitBlurForMenu = blurForMenu;
         return this;
     }
 
     public ItemOptions setBlur(boolean b) {
         this.blur = b;
         this.blurForMenu = b;
+        this.explicitBlurForMenu = b;
         return this;
     }
 
@@ -1132,7 +1141,7 @@ public class ItemOptions {
                 .setColorProvider(colorProvider)
                 .setPadding(dp(8))
                 .setHasPadding(true)
-                .setRadius(dp(12)));
+                .setRadius(dp(PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled()))));
         }
         return this;
     }
@@ -1205,6 +1214,7 @@ public class ItemOptions {
 
     public void setupSelectors() {
         if (layout == null) return;
+        final int radius = PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled());
 
         for (int j = 0; j < layout.getChildCount(); ++j) {
             View child = j == layout.getChildCount() - 1 ? lastLayout : layout.getChildAt(j);
@@ -1215,18 +1225,18 @@ public class ItemOptions {
                 final View first = popupLayout.getItemAt(0);
                 final View last = popupLayout.getItemAt(popupLayout.getItemsCount() - 1);
                 if (first instanceof ActionBarMenuSubItem) {
-                    ((ActionBarMenuSubItem) first).updateSelectorBackground(true, first == last, 12);
+                    ((ActionBarMenuSubItem) first).updateSelectorBackground(true, first == last, radius);
                 } else if (first instanceof MessagePreviewView.ToggleButton || first instanceof FrameLayout) {
-                    first.setBackground(Theme.createRadSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider), 12, first == last ? 12 : 0));
+                    first.setBackground(Theme.createRadSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider), radius, first == last ? radius : 0));
                 } else if (first != null && first.getBackground() instanceof RippleDrawable) {
-                    first.setBackground(Theme.createRadSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider), 12, first == last ? 12 : 0));
+                    first.setBackground(Theme.createRadSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider), radius, first == last ? radius : 0));
                 }
                 if (last instanceof ActionBarMenuSubItem) {
-                    ((ActionBarMenuSubItem) last).updateSelectorBackground(last == first, true, 12);
+                    ((ActionBarMenuSubItem) last).updateSelectorBackground(last == first, true, radius);
                 } else if (last instanceof MessagePreviewView.ToggleButton || last instanceof FrameLayout) {
-                    last.setBackground(Theme.createRadSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider), first == last ? 12 : 0, 12));
+                    last.setBackground(Theme.createRadSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider), first == last ? radius : 0, radius));
                 } else if (last != null && last.getBackground() instanceof RippleDrawable) {
-                    last.setBackground(Theme.createRadSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider), first == last ? 12 : 0, 12));
+                    last.setBackground(Theme.createRadSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider), first == last ? radius : 0, radius));
                 }
             }
         }
@@ -1245,6 +1255,19 @@ public class ItemOptions {
             return this;
         }
 
+        // Reuse Telegram's existing menu-backdrop capture only for simple anchored
+        // popups on devices where the user's blur/power policy permits it.
+        if (forkOwnedMenuBlur && lastLayout != null) {
+            if (lastLayout.getBackgroundDrawable() == forkAppliedMenuBackground) {
+                lastLayout.setBackgroundDrawable(forkOriginalMenuBackground);
+            }
+            forkOriginalMenuBackground = null;
+            forkAppliedMenuBackground = null;
+            forkOwnedMenuBlur = false;
+        }
+        blurForMenu = explicitBlurForMenu || (fragment != null && scrimView != null && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout
+                && !(lastLayout.getBackgroundDrawable() instanceof BlurredBackgroundDrawable)
+                && PanelPolicy.useGlass(ForkPanelSettings.enabled(), !SharedConfig.chatBlurEnabled(), Build.VERSION.SDK_INT, !SharedConfig.deviceIsLow()));
         setupSelectors();
 
         if (fixedWidthDp > 0) {
@@ -1503,9 +1526,14 @@ public class ItemOptions {
                 .setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider))
                 .setPadding(dp(8))
                 .setHasPadding(true)
-                .setRadius(dp(12));
+                .setRadius(dp(PanelPolicy.popupRadiusDp(ForkPanelSettings.enabled())));
 
             bg.setSourceOffset(X + this.translateX, Y + this.translateY);
+            if (!explicitBlurForMenu && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout) {
+                forkOriginalMenuBackground = lastLayout.getBackgroundDrawable();
+                forkAppliedMenuBackground = bg;
+                forkOwnedMenuBlur = true;
+            }
             layout.setBackground(bg);
         }
 
@@ -2011,10 +2039,12 @@ public class ItemOptions {
 
             if (blur || blurForMenu) {
                 blurPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+                final float originalScrimAlpha = scrimView.getAlpha();
                 scrimView.setAlpha(0.0f);
                 ScrimOptions.makeGlobalBlurBitmaps(pointContainer, (bitmapBg, bitmapOptions) -> {
-                    scrimView.setAlpha(1.0f);
+                    scrimView.setAlpha(originalScrimAlpha);
                     if (blur) blurBitmap = bitmapBg;
+                    else if (bitmapBg != null && !bitmapBg.isRecycled()) bitmapBg.recycle();
                     if (scrimBlur3SourceBitmap != null) {
                         scrimBlur3SourceBitmap.setBitmap(bitmapOptions);
                         Blur3Utils.checkBitmapSourceMatrixScale(scrimBlur3SourceBitmap, DimView.this);

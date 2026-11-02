@@ -143,8 +143,8 @@
     <string name="ForkMenuCopyPhone">Копіювати номер телефону</string>
     <string name="ForkVideoTitle">Відеоповідомлення</string>
     <string name="ForkVoiceTitle">Голосові повідомлення</string>
-    <string name="ForkPanelsTitle">Експериментальні панелі й меню</string>
-    <string name="ForkPanelsInfo">Експериментальний режим заокруглює меню. На підтримуваних пристроях використовується ефект скла Telegram; у режимі економії та на старіших пристроях вигляд простіший.</string>
+    <string name="ForkPanelsTitle">Оновлені меню</string>
+    <string name="ForkPanelsInfo">Заокруглені меню з розмитим фоном на підтримуваних пристроях. На старіших пристроях і в режимі економії вигляд простіший.</string>
     <string name="ForkVoiceMode">Якість запису</string>
     <string name="ForkVoiceStandard">Стандартна</string>
     <string name="ForkVoiceAuto">Автоматична</string>

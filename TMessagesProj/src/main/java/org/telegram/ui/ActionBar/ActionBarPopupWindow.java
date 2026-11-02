@@ -172,7 +172,7 @@ public class ActionBarPopupWindow extends PopupWindow {
                 forkStockBackground = getResources().getDrawable(resId).mutate();
                 forkGlassBackground = forkStyleEligible && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
                 if (forkGlassBackground) {
-                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(18), Color.WHITE);
+                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true)), Color.WHITE);
                     backgroundDrawable = forkExperimentalBackground;
                 } else {
                     backgroundDrawable = forkStockBackground;
@@ -470,7 +470,7 @@ public class ActionBarPopupWindow extends PopupWindow {
             if (forkStyleEligible && glass != forkGlassBackground) {
                 forkGlassBackground = glass;
                 if (glass && forkExperimentalBackground == null) {
-                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(18), Color.WHITE);
+                    forkExperimentalBackground = Theme.createRoundRectDrawable(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true)), Color.WHITE);
                 }
                 backgroundDrawable = glass ? forkExperimentalBackground : forkStockBackground;
                 backgroundDrawable.getPadding(bgPaddings);
@@ -513,7 +513,9 @@ public class ActionBarPopupWindow extends PopupWindow {
                         canvas.save();
                         canvas.clipRect(0, bgPaddings.top, getMeasuredWidth(), getMeasuredHeight());
                     }
-                    backgroundDrawable.setAlpha(org.telegram.messenger.fork.panels.PanelPolicy.popupAlpha(applyAlpha ? backAlpha : 255, forkGlassBackground));
+                    int requestedAlpha = applyAlpha ? backAlpha : 255;
+                    backgroundDrawable.setAlpha(backgroundDrawable instanceof org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable
+                        ? requestedAlpha : org.telegram.messenger.fork.panels.PanelPolicy.popupAlpha(requestedAlpha, forkGlassBackground));
                     if (shownFromBottom) {
                         final int height = getMeasuredHeight();
                         AndroidUtilities.rectTmp2.set(0, (int) (height * (1.0f - backScaleY)), (int) (getMeasuredWidth() * backScaleX), height);
@@ -572,7 +574,8 @@ public class ActionBarPopupWindow extends PopupWindow {
                         } else {
                             path.rewind();
                         }
-                        path.addRoundRect(AndroidUtilities.rectTmp, dp(12), dp(12), Path.Direction.CW);
+                        float gapRadius = dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(forkGlassBackground));
+                        path.addRoundRect(AndroidUtilities.rectTmp, gapRadius, gapRadius, Path.Direction.CW);
                         canvas.clipPath(path);
                         for (int i = 0; i < linearLayout.getChildCount(); i++) {
                             if (linearLayout.getChildAt(i) instanceof GapView && linearLayout.getChildAt(i).getVisibility() == View.VISIBLE) {

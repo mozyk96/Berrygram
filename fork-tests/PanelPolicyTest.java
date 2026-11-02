@@ -5,6 +5,8 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(!PanelPolicy.useGlass(true,true,33,true));
  check(!PanelPolicy.useGlass(true,false,32,true));
  check(!PanelPolicy.useGlass(true,false,33,false));
+ check(PanelPolicy.popupRadiusDp(true) == 24);
+ check(PanelPolicy.popupRadiusDp(false) == 12);
  check(PanelPolicy.popupAlpha(255, true) == 240);
  check(PanelPolicy.popupAlpha(128, true) == 120);
  check(PanelPolicy.popupAlpha(255, false) == 255);

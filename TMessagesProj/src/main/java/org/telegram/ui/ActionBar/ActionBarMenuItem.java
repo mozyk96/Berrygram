@@ -756,7 +756,7 @@ public class ActionBarMenuItem extends FrameLayout {
         if (forkMenuGlassApplied != null && forkMenuGlassApplied == enabled) return;
         popupLayout.setBackground(subMenuFactory.create(popupLayout, true)
                 .setColorProvider(subMenuProvider)
-                .setRadius(dp(enabled ? 18 : 12))
+                .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(enabled)))
                 .setPadding(dp(8)));
         forkMenuGlassApplied = enabled;
     }
@@ -820,7 +820,7 @@ public class ActionBarMenuItem extends FrameLayout {
                 if (subMenuFactory != null) {
                     frameLayout.setBackground(subMenuFactory.create(popupLayout, true)
                         .setColorProvider(subMenuProvider)
-                        .setRadius(dp(org.telegram.messenger.fork.panels.ForkPanelSettings.enabled() ? 18 : 12))
+                        .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(org.telegram.messenger.fork.panels.ForkPanelSettings.enabled())))
                         .setPadding(dp(8))
                         .setHasPadding(true));
                 } else {

@@ -143,8 +143,8 @@
     <string name="ForkMenuCopyPhone">Copy phone number</string>
     <string name="ForkVideoTitle">Video messages</string>
     <string name="ForkVoiceTitle">Voice messages</string>
-    <string name="ForkPanelsTitle">Experimental panels and menus</string>
-    <string name="ForkPanelsInfo">Rounded menus are enabled experimentally. On capable devices Telegram’s glass effect is used where available; power saving and older devices use a simpler appearance.</string>
+    <string name="ForkPanelsTitle">Updated menus</string>
+    <string name="ForkPanelsInfo">Rounded menus with a blurred backdrop where supported. On older devices or in power saving mode, menus use a simpler appearance.</string>
     <string name="ForkVoiceMode">Recording quality</string>
     <string name="ForkVoiceStandard">Standard</string>
     <string name="ForkVoiceAuto">Automatic</string>
