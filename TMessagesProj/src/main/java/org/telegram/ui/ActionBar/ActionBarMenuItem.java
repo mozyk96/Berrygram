@@ -749,6 +749,21 @@ public class ActionBarMenuItem extends FrameLayout {
     private BlurredBackgroundDrawableViewFactory subMenuFactory;
     private BlurredBackgroundProvider subMenuProvider;
     private Boolean forkMenuGlassApplied;
+    private android.graphics.Bitmap forkMenuBitmap;
+    private Drawable forkMenuOriginalBackground;
+    private int forkMenuOriginalColor;
+
+    private void clearForkMenuGlass() {
+        if (forkMenuOriginalBackground != null && popupLayout != null) {
+            popupLayout.setBackgroundDrawable(forkMenuOriginalBackground);
+            popupLayout.setBackgroundColor(forkMenuOriginalColor);
+            forkMenuOriginalBackground = null;
+        }
+        if (forkMenuBitmap != null) {
+            forkMenuBitmap.recycle();
+            forkMenuBitmap = null;
+        }
+    }
 
     private void updateForkMenuBlur() {
         if (popupLayout == null || subMenuFactory == null) return;
@@ -867,6 +882,7 @@ public class ActionBarMenuItem extends FrameLayout {
             return false;
         });
         popupWindow.setOnDismissListener(() -> {
+            clearForkMenuGlass();
             onDismiss();
             if (subMenuDelegate != null) {
                 subMenuDelegate.onHideSubMenu();
@@ -885,7 +901,36 @@ public class ActionBarMenuItem extends FrameLayout {
         //}
         processedPopupClick = false;
         popupWindow.setFocusable(true);
+        final android.graphics.Bitmap[] capture = {null};
+        boolean captureGlass = org.telegram.messenger.fork.panels.PanelPolicy.captureMenuGlass(
+                org.telegram.messenger.fork.panels.ForkPanelSettings.enabled(),
+                !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS),
+                Build.VERSION.SDK_INT, !org.telegram.messenger.SharedConfig.deviceIsLow(), subMenuFactory != null,
+                topView == null && popupLayout.hasForkStyleBackground());
+        if (captureGlass) AndroidUtilities.makeGlobalBlurBitmap(bitmap -> capture[0] = bitmap, 15);
         updateOrShowPopup(true, container.getMeasuredWidth() == 0);
+        if (capture[0] != null && popupWindow.isShowing()) {
+            forkMenuBitmap = capture[0];
+            forkMenuOriginalBackground = popupLayout.getBackgroundDrawable();
+            forkMenuOriginalColor = popupLayout.getBackgroundColor();
+            org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap source = new org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap();
+            source.setBitmap(forkMenuBitmap);
+            android.graphics.Matrix matrix = new android.graphics.Matrix();
+            matrix.setScale((float) AndroidUtilities.displaySize.x / forkMenuBitmap.getWidth(),
+                    (float) (AndroidUtilities.displaySize.y + AndroidUtilities.statusBarHeight + AndroidUtilities.navigationBarHeight) / forkMenuBitmap.getHeight());
+            source.setMatrix(matrix);
+            org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable bg = new BlurredBackgroundDrawableViewFactory(source)
+                    .create(popupLayout, true).setColorProvider(BlurredBackgroundProviderImpl.scrimMenuBackground(resourcesProvider))
+                    .setPadding(dp(8)).setHasPadding(true)
+                    .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true)));
+            int[] location = new int[2];
+            popupLayout.getLocationOnScreen(location);
+            bg.setSourceOffset(location[0], location[1]);
+            popupLayout.setBackgroundDrawable(bg);
+            popupLayout.invalidate();
+        } else if (capture[0] != null) {
+            capture[0].recycle();
+        }
         popupLayout.updateRadialSelectors();
         if (popupLayout.getSwipeBack() != null) {
             popupLayout.getSwipeBack().closeForeground(false);
@@ -907,6 +952,7 @@ public class ActionBarMenuItem extends FrameLayout {
     public void setOnMenuDismiss(Utilities.Callback<Boolean> onMenuDismiss) {
         if (popupWindow != null) {
             popupWindow.setOnDismissListener(() -> {
+                clearForkMenuGlass();
                 if (onMenuDismiss != null) {
                     onMenuDismiss.run(processedPopupClick);
                 }
