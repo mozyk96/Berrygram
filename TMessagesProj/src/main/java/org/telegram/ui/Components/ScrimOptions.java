@@ -335,6 +335,7 @@ public class ScrimOptions extends Dialog {
             if (withoutView != null) {
                 withoutView.setVisibility(View.VISIBLE);
             }
+            if (bitmapBg == null || bitmapOptions == null) return;
             blurBitmap = bitmapBg;
 
             blurBitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -348,6 +349,10 @@ public class ScrimOptions extends Dialog {
 
     public static void makeGlobalBlurBitmaps(Utilities.Callback2<Bitmap, Bitmap> bitmaps) {
         AndroidUtilities.makeGlobalBlurBitmap(bitmap -> {
+            if (bitmap == null) {
+                bitmaps.run(null, null);
+                return;
+            }
             final ColorMatrix colorMatrixBg = new ColorMatrix();
             AndroidUtilities.adjustSaturationColorMatrix(colorMatrixBg, Theme.isCurrentThemeDark() ? .04f : +.25f);
             AndroidUtilities.adjustBrightnessColorMatrix(colorMatrixBg, Theme.isCurrentThemeDark() ? -.04f : -.07f);
@@ -377,6 +382,10 @@ public class ScrimOptions extends Dialog {
             return;
         }
         AndroidUtilities.makeGlobalBlurBitmap(bitmap -> {
+            if (bitmap == null) {
+                bitmaps.run(null, null);
+                return;
+            }
             if (cutToContainer.getWidth() > 0 && cutToContainer.getHeight() > 0) {
                 int[] pos = new int[2];
                 cutToContainer.getLocationOnScreen(pos);
@@ -385,7 +394,9 @@ public class ScrimOptions extends Dialog {
                 final int w = Utilities.clamp((int) ((float) (cutToContainer.getWidth()) / AndroidUtilities.displaySize.x * bitmap.getWidth()), bitmap.getWidth() - x, 0);
                 final int h = Utilities.clamp((int) ((float) (cutToContainer.getHeight()) / (AndroidUtilities.displaySize.y + AndroidUtilities.statusBarHeight + AndroidUtilities.navigationBarHeight) * bitmap.getHeight()), bitmap.getHeight() - y, 0);
                 if ((x != 0 || y != 0 || w != bitmap.getWidth() || h != bitmap.getHeight()) && w > 0 && h > 0) {
-                    bitmap = Bitmap.createBitmap(bitmap, x, y, w, h);
+                    Bitmap cropped = Bitmap.createBitmap(bitmap, x, y, w, h);
+                    if (cropped != bitmap) bitmap.recycle();
+                    bitmap = cropped;
                 }
             }
 
