@@ -191,4 +191,5 @@
     <string name="ForkUpdateChannel">Update channel</string>
     <string name="ForkUpdateChannelStable">Stable</string>
     <string name="ForkUpdateChannelBeta">Beta</string>
+    <string name="ForkUpdateNoSpace">Not enough storage space to download the update.</string>
 </resources>

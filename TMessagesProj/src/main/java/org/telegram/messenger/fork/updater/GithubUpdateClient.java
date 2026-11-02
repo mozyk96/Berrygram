@@ -27,6 +27,9 @@ public final class GithubUpdateClient {
     public static final class NoStableReleaseException extends java.io.IOException {
         public NoStableReleaseException() { super("No compatible release found or repository unavailable"); }
     }
+    public static final class InsufficientStorageException extends java.io.IOException {
+        public InsufficientStorageException() { super("Not enough storage space for update"); }
+    }
     public static final class Release {
         public String version, notes, url, digest;
         public long size;
@@ -130,7 +133,7 @@ public final class GithubUpdateClient {
             if (offset >= release.size) offset=0;
             long available = dir.getUsableSpace();
             if (offset == 0 && partial.isFile()) available = Math.min(Long.MAX_VALUE - partial.length(), available) + partial.length();
-            if (!UpdatePolicy.enoughSpace(available, release.size, offset)) throw new java.io.IOException("Not enough storage space for update");
+            if (!UpdatePolicy.enoughSpace(available, release.size, offset)) throw new InsufficientStorageException();
             connection=open(release.url,offset);
             boolean append=offset>0 && connection.getResponseCode()==206;
             if (append && !("bytes " + offset + "-" + (release.size - 1) + "/" + release.size).equals(connection.getHeaderField("Content-Range"))) throw new SecurityException("Invalid update range");

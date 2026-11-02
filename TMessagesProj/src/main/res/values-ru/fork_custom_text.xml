@@ -144,4 +144,5 @@
     <string name="ForkUpdateChannel">Канал обновлений</string>
     <string name="ForkUpdateChannelStable">Стабильный</string>
     <string name="ForkUpdateChannelBeta">Бета</string>
+    <string name="ForkUpdateNoSpace">Недостаточно свободного места для загрузки обновления.</string>
 </resources>

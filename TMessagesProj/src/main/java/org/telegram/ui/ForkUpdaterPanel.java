@@ -159,6 +159,10 @@ public final class ForkUpdaterPanel extends LinearLayout {
         });
     }
     private void fail(Exception e) {
+        if (e instanceof GithubUpdateClient.InsufficientStorageException) {
+            AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateNoSpace); render(false); });
+            return;
+        }
         if (e instanceof GithubUpdateClient.NoStableReleaseException) {
             AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateNoStableRelease); render(false); });
             return;
