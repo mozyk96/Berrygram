@@ -128,6 +128,9 @@ public final class GithubUpdateClient {
                 return partial;
             }
             if (offset >= release.size) offset=0;
+            long available = dir.getUsableSpace();
+            if (offset == 0 && partial.isFile()) available = Math.min(Long.MAX_VALUE - partial.length(), available) + partial.length();
+            if (!UpdatePolicy.enoughSpace(available, release.size, offset)) throw new java.io.IOException("Not enough storage space for update");
             connection=open(release.url,offset);
             boolean append=offset>0 && connection.getResponseCode()==206;
             if (append && !("bytes " + offset + "-" + (release.size - 1) + "/" + release.size).equals(connection.getHeaderField("Content-Range"))) throw new SecurityException("Invalid update range");

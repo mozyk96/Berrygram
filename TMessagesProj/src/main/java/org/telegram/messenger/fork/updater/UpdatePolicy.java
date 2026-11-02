@@ -4,6 +4,9 @@ import java.util.Locale;
 /** Strict source and asset validation for stable, full APK releases. */
 public final class UpdatePolicy {
     private UpdatePolicy() {}
+    public static boolean enoughSpace(long available, long total, long existing) {
+        return available >= 0 && total > 0 && existing >= 0 && existing <= total && available >= total - existing;
+    }
     public static boolean validIdentity(String installedPackage, long installedVersion, java.util.Set<String> installedSigners,
                                         String candidatePackage, long candidateVersion, java.util.Set<String> candidateSigners) {
         return installedPackage != null && installedPackage.equals(candidatePackage) && candidateVersion > installedVersion
