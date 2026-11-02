@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Matrix;
 import android.graphics.RuntimeShader;
 import android.graphics.Shader;
 import androidx.annotation.RequiresApi;
@@ -23,6 +24,7 @@ public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap
     private RuntimeShader shader;
     private BitmapShader bitmapShader;
     private Bitmap shaderBitmap;
+    private final Matrix shaderMatrix = new Matrix();
     private boolean unavailable;
 
     @Override public void draw(Canvas canvas, float left, float top, float right, float bottom) {
@@ -33,13 +35,18 @@ public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap
         }
         try {
             if (shader == null) shader = new RuntimeShader(PROGRAM);
-            if (bitmapShader == null || bitmap != shaderBitmap) {
+            boolean changedBitmap = bitmapShader == null || bitmap != shaderBitmap;
+            if (changedBitmap) {
                 shaderBitmap = bitmap;
                 bitmapShader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            }
+            // RuntimeShader captures the child shader's native instance when it is bound.
+            if (changedBitmap || !shaderMatrix.equals(getMatrix())) {
+                shaderMatrix.set(getMatrix());
+                bitmapShader.setLocalMatrix(shaderMatrix);
                 shader.setInputShader("backdrop", bitmapShader);
                 paint.setShader(shader);
             }
-            bitmapShader.setLocalMatrix(getMatrix());
             shader.setFloatUniform("bounds", left, top, right, bottom);
             shader.setFloatUniform("strength", org.telegram.messenger.fork.panels.ForkPanelSettings.effectStrength() / 100f);
             canvas.drawRect(left, top, right, bottom, paint);
