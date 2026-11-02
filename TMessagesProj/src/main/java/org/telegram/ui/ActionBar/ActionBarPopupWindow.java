@@ -616,6 +616,10 @@ public class ActionBarPopupWindow extends PopupWindow {
             return backgroundDrawable;
         }
 
+        public boolean hasForkStyleBackground() {
+            return forkStyleEligible && backgroundDrawable != null && (backgroundDrawable == forkStockBackground || backgroundDrawable == forkExperimentalBackground);
+        }
+
         public int getItemsCount() {
             return linearLayout.getChildCount();
         }

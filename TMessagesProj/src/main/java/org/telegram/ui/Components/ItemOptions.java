@@ -50,6 +50,7 @@ import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
@@ -1266,8 +1267,8 @@ public class ItemOptions {
             forkOwnedMenuBlur = false;
         }
         blurForMenu = explicitBlurForMenu || (fragment != null && scrimView != null && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout
-                && !(lastLayout.getBackgroundDrawable() instanceof BlurredBackgroundDrawable)
-                && PanelPolicy.useGlass(ForkPanelSettings.enabled(), !SharedConfig.chatBlurEnabled(), Build.VERSION.SDK_INT, !SharedConfig.deviceIsLow()));
+                && lastLayout.hasForkStyleBackground()
+                && PanelPolicy.useGlass(ForkPanelSettings.enabled(), !LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS), Build.VERSION.SDK_INT, !SharedConfig.deviceIsLow()));
         setupSelectors();
 
         if (fixedWidthDp > 0) {
