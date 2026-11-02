@@ -5603,7 +5603,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         if (MessagesController.getInstance(currentAccount).getPrintingString(currentDialogId, getTopicId(), true) != null) {
             CharSequence factual = MessagesController.getInstance(currentAccount).getForkOriginalPrintingString(currentDialogId, getTopicId());
             if (!TextUtils.isEmpty(factual)) {
-                sb.append(getContext().getString(R.string.ForkTextActualStatus)).append(": ").append(factual).append(". ");
+                sb.append(org.telegram.ui.ForkLocale.get(R.string.ForkTextActualStatus)).append(": ").append(factual).append(". ");
             }
         }
         if (unreadCount > 0) {

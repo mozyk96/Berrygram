@@ -33,6 +33,14 @@ public class CustomTextManagerTest {
   CustomTextManager.replaceAll(Collections.singletonMap("Online","imported"));
   check("personal".equals(CustomTextManager.getPersonal(0,42,"Online")));
   check("Friend".equals(CustomTextManager.alias(0,42)));
+  CustomTextManager.setPersonal(0,42,"Online",null);
+  check(CustomTextManager.getPersonal(0,42,"Online")==null);
+  check("imported".equals(CustomTextManager.get("Online")));
+  CustomTextManager.setPersonal(0,42,"Online","personal");
+  CustomTextManager.set("Online",null);
+  check(CustomTextManager.get("Online")==null);
+  check("personal".equals(CustomTextManager.getPersonal(0,42,"Online")));
+  CustomTextManager.set("Online","imported");
   CustomTextManager.activatePack("custom");
   check("legacy".equals(CustomTextManager.get("Online")));
   CustomTextManager.activatePack(pack);

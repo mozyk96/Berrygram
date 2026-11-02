@@ -31,4 +31,8 @@ for attribute in ('testOnly', 'debuggable'):
     if re.search(r'android:' + attribute + r'\([^\n]+\)=\(type 0x12\)0x(?:1|ffffffff)\b', xml.stdout, re.IGNORECASE):
         print('Release APK has android:' + attribute + '=true.', file=sys.stderr)
         sys.exit(1)
+configs = subprocess.run([args.aapt, 'dump', 'configurations', args.apk], text=True, capture_output=True, errors='replace')
+if configs.returncode or not any(line.strip() == 'uk' or line.strip().startswith('uk-') for line in configs.stdout.splitlines()):
+    print('Release APK is missing Ukrainian resources.', file=sys.stderr)
+    sys.exit(1)
 print('APK manifest resources, identity, version and ARM64 ABI passed.')

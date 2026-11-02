@@ -644,7 +644,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
         items.add(UItem.asCustomShadow(topView, 200 - 12));
 
-        items.add(SettingCell.Factory.of(27, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_chat, ApplicationLoader.applicationContext.getString(R.string.ForkSettingsTitle), null));
+        items.add(SettingCell.Factory.of(27, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_chat, ForkLocale.get(R.string.ForkSettingsTitle), null));
         items.add(UItem.asShadow(null));
 
         accountNumbers.clear();

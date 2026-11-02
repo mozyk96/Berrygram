@@ -33,6 +33,7 @@
     <string name="ForkTextUnknownChat">Чат</string>
     <string name="ForkTextOverrides">Змінені фрази</string>
     <string name="ForkTextResetChat">Скинути фрази чату</string>
+    <string name="ForkTextResetChatConfirm">Скинути власні фрази для цього чату?</string>
     <string name="ForkTextResetDone">Власні фрази скинуто</string>
     <string name="ForkTextActiveCount">Активних замін: %1$d</string>
     <string name="ForkTextActualStatus">Фактичний статус</string>

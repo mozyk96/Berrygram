@@ -47,7 +47,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         preferences = context.getSharedPreferences("fork_updater_panel", Context.MODE_PRIVATE);
         expanded = preferences.getBoolean("expanded", false);
         if (preferences.getBoolean("interrupted", false)) {
-            status = context.getString(R.string.ForkUpdateInterrupted);
+            status = ForkLocale.get(R.string.ForkUpdateInterrupted);
             preferences.edit().putBoolean("interrupted", false).apply();
         }
         try { version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName; } catch (Exception ignored) { }
@@ -62,7 +62,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         TextSettingsCell header = new TextSettingsCell(c);
         header.setBackground(Theme.getSelectorDrawable(false));
         String headerValue = version + (release != null ? "  •  " + release.version + " ↑" : "") + (expanded ? "  ▴" : "  ▾");
-        header.setTextAndValue(c.getString(R.string.ForkUpdatePanel), headerValue, expanded);
+        header.setTextAndValue(ForkLocale.get(R.string.ForkUpdatePanel), headerValue, expanded);
         header.setIcon(R.drawable.msg_download);
         header.setOnClickListener(v -> { expanded = !expanded; preferences.edit().putBoolean("expanded", expanded).apply(); render(true); }); addView(header);
         if (!expanded) return;
@@ -80,18 +80,18 @@ public final class ForkUpdaterPanel extends LinearLayout {
         if (verified != null) addAction(R.string.ForkUpdateInstall, this::install, false);
     }
     private void addAction(int label, Runnable action, boolean divider) {
-        TextSettingsCell cell = new TextSettingsCell(getContext()); cell.setText(getContext().getString(label), divider);
+        TextSettingsCell cell = new TextSettingsCell(getContext()); cell.setText(ForkLocale.get(label), divider);
         cell.setBackground(Theme.getSelectorDrawable(false));
         cell.setOnClickListener(v -> action.run()); addView(cell);
     }
     private void updateDetails() {
         if (details == null || !expanded || disposed) return;
-        StringBuilder text = new StringBuilder(getContext().getString(R.string.ForkUpdateCurrent, version));
+        StringBuilder text = new StringBuilder(ForkLocale.get(R.string.ForkUpdateCurrent, version));
         long lastChecked = preferences.getLong("last_checked", 0);
-        if (lastChecked > 0) text.append("\n").append(getContext().getString(R.string.ForkUpdateLastChecked, DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(new Date(lastChecked))));
+        if (lastChecked > 0) text.append("\n").append(ForkLocale.get(R.string.ForkUpdateLastChecked, DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(new Date(lastChecked))));
         if (!status.isEmpty()) text.append("\n").append(status);
         if (release != null) {
-            text.append("\n").append(getContext().getString(R.string.ForkUpdateAvailable, release.version, release.size / 1048576f));
+            text.append("\n").append(ForkLocale.get(R.string.ForkUpdateAvailable, release.version, release.size / 1048576f));
             if (release.notes != null && !release.notes.isEmpty()) text.append("\n\n").append(release.notes.length() > 600 ? release.notes.substring(0, 600) + "…" : release.notes);
         }
         details.setText(text);
@@ -117,48 +117,48 @@ public final class ForkUpdaterPanel extends LinearLayout {
         edit.apply();
     }
     private void check() {
-        busy = true; preferences.edit().putBoolean("interrupted", true).apply(); release = null; verified = null; saveRelease(null); status = getContext().getString(R.string.ForkUpdateChecking); render(false);
+        busy = true; preferences.edit().putBoolean("interrupted", true).apply(); release = null; verified = null; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
         worker.execute(() -> {
             try {
                 GithubUpdateClient.Release found = GithubUpdateClient.latest(REPOSITORY);
                 Integer comparison = UpdatePolicy.compareVersions(found.version, version);
                 if (comparison == null) throw new SecurityException("Invalid release version");
                 AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); release = comparison > 0 ? found : null;
-                    status = comparison > 0 ? "" : getContext().getString(R.string.ForkUpdateLatest); saveRelease(release); preferences.edit().putLong("last_checked", System.currentTimeMillis()).apply(); render(false); });
+                    status = comparison > 0 ? "" : ForkLocale.get(R.string.ForkUpdateLatest); saveRelease(release); preferences.edit().putLong("last_checked", System.currentTimeMillis()).apply(); render(false); });
             } catch (Exception e) { fail(e); }
         });
     }
     private void download() {
         GithubUpdateClient.Release candidate = release; if (candidate == null) return;
-        Context app = getContext().getApplicationContext(); busy = true; preferences.edit().putBoolean("interrupted", true).apply(); status = getContext().getString(R.string.ForkUpdateDownloading, 0); render(false);
+        Context app = getContext().getApplicationContext(); busy = true; preferences.edit().putBoolean("interrupted", true).apply(); status = ForkLocale.get(R.string.ForkUpdateDownloading, 0); render(false);
         worker.execute(() -> {
             try {
                 File file = GithubUpdateClient.downloadAndVerify(app, candidate, (received, total) -> AndroidUtilities.runOnUIThread(() -> {
                     if (disposed) return; int percent = (int)(received * 100 / total);
-                    status = getContext().getString(R.string.ForkUpdateDownloading, percent); updateDetails();
+                    status = ForkLocale.get(R.string.ForkUpdateDownloading, percent); updateDetails();
                     if (progress != null) { progress.setIndeterminate(false); progress.setProgress(percent); }
                 }));
                 AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); verified = file;
-                    status = getContext().getString(R.string.ForkUpdateVerified); render(false); });
+                    status = ForkLocale.get(R.string.ForkUpdateVerified); render(false); });
             } catch (Exception e) { fail(e); }
         });
     }
     private void fail(Exception e) {
         if (e instanceof GithubUpdateClient.NoStableReleaseException) {
-            AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = getContext().getString(R.string.ForkUpdateNoStableRelease); render(false); });
+            AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateNoStableRelease); render(false); });
             return;
         }
         String message = e.getMessage();
         final String detail = message == null || message.isEmpty() || message.length() > 160
                 ? e.getClass().getSimpleName() : message;
-        AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = getContext().getString(R.string.ForkUpdateFailure, detail); render(false); });
+        AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateFailure, detail); render(false); });
     }
     private void install() {
         Context c = parent.getParentActivity(); if (c == null || verified == null || !verified.isFile()) return;
         try {
             if (Build.VERSION.SDK_INT >= 26 && !c.getPackageManager().canRequestPackageInstalls()) {
-                parent.showDialog(new AlertDialog.Builder(c).setTitle(c.getString(R.string.ForkUpdateInstall))
-                    .setMessage(c.getString(R.string.ForkUpdatePermissionInfo))
+                parent.showDialog(new AlertDialog.Builder(c).setTitle(ForkLocale.get(R.string.ForkUpdateInstall))
+                    .setMessage(ForkLocale.get(R.string.ForkUpdatePermissionInfo))
                     .setPositiveButton(c.getString(android.R.string.ok), (dialog, which) -> {
                         try { c.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + c.getPackageName()))); }
                         catch (Exception e) { fail(e); }

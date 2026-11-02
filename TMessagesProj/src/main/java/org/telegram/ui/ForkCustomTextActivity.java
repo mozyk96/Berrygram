@@ -20,6 +20,7 @@ import org.telegram.messenger.fork.text.CustomTextManager;
 import org.telegram.messenger.fork.text.CustomTextRegistry;
 import org.telegram.messenger.fork.text.CustomTextValidator;
 import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
@@ -47,12 +48,17 @@ public class ForkCustomTextActivity extends BaseFragment {
     private long selectedDialogId;
     private TextView globalTab;
     private TextView personalTab;
+    private ActionBarMenuItem resetButton;
     @Override public View createView(Context context) {
-        actionBar.setTitle(org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkCustomTextTitle));
+        actionBar.setTitle(ForkLocale.get(R.string.ForkCustomTextTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
-            @Override public void onItemClick(int id) { if (id == -1 && onBackPressed(true)) finishFragment(); }
+            @Override public void onItemClick(int id) {
+                if (id == -1 && onBackPressed(true)) finishFragment();
+                else if (id == 1) confirmReset();
+            }
         });
+        resetButton = actionBar.createMenu().addItem(1, R.drawable.msg_reset);
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
@@ -66,14 +72,14 @@ public class ForkCustomTextActivity extends BaseFragment {
             ForkSettingsLayout.interactive(tab);
             tabs.addView(tab, new LinearLayout.LayoutParams(0, AndroidUtilities.dp(48), 1));
         }
-        globalTab.setText(context.getString(R.string.ForkTextGlobalTab));
-        personalTab.setText(context.getString(R.string.ForkTextPersonalTab));
+        globalTab.setText(ForkLocale.get(R.string.ForkTextGlobalTab));
+        personalTab.setText(ForkLocale.get(R.string.ForkTextPersonalTab));
         globalTab.setOnClickListener(v -> { personalMode = false; selectedDialogId = 0; addingPhrase = false; renderRows(); });
         personalTab.setOnClickListener(v -> { personalMode = true; selectedDialogId = 0; addingPhrase = false; renderRows(); });
         root.addView(tabs);
         search = new EditText(context);
         search.setSingleLine(true);
-        search.setHint(org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkCustomTextSearch));
+        search.setHint(ForkLocale.get(R.string.ForkCustomTextSearch));
         search.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         search.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         int pad = AndroidUtilities.dp(16);
@@ -100,12 +106,15 @@ public class ForkCustomTextActivity extends BaseFragment {
         String query = search.getText().toString().trim().toLowerCase(Locale.ROOT);
         globalTab.setSelected(!personalMode);
         personalTab.setSelected(personalMode);
+        boolean canReset = !personalMode || selectedDialogId != 0;
+        resetButton.setVisibility(canReset ? View.VISIBLE : View.GONE);
+        resetButton.setContentDescription(ForkLocale.get(personalMode ? R.string.ForkTextResetChat : R.string.ForkCustomTextResetAll));
         globalTab.setTextColor(Theme.getColor(personalMode ? Theme.key_windowBackgroundWhiteGrayText : Theme.key_windowBackgroundWhiteBlueHeader));
         personalTab.setTextColor(Theme.getColor(personalMode ? Theme.key_windowBackgroundWhiteBlueHeader : Theme.key_windowBackgroundWhiteGrayText));
         if (personalMode && selectedDialogId == 0) {
             if (query.isEmpty()) {
                 TextSettingsCell add = new TextSettingsCell(context);
-                add.setText(context.getString(R.string.ForkTextAddChat), true);
+                add.setText(ForkLocale.get(R.string.ForkTextAddChat), true);
                 add.setOnClickListener(v -> choosePersonalChat());
                 rows.addView(add);
             }
@@ -120,7 +129,7 @@ public class ForkCustomTextActivity extends BaseFragment {
             }
             if (ids.isEmpty() && query.isEmpty()) {
                 TextView empty = new TextView(context);
-                empty.setText(context.getString(R.string.ForkTextEmptyChats));
+                empty.setText(ForkLocale.get(R.string.ForkTextEmptyChats));
                 empty.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
                 empty.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(16), AndroidUtilities.dp(16), 0);
                 rows.addView(empty);
@@ -133,54 +142,54 @@ public class ForkCustomTextActivity extends BaseFragment {
             title.setOnClickListener(v -> { selectedDialogId = 0; addingPhrase = false; renderRows(); });
             rows.addView(title);
             TextSettingsCell add = new TextSettingsCell(context);
-            add.setText(context.getString(R.string.ForkTextAddPhrase), true);
+            add.setText(ForkLocale.get(R.string.ForkTextAddPhrase), true);
             add.setOnClickListener(v -> { addingPhrase = true; renderRows(); search.requestFocus(); });
             rows.addView(add);
         }
         if (!personalMode && query.isEmpty()) {
             TextSettingsCell filter = new TextSettingsCell(context);
-            filter.setText(context.getString(changedOnly ? R.string.ForkTextShowAll : R.string.ForkTextChangedOnly), true);
+            filter.setText(ForkLocale.get(changedOnly ? R.string.ForkTextShowAll : R.string.ForkTextChangedOnly), true);
             filter.setOnClickListener(v -> { changedOnly = !changedOnly; renderRows(); });
             rows.addView(filter);
             TextSettingsCell activePack = new TextSettingsCell(context);
             String packId = CustomTextManager.activePack();
-            String packName = "custom".equals(packId) ? context.getString(R.string.ForkTextDefaultPack) : CustomTextManager.packName(packId);
-            activePack.setTextAndValue(context.getString(R.string.ForkTextPacks), packName, true);
+            String packName = "custom".equals(packId) ? ForkLocale.get(R.string.ForkTextDefaultPack) : CustomTextManager.packName(packId);
+            activePack.setTextAndValue(ForkLocale.get(R.string.ForkTextPacks), packName, true);
             activePack.setOnClickListener(v -> selectPack());
             rows.addView(activePack);
             TextSettingsCell newPack = new TextSettingsCell(context);
-            newPack.setText(context.getString(R.string.ForkTextNewPack), true);
+            newPack.setText(ForkLocale.get(R.string.ForkTextNewPack), true);
             newPack.setOnClickListener(v -> createPack());
             rows.addView(newPack);
             if (!"custom".equals(packId)) {
                 TextSettingsCell deletePack = new TextSettingsCell(context);
-                deletePack.setText(context.getString(R.string.ForkTextDeletePack), true);
+                deletePack.setText(ForkLocale.get(R.string.ForkTextDeletePack), true);
                 deletePack.setOnClickListener(v -> new AlertDialog.Builder(getParentActivity())
-                    .setMessage(context.getString(R.string.ForkTextDeletePackConfirm))
+                    .setMessage(ForkLocale.get(R.string.ForkTextDeletePackConfirm))
                     .setPositiveButton(getString(R.string.Delete), (d, w) -> { CustomTextManager.deletePack(packId); changed(); })
                     .setNegativeButton(getString(R.string.Cancel), null).show());
                 rows.addView(deletePack);
             }
             TextSettingsCell pack = new TextSettingsCell(context);
-            pack.setText(context.getString(CustomTextManager.isEnabled() ? R.string.ForkTextUseStandard : R.string.ForkTextUseCustom), true);
+            pack.setText(ForkLocale.get(CustomTextManager.isEnabled() ? R.string.ForkTextUseStandard : R.string.ForkTextUseCustom), true);
             pack.setOnClickListener(v -> { CustomTextManager.setEnabled(!CustomTextManager.isEnabled()); changed(); });
             rows.addView(pack);
             TextSettingsCell importCell = new TextSettingsCell(context);
-            importCell.setText(context.getString(R.string.ForkTextImport), true);
+            importCell.setText(ForkLocale.get(R.string.ForkTextImport), true);
             importCell.setOnClickListener(v -> {
                 Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(i, 701);
             });
             rows.addView(importCell);
             TextSettingsCell exportCell = new TextSettingsCell(context);
-            exportCell.setText(context.getString(R.string.ForkTextExport), true);
+            exportCell.setText(ForkLocale.get(R.string.ForkTextExport), true);
             exportCell.setOnClickListener(v -> {
                 Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE, "fork-phrases.json");
                 startActivityForResult(i, 702);
             });
             rows.addView(exportCell);
             TextSettingsCell aliases = new TextSettingsCell(context);
-            aliases.setText(context.getString(R.string.ForkTextAliases), true);
+            aliases.setText(ForkLocale.get(R.string.ForkTextAliases), true);
             aliases.setOnClickListener(v -> chooseAliasDialog());
             rows.addView(aliases);
         }
@@ -194,7 +203,7 @@ public class ForkCustomTextActivity extends BaseFragment {
             }
         }
         TextView counter = new TextView(context);
-        counter.setText(context.getString(R.string.ForkTextActiveCount, activeCount));
+        counter.setText(ForkLocale.get(R.string.ForkTextActiveCount, activeCount));
         counter.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         counter.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(12), AndroidUtilities.dp(16), 0);
         rows.addView(counter);
@@ -216,15 +225,16 @@ public class ForkCustomTextActivity extends BaseFragment {
                     header = true;
                 }
                 TextDetailSettingsCell cell = new TextDetailSettingsCell(context);
-                cell.setTextAndValue(entry.key + " · " + original, custom == null ? original : custom, true);
+                cell.setTextAndValue(original, custom == null ? original : custom, true);
+                ForkSettingsLayout.interactive(cell);
                 cell.setOnClickListener(v -> edit(entry, original));
                 rows.addView(cell);
             }
             if (header && query.isEmpty()) {
                 TextSettingsCell resetCategory = new TextSettingsCell(context);
-                resetCategory.setText(context.getString(R.string.ForkTextResetCategory), false);
+                resetCategory.setText(ForkLocale.get(R.string.ForkTextResetCategory), false);
                 resetCategory.setOnClickListener(v -> new AlertDialog.Builder(getParentActivity())
-                    .setMessage(context.getString(R.string.ForkTextResetCategoryConfirm))
+                    .setMessage(ForkLocale.get(R.string.ForkTextResetCategoryConfirm))
                     .setPositiveButton(getString(R.string.Reset), (d, w) -> { resetWithUndo(personalMode ? selectedDialogId : 0, category, null); })
                     .setNegativeButton(getString(R.string.Cancel), null).show());
                 rows.addView(resetCategory);
@@ -232,23 +242,28 @@ public class ForkCustomTextActivity extends BaseFragment {
         }
         if (query.isEmpty()) {
             TextSettingsCell reset = new TextSettingsCell(context);
-            reset.setText(context.getString(personalMode ? R.string.ForkTextResetChat : R.string.ForkCustomTextResetAll), false);
-            reset.setOnClickListener(v -> new AlertDialog.Builder(getParentActivity())
-                .setMessage(org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkCustomTextResetConfirm))
-                .setPositiveButton(getString(R.string.Reset), (d, w) -> { resetWithUndo(personalMode ? selectedDialogId : 0, null, null); })
-                .setNegativeButton(getString(R.string.Cancel), null).show());
+            reset.setText(ForkLocale.get(personalMode ? R.string.ForkTextResetChat : R.string.ForkCustomTextResetAll), false);
+            reset.setOnClickListener(v -> confirmReset());
             rows.addView(reset);
         }
     }
+    private void confirmReset() {
+        if (getParentActivity() == null || personalMode && selectedDialogId == 0) return;
+        final long dialogId = personalMode ? selectedDialogId : 0;
+        showDialog(new AlertDialog.Builder(getParentActivity())
+            .setMessage(ForkLocale.get(personalMode ? R.string.ForkTextResetChatConfirm : R.string.ForkCustomTextResetConfirm))
+            .setPositiveButton(getString(R.string.Reset), (d, w) -> resetWithUndo(dialogId, null, null))
+            .setNegativeButton(getString(R.string.Cancel), null).create());
+    }
     private String categoryTitle(Context context, CustomTextRegistry.Category category) {
         switch (category) {
-            case ONLINE: return context.getString(R.string.ForkTextCategoryOnline);
-            case LAST_SEEN: return context.getString(R.string.ForkTextCategoryLastSeen);
-            case TYPING: return context.getString(R.string.ForkTextCategoryTyping);
-            case RECORDING: return context.getString(R.string.ForkTextCategoryRecording);
-            case SENDING: return context.getString(R.string.ForkTextCategorySending);
-            case MEDIA: return context.getString(R.string.ForkTextCategoryMedia);
-            default: return context.getString(R.string.ForkTextCategoryNavigation);
+            case ONLINE: return ForkLocale.get(R.string.ForkTextCategoryOnline);
+            case LAST_SEEN: return ForkLocale.get(R.string.ForkTextCategoryLastSeen);
+            case TYPING: return ForkLocale.get(R.string.ForkTextCategoryTyping);
+            case RECORDING: return ForkLocale.get(R.string.ForkTextCategoryRecording);
+            case SENDING: return ForkLocale.get(R.string.ForkTextCategorySending);
+            case MEDIA: return ForkLocale.get(R.string.ForkTextCategoryMedia);
+            default: return ForkLocale.get(R.string.ForkTextCategoryNavigation);
         }
     }
     private void edit(CustomTextRegistry.Entry entry, String original) {
@@ -260,17 +275,17 @@ public class ForkCustomTextActivity extends BaseFragment {
         content.setPadding(pad, 0, pad, 0);
         TextView originalView = new TextView(context);
         originalView.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-        originalView.setText(org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkCustomTextOriginal) + ": " + original);
+        originalView.setText(ForkLocale.get(R.string.ForkCustomTextOriginal) + ": " + original);
         content.addView(originalView);
         if (entry.status) {
             TextView hint = new TextView(context);
             hint.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-            hint.setText(context.getString(R.string.ForkTextActualHint));
+            hint.setText(ForkLocale.get(R.string.ForkTextActualHint));
             content.addView(hint);
         }
         EditText input = new EditText(context);
         input.setSingleLine(false);
-        input.setHint(org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkCustomTextHint));
+        input.setHint(ForkLocale.get(R.string.ForkCustomTextHint));
         input.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
         final long editDialogId = personalMode ? selectedDialogId : 0;
         input.setText(editDialogId == 0 ? CustomTextManager.get(entry.key) : CustomTextManager.getPersonal(currentAccount, editDialogId, entry.key));
@@ -278,7 +293,7 @@ public class ForkCustomTextActivity extends BaseFragment {
         TextView preview = new TextView(context);
         preview.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
         content.addView(preview);
-        Runnable update = () -> preview.setText(org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkCustomTextPreview) + ": " + input.getText());
+        Runnable update = () -> preview.setText(ForkLocale.get(R.string.ForkCustomTextPreview) + ": " + input.getText());
         input.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             public void onTextChanged(CharSequence s, int start, int before, int count) { update.run(); }
@@ -286,18 +301,18 @@ public class ForkCustomTextActivity extends BaseFragment {
         });
         update.run();
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(entry.key);
+        builder.setTitle(original);
         builder.setView(content);
         builder.setPositiveButton(getString(R.string.Save), null);
         builder.setNegativeButton(getString(R.string.Cancel), null);
-        builder.setNeutralButton(org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkCustomTextReset), (d, w) -> resetWithUndo(editDialogId, null, entry.key));
+        builder.setNeutralButton(ForkLocale.get(R.string.ForkCustomTextReset), (d, w) -> resetWithUndo(editDialogId, null, entry.key));
         AlertDialog dialog = builder.create();
         if (showDialog(dialog) != null) {
             View save = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
             if (save != null) save.setOnClickListener(v -> {
                 String value = input.getText().toString();
                 if (!CustomTextValidator.valid(original, value)) {
-                    input.setError(context.getString(R.string.ForkCustomTextInvalid));
+                    input.setError(ForkLocale.get(R.string.ForkCustomTextInvalid));
                     return;
                 }
                 if (editDialogId == 0) CustomTextManager.set(entry.key, value);
@@ -327,7 +342,7 @@ public class ForkCustomTextActivity extends BaseFragment {
             org.telegram.tgnet.TLRPC.Chat chat = getMessagesController().getChat(-dialogId);
             if (chat != null && chat.title != null) return chat.title;
         }
-        return org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkTextUnknownChat);
+        return ForkLocale.get(R.string.ForkTextUnknownChat);
     }
     private void choosePersonalChat() {
         Bundle args = new Bundle();
@@ -353,9 +368,9 @@ public class ForkCustomTextActivity extends BaseFragment {
         CharSequence[] names = new CharSequence[ids.size()];
         for (int i = 0; i < ids.size(); i++) {
             String id = ids.get(i);
-            names[i] = (id.equals(CustomTextManager.activePack()) ? "✓ " : "") + ("custom".equals(id) ? context.getString(R.string.ForkTextDefaultPack) : CustomTextManager.packName(id));
+            names[i] = (id.equals(CustomTextManager.activePack()) ? "✓ " : "") + ("custom".equals(id) ? ForkLocale.get(R.string.ForkTextDefaultPack) : CustomTextManager.packName(id));
         }
-        showDialog(new AlertDialog.Builder(context).setTitle(context.getString(R.string.ForkTextPacks))
+        showDialog(new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkTextPacks))
             .setItems(names, (dialog, which) -> { CustomTextManager.activatePack(ids.get(which)); changed(); })
             .setNegativeButton(getString(R.string.Cancel), null).create());
     }
@@ -363,18 +378,18 @@ public class ForkCustomTextActivity extends BaseFragment {
         Context context = getParentActivity();
         if (context == null) return;
         EditText name = new EditText(context);
-        name.setSingleLine(true); name.setHint(context.getString(R.string.ForkTextPackName));
+        name.setSingleLine(true); name.setHint(ForkLocale.get(R.string.ForkTextPackName));
         name.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
         LinearLayout container = new LinearLayout(context);
         int pad = AndroidUtilities.dp(20); container.setPadding(pad, 0, pad, 0); container.addView(name);
-        AlertDialog dialog = new AlertDialog.Builder(context).setTitle(context.getString(R.string.ForkTextNewPack))
+        AlertDialog dialog = new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkTextNewPack))
             .setView(container).setPositiveButton(getString(R.string.Save), null)
             .setNegativeButton(getString(R.string.Cancel), null).create();
         if (showDialog(dialog) != null) {
             View save = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
             if (save != null) save.setOnClickListener(v -> {
                 String value = name.getText().toString().trim();
-                if (!LocalAliasPolicy.valid(value) || value.length() > 40) { name.setError(context.getString(R.string.ForkTextInvalidPackName)); return; }
+                if (!LocalAliasPolicy.valid(value) || value.length() > 40) { name.setError(ForkLocale.get(R.string.ForkTextInvalidPackName)); return; }
                 CustomTextManager.createPack(value); dialog.dismiss(); changed();
             });
         }
@@ -396,7 +411,7 @@ public class ForkCustomTextActivity extends BaseFragment {
         if (!previous.isEmpty()) AndroidUtilities.runOnUIThread(() -> {
             if (getParentActivity() == null) return;
             org.telegram.ui.Components.BulletinFactory.of(this).createUndoBulletin(
-                getParentActivity().getString(R.string.ForkTextResetDone), () -> {
+                ForkLocale.get(R.string.ForkTextResetDone), () -> {
                     if (!packId.equals(CustomTextManager.activePack()) || dialogId != 0 && ownerId != getUserConfig().getClientUserId()) return;
                     for (Map.Entry<String, String> entry : previous.entrySet()) {
                         if (dialogId == 0) CustomTextManager.set(entry.getKey(), entry.getValue());
@@ -431,26 +446,26 @@ public class ForkCustomTextActivity extends BaseFragment {
         int pad = AndroidUtilities.dp(20); content.setPadding(pad, 0, pad, 0);
         TextView info = new TextView(context);
         info.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-        info.setText(context.getString(R.string.ForkTextAliasInfo));
+        info.setText(ForkLocale.get(R.string.ForkTextAliasInfo));
         content.addView(info);
         EditText input = new EditText(context);
         input.setSingleLine(true);
         input.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-        input.setHint(context.getString(R.string.ForkTextAliasHint));
+        input.setHint(ForkLocale.get(R.string.ForkTextAliasHint));
         input.setText(CustomTextManager.alias(currentAccount, dialogId));
         content.addView(input);
         AlertDialog.Builder b = new AlertDialog.Builder(context);
-        b.setTitle(context.getString(R.string.ForkTextAliases)); b.setView(content);
+        b.setTitle(ForkLocale.get(R.string.ForkTextAliases)); b.setView(content);
         b.setPositiveButton(getString(R.string.Save), null);
         b.setNegativeButton(getString(R.string.Cancel), null);
-        b.setNeutralButton(org.telegram.messenger.ApplicationLoader.applicationContext.getString(R.string.ForkCustomTextReset), (d, w) -> { CustomTextManager.setAlias(currentAccount, dialogId, null); changed(); });
+        b.setNeutralButton(ForkLocale.get(R.string.ForkCustomTextReset), (d, w) -> { CustomTextManager.setAlias(currentAccount, dialogId, null); changed(); });
         AlertDialog dialog = b.create();
         if (showDialog(dialog) != null) {
             View save = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
             if (save != null) save.setOnClickListener(v -> {
                 String value = input.getText().toString().trim();
                 if (!LocalAliasPolicy.valid(value)) {
-                    input.setError(context.getString(R.string.ForkTextAliasInvalid));
+                    input.setError(ForkLocale.get(R.string.ForkTextAliasInvalid));
                     return;
                 }
                 CustomTextManager.setAlias(currentAccount, dialogId, value);
@@ -493,7 +508,7 @@ public class ForkCustomTextActivity extends BaseFragment {
                 }
                 if (!CustomTextPackValidator.valid(originals, values)) throw new IllegalArgumentException();
                 // Import into a new pack so an existing pack is never silently replaced.
-                CustomTextManager.createPack(getParentActivity().getString(R.string.ForkTextImportedPack));
+                CustomTextManager.createPack(ForkLocale.get(R.string.ForkTextImportedPack));
                 CustomTextManager.replaceAll(values);
                 changed();
             } else if (requestCode == 702) {
@@ -509,7 +524,7 @@ public class ForkCustomTextActivity extends BaseFragment {
                 }
             }
         } catch (Exception e) {
-            showDialog(new AlertDialog.Builder(getParentActivity()).setMessage(getParentActivity().getString(R.string.ForkTextPackError)).setPositiveButton(getString(R.string.OK), null).create());
+            showDialog(new AlertDialog.Builder(getParentActivity()).setMessage(ForkLocale.get(R.string.ForkTextPackError)).setPositiveButton(getString(R.string.OK), null).create());
         }
     }
 

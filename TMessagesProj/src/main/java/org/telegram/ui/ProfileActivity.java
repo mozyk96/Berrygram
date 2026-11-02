@@ -11506,7 +11506,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 onlineTextView[a].setOnLongClickListener(factualStatus == null ? null : v -> {
                     if (getParentActivity() == null) return false;
                     showDialog(new AlertDialog.Builder(getParentActivity())
-                        .setTitle(getParentActivity().getString(R.string.ForkTextActualStatus))
+                        .setTitle(org.telegram.ui.ForkLocale.get(R.string.ForkTextActualStatus))
                         .setMessage(factualStatus)
                         .setPositiveButton(getString(R.string.OK), null).create());
                     return true;

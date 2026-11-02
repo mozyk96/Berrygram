@@ -160,6 +160,15 @@ android {
 
         multiDexEnabled true
 
+        // Match the app variant when a single-ABI fork build is requested.
+        def forkAbi = project.findProperty("forkAbi")
+        if (forkAbi != null) {
+            if (!(forkAbi in ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"])) {
+                throw new GradleException("Unsupported forkAbi: " + forkAbi)
+            }
+            ndk { abiFilters forkAbi }
+        }
+
         externalNativeBuild {
             cmake {
                 version '3.22.1'

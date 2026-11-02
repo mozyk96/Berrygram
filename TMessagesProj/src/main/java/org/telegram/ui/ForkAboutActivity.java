@@ -15,7 +15,7 @@ import org.telegram.ui.ActionBar.Theme;
 /** Basic attribution and installed-version information. */
 public final class ForkAboutActivity extends BaseFragment {
     @Override public View createView(Context context) {
-        actionBar.setTitle(context.getString(R.string.ForkAboutTitle));
+        actionBar.setTitle(ForkLocale.get(R.string.ForkAboutTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
@@ -26,7 +26,7 @@ public final class ForkAboutActivity extends BaseFragment {
         content.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(20), AndroidUtilities.dp(20), AndroidUtilities.dp(20));
         content.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
         TextView title = new TextView(context);
-        title.setText(context.getString(R.string.ForkAppName));
+        title.setText(ForkLocale.get(R.string.ForkAppName));
         title.setTextSize(22);
         title.setTypeface(AndroidUtilities.bold());
         title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
@@ -35,9 +35,9 @@ public final class ForkAboutActivity extends BaseFragment {
         String version = "";
         try { version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName; }
         catch (PackageManager.NameNotFoundException ignored) { }
-        details.setText(context.getString(R.string.ForkIntroDisclosure) + "\n\n" +
-            context.getString(R.string.ForkAboutVersion, version == null ? "" : version) + "\n\n" +
-            context.getString(R.string.ForkAboutAttribution));
+        details.setText(ForkLocale.get(R.string.ForkIntroDisclosure) + "\n\n" +
+            ForkLocale.get(R.string.ForkAboutVersion, version == null ? "" : version) + "\n\n" +
+            ForkLocale.get(R.string.ForkAboutAttribution));
         details.setTextSize(16);
         details.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         details.setPadding(0, AndroidUtilities.dp(12), 0, 0);

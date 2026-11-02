@@ -33,6 +33,7 @@
     <string name="ForkTextUnknownChat">Chat</string>
     <string name="ForkTextOverrides">Overrides</string>
     <string name="ForkTextResetChat">Reset this chat</string>
+    <string name="ForkTextResetChatConfirm">Reset custom phrases for this chat?</string>
     <string name="ForkTextResetDone">Custom phrases reset</string>
     <string name="ForkTextActiveCount">Active overrides: %1$d</string>
     <string name="ForkTextActualStatus">Actual status</string>

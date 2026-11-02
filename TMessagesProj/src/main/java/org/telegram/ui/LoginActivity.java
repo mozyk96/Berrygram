@@ -2883,7 +2883,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 return;
             }
             if (activityMode == MODE_LOGIN && (BuildVars.APP_ID == 0 || BuildVars.APP_HASH.isEmpty())) {
-                needShowAlert(getString(R.string.ForkAppName), getString(R.string.ForkCredentialsMissing));
+                needShowAlert(ForkLocale.get(R.string.ForkAppName), ForkLocale.get(R.string.ForkCredentialsMissing));
                 needHideProgress(false);
                 return;
             }

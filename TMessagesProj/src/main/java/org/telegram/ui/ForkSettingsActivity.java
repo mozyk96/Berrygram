@@ -23,7 +23,7 @@ import org.telegram.ui.Cells.TextDetailSettingsCell;
 public final class ForkSettingsActivity extends BaseFragment {
     private ForkUpdaterPanel updater;
     @Override public View createView(Context context) {
-        actionBar.setTitle(context.getString(R.string.ForkSettingsTitle));
+        actionBar.setTitle(ForkLocale.get(R.string.ForkSettingsTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
@@ -32,11 +32,11 @@ public final class ForkSettingsActivity extends BaseFragment {
         LinearLayout rows = ForkSettingsLayout.section(context);
         TextDetailSettingsCell video = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(video);
-        video.setTextAndValueAndIcon(context.getString(R.string.ForkVideoTitle), context.getString(R.string.ForkVideoSubtitle), R.drawable.msg_video, true);
+        video.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkVideoTitle), ForkLocale.get(R.string.ForkVideoSubtitle), R.drawable.msg_video, true);
         video.setOnClickListener(v -> presentFragment(new ForkVideoSettingsActivity())); rows.addView(video);
         TextDetailSettingsCell voice = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(voice);
-        voice.setTextAndValueAndIcon(context.getString(R.string.ForkVoiceTitle), context.getString(R.string.ForkVoiceSubtitle), R.drawable.msg_filled_data_voice, true);
+        voice.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkVoiceTitle), ForkLocale.get(R.string.ForkVoiceSubtitle), R.drawable.msg_filled_data_voice, true);
         voice.setOnClickListener(v -> presentFragment(new ForkVoiceSettingsActivity())); rows.addView(voice);
         TextCheckCell panels = new TextCheckCell(context, 71);
         ForkSettingsLayout.interactive(panels);
@@ -44,14 +44,14 @@ public final class ForkSettingsActivity extends BaseFragment {
         panelIcon.setImageResource(R.drawable.msg_palette);
         panelIcon.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.MULTIPLY));
         panels.addView(panelIcon, LayoutHelper.createFrame(24, 24, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL, 17, 0, 17, 0));
-        panels.setTextAndCheck(context.getString(R.string.ForkPanelsTitle), ForkPanelSettings.enabled(), true);
+        panels.setTextAndCheck(ForkLocale.get(R.string.ForkPanelsTitle), ForkPanelSettings.enabled(), true);
         panels.setOnClickListener(v -> { boolean enabled = !ForkPanelSettings.enabled(); ForkPanelSettings.setEnabled(enabled); panels.setChecked(enabled); });
         rows.addView(panels);
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
-        info.setText(context.getString(R.string.ForkPanelsInfo)); rows.addView(info);
+        info.setText(ForkLocale.get(R.string.ForkPanelsInfo)); rows.addView(info);
         TextDetailSettingsCell text = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(text);
-        text.setTextAndValueAndIcon(context.getString(R.string.ForkCustomTextTitle), context.getString(R.string.ForkTextSubtitle), R.drawable.msg_edit, false);
+        text.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkCustomTextTitle), ForkLocale.get(R.string.ForkTextSubtitle), R.drawable.msg_edit, false);
         text.setOnClickListener(v -> presentFragment(new ForkCustomTextActivity())); rows.addView(text);
         ForkSettingsLayout.addSection(content, rows);
         LinearLayout updates = ForkSettingsLayout.section(context);

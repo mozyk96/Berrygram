@@ -314,7 +314,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
             setOnLongClickListener(v -> {
                 if (TextUtils.isEmpty(forkActualSubtitle) || parentFragment.getParentActivity() == null) return false;
                 parentFragment.showDialog(new org.telegram.ui.ActionBar.AlertDialog.Builder(getContext())
-                    .setTitle(getContext().getString(R.string.ForkTextActualStatus))
+                    .setTitle(org.telegram.ui.ForkLocale.get(R.string.ForkTextActualStatus))
                     .setMessage(forkActualSubtitle)
                     .setPositiveButton(getString(R.string.OK), null).create());
                 return true;
@@ -1679,7 +1679,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
         if (!TextUtils.isEmpty(forkActualSubtitle)) {
             sb.append("\n");
-            sb.append(getContext().getString(R.string.ForkTextActualStatus));
+            sb.append(org.telegram.ui.ForkLocale.get(R.string.ForkTextActualStatus));
             sb.append(": ");
             sb.append(forkActualSubtitle);
         }

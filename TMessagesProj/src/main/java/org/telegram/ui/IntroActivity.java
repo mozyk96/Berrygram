@@ -136,7 +136,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
                 LocaleController.getString(R.string.Page6Title)
         };
         messages = new String[]{
-                LocaleController.getString(R.string.ForkIntroDisclosure),
+                ForkLocale.get(R.string.ForkIntroDisclosure),
                 LocaleController.getString(R.string.Page2Message),
                 LocaleController.getString(R.string.Page3Message),
                 LocaleController.getString(R.string.Page5Message),
@@ -148,7 +148,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
 
     @Override
     public View createView(Context context) {
-        titles[0] = LocaleController.getString(R.string.ForkAppName);
+        titles[0] = ForkLocale.get(R.string.ForkAppName);
 
 
         actionBar.setAddToContainer(false);

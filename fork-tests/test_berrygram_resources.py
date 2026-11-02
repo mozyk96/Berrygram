@@ -1,5 +1,6 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
+import re
 root = Path(__file__).resolve().parent.parent
 res = root / 'TMessagesProj/src/main/res/xml'
 old = ET.parse(res / 'berrygram_backup_rules.xml').getroot()
@@ -23,8 +24,17 @@ for line in (root / 'gradle.properties').read_text(encoding='utf-8').splitlines(
         key, value = line.split('=', 1)
         if key in {'APP_VERSION_NAME', 'APP_VERSION_CODE', 'APP_PACKAGE'}:
             properties[key] = value.strip()
-assert properties.get('APP_VERSION_NAME') == '1.0.3'
-assert int(properties['APP_VERSION_CODE']) > 7239
+assert properties.get('APP_VERSION_NAME') == '1.0.4'
+assert int(properties['APP_VERSION_CODE']) > 7240
 assert int(properties.get('APP_VERSION_CODE', '0')) > 0
 assert properties.get('APP_PACKAGE') == 'org.example.forkclient'
+resources = root / 'TMessagesProj/src/main/res'
+def strings(path):
+    return {item.attrib['name']: ''.join(item.itertext()) for item in ET.parse(path).getroot() if item.tag == 'string'}
+english = strings(resources / 'values/fork_custom_text.xml')
+ukrainian = strings(resources / 'values-uk/fork_custom_text.xml')
+assert english.keys() == ukrainian.keys(), 'Ukrainian BerryGram translations are incomplete'
+format_arg = re.compile(r'%(?:\d+\$)?[-#+ 0,(]*\d*(?:\.\d+)?[a-zA-Z%]')
+for key in english:
+    assert sorted(format_arg.findall(english[key])) == sorted(format_arg.findall(ukrainian[key])), key
 print('BerryGram backup, manifest and release metadata checks passed')

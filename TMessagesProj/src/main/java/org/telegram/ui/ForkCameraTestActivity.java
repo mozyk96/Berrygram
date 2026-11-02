@@ -41,7 +41,7 @@ public final class ForkCameraTestActivity extends BaseFragment {
         status.setText(R.string.ForkCameraPreviewWaiting);
     };
     @Override public View createView(Context c) {
-        actionBar.setTitle(c.getString(R.string.ForkCameraPreviewTitle));
+        actionBar.setTitle(ForkLocale.get(R.string.ForkCameraPreviewTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
@@ -65,9 +65,9 @@ public final class ForkCameraTestActivity extends BaseFragment {
         status.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(8), AndroidUtilities.dp(16), AndroidUtilities.dp(8));
         status.setText(R.string.ForkCameraPreviewInfo);
         content.addView(status);
-        start = new TextSettingsCell(c); start.setCanDisable(true); start.setText(c.getString(R.string.ForkCameraPreviewStart), true);
+        start = new TextSettingsCell(c); start.setCanDisable(true); start.setText(ForkLocale.get(R.string.ForkCameraPreviewStart), true);
         start.setOnClickListener(v -> startPreview()); content.addView(start);
-        flip = new TextSettingsCell(c); flip.setCanDisable(true); flip.setText(c.getString(R.string.ForkCameraPreviewFlip), false);
+        flip = new TextSettingsCell(c); flip.setCanDisable(true); flip.setText(ForkLocale.get(R.string.ForkCameraPreviewFlip), false);
         flip.setEnabled(false); flip.setOnClickListener(v -> { if (camera != null && availableFront && availableBack) camera.switchCamera(); });
         content.addView(flip);
         android.widget.ScrollView scroll = new android.widget.ScrollView(c);

@@ -18,10 +18,10 @@ public final class ForkRoundCameraShortcuts {
         int[] names = {R.string.ForkCameraStandard, R.string.ForkCameraFront, R.string.ForkCameraBack, R.string.ForkCameraLast, R.string.ForkCameraGesture};
         String current = RoundCameraSettings.mode();
         CharSequence[] labels = new CharSequence[modes.length];
-        for (int i = 0; i < modes.length; i++) labels[i] = (modes[i].equals(current) ? "✓ " : "") + context.getString(names[i]);
+        for (int i = 0; i < modes.length; i++) labels[i] = (modes[i].equals(current) ? "✓ " : "") + ForkLocale.get(names[i]);
         parent.showDialog(new AlertDialog.Builder(context)
-            .setTitle(context.getString(R.string.ForkRoundCameraTitle))
-            .setMessage(context.getString(R.string.ForkCameraFallback))
+            .setTitle(ForkLocale.get(R.string.ForkRoundCameraTitle))
+            .setMessage(ForkLocale.get(R.string.ForkCameraFallback))
             .setItems(labels, (dialog, index) -> { RoundCameraSettings.setMode(modes[index]); if (onChanged != null) onChanged.run(); })
             .setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
     }
@@ -33,15 +33,15 @@ public final class ForkRoundCameraShortcuts {
         String[] modes = {"standard", "auto", "custom"};
         int[] labels = {R.string.ForkVideoQualityStandard, R.string.ForkVideoQualityAuto, R.string.ForkVideoQualityCustom};
         CharSequence[] choices = new CharSequence[modes.length];
-        for (int i = 0; i < modes.length; i++) choices[i] = (modes[i].equals(mode) ? "✓ " : "") + context.getString(labels[i])
+        for (int i = 0; i < modes.length; i++) choices[i] = (modes[i].equals(mode) ? "✓ " : "") + ForkLocale.get(labels[i])
                 + ("custom".equals(modes[i]) && "custom".equals(mode) ? " (" + (RoundCameraSettings.customBitrate() / 1000) + " kbps)" : "");
-        parent.showDialog(new AlertDialog.Builder(context).setTitle(context.getString(R.string.ForkVideoQualityTitle))
-            .setMessage(context.getString(R.string.ForkVideoQualityDescription))
+        parent.showDialog(new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkVideoQualityTitle))
+            .setMessage(ForkLocale.get(R.string.ForkVideoQualityDescription))
             .setItems(choices, (dialog, which) -> {
                 if (which != 2) { RoundCameraSettings.setQuality(modes[which], 0); if (onChanged != null) onChanged.run(); return; }
                 int[] rates = {500000, 1000000, 1500000, 2500000, 4000000};
                 CharSequence[] items = {"0.5 Mbps", "1 Mbps", "1.5 Mbps", "2.5 Mbps", "4 Mbps"};
-                parent.showDialog(new AlertDialog.Builder(context).setTitle(context.getString(R.string.ForkVideoQualityBitrate))
+                parent.showDialog(new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkVideoQualityBitrate))
                     .setItems(items, (d, selected) -> { RoundCameraSettings.setQuality("custom", rates[selected]); if (onChanged != null) onChanged.run(); })
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
             }).setNegativeButton(LocaleController.getString(R.string.Cancel), null).create());
