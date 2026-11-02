@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0-beta.1 — public testing
+
+- Add selectable popup styles, graphic preferences and a color picker; hardware rendering and broad component coverage remain unverified.
+- Add floating headers to BerryGram settings pages; layout, camera, account and media flows need device testing.
+- Add Stable/Beta update channels and prerelease version ordering. Existing 1.1.4 installs require a one-time manual Beta download.
+- Main chat-list header and full 1.2.0 visual overhaul remain in development.
+
 ## 1.0.4 — in development
 
 - Keep the Ukrainian BerryGram resources in release APKs and follow the language selected in Telegram.
