@@ -2101,9 +2101,9 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
             listViewMini.setVisibility(View.INVISIBLE);
             recyclerListView.setVisibility(View.VISIBLE);
         } else if (currentState == COLLAPSED_STATE) {
-            listViewMini.setVisibility(View.VISIBLE);
-            recyclerListView.setVisibility(View.INVISIBLE);
-            layoutManager.scrollToPositionWithOffset(0,  0);
+            listViewMini.setVisibility(floatingCompactHeader ? View.INVISIBLE : View.VISIBLE);
+            recyclerListView.setVisibility(floatingCompactHeader ? View.VISIBLE : View.INVISIBLE);
+            if (!floatingCompactHeader) layoutManager.scrollToPositionWithOffset(0,  0);
             MessagesController.getInstance(currentAccount).getStoriesController().scheduleSort();
             if (globalCancelable != null) {
                 globalCancelable.cancel();
@@ -2249,7 +2249,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     }
 
     private void checkUi_titleVisibility() {
-        final float progress = MathUtils.clamp(Math.min(collapsedProgress, collapsedProgress2), 0, 1);
+        final float progress = floatingCompactHeader ? 0f : MathUtils.clamp(Math.min(collapsedProgress, collapsedProgress2), 0, 1);
         final float titleVisibility = animatorHasTitleText.getFloatValue();
         final float logoVisibility = 1f - titleVisibility;
         final float titleAlpha = titleVisibility * progress;

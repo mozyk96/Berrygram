@@ -632,6 +632,8 @@ public class ActionBarMenu extends LinearLayout {
         this.onLayoutListener = listener;
     }
 
+    public boolean isGlassMode() { return glassMode; }
+
     public void setGlassMode(boolean glassMode) {
         this.glassMode = glassMode;
     }

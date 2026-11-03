@@ -905,7 +905,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 final boolean doNotClip = child == topPanelLayout || child == filterTabsView;
                 if (!doNotClip) {
                     canvas.clipRect(0, usesFloatingMainHeader() ? getMainHeaderSafeInset()
-                            : -getY() + getActionBarTop() + getActionBarFullHeight(), getMeasuredWidth(), getMeasuredHeight());
+                            : getActionBarTop() + getActionBarFullHeight(), getMeasuredWidth(), getMeasuredHeight());
                 }
                 if (slideFragmentProgress != 1f) {
                     if (slideFragmentLite) {
@@ -957,6 +957,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         @Override
         protected void dispatchDraw(Canvas canvas) {
+            if (usesFloatingMainHeader()) updateForkHeaderSurfaces();
             if (Build.VERSION.SDK_INT >= 31 && scrollableViewNoiseSuppressor != null) {
                 blur3_InvalidateBlur();
             }
@@ -2086,7 +2087,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         pos = Math.max(1, pos);
                     }
                     ignoreLayout = true;
-                    parentPage.layoutManager.scrollToPositionWithOffset(pos, (int) (top - lastListPadding + scrollAdditionalOffset + parentPage.pageAdditionalOffset));
+                    int restoredOffset = (int) (top - lastListPadding + scrollAdditionalOffset + parentPage.pageAdditionalOffset);
+                    if (isArchive()) restoredOffset = org.telegram.messenger.fork.panels.HeaderGeometry.archiveInitialOffset(pos, firstLayout, restoredOffset, (int) scrollYOffset);
+                    parentPage.layoutManager.scrollToPositionWithOffset(pos, restoredOffset);
                     ignoreLayout = false;
                 }
             } else if (pos == RecyclerView.NO_POSITION && firstLayout) {
@@ -4225,7 +4228,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         setStoriesOvercroll(viewPage, newOverscroll);
                         return super.scrollVerticallyBy(measuredDy, recycler, state);
                     }
-                    final boolean hasStories = DialogsActivity.this.hasStories && communityId == 0 && !(actionBar != null && actionBar.isActionModeShowed());
+                    final boolean hasStories = DialogsActivity.this.hasStories && !usesFloatingMainHeader() && communityId == 0 && !(actionBar != null && actionBar.isActionModeShowed());
                     int pTop = viewPage.listView.getPaddingTop();
                     int realTopPadding = pTop;
                     if (hasStories && !rightSlidingDialogContainer.hasFragment() && !fixScrollYAfterArchiveOpened) {
@@ -5754,6 +5757,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private boolean checkAutoscrollToStories(ViewPage viewPage) {
+        if (usesFloatingMainHeader()) return false;
         if (!rightSlidingDialogContainer.hasFragment()) {
             int scrollY = (int) -scrollYOffset;
             int actionBarHeight = getMaxScrollYOffset();
@@ -12841,6 +12845,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         return true;
     }
 
+    private void applyFloatingStoriesState(boolean peersVisible) {
+        // Peer arrival does not insert/remove the native expanded 81dp story row.
+        // The compact row also hosts the genuine self recorder entry.
+        hasStories = animateToHasStories = peersVisible;
+        progressToShowStories = peersVisible ? 1f : 0f;
+        dialogStoriesCell.setVisibility(dialogStoriesCellVisible && !isInPreviewMode() ? View.VISIBLE : View.GONE);
+        if (storiesVisibilityAnimator2 == null) progressToDialogStoriesCell = dialogStoriesCellVisible ? 1f : 0f;
+        scrollAdditionalOffset = 0;
+        setScrollY(0);
+    }
+
     public void updateStoriesVisibility(boolean animated) {
         if (dialogStoriesCell == null || storiesVisibilityAnimator != null || rightSlidingDialogContainer != null && rightSlidingDialogContainer.hasFragment() || searchIsShowed || actionBar == null || actionBar.isActionModeShowed() || onlySelect) {
             return;
@@ -12862,7 +12877,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         hasOnlySlefStories = onlySelfStories;
 
         boolean oldStoriesCellVisibility = dialogStoriesCellVisible;
-        dialogStoriesCellVisible = onlySelfStories || newVisibility;
+        // The existing self StoryCell opens the real recorder; it is not a fake story.
+        // Keep it reachable on the main screen before any followed peer publishes.
+        boolean showRecorderEntry = isForkMainHeader() && getMessagesController().storiesEnabled();
+        dialogStoriesCellVisible = showRecorderEntry || onlySelfStories || newVisibility;
 
         if (newVisibility || dialogStoriesCellVisible) {
             dialogStoriesCell.updateItems(animated, dialogStoriesCellVisible != oldStoriesCellVisibility);
@@ -12908,6 +12926,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
             }
         }
+        if (usesFloatingMainHeader()) {
+            applyFloatingStoriesState(newVisibility);
+            return;
+        }
         if (newVisibility == animateToHasStories) {
             return;
         }
@@ -12950,10 +12972,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 public void onAnimationEnd(Animator animation) {
                     storiesVisibilityAnimator = null;
                     hasStories = newVisibility;
-                    if (!hasStories && !hasOnlySlefStories) {
-                        dialogStoriesCell.setVisibility(View.GONE);
-                    }
-                    if (!newVisibility) {
+                    dialogStoriesCell.setVisibility(dialogStoriesCellVisible && !isInPreviewMode() ? View.VISIBLE : View.GONE);
+                    if (usesFloatingMainHeader()) {
+                        applyFloatingStoriesState(newVisibility);
+                    } else if (!newVisibility) {
                         setScrollY(0);
                         scrollAdditionalOffset = dp(DialogStoriesCell.HEIGHT_IN_DP);
                     } else {
@@ -12976,7 +12998,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         } else {
             progressToShowStories = newVisibility ? 1f : 0;
             hasStories = newVisibility;
-            dialogStoriesCell.setVisibility((hasStories || hasOnlySlefStories) && !isInPreviewMode() ? View.VISIBLE : View.GONE);
+            dialogStoriesCell.setVisibility(dialogStoriesCellVisible && !isInPreviewMode() ? View.VISIBLE : View.GONE);
             if (!newVisibility) {
                 setScrollY(0);
             } else {
@@ -14251,7 +14273,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     // The main list has a dedicated search button; do not reserve a second,
     // collapsed search row. Search itself keeps its normal 48dp input field.
     private boolean usesFloatingMainHeader() {
-        return isForkMainHeader() && !searchIsShowed && progressToActionMode == 0f
+        return isForkMainHeader() && !searchIsShowed && searchAnimationProgress == 0f && progressToActionMode == 0f
                 && !actionBar.isActionModeShowed() && !animatorDoneButtonVisible.getValue()
                 && (rightSlidingDialogContainer == null || !rightSlidingDialogContainer.hasFragment());
     }
@@ -14261,18 +14283,19 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private int getMainHeaderOverlayHeight() {
-        return getMainHeaderSafeInset() + ActionBar.getCurrentActionBarHeight();
+        return getMainHeaderSafeInset() + Math.max(dp(60), ActionBar.getCurrentActionBarHeight() + dp(4));
     }
 
     private int getMainHeaderHeight() {
         if (forkFloatingMainHeader != null && usesFloatingMainHeader()) {
-            // Rails below the controls are real content, not an invisible toolbar.
-            boolean rail = filterTabsView != null && filterTabsView.getVisibility() == View.VISIBLE
-                    || topPanelLayout != null && topPanelLayout.getSumHeightOfAllVisibleChild() > 0;
-            return rail ? getMainHeaderOverlayHeight() : getMainHeaderSafeInset();
+            // This is the actual compact Stories/control row, not the hidden ActionBar.
+            // Its first content item starts below the row; scrolling may pass behind it.
+            return getMainHeaderOverlayHeight();
         }
         return actionBar.getMeasuredHeight();
     }
+
+    private boolean forkMainMenuOriginalGlassMode;
 
     private void updateForkMainHeaderLayout() {
         if (forkFloatingMainHeader == null || forkMainMenu == null) return;
@@ -14280,20 +14303,33 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (dialogStoriesCell != null) dialogStoriesCell.setFloatingCompactHeader(floating);
         if (floating && forkMainMenu.getParent() != forkFloatingMainHeader) {
             forkMainMenuOriginalParams = forkMainMenu.getLayoutParams();
+            forkMainMenuOriginalGlassMode = forkMainMenu.isGlassMode();
+            forkHeaderSurfaceBackgrounds.clear();
+            forkHeaderSurfaceStyle = null;
+            // Native glass menus deliberately overlap items via negative margins.
+            // Independent circular controls must keep their own symmetric spacing.
+            forkMainMenu.setGlassMode(false);
+            configureForkHeaderButton(searchItem);
+            configureForkHeaderButton(passcodeItem);
+            configureForkHeaderButton(downloadsItem);
+            configureForkHeaderButton(optionsItem);
             AndroidUtilities.removeFromParent(forkMainMenu);
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48), Gravity.RIGHT | Gravity.TOP);
             params.topMargin = (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0)
                     + dp(4) + Math.max(0, (ActionBar.getCurrentActionBarHeight() - dp(48)) / 2);
             params.rightMargin = dp(9);
             forkFloatingMainHeader.addView(forkMainMenu, params);
+            if (storiesVisibilityAnimator != null) storiesVisibilityAnimator.cancel();
+            updateStoriesVisibility(false);
         } else if (!floating && forkMainMenu.getParent() == forkFloatingMainHeader) {
             AndroidUtilities.removeFromParent(forkMainMenu);
+            forkMainMenu.setGlassMode(forkMainMenuOriginalGlassMode);
             actionBar.addView(forkMainMenu, forkMainMenuOriginalParams);
         }
         forkFloatingMainHeader.setVisibility(floating ? View.VISIBLE : View.GONE);
         actionBar.setVisibility(floating ? View.GONE : View.VISIBLE);
         ViewGroup.LayoutParams params = forkFloatingMainHeader.getLayoutParams();
-        params.height = dp(4) + ActionBar.getCurrentActionBarHeight() + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0);
+        params.height = getMainHeaderOverlayHeight();
     }
 
     private int getReservedSearchHeight() {
@@ -14319,6 +14355,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private String forkHeaderSurfaceStyle;
     private int forkHeaderSurfaceColor;
+    private int forkHeaderSurfaceStrength = -1;
+    private int forkHeaderSurfaceSelector;
+    private final java.util.IdentityHashMap<ActionBarMenuItem, android.graphics.drawable.Drawable> forkHeaderSurfaceBackgrounds = new java.util.IdentityHashMap<>();
+
+    private boolean forkHeaderSurfaceIntact(ActionBarMenuItem item) {
+        return item == null || forkHeaderSurfaceBackgrounds.get(item) == item.getBackground();
+    }
 
     private void updateForkHeaderSurfaces() {
         if (fragmentView == null || searchItem == null || !isForkMainHeader()) {
@@ -14328,11 +14371,16 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         final int color = "material".equals(style)
                 ? ForkGraphicsSurface.materialColor(fragmentView.getContext(), getThemedColor(Theme.key_windowBackgroundWhite))
                 : getThemedColor(Theme.key_windowBackgroundWhite);
-        if (style.equals(forkHeaderSurfaceStyle) && color == forkHeaderSurfaceColor) {
-            return;
-        }
+        final int strength = org.telegram.messenger.fork.panels.ForkPanelSettings.effectStrength();
+        final int selector = getThemedColor(Theme.key_actionBarDefaultSelector);
+        if (style.equals(forkHeaderSurfaceStyle) && color == forkHeaderSurfaceColor
+                && strength == forkHeaderSurfaceStrength && selector == forkHeaderSurfaceSelector
+                && forkHeaderSurfaceIntact(searchItem) && forkHeaderSurfaceIntact(passcodeItem)
+                && forkHeaderSurfaceIntact(downloadsItem) && forkHeaderSurfaceIntact(optionsItem)) return;
         forkHeaderSurfaceStyle = style;
         forkHeaderSurfaceColor = color;
+        forkHeaderSurfaceStrength = strength;
+        forkHeaderSurfaceSelector = selector;
         updateForkHeaderSurface(searchItem, style, color);
         updateForkHeaderSurface(passcodeItem, style, color);
         updateForkHeaderSurface(downloadsItem, style, color);
@@ -14352,6 +14400,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             item.setBackground(factory.create(item, ForkGlassSurface.provider(resourceProvider)).setRadius(dp(24)));
             item.setForeground(Theme.createSelectorDrawable(selector));
         }
+        forkHeaderSurfaceBackgrounds.put(item, item.getBackground());
     }
 
     private void checkUi_itemSearchVisibility() {
