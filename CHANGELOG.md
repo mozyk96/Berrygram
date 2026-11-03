@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0-beta.3 — public testing
+
+- Connect the main chat-list search and menu controls to the selected graphics surfaces and remove the old Telegram branding from the normal header.
+- Improve popup rendering, settings rounding, header accessibility and updater channel handling.
+- Beta: layout, graphics, login, messaging, calls, media, notifications and installation are not yet device-verified. BerryGram settings headers still use a solid theme surface rather than a live blur.
+
 ## 1.2.0-beta.2 — public testing
 
 - Correct rectangular bitmap recording dimensions and downscale geometry.
