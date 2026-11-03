@@ -32718,6 +32718,7 @@ public class ChatActivity extends BaseFragment implements
                 if (scrimPopupWindow == null || fragmentView == null || scrimPopupWindow.isShowing() || !AndroidUtilities.isActivityRunning(getParentActivity())) {
                     return;
                 }
+                scrimPopupWindow.setAnimationSource(v);
                 scrimPopupWindow.showAtLocation(chatListView, Gravity.LEFT | Gravity.TOP, finalPopupX, finalPopupY);
                 if (isReactionsAvailableFinal && finalReactionsLayout != null) {
                     finalReactionsLayout.startEnterAnimation(true);
@@ -40831,6 +40832,7 @@ public class ChatActivity extends BaseFragment implements
             if (scrimPopupContainerLayout.getVisibility() != View.VISIBLE) {
                 scrimViewReactionOffset = 0;
             }
+            scrimPopupWindow.setAnimationSource(scrimView);
             scrimPopupWindow.showAtLocation(chatListView, Gravity.LEFT | Gravity.TOP, scrimPopupX = popupX, scrimPopupY = popupY);
 
             chatListView.stopScroll();
@@ -45917,6 +45919,7 @@ public class ChatActivity extends BaseFragment implements
             if (scrimPopupContainerLayout.getVisibility() != View.VISIBLE) {
                 scrimViewReactionOffset = 0;
             }
+            scrimPopupWindow.setAnimationSource(scrimView);
             scrimPopupWindow.showAtLocation(chatListView, Gravity.LEFT | Gravity.TOP, scrimPopupX = popupX, scrimPopupY = popupY);
 
             chatListView.stopScroll();
@@ -47026,10 +47029,9 @@ public class ChatActivity extends BaseFragment implements
                 && !ChatObject.isForum(currentChat) && !UserObject.isBotForumWithEditableTopics(currentUser)
                 && currentEncryptedChat == null && avatarContainer.hasVisibleAvatar()
                 && !UserObject.isReplyUser(currentUser) && (currentUser == null || currentUser.id != UserObject.VERIFY)
-                && !showAudioCallAsIcon && !showSearchAsIcon
                 && !searching && !actionBar.isSearchFieldVisible() && animatorSearchFieldVisibility.getFloatValue() == 0
                 && !actionBar.isActionModeShowed() && actionBar.getActionModeFactor() == 0
-                && contentView.getMeasuredWidth() >= dp(360);
+                && contentView.getMeasuredWidth() >= dp(320);
         if (floatingChatHeader == enabled) return;
         if (enabled && !floatingChatHeaderDrawablesReady) {
             avatarContainer.setupFloatingChatHeader(glassBackgroundDrawableFactory,
@@ -47038,7 +47040,9 @@ public class ChatActivity extends BaseFragment implements
         }
         floatingChatHeader = enabled;
         actionBar.setDrawGlassTitle(!enabled);
+        avatarContainer.setTranslationX(0);
         avatarContainer.setFloatingChatHeader(enabled);
+        actionBar.requestLayout();
     }
 
 

@@ -436,8 +436,8 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         canvas.scale(s, s, getPivotX(), getHeight() - ActionBar.getCurrentActionBarHeight() / 2f);
         if (floatingChatHeader && floatingTitleBackground != null) {
             final int centerY = getHeight() - ActionBar.getCurrentActionBarHeight() / 2;
-            final int titleWidth = Math.min(getWidth() - dp(108), Math.max(titleTextView.getMeasuredWidth(), getSubtitleTextView().getMeasuredWidth()) + dp(24));
-            final int titleLeft = (getWidth() - titleWidth) / 2;
+            final int titleWidth = Math.max(0, Math.min(getWidth() - dp(72), Math.max(titleTextView.getMeasuredWidth(), getSubtitleTextView().getMeasuredWidth()) + dp(24)));
+            final int titleLeft = (getWidth() - dp(64) - titleWidth) / 2;
             floatingTitleBackground.setBounds(titleLeft - dp(6), centerY - dp(29), titleLeft + titleWidth + dp(6), centerY + dp(29));
             floatingTitleBackground.draw(canvas);
             floatingAvatarBackground.setBounds(avatarImageView.getLeft() - dp(9), centerY - dp(29), avatarImageView.getRight() + dp(9), centerY + dp(29));
@@ -686,7 +686,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         final int width = MeasureSpec.getSize(widthMeasureSpec);
-        final int availableWidth = Math.max(0, width - dp(floatingChatHeader ? 132 : (avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16));
+        final int availableWidth = Math.max(0, width - dp(floatingChatHeader ? 76 : (avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16));
         avatarImageView.measure(MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY));
         titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
@@ -868,7 +868,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     private void centerFloatingHeaderText(View view) {
-        view.offsetLeftAndRight((getMeasuredWidth() - view.getMeasuredWidth()) / 2 - view.getLeft());
+        view.offsetLeftAndRight((getMeasuredWidth() - dp(64) - view.getMeasuredWidth()) / 2 - view.getLeft());
     }
 
     public void setLeftPadding(int value) {

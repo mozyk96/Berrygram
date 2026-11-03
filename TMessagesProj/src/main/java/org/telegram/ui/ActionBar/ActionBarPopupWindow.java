@@ -105,7 +105,8 @@ public class ActionBarPopupWindow extends PopupWindow {
         ActionBarPopupWindowLayout content = forkPopupLayout();
         if (!animationEnabled || content == null || !org.telegram.ui.ForkSurfaceAnimation.enabled()) return false;
         if (windowAnimatorSet != null || forkFluidShown) return true;
-        AnimatorSet animation = org.telegram.ui.ForkSurfaceAnimation.create(getContentView(), forkAnimationSource, true, content.shownFromBottom);
+        if (!content.isLaidOut() || !content.isAttachedToWindow()) return true;
+        AnimatorSet animation = org.telegram.ui.ForkSurfaceAnimation.create(content, forkAnimationSource, true, content.shownFromBottom);
         if (animation == null) return false;
         forkFluidShown = true;
         windowAnimatorSet = animation;
@@ -114,6 +115,13 @@ public class ActionBarPopupWindow extends PopupWindow {
                 if (windowAnimatorSet == animator) windowAnimatorSet = null;
             }
         });
+        content.setBackScaleX(1f);
+        content.setBackScaleY(1f);
+        content.setBackAlpha(255);
+        for (int i = 0; i < content.getItemsCount(); i++) {
+            View item = content.getItemAt(i);
+            item.setAlpha(item.isEnabled() ? 1f : 0.5f);
+        }
         animation.start();
         return true;
     }
@@ -130,8 +138,13 @@ public class ActionBarPopupWindow extends PopupWindow {
     }
 
     private void postForkFluidAnimation() {
-        getContentView().post(() -> {
-            if (isShowing() && !isClosingAnimated) startForkFluidAnimation();
+        View root = getContentView();
+        root.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                if (root.getViewTreeObserver().isAlive()) root.getViewTreeObserver().removeOnPreDrawListener(this);
+                if (isShowing() && !isClosingAnimated) startForkFluidAnimation();
+                return true;
+            }
         });
     }
 
@@ -1191,7 +1204,7 @@ public class ActionBarPopupWindow extends PopupWindow {
         isClosingAnimated = false;
         ActionBarPopupWindowLayout fluidContent = forkPopupLayout();
         if (animationEnabled && animated && forkFluidShown && fluidContent != null && outEmptyTime <= 0) {
-            AnimatorSet fluid = org.telegram.ui.ForkSurfaceAnimation.create(getContentView(), forkAnimationSource, false, fluidContent.shownFromBottom);
+            AnimatorSet fluid = org.telegram.ui.ForkSurfaceAnimation.create(fluidContent, forkAnimationSource, false, fluidContent.shownFromBottom);
             if (fluid != null) {
                 isClosingAnimated = true;
                 windowAnimatorSet = fluid;

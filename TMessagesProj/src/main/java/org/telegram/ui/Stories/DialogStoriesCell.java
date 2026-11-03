@@ -169,6 +169,12 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     private CharSequence currentTitle;
     private boolean hasOverlayText;
     private boolean forkHideBranding;
+    private boolean floatingCompactHeader;
+    public void setFloatingCompactHeader(boolean compact) {
+        if (floatingCompactHeader == compact) return;
+        floatingCompactHeader = compact;
+        requestLayout();
+    }
     private int overlayTextId;
     private SpannableStringBuilder uploadingString;
     private ValueAnimator textAnimator;
@@ -686,7 +692,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
             canvas.clipRect(0, clipTop, getMeasuredWidth(), getMeasuredHeight());
         }
         float maxY = getMeasuredHeight() - ActionBar.getCurrentActionBarHeight() - dp(4);
-        float bottomY = AndroidUtilities.lerp(0, maxY, collapsedProgress1);
+        float bottomY = floatingCompactHeader ? 0 : AndroidUtilities.lerp(0, maxY, collapsedProgress1);
         recyclerListView.setTranslationY(bottomY);
         listViewMini.setTranslationY(bottomY);
         listViewMini.setTranslationX(menuItemsOffset);
@@ -1014,7 +1020,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         titleView.setTextSize(dp(!AndroidUtilities.isTablet() && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 18 : 20));
         currentCellWidth = dp(ITEM_WIDTH);
         AndroidUtilities.rectTmp.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
-        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(85 + FAKE_TOP_PADDING), MeasureSpec.EXACTLY));
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(floatingCompactHeader ? 56 : 85 + FAKE_TOP_PADDING), MeasureSpec.EXACTLY));
     }
 
     @Override

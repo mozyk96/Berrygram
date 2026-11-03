@@ -862,6 +862,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
         public int getActionBarFullHeight() {
+            if (usesFloatingMainHeader()) return getMainHeaderHeight();
             float h = getMainHeaderHeight();
             float rightSlidingProgress = 0f;
             if (rightSlidingDialogContainer != null && rightSlidingDialogContainer.hasFragment()) {
@@ -903,7 +904,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
                 final boolean doNotClip = child == topPanelLayout || child == filterTabsView;
                 if (!doNotClip) {
-                    canvas.clipRect(0, -getY() + getActionBarTop() + getActionBarFullHeight(), getMeasuredWidth(), getMeasuredHeight());
+                    canvas.clipRect(0, usesFloatingMainHeader() ? getMainHeaderSafeInset()
+                            : -getY() + getActionBarTop() + getActionBarFullHeight(), getMeasuredWidth(), getMeasuredHeight());
                 }
                 if (slideFragmentProgress != 1f) {
                     if (slideFragmentLite) {
@@ -1014,7 +1016,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
             rightSlidingDialogContainer.setCurrentTop(top + actionBarHeight);
             float storiesAlpha = 1f;
-            if (whiteActionBar) {
+            if (usesFloatingMainHeader()) {
+                // Individual overlay surfaces own their backgrounds; no full-width scrim.
+            } else if (whiteActionBar) {
                 if (searchAnimationProgress == 1f) {
                     actionBarSearchPaint.setColor(getThemedColor(Theme.key_windowBackgroundWhite));
                 } else if (searchAnimationProgress == 0) {
@@ -1173,7 +1177,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 if (child == null || child.getVisibility() == GONE || child == actionBar) {
                     continue;
                 }
-                if (child instanceof DatabaseMigrationHint) {
+                if (child == dialogStoriesCell && usesFloatingMainHeader()) {
+                    int controlsWidth = forkMainMenu == null ? dp(160) : forkMainMenu.getMeasuredWidth();
+                    child.measure(MeasureSpec.makeMeasureSpec(Math.max(dp(48), widthSize - controlsWidth - dp(16)), MeasureSpec.EXACTLY),
+                            MeasureSpec.makeMeasureSpec(dp(56), MeasureSpec.EXACTLY));
+                } else if (child instanceof DatabaseMigrationHint) {
                     int contentWidthSpec = View.MeasureSpec.makeMeasureSpec(widthSize, View.MeasureSpec.EXACTLY);
                     int h = View.MeasureSpec.getSize(heightMeasureSpec);
                     int contentHeightSpec = View.MeasureSpec.makeMeasureSpec(Math.max(dp(10), h + dp(2) - getMainHeaderHeight()), View.MeasureSpec.EXACTLY);
@@ -1300,7 +1308,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
 
                 if (child == fragmentSearchField || child == searchTabsAndFiltersLayout || child == dialogStoriesCell) {
-                    childTop = getMainHeaderHeight();
+                    childTop = child == dialogStoriesCell && usesFloatingMainHeader() ? getMainHeaderSafeInset() : getMainHeaderHeight();
+                    if (child == dialogStoriesCell && usesFloatingMainHeader()) childLeft = dp(8);
                     if (child != fragmentSearchField && child != dialogStoriesCell && child != searchTabsAndFiltersLayout) {
                         childTop += getReservedSearchHeight();
                     }
@@ -1644,6 +1653,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private void updateStoriesViewAlpha(float alpha) {
         final float factorSearch = Utilities.clamp(searchAnimationProgress * 2, 1f, 0f);
+        if (usesFloatingMainHeader()) {
+            dialogStoriesCell.setAlpha(alpha * progressToDialogStoriesCell);
+            dialogStoriesCell.setTranslationY(0);
+            dialogStoriesCell.setClipTop(0);
+            dialogStoriesCell.setProgressToCollapse(1f, false);
+            return;
+        }
         dialogStoriesCell.setAlpha((1f - progressToActionMode) * alpha * progressToDialogStoriesCell * (1f - factorSearch));
         float containersAlpha;
 
@@ -2078,8 +2094,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
 
             ignoreLayout = true;
-            t = ActionBar.getCurrentActionBarHeight() + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0);
-            if (hasStories && !actionModeFullyShowed) {
+            t = getMainHeaderHeight();
+            if (hasStories && !actionModeFullyShowed && !usesFloatingMainHeader()) {
                 t += dp(DialogStoriesCell.HEIGHT_IN_DP);
             }
             if (!actionModeFullyShowed) {
@@ -5777,6 +5793,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private int getMaxScrollYOffsetWithoutSearch() {
+        if (usesFloatingMainHeader()) return 0;
         if (hasStories) {
             return dp(DialogStoriesCell.HEIGHT_IN_DP);
         } else {
@@ -5785,6 +5802,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private int getMaxScrollYOffset() {
+        if (usesFloatingMainHeader()) return 0;
         if (hasStories) {
             return dp(DialogStoriesCell.HEIGHT_IN_DP) + getReservedSearchHeight();
         } else {
@@ -14238,9 +14256,20 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 && (rightSlidingDialogContainer == null || !rightSlidingDialogContainer.hasFragment());
     }
 
+    private int getMainHeaderSafeInset() {
+        return actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0;
+    }
+
+    private int getMainHeaderOverlayHeight() {
+        return getMainHeaderSafeInset() + ActionBar.getCurrentActionBarHeight();
+    }
+
     private int getMainHeaderHeight() {
         if (forkFloatingMainHeader != null && usesFloatingMainHeader()) {
-            return ActionBar.getCurrentActionBarHeight() + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0);
+            // Rails below the controls are real content, not an invisible toolbar.
+            boolean rail = filterTabsView != null && filterTabsView.getVisibility() == View.VISIBLE
+                    || topPanelLayout != null && topPanelLayout.getSumHeightOfAllVisibleChild() > 0;
+            return rail ? getMainHeaderOverlayHeight() : getMainHeaderSafeInset();
         }
         return actionBar.getMeasuredHeight();
     }
@@ -14248,6 +14277,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private void updateForkMainHeaderLayout() {
         if (forkFloatingMainHeader == null || forkMainMenu == null) return;
         boolean floating = usesFloatingMainHeader();
+        if (dialogStoriesCell != null) dialogStoriesCell.setFloatingCompactHeader(floating);
         if (floating && forkMainMenu.getParent() != forkFloatingMainHeader) {
             forkMainMenuOriginalParams = forkMainMenu.getLayoutParams();
             AndroidUtilities.removeFromParent(forkMainMenu);
@@ -14378,7 +14408,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         final int mainTabBottom = fragmentView.getMeasuredHeight() - navigationBarHeight - dp(DialogsActivity.MAIN_TABS_MARGIN);
         final int mainTabTop = mainTabBottom - dp(DialogsActivity.MAIN_TABS_HEIGHT);
 
-        final int actionBarHeight = getMainHeaderHeight()
+        final int actionBarHeight = (usesFloatingMainHeader() ? getMainHeaderOverlayHeight() : getMainHeaderHeight())
             + getReservedSearchHeight()
             + dp(hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0)
             + (filterTabsView != null && filterTabsView.getVisibility() == View.VISIBLE ? filterTabsView.getMeasuredHeight() : 0)
