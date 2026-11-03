@@ -72,6 +72,68 @@ public class ActionBarPopupWindow extends PopupWindow {
     private boolean pauseNotifications;
     private long outEmptyTime = -1;
     private boolean scaleOut;
+    private Rect forkAnimationSource;
+    private boolean forkFluidShown;
+    private Integer forkOriginalAnimationStyle;
+
+    /** Explicit source for absolute-positioned menus (the showAtLocation parent is only a container). */
+    public void setAnimationSource(View source) {
+        forkAnimationSource = null;
+        if (source != null) {
+            int[] location = new int[2];
+            source.getLocationOnScreen(location);
+            forkAnimationSource = new Rect(location[0], location[1],
+                    location[0] + source.getWidth(), location[1] + source.getHeight());
+        }
+    }
+
+    private ActionBarPopupWindowLayout forkPopupLayout() {
+        View root = getContentView();
+        if (root instanceof ActionBarPopupWindowLayout) return (ActionBarPopupWindowLayout) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                if (group.getChildAt(i) instanceof ActionBarPopupWindowLayout) {
+                    return (ActionBarPopupWindowLayout) group.getChildAt(i);
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean startForkFluidAnimation() {
+        ActionBarPopupWindowLayout content = forkPopupLayout();
+        if (!animationEnabled || content == null || !org.telegram.ui.ForkSurfaceAnimation.enabled()) return false;
+        if (windowAnimatorSet != null || forkFluidShown) return true;
+        AnimatorSet animation = org.telegram.ui.ForkSurfaceAnimation.create(getContentView(), forkAnimationSource, true, content.shownFromBottom);
+        if (animation == null) return false;
+        forkFluidShown = true;
+        windowAnimatorSet = animation;
+        animation.addListener(new AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(Animator animator) {
+                if (windowAnimatorSet == animator) windowAnimatorSet = null;
+            }
+        });
+        animation.start();
+        return true;
+    }
+
+    private void prepareForkFluidAnimation() {
+        forkFluidShown = false;
+        if (animationEnabled && forkPopupLayout() != null && org.telegram.ui.ForkSurfaceAnimation.enabled()) {
+            if (forkOriginalAnimationStyle == null) forkOriginalAnimationStyle = getAnimationStyle();
+            setAnimationStyle(0);
+        } else if (forkOriginalAnimationStyle != null) {
+            setAnimationStyle(forkOriginalAnimationStyle);
+            forkOriginalAnimationStyle = null;
+        }
+    }
+
+    private void postForkFluidAnimation() {
+        getContentView().post(() -> {
+            if (isShowing() && !isClosingAnimated) startForkFluidAnimation();
+        });
+    }
 
     static {
         Field f = null;
@@ -916,14 +978,22 @@ public class ActionBarPopupWindow extends PopupWindow {
     @Override
     public void showAsDropDown(View anchor, int xoff, int yoff) {
         try {
+            setAnimationSource(anchor);
+            prepareForkFluidAnimation();
             super.showAsDropDown(anchor, xoff, yoff);
             registerListener(anchor);
+            postForkFluidAnimation();
         } catch (Exception e) {
             FileLog.e(e);
         }
     }
 
     public static AnimatorSet startAnimation(ActionBarPopupWindowLayout content) {
+        AnimatorSet fluid = org.telegram.ui.ForkSurfaceAnimation.create(content, null, true, content.shownFromBottom);
+        if (fluid != null) {
+            fluid.start();
+            return fluid;
+        }
         content.startAnimationPending = true;
         content.setTranslationY(0);
         content.setAlpha(1.0f);
@@ -997,6 +1067,7 @@ public class ActionBarPopupWindow extends PopupWindow {
     }
 
     public void startAnimation() {
+        if (startForkFluidAnimation()) return;
         if (animationEnabled) {
             if (windowAnimatorSet != null) {
                 return;
@@ -1091,8 +1162,10 @@ public class ActionBarPopupWindow extends PopupWindow {
 
     @Override
     public void showAtLocation(View parent, int gravity, int x, int y) {
+        prepareForkFluidAnimation();
         super.showAtLocation(parent, gravity, x, y);
         unregisterListener();
+        postForkFluidAnimation();
     }
 
     @Override
@@ -1105,6 +1178,7 @@ public class ActionBarPopupWindow extends PopupWindow {
     }
 
     public void dismiss(boolean animated) {
+        animated = animated && AndroidUtilities.getAnimatorDurationScale() > 0f;
         setFocusable(false);
         dismissDim();
         if (windowAnimatorSet != null) {
@@ -1115,6 +1189,28 @@ public class ActionBarPopupWindow extends PopupWindow {
             windowAnimatorSet = null;
         }
         isClosingAnimated = false;
+        ActionBarPopupWindowLayout fluidContent = forkPopupLayout();
+        if (animationEnabled && animated && forkFluidShown && fluidContent != null && outEmptyTime <= 0) {
+            AnimatorSet fluid = org.telegram.ui.ForkSurfaceAnimation.create(getContentView(), forkAnimationSource, false, fluidContent.shownFromBottom);
+            if (fluid != null) {
+                isClosingAnimated = true;
+                windowAnimatorSet = fluid;
+                fluid.addListener(new AnimatorListenerAdapter() {
+                    @Override public void onAnimationEnd(Animator animation) {
+                        windowAnimatorSet = null;
+                        isClosingAnimated = false;
+                        forkFluidShown = false;
+                        try { ActionBarPopupWindow.super.dismiss(); } catch (Exception ignore) { }
+                        unregisterListener();
+                        if (pauseNotifications) notificationsLocker.unlock();
+                    }
+                });
+                if (pauseNotifications) notificationsLocker.lock();
+                fluid.start();
+                return;
+            }
+        }
+        forkFluidShown = false;
         if (animationEnabled && animated) {
             isClosingAnimated = true;
             ViewGroup viewGroup = (ViewGroup) getContentView();
