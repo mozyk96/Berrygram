@@ -1179,7 +1179,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 if (child == dialogStoriesCell && usesFloatingMainHeader()) {
                     int controlsWidth = forkMainMenu == null ? dp(160) : forkMainMenu.getMeasuredWidth();
-                    child.measure(MeasureSpec.makeMeasureSpec(Math.max(dp(48), widthSize - controlsWidth - dp(16)), MeasureSpec.EXACTLY),
+                    child.measure(MeasureSpec.makeMeasureSpec(org.telegram.messenger.fork.panels.HeaderGeometry.storiesWidth(widthSize, controlsWidth, dp(24)), MeasureSpec.EXACTLY),
                             MeasureSpec.makeMeasureSpec(dp(56), MeasureSpec.EXACTLY));
                 } else if (child instanceof DatabaseMigrationHint) {
                     int contentWidthSpec = View.MeasureSpec.makeMeasureSpec(widthSize, View.MeasureSpec.EXACTLY);
@@ -1308,7 +1308,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
 
                 if (child == fragmentSearchField || child == searchTabsAndFiltersLayout || child == dialogStoriesCell) {
-                    childTop = child == dialogStoriesCell && usesFloatingMainHeader() ? getMainHeaderSafeInset() : getMainHeaderHeight();
+                    childTop = child == dialogStoriesCell && usesFloatingMainHeader() ? getMainHeaderSafeInset() + dp(4) : getMainHeaderHeight();
                     if (child == dialogStoriesCell && usesFloatingMainHeader()) childLeft = dp(8);
                     if (child != fragmentSearchField && child != dialogStoriesCell && child != searchTabsAndFiltersLayout) {
                         childTop += getReservedSearchHeight();
@@ -14283,8 +14283,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             AndroidUtilities.removeFromParent(forkMainMenu);
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48), Gravity.RIGHT | Gravity.TOP);
             params.topMargin = (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0)
-                    + Math.max(0, (ActionBar.getCurrentActionBarHeight() - dp(48)) / 2);
-            params.rightMargin = dp(5);
+                    + dp(4) + Math.max(0, (ActionBar.getCurrentActionBarHeight() - dp(48)) / 2);
+            params.rightMargin = dp(9);
             forkFloatingMainHeader.addView(forkMainMenu, params);
         } else if (!floating && forkMainMenu.getParent() == forkFloatingMainHeader) {
             AndroidUtilities.removeFromParent(forkMainMenu);
@@ -14293,7 +14293,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         forkFloatingMainHeader.setVisibility(floating ? View.VISIBLE : View.GONE);
         actionBar.setVisibility(floating ? View.GONE : View.VISIBLE);
         ViewGroup.LayoutParams params = forkFloatingMainHeader.getLayoutParams();
-        params.height = ActionBar.getCurrentActionBarHeight() + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0);
+        params.height = dp(4) + ActionBar.getCurrentActionBarHeight() + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0);
     }
 
     private int getReservedSearchHeight() {
