@@ -1,6 +1,11 @@
 import org.telegram.messenger.fork.camera.RoundCameraPolicy;
 public class RoundCameraPolicyTest {
  public static void main(String[] args) {
+  check("front".equals(RoundCameraPolicy.migrateMode("standard", false)));
+  check("choose".equals(RoundCameraPolicy.migrateMode("gesture", false)));
+  check("front".equals(RoundCameraPolicy.migrateMode("last", true)));
+  check("back".equals(RoundCameraPolicy.migrateMode("last", false)));
+  check("choose".equals(RoundCameraPolicy.migrateMode("choose", false)));
   check(RoundCameraPolicy.initial("standard",false,false)==false);
   check(RoundCameraPolicy.initial("front",false,false));
   check(!RoundCameraPolicy.initial("back",true,true));
@@ -9,6 +14,7 @@ public class RoundCameraPolicyTest {
   check(RoundCameraPolicy.initial("invalid",false,true));
   check(RoundCameraPolicy.explicit("front"));
   check(!RoundCameraPolicy.explicit("standard"));
+  check(RoundCameraPolicy.explicit("choose"));
   check(RoundCameraPolicy.fixedCamera("front"));
   check(RoundCameraPolicy.fixedCamera("back"));
   check(!RoundCameraPolicy.fixedCamera("gesture"));

@@ -1,60 +1,46 @@
 package org.telegram.ui;
 
-import android.content.Context;
-import org.telegram.messenger.LocaleController;
+import android.view.View;
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.messenger.fork.camera.RoundCameraSettings;
-import org.telegram.ui.ActionBar.AlertDialog;
-import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.BaseFragment;
 
-/** Selects the initial camera used by Telegram video messages. */
+/** Anchored selections for the actual round-video camera and encoder preferences. */
 public final class ForkRoundCameraShortcuts {
-    private ForkRoundCameraShortcuts() {}
-    public static void show(BaseFragment parent) { show(parent, null); }
-    public static void show(BaseFragment parent, Runnable onChanged) {
-        Context context = parent.getParentActivity();
-        if (context == null) return;
-        String[] modes = {"back", "front"};
-        int[] names = {R.string.ForkCameraBack, R.string.ForkCameraFront};
-        int[] icons = {R.drawable.msg_video, R.drawable.msg_photo_switch2};
-        String current = RoundCameraSettings.mode();
-        CharSequence[] labels = new CharSequence[modes.length];
-        for (int i = 0; i < modes.length; i++) labels[i] = (modes[i].equals(current) ? "✓ " : "") + ForkLocale.get(names[i]);
-        parent.showDialog(new BottomSheet.Builder(context)
-            .setTitle(ForkLocale.get(R.string.ForkCameraChoiceTitle))
-            .setItems(labels, icons, (dialog, index) -> { RoundCameraSettings.setMode(modes[index]); if (onChanged != null) onChanged.run(); })
-            .create());
+    private ForkRoundCameraShortcuts() { }
+
+    public static void show(BaseFragment parent, View anchor, Runnable onChanged) {
+        String[] modes = {"back", "front", "choose"};
+        CharSequence[] names = {ForkLocale.get(R.string.ForkCameraBack), ForkLocale.get(R.string.ForkCameraFront), ForkLocale.get(R.string.ForkCameraChooseDuring)};
+        int[] icons = {R.drawable.camera, R.drawable.fork_camera_front, R.drawable.msg_photo_switch2};
+        int selected = java.util.Arrays.asList(modes).indexOf(RoundCameraSettings.mode());
+        ForkChoicePopup.show(parent, anchor, names, icons, selected, i -> {
+            RoundCameraSettings.setMode(modes[i]);
+            if (onChanged != null) onChanged.run();
+        });
     }
-    public static void showBehavior(BaseFragment parent, Runnable onChanged) {
-        Context context = parent.getParentActivity();
-        if (context == null) return;
-        String[] modes = {"standard", "last", "gesture"};
-        int[] names = {R.string.ForkCameraStandard, R.string.ForkCameraLast, R.string.ForkCameraGesture};
-        String current = RoundCameraSettings.mode();
-        CharSequence[] labels = new CharSequence[modes.length];
-        for (int i = 0; i < modes.length; i++) labels[i] = (modes[i].equals(current) ? "✓ " : "") + ForkLocale.get(names[i]);
-        parent.showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkCameraBehavior))
-                .setItems(labels, (dialog, index) -> { RoundCameraSettings.setMode(modes[index]); if (onChanged != null) onChanged.run(); }).create());
-    }
-    public static void showQuality(BaseFragment parent) { showQuality(parent, null); }
-    public static void showQuality(BaseFragment parent, Runnable onChanged) {
-        Context context = parent.getParentActivity();
-        if (context == null) return;
-        String mode = RoundCameraSettings.qualityMode();
+
+    public static void showQuality(BaseFragment parent, View anchor, Runnable onChanged) {
         String[] modes = {"standard", "auto", "custom"};
-        int[] labels = {R.string.ForkVideoQualityStandard, R.string.ForkVideoQualityAuto, R.string.ForkVideoQualityCustom};
-        CharSequence[] choices = new CharSequence[modes.length];
-        for (int i = 0; i < modes.length; i++) choices[i] = (modes[i].equals(mode) ? "✓ " : "") + ForkLocale.get(labels[i])
-                + ("custom".equals(modes[i]) && "custom".equals(mode) ? " (" + (RoundCameraSettings.customBitrate() / 1000) + " kbps)" : "");
-        parent.showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkVideoQualityTitle))
-            .setItems(choices, (dialog, which) -> {
-                if (which != 2) { RoundCameraSettings.setQuality(modes[which], 0); if (onChanged != null) onChanged.run(); return; }
+        CharSequence[] names = {ForkLocale.get(R.string.ForkVideoQualityStandard), ForkLocale.get(R.string.ForkVideoQualityAuto), ForkLocale.get(R.string.ForkVideoQualityCustom)};
+        int selected = java.util.Arrays.asList(modes).indexOf(RoundCameraSettings.qualityMode());
+        ForkChoicePopup.show(parent, anchor, names, null, selected, i -> {
+            if (i != 2) {
+                RoundCameraSettings.setQuality(modes[i], 0);
+                if (onChanged != null) onChanged.run();
+                return;
+            }
+            AndroidUtilities.runOnUIThread(() -> {
                 int[] rates = {500000, 1000000, 1500000, 2500000, 4000000};
-                CharSequence[] items = {"0.5 Mbps", "1 Mbps", "1.5 Mbps", "2.5 Mbps", "4 Mbps"};
-                org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> parent.showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkVideoQualityBitrate))
-                    .setItems(items, (d, selected) -> { RoundCameraSettings.setQuality("custom", rates[selected]); if (onChanged != null) onChanged.run(); })
-                    .create()), 250);
-            }).create());
+                CharSequence[] labels = {"0.5 Mbps", "1 Mbps", "1.5 Mbps", "2.5 Mbps", "4 Mbps"};
+                int current = -1;
+                for (int j = 0; j < rates.length; j++) if (rates[j] == RoundCameraSettings.customBitrate()) current = j;
+                ForkChoicePopup.show(parent, anchor, labels, null, current, j -> {
+                    RoundCameraSettings.setQuality("custom", rates[j]);
+                    if (onChanged != null) onChanged.run();
+                });
+            }, 150);
+        });
     }
 }

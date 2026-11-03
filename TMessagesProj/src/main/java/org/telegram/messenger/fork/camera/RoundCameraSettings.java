@@ -6,9 +6,14 @@ import org.telegram.messenger.ApplicationLoader;
 public final class RoundCameraSettings {
     private RoundCameraSettings() {}
     private static SharedPreferences prefs() { return ApplicationLoader.applicationContext.getSharedPreferences("fork_round_camera", Context.MODE_PRIVATE); }
-    public static String mode() { return prefs().getString("mode", "standard"); }
+    public static String mode() {
+        String old = prefs().getString("mode", "standard");
+        String mode = RoundCameraPolicy.migrateMode(old, lastFront());
+        if (!mode.equals(old)) prefs().edit().putString("mode", mode).apply();
+        return mode;
+    }
     public static void setMode(String mode) {
-        if (!"standard".equals(mode) && !RoundCameraPolicy.explicit(mode)) throw new IllegalArgumentException("Invalid camera mode");
+        if (!RoundCameraPolicy.explicit(mode)) throw new IllegalArgumentException("Invalid camera mode");
         prefs().edit().putString("mode", mode).apply();
     }
     public static String qualityMode() { return prefs().getString("quality_mode", "standard"); }

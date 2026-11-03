@@ -2,6 +2,12 @@ package org.telegram.messenger.fork.camera;
 /** Maps a user's starting-camera preference without changing Telegram's default. */
 public final class RoundCameraPolicy {
     private RoundCameraPolicy() {}
+    public static String migrateMode(String mode, boolean lastFront) {
+        if ("front".equals(mode) || "back".equals(mode) || "choose".equals(mode)) return mode;
+        if ("gesture".equals(mode)) return "choose";
+        if ("last".equals(mode)) return lastFront ? "front" : "back";
+        return "front";
+    }
     public static boolean initial(String mode, boolean lastFront, boolean upstreamFront) {
         if ("front".equals(mode)) return true;
         if ("back".equals(mode)) return false;
@@ -23,7 +29,7 @@ public final class RoundCameraPolicy {
         return y < height / 2f ? 0 : 1;
     }
     public static boolean explicit(String mode) {
-        return "front".equals(mode) || "back".equals(mode) || "last".equals(mode) || "gesture".equals(mode);
+        return "front".equals(mode) || "back".equals(mode) || "choose".equals(mode);
     }
     public static boolean fixedCamera(String mode) { return "front".equals(mode) || "back".equals(mode); }
 }

@@ -18,7 +18,7 @@
     <string name="ForkColorHex">Колір у форматі HEX</string>
     <string name="ForkColorPreview">Попередній перегляд</string>
     <string name="ForkColorInvalid">Введіть шість шістнадцяткових символів.</string>
-    <string name="ForkCameraChoiceTitle">Камера</string>
+    <string name="ForkCameraChoiceTitle">Камера для відеоповідомлень</string>
     <string name="ForkCameraBehavior">Початкова поведінка</string>
     <string name="ForkCameraChoiceAuto">За режимом</string>
     <string name="ForkCameraBehaviorFixed">Обрана камера</string>
@@ -98,7 +98,7 @@
     <string name="ForkRoundCameraTitle">Відеоповідомлення: початкова камера</string>
     <string name="ForkCameraStandard">Стандарт Telegram</string>
     <string name="ForkCameraGesture">Вибір камери жестом</string>
-    <string name="ForkCameraFront">Передня камера</string>
+    <string name="ForkCameraFront">Фронтальна камера</string>
     <string name="ForkCameraBack">Основна камера</string>
     <string name="ForkCameraLast">Остання використана камера</string>
     <string name="ForkCameraFallback">Якщо вибрана камера недоступна, за можливості використовується інша.</string>
@@ -195,4 +195,5 @@
     <string name="ForkUpdateOlderStable">Остання стабільна версія старіша за назвою. Завантажте її, щоб перевірити Android versionCode. Android може відхилити стару версію. Видалення застосунку може стерти локальні дані й вимагати повторного входу в Telegram. Ви можете експортувати підтримуваний набір фраз або зачекати на сумісний стабільний реліз.</string>
     <string name="ForkUpdateIncompatibleVersion">Перевірений пакет має такий самий або менший Android versionCode. Встановити його як оновлення неможливо.</string>
     <string name="ForkUpdateExportPhrases">Експорт фраз у редакторі</string>
+    <string name="ForkCameraChooseDuring">Вибір під час зйомки</string>
 </resources>

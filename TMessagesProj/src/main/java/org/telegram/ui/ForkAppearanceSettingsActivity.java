@@ -74,11 +74,10 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         animations.setOnClickListener(v -> {
             String[] modes = {"system", "smooth", "minimal"};
             CharSequence[] labels = {ForkLocale.get(R.string.ForkAnimationSystem), ForkLocale.get(R.string.ForkAnimationSmooth), ForkLocale.get(R.string.ForkAnimationMinimal)};
-            showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkGraphicsAnimations))
-                    .setItems(labels, (dialog, index) -> {
+            ForkChoicePopup.show(this, v, labels, null, java.util.Arrays.asList(modes).indexOf(ForkPanelSettings.animationMode()), index -> {
                         ForkPanelSettings.setAnimationMode(modes[index]);
                         animations.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsAnimations), animationLabel(), false);
-                    }).create());
+                    });
         });
         controls.addView(animations);
         TextCheckCell adaptive = new TextCheckCell(context);
@@ -109,15 +108,14 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         style.setOnClickListener(v -> {
             String[] modes = {"material", "blur", "liquid"};
             CharSequence[] labels = {ForkLocale.get(R.string.ForkGraphicsMaterial), ForkLocale.get(R.string.ForkGraphicsBlur), ForkLocale.get(R.string.ForkGraphicsLiquid)};
-            showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkGraphicsStyle))
-                    .setItems(labels, (dialog, index) -> {
+            ForkChoicePopup.show(this, v, labels, null, java.util.Arrays.asList(modes).indexOf(ForkPanelSettings.style()), index -> {
                         ForkPanelSettings.setStyle(modes[index]);
                         style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
                         effect.setEnabled(effectsAvailable());
                         ForkSettingsLayout.refreshSection(controls, false);
                         ForkFloatingHeader.refresh(fragmentView);
                         applyAccent(slider, effect, preview, accent(context));
-                    }).create());
+                    });
         });
         slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {

@@ -165,7 +165,7 @@ public class ForkCustomTextActivity extends BaseFragment {
             String packId = CustomTextManager.activePack();
             String packName = "custom".equals(packId) ? ForkLocale.get(R.string.ForkTextDefaultPack) : CustomTextManager.packName(packId);
             activePack.setTextAndValue(ForkLocale.get(R.string.ForkTextPacks), packName, true);
-            activePack.setOnClickListener(v -> selectPack());
+            activePack.setOnClickListener(this::selectPack);
             rows.addView(activePack);
             TextSettingsCell newPack = new TextSettingsCell(context);
             newPack.setText(ForkLocale.get(R.string.ForkTextNewPack), true);
@@ -375,18 +375,16 @@ public class ForkCustomTextActivity extends BaseFragment {
         });
         presentFragment(picker);
     }
-    private void selectPack() {
+    private void selectPack(View anchor) {
         Context context = getParentActivity();
         if (context == null) return;
         java.util.ArrayList<String> ids = CustomTextManager.packIds();
         CharSequence[] names = new CharSequence[ids.size()];
         for (int i = 0; i < ids.size(); i++) {
             String id = ids.get(i);
-            names[i] = (id.equals(CustomTextManager.activePack()) ? "✓ " : "") + ("custom".equals(id) ? ForkLocale.get(R.string.ForkTextDefaultPack) : CustomTextManager.packName(id));
+            names[i] = "custom".equals(id) ? ForkLocale.get(R.string.ForkTextDefaultPack) : CustomTextManager.packName(id);
         }
-        showDialog(new BottomSheet.Builder(context).setTitle(ForkLocale.get(R.string.ForkTextPacks))
-            .setItems(names, (dialog, which) -> { CustomTextManager.activatePack(ids.get(which)); changed(); })
-            .create());
+        ForkChoicePopup.show(this, anchor, names, null, ids.indexOf(CustomTextManager.activePack()), which -> { CustomTextManager.activatePack(ids.get(which)); changed(); });
     }
     private void createPack() {
         Context context = getParentActivity();

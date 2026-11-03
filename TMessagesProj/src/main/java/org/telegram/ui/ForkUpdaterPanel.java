@@ -80,11 +80,11 @@ public final class ForkUpdaterPanel extends LinearLayout {
         channel.setTextAndValue(ForkLocale.get(R.string.ForkUpdateChannel), ForkLocale.get(beta ? R.string.ForkUpdateChannelBeta : R.string.ForkUpdateChannelStable), false);
         channel.setEnabled(!busy);
         channel.setBackground(Theme.getSelectorDrawable(false));
-        channel.setOnClickListener(v -> parent.showDialog(new BottomSheet.Builder(c).setTitle(ForkLocale.get(R.string.ForkUpdateChannel))
-            .setItems(new CharSequence[]{ForkLocale.get(R.string.ForkUpdateChannelStable), ForkLocale.get(R.string.ForkUpdateChannelBeta)}, (dialog, index) -> {
+        channel.setOnClickListener(v -> ForkChoicePopup.show(parent, v,
+            new CharSequence[]{ForkLocale.get(R.string.ForkUpdateChannelStable), ForkLocale.get(R.string.ForkUpdateChannelBeta)}, null, beta ? 1 : 0, index -> {
                 preferences.edit().putBoolean("beta_channel", index == 1).apply();
                 release = null; verified = null; incompatible = false; saveRelease(null); status = ""; render(false);
-            }).create()));
+            }));
         addView(channel);
         if (busy) { progress = new ProgressBar(c, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(true); addView(progress); return; }
         addAction(R.string.ForkUpdateCheck, this::check, release != null || verified != null);
