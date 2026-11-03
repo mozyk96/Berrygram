@@ -16,6 +16,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -56,6 +57,38 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     private final TextView textView;
     private final RLottieImageView imageView;
     private BackupImageView backupImageView;
+    private boolean iconOnly;
+    private String counterText;
+
+    /** Used by the main Mini Dock only; attach tabs retain their own layout. */
+    public void setIconOnly(boolean iconOnly) {
+        if (this.iconOnly == iconOnly) return;
+        this.iconOnly = iconOnly;
+        textView.setVisibility(iconOnly ? GONE : VISIBLE);
+        imageView.setLayoutParams(LayoutHelper.createFrame(24, 24,
+                iconOnly ? Gravity.CENTER : Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, iconOnly ? 0 : 4, 0, 0));
+        if (backupImageView != null) {
+            backupImageView.setLayoutParams(LayoutHelper.createFrame(22, 22,
+                    iconOnly ? Gravity.CENTER : Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, iconOnly ? 0 : 5, 0, 0));
+            if (!iconOnly) backupImageView.setTranslationX(0);
+        }
+        setContentDescription(iconOnly ? textView.getText() : null);
+        textView.setImportantForAccessibility(iconOnly ? IMPORTANT_FOR_ACCESSIBILITY_NO : IMPORTANT_FOR_ACCESSIBILITY_AUTO);
+        imageView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+        if (backupImageView != null) backupImageView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+        requestLayout();
+        invalidate();
+    }
+
+    @Override
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        if (iconOnly) {
+            info.setSelected(isTabSelected());
+            info.setContentDescription(TextUtils.isEmpty(counterText) ? textView.getText()
+                    : TextUtils.concat(textView.getText(), ", ", counterText));
+        }
+    }
     private Theme.ResourcesProvider resourcesProvider;
     private final Paint paintCounterBackground = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final AnimatedTextView.AnimatedTextDrawable counter;
@@ -125,6 +158,7 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
             final float offset = (visualWidth - getMeasuredWidth()) / 2f;
             imageView.setTranslationX(offset);
             textView.setTranslationX(offset);
+            if (iconOnly && backupImageView != null) backupImageView.setTranslationX(offset);
         }
     }
 
@@ -221,6 +255,7 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     private Drawable premiumStarDrawable;
 
     public void setCounter(String text, boolean isError, boolean animated) {
+        counterText = text;
         counter.setText(text, animated);
         isHasCounterAnimator.setValue(!TextUtils.isEmpty(text), animated);
         isHasCounterErrorAnimator.setValue(isError, animated);
@@ -231,6 +266,7 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
     }
 
     public void setSelected(boolean selected, boolean animated) {
+        super.setSelected(selected);
         isSelectedAnimator.setValue(selected, animated);
         checkPlayAnimation(animated);
 

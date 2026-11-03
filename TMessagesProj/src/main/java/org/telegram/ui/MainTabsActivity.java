@@ -7,6 +7,7 @@ import static org.telegram.ui.Components.Premium.LimitReachedBottomSheet.TYPE_AC
 
 import android.animation.Animator;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -53,6 +54,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
+import org.telegram.messenger.fork.panels.ForkDockSettings;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -119,6 +121,15 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private MainTabsLayout tabsView;
     private BlurredBackgroundDrawable tabsViewBackground;
     private View fadeView;
+    private final SharedPreferences.OnSharedPreferenceChangeListener dockPreferenceListener = (preferences, key) -> {
+        if (ForkDockSettings.KEY_MINI_DOCK.equals(key)) {
+            AndroidUtilities.runOnUIThread(this::applyDockSettings);
+        }
+    };
+
+    private void applyDockSettings() {
+        if (tabsView != null) tabsView.setMiniDock(ForkDockSettings.miniDockEnabled());
+    }
 
     public MainTabsActivity() {
         super();
@@ -272,6 +283,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     @Override
     public void onResume() {
         super.onResume();
+        applyDockSettings();
         blur3_updateColors();
         checkContactsTabBadge();
         checkUnreadCount(true);
@@ -352,6 +364,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             tabsView.setViewVisible(view, true, false);
         }
         checkUi_callTabVisible(getUserConfig().showCallsTab, false);
+        applyDockSettings();
 
         selectTab(viewPager.getCurrentPosition(), false);
 
@@ -1014,6 +1027,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     @Override
     public boolean onFragmentCreate() {
+        ForkDockSettings.preferences().registerOnSharedPreferenceChangeListener(dockPreferenceListener);
         observersGroup = NotificationCenter.getInstance(currentAccount)
             .createObserversGroup(this)
             .add(NotificationCenter.fileLoaded)
@@ -1033,6 +1047,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     @Override
     public void onFragmentDestroy() {
+        ForkDockSettings.preferences().unregisterOnSharedPreferenceChangeListener(dockPreferenceListener);
         Bulletin.removeDelegate(this);
         Bulletin.removeDelegate(contentView);
 

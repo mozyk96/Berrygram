@@ -47,6 +47,18 @@ public class MainTabsLayout extends AnimatedLinearLayout {
     private static final int[] PASS_PADDINGS_DP = {16, 8, 4};
 
     private int maxWidthPx;
+    private boolean miniDock;
+
+    public void setMiniDock(boolean miniDock) {
+        if (this.miniDock == miniDock) return;
+        this.miniDock = miniDock;
+        for (int a = 0; a < getChildCount(); a++) {
+            if (getChildAt(a) instanceof GlassTabView) {
+                ((GlassTabView) getChildAt(a)).setIconOnly(miniDock);
+            }
+        }
+        requestLayout();
+    }
 
     public void setMaxWidth(int maxWidthPx) {
         if (this.maxWidthPx != maxWidthPx) {
@@ -66,6 +78,24 @@ public class MainTabsLayout extends AnimatedLinearLayout {
         }
 
         final int maxTotalWidthForTabs = width - getPaddingLeft() - getPaddingRight();
+        if (miniDock) {
+            measureTabTexts(12f);
+            // Keep each real tab and its existing hit/gesture handling. Normally 56dp;
+            // never make a touch target narrower than 48dp on a small window.
+            final int tabWidth = Math.max(dp(48), Math.min(dp(56), maxTotalWidthForTabs / Math.max(1, visibleChildCount)));
+            int left = 0;
+            for (int a = 0; a < getChildCount(); a++) {
+                final View child = getChildAt(a);
+                tabsWidth[a] = isViewVisible(child) ? tabWidth : 0;
+                tabsLeftPos[a] = left;
+                left += tabsWidth[a];
+                child.measure(MeasureSpec.makeMeasureSpec(tabsWidth[a], MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(tabHeight, MeasureSpec.EXACTLY));
+            }
+            setMeasuredDimension(left + getPaddingLeft() + getPaddingRight(), height);
+            calculateTotalSizesAfterMeasure();
+            return;
+        }
         final int minTotalWidthForTabs = Math.min(dp(320), maxTotalWidthForTabs);
 
         int chosenPass = PASS_TEXT_SIZES_DP.length - 1;
