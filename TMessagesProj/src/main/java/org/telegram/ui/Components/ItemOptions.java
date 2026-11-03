@@ -1421,7 +1421,9 @@ public class ItemOptions {
         actionBarPopupWindow.setOutsideTouchable(true);
         actionBarPopupWindow.setFocusable(!dontFocus);
         actionBarPopupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        actionBarPopupWindow.setAnimationStyle("minimal".equals(ForkPanelSettings.animationMode()) || AndroidUtilities.getAnimatorDurationScale() <= 0f ? 0 : R.style.PopupContextAnimation);
+        String animationMode = ForkPanelSettings.animationMode();
+        actionBarPopupWindow.setAnimationStyle("minimal".equals(animationMode) || AndroidUtilities.getAnimatorDurationScale() <= 0f
+                ? 0 : "smooth".equals(animationMode) ? R.style.ForkPopupContextSmooth : R.style.PopupContextAnimation);
         if (allowShowingOnTopOfKeyboard) {
             actionBarPopupWindow.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
             actionBarPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED);
