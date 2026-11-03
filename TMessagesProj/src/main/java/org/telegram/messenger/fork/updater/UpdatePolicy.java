@@ -43,6 +43,10 @@ public final class UpdatePolicy {
         }
         return Integer.compare(ls.length, rs.length);
     }
+    public static boolean shouldShowRelease(String candidate, String installed, boolean betaChannel) {
+        Integer comparison = compareVersions(candidate, installed);
+        return comparison != null && (comparison > 0 || (!betaChannel && comparison < 0));
+    }
     public static boolean isPrerelease(String value) { java.util.regex.Matcher m = version(value); return m != null && m.group(4) != null; }
     public static boolean validRepository(String value) {
         if (value == null || value.length() > 140 || !value.matches("[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}")) return false;
@@ -57,8 +61,10 @@ public final class UpdatePolicy {
     }
     public static boolean validDigest(String digest) { return digest != null && digest.matches("sha256:[0-9a-fA-F]{64}"); }
     public static boolean validSavedRelease(String repo, String version, String installed, String url, String digest, long size) {
-        Integer comparison = compareVersions(version, installed);
-        if (comparison == null || comparison <= 0 || size <= 0 || size > 512L * 1024 * 1024 || !validDigest("sha256:" + digest)) return false;
+        return validSavedRelease(repo, version, installed, url, digest, size, true);
+    }
+    public static boolean validSavedRelease(String repo, String version, String installed, String url, String digest, long size, boolean betaChannel) {
+        if (!shouldShowRelease(version, installed, betaChannel) || size <= 0 || size > 512L * 1024 * 1024 || !validDigest("sha256:" + digest)) return false;
         String name = "BerryGram-" + version + "-arm64-v8a.apk";
         return validAssetUrl(repo, "v" + version, name, url) || validAssetUrl(repo, version, name, url);
     }

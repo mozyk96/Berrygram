@@ -145,4 +145,7 @@
     <string name="ForkUpdateChannelStable">Стабильный</string>
     <string name="ForkUpdateChannelBeta">Бета</string>
     <string name="ForkUpdateNoSpace">Недостаточно свободного места для загрузки обновления.</string>
+    <string name="ForkUpdateOlderStable">Последняя стабильная версия старше по названию. Загрузите её, чтобы проверить Android versionCode. Android может отклонить старую версию. Удаление приложения может стереть локальные данные и потребовать повторного входа в Telegram. Можно экспортировать поддерживаемый набор фраз или дождаться совместимого стабильного выпуска.</string>
+    <string name="ForkUpdateIncompatibleVersion">Проверенный пакет имеет такой же или меньший Android versionCode. Установить его как обновление невозможно.</string>
+    <string name="ForkUpdateExportPhrases">Экспорт фраз в редакторе</string>
 </resources>

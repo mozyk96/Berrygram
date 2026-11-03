@@ -27,6 +27,9 @@ public final class GithubUpdateClient {
     public static final class NoStableReleaseException extends java.io.IOException {
         public NoStableReleaseException() { super("No compatible release found or repository unavailable"); }
     }
+    public static final class VersionNotNewerException extends java.io.IOException {
+        public VersionNotNewerException() { super("The installed Android version code is not older than this release"); }
+    }
     public static final class InsufficientStorageException extends java.io.IOException {
         public InsufficientStorageException() { super("Not enough storage space for update"); }
     }
@@ -189,6 +192,7 @@ public final class GithubUpdateClient {
         long candidateCode=Build.VERSION.SDK_INT>=28 ? candidate.getLongVersionCode() : candidate.versionCode;
         long installedCode=Build.VERSION.SDK_INT>=28 ? installed.getLongVersionCode() : installed.versionCode;
         Set<String> expected=signers(installed), actual=signers(candidate);
-        if(!UpdatePolicy.validIdentity(context.getPackageName(),installedCode,expected,candidate.packageName,candidateCode,actual)) throw new SecurityException("Update version or signing certificate mismatch");
+        if (expected.isEmpty() || !expected.equals(actual)) throw new SecurityException("Update signing certificate mismatch");
+        if (candidateCode <= installedCode) throw new VersionNotNewerException();
     }
 }

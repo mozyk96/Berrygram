@@ -28,6 +28,11 @@ public final class UpdaterPackageFixtureTest {
   boolean passed=true;try{m.invoke(null,c,apk,"1.0.1");}catch(InvocationTargetException e){passed=false;}
   if(passed!=ok)throw new AssertionError("Unexpected verification result");
  }
+ static void verifyFailureType(Ctx c,File apk,Class<?> type) throws Exception {
+  Method m=GithubUpdateClient.class.getDeclaredMethod("verifyPackage",Context.class,File.class,String.class); m.setAccessible(true);
+  try { m.invoke(null,c,apk,"1.0.1"); throw new AssertionError("Expected rejection"); }
+  catch (InvocationTargetException e) { if (!type.isInstance(e.getCause())) throw new AssertionError("Unexpected rejection",e.getCause()); }
+ }
  static File apk(boolean arm) throws IOException {
   File f=File.createTempFile("berrygram-fixture-", ".apk"); f.deleteOnExit();
   try(ZipOutputStream z=new ZipOutputStream(new FileOutputStream(f))){z.putNextEntry(new ZipEntry(arm?"lib/arm64-v8a/libfixture.so":"lib/x86/libfixture.so"));z.write(1);z.closeEntry();} return f;
@@ -39,6 +44,8 @@ public final class UpdaterPackageFixtureTest {
   c.pm.candidate=info(NAME,"1.0.2",101,0,1);verify(c,good,false);
   c.pm.candidate=info(NAME,"1.0.1",101,ApplicationInfo.FLAG_DEBUGGABLE,1);verify(c,good,false);
   c.pm.candidate=info(NAME,"1.0.1",100,0,1);verify(c,good,false);
+  verifyFailureType(c,good,GithubUpdateClient.VersionNotNewerException.class);
+  c.pm.candidate=info(NAME,"1.0.1",99,0,2); verifyFailureType(c,good,SecurityException.class);
   c.pm.candidate=info(NAME,"1.0.1",101,0,2);verify(c,good,false);
   c.pm.candidate=info(NAME,"1.0.1",101,0,1);verify(c,apk(false),false);
   c.pm.candidate.signingInfo=new SigningInfo(new Signature[0]);verify(c,good,false);

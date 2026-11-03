@@ -35,7 +35,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final BaseFragment parent;
     private final SharedPreferences preferences;
-    private boolean expanded, busy, disposed;
+    private boolean expanded, busy, disposed, incompatible;
     private String status = "";
     private String version = "";
     private GithubUpdateClient.Release release;
@@ -83,12 +83,13 @@ public final class ForkUpdaterPanel extends LinearLayout {
         channel.setOnClickListener(v -> parent.showDialog(new BottomSheet.Builder(c).setTitle(ForkLocale.get(R.string.ForkUpdateChannel))
             .setItems(new CharSequence[]{ForkLocale.get(R.string.ForkUpdateChannelStable), ForkLocale.get(R.string.ForkUpdateChannelBeta)}, (dialog, index) -> {
                 preferences.edit().putBoolean("beta_channel", index == 1).apply();
-                release = null; verified = null; saveRelease(null); status = ""; render(false);
+                release = null; verified = null; incompatible = false; saveRelease(null); status = ""; render(false);
             }).create()));
         addView(channel);
         if (busy) { progress = new ProgressBar(c, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(true); addView(progress); return; }
         addAction(R.string.ForkUpdateCheck, this::check, release != null || verified != null);
-        if (release != null && verified == null) addAction(R.string.ForkUpdateDownload, this::download, false);
+        if (release != null && verified == null && !incompatible) addAction(R.string.ForkUpdateDownload, this::download, false);
+        if (olderStable()) addAction(R.string.ForkUpdateExportPhrases, () -> parent.presentFragment(new ForkCustomTextActivity()), false);
         if (verified != null) addAction(R.string.ForkUpdateInstall, this::install, false);
     }
     private void addAction(int label, Runnable action, boolean divider) {
@@ -96,6 +97,11 @@ public final class ForkUpdaterPanel extends LinearLayout {
         cell.setIcon(label == R.string.ForkUpdateCheck ? R.drawable.msg_retry : label == R.string.ForkUpdateDownload ? R.drawable.msg_download : R.drawable.msg_check_s);
         cell.setBackground(Theme.getSelectorDrawable(false));
         cell.setOnClickListener(v -> action.run()); addView(cell);
+    }
+    private boolean olderStable() {
+        if (release == null || preferences.getBoolean("beta_channel", true)) return false;
+        Integer comparison = UpdatePolicy.compareVersions(release.version, version);
+        return comparison != null && comparison < 0;
     }
     private void updateDetails() {
         if (details == null || !expanded || disposed) return;
@@ -105,6 +111,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         if (!status.isEmpty()) text.append("\n").append(status);
         if (release != null) {
             text.append("\n").append(ForkLocale.get(R.string.ForkUpdateAvailable, release.version, release.size / 1048576f));
+            if (olderStable()) text.append("\n").append(ForkLocale.get(R.string.ForkUpdateOlderStable));
             if (release.notes != null && !release.notes.isEmpty()) text.append("\n\n").append(release.notes.length() > 600 ? release.notes.substring(0, 600) + "…" : release.notes);
         }
         details.setText(text);
@@ -115,7 +122,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         String digest = preferences.getString("release_digest", "");
         long size = preferences.getLong("release_size", 0);
         boolean prerelease = preferences.getBoolean("release_prerelease", true);
-        if ((!preferences.getBoolean("beta_channel", true) && (prerelease || UpdatePolicy.isPrerelease(v))) || !UpdatePolicy.validSavedRelease(REPOSITORY, v, version, url, digest, size)) return null;
+        if ((!preferences.getBoolean("beta_channel", true) && (prerelease || UpdatePolicy.isPrerelease(v))) || !UpdatePolicy.validSavedRelease(REPOSITORY, v, version, url, digest, size, preferences.getBoolean("beta_channel", true))) return null;
         GithubUpdateClient.Release result = new GithubUpdateClient.Release();
         result.version = v; result.url = url; result.digest = digest; result.size = size; result.prerelease = prerelease;
         result.notes = preferences.getString("release_notes", ""); return result;
@@ -131,15 +138,16 @@ public final class ForkUpdaterPanel extends LinearLayout {
         edit.apply();
     }
     private void check() {
-        busy = true; preferences.edit().putBoolean("interrupted", true).apply(); release = null; verified = null; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
+        busy = true; preferences.edit().putBoolean("interrupted", true).apply(); release = null; verified = null; incompatible = false; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
         final boolean betaChannel = preferences.getBoolean("beta_channel", true);
         worker.execute(() -> {
             try {
                 GithubUpdateClient.Release found = GithubUpdateClient.latest(REPOSITORY, betaChannel);
                 Integer comparison = UpdatePolicy.compareVersions(found.version, version);
                 if (comparison == null) throw new SecurityException("Invalid release version");
-                AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); release = comparison > 0 ? found : null;
-                    status = comparison > 0 ? "" : ForkLocale.get(R.string.ForkUpdateLatest); saveRelease(release); preferences.edit().putLong("last_checked", System.currentTimeMillis()).apply(); render(false); });
+                boolean show = UpdatePolicy.shouldShowRelease(found.version, version, betaChannel);
+                AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); release = show ? found : null;
+                    status = show ? "" : ForkLocale.get(R.string.ForkUpdateLatest); saveRelease(release); preferences.edit().putLong("last_checked", System.currentTimeMillis()).apply(); render(false); });
             } catch (Exception e) { fail(e); }
         });
     }
@@ -159,6 +167,10 @@ public final class ForkUpdaterPanel extends LinearLayout {
         });
     }
     private void fail(Exception e) {
+        if (e instanceof GithubUpdateClient.VersionNotNewerException) {
+            AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; incompatible = true; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateIncompatibleVersion); render(false); });
+            return;
+        }
         if (e instanceof GithubUpdateClient.InsufficientStorageException) {
             AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateNoSpace); render(false); });
             return;

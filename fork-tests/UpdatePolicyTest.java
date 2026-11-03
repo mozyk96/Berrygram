@@ -19,6 +19,11 @@ public class UpdatePolicyTest {
   check(UpdatePolicy.compareVersions("1.2.0-beta.1","1.2.0-beta.2") < 0);
   check(UpdatePolicy.compareVersions("1.2.0-beta.10","1.2.0-beta.2") > 0);
   check(UpdatePolicy.compareVersions("1.2.0-beta.3","1.2.0") < 0);
+  check(UpdatePolicy.shouldShowRelease("1.2.0", "1.2.0-rc.2", true));
+  check(UpdatePolicy.shouldShowRelease("1.2.0", "1.2.1-beta.1", false));
+  check(!UpdatePolicy.shouldShowRelease("1.2.0", "1.2.1-beta.1", true));
+  check(!UpdatePolicy.shouldShowRelease("1.2.0", "1.2.0", false));
+  check(!UpdatePolicy.shouldShowRelease("bad", "1.2.0", false));
   check(UpdatePolicy.compareVersions("1.2.0+build.1","1.2.0+build.2") == 0);
   check(UpdatePolicy.compareVersions("1.2.0-beta.01","1.2.0") == null);
   check(UpdatePolicy.validAsset("v1.2.0-beta.1","BerryGram-1.2.0-beta.1-arm64-v8a.apk"));
@@ -38,6 +43,8 @@ public class UpdatePolicyTest {
   String digest="a".repeat(64);
   check(UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, digest, 100));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.2.3", url, digest, 100));
+  check(UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.3.0-beta.1", url, digest, 100, false));
+  check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.3.0-beta.1", url, digest, 100, true));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, digest, 0));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", "https://evil.test/file", digest, 100));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, "invalid", 100));

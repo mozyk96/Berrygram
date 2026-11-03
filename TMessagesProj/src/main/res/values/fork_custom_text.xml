@@ -192,4 +192,7 @@
     <string name="ForkUpdateChannelStable">Stable</string>
     <string name="ForkUpdateChannelBeta">Beta</string>
     <string name="ForkUpdateNoSpace">Not enough storage space to download the update.</string>
+    <string name="ForkUpdateOlderStable">The latest stable version is older by version name. Download to check its Android version code. Android may refuse an older version. Removing the app can erase local data and require Telegram sign-in again. You can export supported phrase packs or wait for a compatible stable release.</string>
+    <string name="ForkUpdateIncompatibleVersion">The verified package has an equal or older Android version code. It cannot be installed as an update.</string>
+    <string name="ForkUpdateExportPhrases">Export phrases in editor</string>
 </resources>
