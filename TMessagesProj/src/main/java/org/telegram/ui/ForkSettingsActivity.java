@@ -64,6 +64,6 @@ public final class ForkSettingsActivity extends BaseFragment {
         int color = org.telegram.messenger.fork.panels.GraphicsColorPolicy.readableAccent(ForkAppearanceSettingsActivity.accent(context), background);
         for (TextDetailSettingsCell cell : accentCells) cell.setIconColor(color);
     }
-    @Override public void onResume() { super.onResume(); if (settingsPage != null) { ForkSettingsLayout.refreshPage(settingsPage); updateAccent(settingsPage.getContext()); } }
+    @Override public void onResume() { super.onResume(); if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView); if (settingsPage != null) { ForkSettingsLayout.refreshPage(settingsPage); updateAccent(settingsPage.getContext()); } }
     @Override public void onFragmentDestroy() { if (updater != null) updater.dispose(); updater = null; accentCells = null; settingsPage = null; super.onFragmentDestroy(); }
 }

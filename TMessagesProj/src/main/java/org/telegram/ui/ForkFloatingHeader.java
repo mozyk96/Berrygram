@@ -20,6 +20,29 @@ import org.telegram.ui.ActionBar.Theme;
 final class ForkFloatingHeader {
     private ForkFloatingHeader() { }
 
+    private static int surface(Context context) {
+        int color = Theme.getColor(Theme.key_windowBackgroundWhite);
+        return "material".equals(ForkGraphicsSurface.effectiveStyle()) ? ForkGraphicsSurface.materialColor(context, color) : color;
+    }
+
+    static void refresh(View view) {
+        if (!(view instanceof LinearLayout)) return;
+        LinearLayout root = (LinearLayout) view;
+        if (root.getChildCount() == 0 || !(root.getChildAt(0) instanceof LinearLayout)) return;
+        LinearLayout header = (LinearLayout) root.getChildAt(0);
+        int color = surface(view.getContext());
+        root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+        for (int i = 0; i < header.getChildCount(); i++) {
+            View child = header.getChildAt(i);
+            if (child instanceof ImageView) {
+                ((ImageView) child).setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.MULTIPLY));
+                child.setBackground(Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(48), color, Theme.getColor(Theme.key_actionBarDefaultSelector)));
+            } else if (child instanceof TextView) {
+                ((TextView) child).setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+            }
+        }
+    }
+
     static View wrap(Context context, ActionBar actionBar, View content, CharSequence title, Runnable onBack) {
         return wrap(context, actionBar, content, title, onBack, null);
     }
@@ -44,8 +67,7 @@ final class ForkFloatingHeader {
         back.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.MULTIPLY));
         back.setScaleType(ImageView.ScaleType.CENTER);
         back.setContentDescription(LocaleController.getString(R.string.AccDescrGoBack));
-        int surface = Theme.getColor(Theme.key_windowBackgroundWhite);
-        if ("material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())) surface = ForkGraphicsSurface.materialColor(context, surface);
+        int surface = surface(context);
         back.setBackground(Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(48), surface, Theme.getColor(Theme.key_actionBarDefaultSelector)));
         back.setOnClickListener(v -> onBack.run());
         header.addView(back, new LinearLayout.LayoutParams(AndroidUtilities.dp(48), AndroidUtilities.dp(48)));

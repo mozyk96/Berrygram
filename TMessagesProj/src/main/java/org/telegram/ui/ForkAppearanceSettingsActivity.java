@@ -115,6 +115,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                         style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
                         effect.setEnabled(effectsAvailable());
                         ForkSettingsLayout.refreshSection(controls, false);
+                        ForkFloatingHeader.refresh(fragmentView);
                         applyAccent(slider, effect, preview, accent(context));
                     }).create());
         });
@@ -198,6 +199,6 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
             });
         } else applyAccent(slider, effect, preview, accent(context));
     }
-    @Override public void onResume() { super.onResume(); if (effectControl != null) effectControl.setEnabled(effectsAvailable()); }
+    @Override public void onResume() { super.onResume(); if (effectControl != null) effectControl.setEnabled(effectsAvailable()); if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView); }
     @Override public void onFragmentDestroy() { effectControl = null; super.onFragmentDestroy(); }
 }
