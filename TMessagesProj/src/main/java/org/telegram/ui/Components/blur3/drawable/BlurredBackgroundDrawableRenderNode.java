@@ -53,6 +53,7 @@ public class BlurredBackgroundDrawableRenderNode extends BlurredBackgroundDrawab
     }
 
     private LiquidGlassEffect liquidGlassEffect;
+    private boolean forkLiquidActive;
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     public void setLiquidGlassEffectAllowed() {
@@ -114,7 +115,7 @@ public class BlurredBackgroundDrawableRenderNode extends BlurredBackgroundDrawab
         c = renderNodeFill.beginRecording();
         c.save();
         c.translate(-sL, -sT);
-        if (liquidGlassEffect != null && Build.VERSION.SDK_INT >= 33) {
+        if (liquidGlassEffect != null && forkLiquidActive && Build.VERSION.SDK_INT >= 33) {
             final int thickness = Math.max(Math.min(
                 boundProps.liquidThickness <= 0 ? dp(11) : boundProps.liquidThickness,
                 Math.min(boundProps.boundsWithPadding.width(), boundProps.boundsWithPadding.height()) / 5), 1);
@@ -128,6 +129,7 @@ public class BlurredBackgroundDrawableRenderNode extends BlurredBackgroundDrawab
                 backgroundColor
             );
         }
+        if (!forkLiquidActive && Build.VERSION.SDK_INT >= 31) renderNodeFill.setRenderEffect(null);
         source.draw(c, sL, sT, sR, sB);
         c.save();
         renderNodeFill.endRecording();
@@ -138,7 +140,7 @@ public class BlurredBackgroundDrawableRenderNode extends BlurredBackgroundDrawab
             c.drawColor(backgroundColor);
         } else {
             c.drawRenderNode(renderNodeFill);
-            if (liquidGlassEffect == null && Color.alpha(backgroundColor) != 0) {
+            if ((!forkLiquidActive || liquidGlassEffect == null) && Color.alpha(backgroundColor) != 0) {
                 c.drawColor(backgroundColor);
             }
         }
@@ -168,6 +170,11 @@ public class BlurredBackgroundDrawableRenderNode extends BlurredBackgroundDrawab
 
     @Override
     public void draw(@NonNull Canvas canvas) {
+        boolean liquid = org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS);
+        if (forkLiquidActive != liquid) {
+            forkLiquidActive = liquid;
+            renderNodeInvalidated = true;
+        }
         if (boundProps.boundsWithPadding.isEmpty()) {
             return;
         }

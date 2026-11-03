@@ -152,27 +152,33 @@ public class LiteMode {
             return true;
         }
         int active = getValue();
-        if (flag == FLAG_LIQUID_GLASS && org.telegram.messenger.fork.panels.PanelPolicy.useGlass(
-                org.telegram.messenger.fork.panels.ForkPanelSettings.enabled(), lastPowerSaverApplied,
-                Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE))) {
-            return true;
+        if (flag == FLAG_LIQUID_GLASS) {
+            return "liquid".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())
+                    && org.telegram.messenger.fork.panels.PanelPolicy.useGlass(true, lastPowerSaverApplied,
+                    Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(
+                    SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE));
         }
         return (active & preprocessFlag(flag)) > 0;
     }
 
     public static boolean isEnabledSetting(int flag) {
+        if (flag == FLAG_LIQUID_GLASS) return "liquid".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
         return (getValue(true) & flag) > 0;
     }
 
     public static void toggleFlag(int flag) {
-        toggleFlag(flag, !isEnabled(flag));
+        toggleFlag(flag, !(flag == FLAG_LIQUID_GLASS ? isEnabledSetting(flag) : isEnabled(flag)));
     }
 
     public static void toggleFlag(int flag, boolean enabled) {
+        if (flag == FLAG_LIQUID_GLASS) org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle(enabled ? "liquid" : "blur");
         setAllFlags(enabled ? getValue(true) | flag : getValue(true) & ~flag);
     }
 
     public static void setAllFlags(int flags) {
+        if (((getValue(true) ^ flags) & FLAG_LIQUID_GLASS) != 0) {
+            org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle((flags & FLAG_LIQUID_GLASS) != 0 ? "liquid" : "blur");
+        }
         // in settings it is already handled. would you handle it? 🫵
         // onFlagsUpdate(value, flags);
         value = flags;

@@ -10,16 +10,9 @@ public final class ForkPanelSettings {
     private static volatile String cachedAnimation;
     private static volatile Boolean cachedAdaptive;
     private ForkPanelSettings() { }
-    public static boolean enabled() {
-        Boolean value = cached;
-        if (value == null) synchronized (ForkPanelSettings.class) {
-            value = cached;
-            if (value == null) cached = value = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).getBoolean("enabled", false);
-        }
-        return value;
-    }
+    public static boolean enabled() { return true; }
     public static synchronized void setEnabled(boolean value) {
-        setStyle(value ? "blur" : "material");
+        setStyle("blur");
     }
     public static String style() {
         String value = cachedStyle;
@@ -28,15 +21,19 @@ public final class ForkPanelSettings {
             if (value == null) {
                 android.content.SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE);
                 value = prefs.getString("style", prefs.getBoolean("enabled", false) ? "blur" : "material");
-                if (!"material".equals(value) && !"blur".equals(value) && !"liquid".equals(value)) value = "material";
+                if (!"blur".equals(value) && !"liquid".equals(value)) {
+                    value = "blur";
+                    prefs.edit().putString("style", value).putBoolean("enabled", true).apply();
+                }
                 cachedStyle = value;
             }
         }
         return value;
     }
     public static synchronized void setStyle(String value) {
-        if (!"material".equals(value) && !"blur".equals(value) && !"liquid".equals(value)) throw new IllegalArgumentException("Invalid graphics style");
-        boolean active = !"material".equals(value);
+        if ("material".equals(value)) value = "blur";
+        if (!"blur".equals(value) && !"liquid".equals(value)) throw new IllegalArgumentException("Invalid graphics style");
+        boolean active = true;
         ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("style", value).putBoolean("enabled", active).apply();
         cached = active;
         cachedStyle = value;
