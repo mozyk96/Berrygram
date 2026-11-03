@@ -582,6 +582,9 @@ public abstract class BlurredBackgroundDrawable extends Drawable {
 
         if (source instanceof BlurredBackgroundSourceColor) {
             drawSourceColor(canvas, (BlurredBackgroundSourceColor) source);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && source instanceof org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource) {
+            // The specialized source performs refraction in draw(); the generic bitmap path bypasses it.
+            drawSourceAny(canvas, source);
         } else if (source instanceof BlurredBackgroundSourceBitmap) {
             drawSourceBitmap(canvas, (BlurredBackgroundSourceBitmap) source);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && source instanceof BlurredBackgroundSourceRenderNode) {

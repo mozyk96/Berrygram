@@ -8,11 +8,13 @@ import org.telegram.ui.Components.blur3.source.BlurredBackgroundSource;
 import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceWrapped;
 
 public class BlurredBackgroundDrawableSource extends BlurredBackgroundDrawable {
-    private final BlurredBackgroundSource source;
+    private BlurredBackgroundSource source;
 
     public BlurredBackgroundDrawableSource(BlurredBackgroundSource source) {
         this.source = source;
     }
+
+    public void setSource(BlurredBackgroundSource source) { this.source = source; }
 
     @Override
     public void draw(@NonNull Canvas canvas) {

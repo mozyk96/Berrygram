@@ -777,8 +777,17 @@ public class ActionBarMenuItem extends FrameLayout {
             popupLayout.setBackgroundDrawable(Theme.createRoundRectDrawable(dp(radius), android.graphics.Color.WHITE));
             popupLayout.setBackgroundColor(color);
         } else {
-            popupLayout.setBackground(subMenuFactory.create(popupLayout, true)
-                    .setColorProvider(subMenuProvider)
+            org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable drawable = subMenuFactory.create(popupLayout, true);
+            if ("liquid".equals(style) && Build.VERSION.SDK_INT >= 33 && drawable instanceof org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawableSource) {
+                org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawableSource sourceDrawable = (org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawableSource) drawable;
+                if (sourceDrawable.getSource() instanceof org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap) {
+                    sourceDrawable.setSource(new org.telegram.ui.Components.blur3.source.LiquidGlassBitmapSource(
+                            (org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap) sourceDrawable.getSource()));
+                }
+            } else if ("liquid".equals(style) && Build.VERSION.SDK_INT >= 33 && drawable instanceof org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawableRenderNode) {
+                ((org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawableRenderNode) drawable).setLiquidGlassEffectAllowed();
+            }
+            popupLayout.setBackground(drawable.setColorProvider(org.telegram.ui.ForkGlassSurface.provider(resourcesProvider))
                     .setRadius(dp(radius))
                     .setPadding(dp(8)));
         }

@@ -20,6 +20,14 @@ public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap
             " float edge = smoothstep(0.55, 1.0, max(abs(d.x), abs(d.y)));" +
             " return backdrop.eval(p + d*edge*6.0*strength);" +
             "}";
+    private final BlurredBackgroundSourceBitmap upstream;
+
+    public LiquidGlassBitmapSource() { this(null); }
+    public LiquidGlassBitmapSource(BlurredBackgroundSourceBitmap upstream) { this.upstream = upstream; }
+
+    @Override public Bitmap getBitmap() { return upstream != null ? upstream.getBitmap() : super.getBitmap(); }
+    @Override public Matrix getMatrix() { return upstream != null ? upstream.getMatrix() : super.getMatrix(); }
+
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private RuntimeShader shader;
     private BitmapShader bitmapShader;
@@ -27,20 +35,31 @@ public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap
     private final Matrix shaderMatrix = new Matrix();
     private boolean unavailable;
 
+    private void clearShader() {
+        paint.setShader(null);
+        shader = null;
+        bitmapShader = null;
+        shaderBitmap = null;
+    }
+
     @Override public void setBitmap(Bitmap bitmap) {
-        if (bitmap != getBitmap()) {
-            paint.setShader(null);
-            shader = null;
-            bitmapShader = null;
-            shaderBitmap = null;
-        }
+        if (bitmap != getBitmap()) clearShader();
         super.setBitmap(bitmap);
+    }
+
+    private void drawFallback(Canvas canvas, float left, float top, float right, float bottom) {
+        if (upstream != null) upstream.draw(canvas, left, top, right, bottom);
+        else super.draw(canvas, left, top, right, bottom);
     }
 
     @Override public void draw(Canvas canvas, float left, float top, float right, float bottom) {
         Bitmap bitmap = getBitmap();
-        if (unavailable || !canvas.isHardwareAccelerated() || bitmap == null || bitmap.isRecycled()) {
-            super.draw(canvas, left, top, right, bottom);
+        if (bitmap == null || bitmap.isRecycled()) {
+            if (shaderBitmap != null) clearShader();
+            return;
+        }
+        if (unavailable || !canvas.isHardwareAccelerated()) {
+            drawFallback(canvas, left, top, right, bottom);
             return;
         }
         try {
@@ -62,7 +81,7 @@ public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap
             canvas.drawRect(left, top, right, bottom, paint);
         } catch (RuntimeException e) {
             unavailable = true;
-            super.draw(canvas, left, top, right, bottom);
+            drawFallback(canvas, left, top, right, bottom);
         }
     }
 }
