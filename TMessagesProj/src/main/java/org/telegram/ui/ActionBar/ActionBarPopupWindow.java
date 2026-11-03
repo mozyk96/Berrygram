@@ -141,6 +141,8 @@ public class ActionBarPopupWindow extends PopupWindow {
         private int forkMaterialColor;
         private int forkMaterialRadius = -1;
         private int forkExperimentalRadius = -1;
+        private String forkRequestedStyle;
+        private String forkResolvedStyle;
 
         private boolean fitItems;
         private final Theme.ResourcesProvider resourcesProvider;
@@ -175,13 +177,14 @@ public class ActionBarPopupWindow extends PopupWindow {
                 // alert and alert2. Leave custom/transparent popup surfaces untouched.
                 forkStyleEligible = resId == R.drawable.popup_fixed_alert || resId == R.drawable.popup_fixed_alert2 || resId == R.drawable.popup_fixed_alert4;
                 forkStockBackground = getResources().getDrawable(resId).mutate();
-                forkGlassBackground = forkStyleEligible && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
+                if (forkStyleEligible) refreshForkStyle();
+                forkGlassBackground = forkStyleEligible && !"material".equals(forkResolvedStyle);
                 if (forkGlassBackground) {
                     forkExperimentalRadius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
                     forkExperimentalBackground = Theme.createRoundRectDrawable(dp(forkExperimentalRadius), Color.WHITE);
                     backgroundDrawable = forkExperimentalBackground;
                 } else {
-                    forkMaterialApplied = forkStyleEligible && "material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
+                    forkMaterialApplied = forkStyleEligible && "material".equals(forkResolvedStyle);
                     if (forkMaterialApplied) {
                         forkMaterialRadius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
                         forkMaterialBackground = Theme.createRoundRectDrawable(dp(forkMaterialRadius), Color.WHITE);
@@ -472,14 +475,26 @@ public class ActionBarPopupWindow extends PopupWindow {
             return super.dispatchKeyEvent(event);
         }
 
+        private void refreshForkStyle() {
+            forkRequestedStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
+            forkResolvedStyle = org.telegram.ui.ForkGraphicsSurface.effectiveStyle();
+        }
+
+        @Override
+        protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            if (forkStyleEligible) refreshForkStyle();
+        }
+
         Path path;
 
         @Override
         protected void dispatchDraw(Canvas canvas) {
             // Action-bar popup layouts are cached, so refresh the surface when the
             // preference changes instead of requiring the whole screen to reopen.
-            boolean glass = forkStyleEligible && org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
-            boolean material = forkStyleEligible && !glass && "material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
+            if (forkStyleEligible && !org.telegram.messenger.fork.panels.ForkPanelSettings.style().equals(forkRequestedStyle)) refreshForkStyle();
+            boolean glass = forkStyleEligible && !"material".equals(forkResolvedStyle);
+            boolean material = forkStyleEligible && !glass;
             int radius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
             boolean ownsSurface = backgroundDrawable == forkExperimentalBackground || backgroundDrawable == forkStockBackground || backgroundDrawable == forkMaterialBackground;
             if (forkStyleEligible && ownsSurface && (glass != forkGlassBackground || material != forkMaterialApplied || (glass && radius != forkExperimentalRadius) || (material && radius != forkMaterialRadius))) {

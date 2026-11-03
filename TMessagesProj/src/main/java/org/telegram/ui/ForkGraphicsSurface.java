@@ -15,6 +15,13 @@ public final class ForkGraphicsSurface {
         }
         return fallback;
     }
+    public static String effectiveStyle() {
+        return org.telegram.messenger.fork.panels.PanelPolicy.effectiveStyle(
+                org.telegram.messenger.fork.panels.ForkPanelSettings.style(),
+                !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS) || systemPowerSaver(),
+                Build.VERSION.SDK_INT,
+                org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()));
+    }
     public static boolean systemPowerSaver() {
         Context context = org.telegram.messenger.ApplicationLoader.applicationContext;
         if (context == null) return false;
