@@ -168,6 +168,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     BaseFragment fragment;
     private CharSequence currentTitle;
     private boolean hasOverlayText;
+    private boolean forkHideBranding;
     private int overlayTextId;
     private SpannableStringBuilder uploadingString;
     private ValueAnimator textAnimator;
@@ -1354,6 +1355,11 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         return true;
     }
 
+    public void setForkHideBranding(boolean hide) {
+        forkHideBranding = hide;
+        checkUi_titleVisibility();
+    }
+
     public void setActionBar(ActionBar actionBar) {
         this.actionBar = actionBar;
     }
@@ -2210,7 +2216,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         final float titleVisibility = animatorHasTitleText.getFloatValue();
         final float logoVisibility = 1f - titleVisibility;
         final float titleAlpha = titleVisibility * progress;
-        final float logoAlpha = logoVisibility * progress;
+        final float logoAlpha = forkHideBranding ? 0f : logoVisibility * progress;
 
         if (titleView != null) {
             titleView.setAlpha(titleAlpha);

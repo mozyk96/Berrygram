@@ -1040,8 +1040,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     blurBounds.set(0, Math.max(0, top), getMeasuredWidth(), top + actionBarHeight - dp(2 * searchAnimationProgress));
                     drawBlurRect(canvas, 0, blurBounds, actionBarSearchPaint, true);
                 } else {
-                    blurBounds.set(0, Math.max(0, top), getMeasuredWidth(), top + actionBarHeight - dp(2 * searchAnimationProgress));
-                    drawBlurRect(canvas, 0, blurBounds, actionBarDefaultPaint, true);
+                    // Keep the normal chat-list header open so the floating controls can use
+                    // the live list backdrop. Search and selection retain Telegram's scrim.
+                    int backgroundTop = top;
+                    if (isForkMainHeader() && !searchIsShowed && searchAnimationProgress == 0f
+                            && (rightSlidingDialogContainer == null || !rightSlidingDialogContainer.hasFragment())) {
+                        backgroundTop += actionBar.getHeight();
+                    }
+                    blurBounds.set(0, Math.max(0, backgroundTop), getMeasuredWidth(), top + actionBarHeight - dp(2 * searchAnimationProgress));
+                    if (blurBounds.top < blurBounds.bottom) {
+                        drawBlurRect(canvas, 0, blurBounds, actionBarDefaultPaint, true);
+                    }
                 }
             }
             tabsYOffset = 0;
@@ -2713,9 +2722,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 @Override
                 public void renderNodeCalculateHash(IBlur3Hash hash) {
                     hash.add(getThemedColor(Theme.key_windowBackgroundWhite));
-                    hash.add(SharedConfig.chatBlurEnabled());
+                    hash.add(forkHeaderBackdropEnabled());
 
-                    if (SharedConfig.chatBlurEnabled()) {
+                    if (forkHeaderBackdropEnabled()) {
                         TopicsFragment topicsFragment = null;
                         if (rightSlidingDialogContainer != null && rightSlidingDialogContainer.getFragment() instanceof TopicsFragment) {
                             topicsFragment = (TopicsFragment) rightSlidingDialogContainer.getFragment();
@@ -2734,7 +2743,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     final int height = fragmentView.getMeasuredHeight();
 
                     canvas.drawColor(getThemedColor(Theme.key_windowBackgroundWhite));
-                    if (SharedConfig.chatBlurEnabled()) {
+                    if (forkHeaderBackdropEnabled()) {
                         TopicsFragment topicsFragment = null;
                         if (rightSlidingDialogContainer != null && rightSlidingDialogContainer.getFragment() instanceof TopicsFragment) {
                             topicsFragment = (TopicsFragment) rightSlidingDialogContainer.getFragment();
@@ -2761,9 +2770,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 @Override
                 public void renderNodeCalculateHash(IBlur3Hash hash) {
                     hash.add(getThemedColor(Theme.key_windowBackgroundWhite));
-                    hash.add(SharedConfig.chatBlurEnabled());
+                    hash.add(forkHeaderBackdropEnabled());
 
-                    if (SharedConfig.chatBlurEnabled()) {
+                    if (forkHeaderBackdropEnabled()) {
                         TopicsFragment topicsFragment = null;
                         if (rightSlidingDialogContainer != null && rightSlidingDialogContainer.getFragment() instanceof TopicsFragment) {
                             topicsFragment = (TopicsFragment) rightSlidingDialogContainer.getFragment();
@@ -2782,7 +2791,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     final int height = fragmentView.getMeasuredHeight();
 
                     canvas.drawColor(getThemedColor(Theme.key_windowBackgroundWhite));
-                    if (SharedConfig.chatBlurEnabled()) {
+                    if (forkHeaderBackdropEnabled()) {
                         TopicsFragment topicsFragment = null;
                         if (rightSlidingDialogContainer != null && rightSlidingDialogContainer.getFragment() instanceof TopicsFragment) {
                             topicsFragment = (TopicsFragment) rightSlidingDialogContainer.getFragment();
@@ -3452,6 +3461,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             });
         }
 
+
         searchItem.setSearchFieldHint(getString(R.string.Search));
         searchItem.setContentDescription(getString(R.string.Search));
         if (onlySelect) {
@@ -3518,12 +3528,19 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 logoDrawable.setColorFilter(getThemedColor(Theme.key_telegram_color_dialogsLogo), PorterDuff.Mode.MULTIPLY);
                 SpannableStringBuilder ssb = new SpannableStringBuilder(getString(R.string.AppName));
                 ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                actionBar.setTitle(ssb, statusDrawable);
+                if (initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect && TextUtils.isEmpty(searchString)) {
+                    actionBar.setTitle("");
+                } else {
+                    actionBar.setTitle(ssb, statusDrawable);
+                }
                 updateStatus(UserConfig.getInstance(currentAccount).getCurrentUser(), false);
             }
             if (folderId == 0) {
                 actionBar.setSupportsHolidayImage(true);
             }
+        }
+        if (isForkMainHeader()) {
+            actionBar.setBackgroundColor(Color.TRANSPARENT);
         }
         //if (!onlySelect || initialDialogsType == DIALOGS_TYPE_FORWARD) {
             actionBar.setAddToContainer(false);
@@ -4022,6 +4039,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         iBlur3FactoryLiquidGlass.setSourceRootView(viewPositionWatcher, contentView);
         iBlur3FactoryFade.setSourceRootView(viewPositionWatcher, contentView);
         iBlur3FactoryBlur.setSourceRootView(viewPositionWatcher, contentView);
+        forkHeaderSurfaceStyle = null;
+        updateForkHeaderSurfaces();
 
         final PointF tmpPoint = new PointF();
         iBlur3Capture = (canvas, position) -> {
@@ -5318,6 +5337,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
         };
         dialogStoriesCell.setActionBar(actionBar);
+        dialogStoriesCell.setForkHideBranding(initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect
+                && folderId == 0 && communityId == 0 && TextUtils.isEmpty(searchString));
         dialogStoriesCell.setMenuItemsOffset(isArchive() ? dp(68) : dpf2(16.66f));
         dialogStoriesCell.allowGlobalUpdates = false;
         dialogStoriesCell.setVisibility(View.GONE);
@@ -7020,6 +7041,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void onResume() {
         super.onResume();
+        updateForkHeaderSurfaces();
         if (dialogStoriesCell != null) {
             dialogStoriesCell.onResume();
         }
@@ -14170,9 +14192,55 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         FragmentFloatingButton.setAnimatedVisibility(speedItem, factor);
     }
 
+    private boolean isForkMainHeader() {
+        return initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect && folderId == 0
+                && communityId == 0 && TextUtils.isEmpty(searchString);
+    }
+
+    private boolean forkHeaderBackdropEnabled() {
+        return SharedConfig.chatBlurEnabled()
+                || (isForkMainHeader() && !"material".equals(ForkGraphicsSurface.effectiveStyle()));
+    }
+
+    private String forkHeaderSurfaceStyle;
+    private int forkHeaderSurfaceColor;
+
+    private void updateForkHeaderSurfaces() {
+        if (fragmentView == null || searchItem == null || !isForkMainHeader()) {
+            return;
+        }
+        final String style = ForkGraphicsSurface.effectiveStyle();
+        final int color = "material".equals(style)
+                ? ForkGraphicsSurface.materialColor(fragmentView.getContext(), getThemedColor(Theme.key_windowBackgroundWhite))
+                : getThemedColor(Theme.key_windowBackgroundWhite);
+        if (style.equals(forkHeaderSurfaceStyle) && color == forkHeaderSurfaceColor) {
+            return;
+        }
+        forkHeaderSurfaceStyle = style;
+        forkHeaderSurfaceColor = color;
+        updateForkHeaderSurface(searchItem, style, color);
+        updateForkHeaderSurface(optionsItem, style, color);
+    }
+
+    private void updateForkHeaderSurface(ActionBarMenuItem item, String style, int color) {
+        if (item == null) return;
+        if (viewPositionWatcher != null) viewPositionWatcher.unsubscribe(item);
+        int selector = getThemedColor(Theme.key_actionBarDefaultSelector);
+        if ("material".equals(style)) {
+            item.setForeground(null);
+            item.setBackground(Theme.createSimpleSelectorCircleDrawable(dp(44), color, selector));
+        } else {
+            BlurredBackgroundDrawableViewFactory factory = "liquid".equals(style)
+                    ? iBlur3FactoryLiquidGlass : iBlur3FactoryBlur;
+            item.setBackground(factory.create(item, ForkGlassSurface.provider(resourceProvider)).setRadius(dp(22)));
+            item.setForeground(Theme.createSelectorDrawable(selector));
+        }
+    }
+
     private void checkUi_itemSearchVisibility() {
         final float factor0 = isSupportSearch() ? 1 : 0;
-        final float factor1 = animatorSearchButtonVisible.getFloatValue();
+        final boolean mainList = initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect && folderId == 0 && communityId == 0;
+        final float factor1 = mainList && !searchIsShowed && !actionBar.isActionModeShowed() ? 1f : animatorSearchButtonVisible.getFloatValue();
         final float factor2 = 1f - getRightSlidingProgress();
         final float factor3 = 1f - animatorDoneButtonVisible.getFloatValue();
         final float factor = factor0 * factor1 * factor2 * factor3;
