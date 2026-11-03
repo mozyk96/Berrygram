@@ -3464,6 +3464,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         if (isForkMainHeader()) {
             configureForkHeaderButton(searchItem);
+            configureForkHeaderButton(passcodeItem);
             configureForkHeaderButton(optionsItem);
         }
 
@@ -14183,7 +14184,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private void checkUi_itemPasscodeVisibility() {
-        final float factor0 = SharedConfig.passcodeHash.isEmpty() || isForkMainHeader() ? 0 : 1;
+        final float factor0 = SharedConfig.passcodeHash.isEmpty() ? 0 : 1;
         final float factor1 = 1f - animatorSearchVisible.getFloatValue();
         final float factor2 = 1f - getRightSlidingProgress();
         final float factor3 = 1f - animatorDoneButtonVisible.getFloatValue();
@@ -14254,6 +14255,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         forkHeaderSurfaceStyle = style;
         forkHeaderSurfaceColor = color;
         updateForkHeaderSurface(searchItem, style, color);
+        updateForkHeaderSurface(passcodeItem, style, color);
         updateForkHeaderSurface(optionsItem, style, color);
     }
 
