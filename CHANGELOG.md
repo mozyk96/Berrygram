@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0-beta.4 — public testing
+
+- Remove the duplicate search-row space on the main chat list; size the search and menu controls equally and retain passcode locking in the menu.
+- Open simple BerryGram settings choices in anchored Telegram popup menus.
+- Consolidate the round-video camera setting into rear, front and choose during recording, migrating older preferences and using Telegram’s camera switch.
+- Beta: real-device layout, popup positioning, camera recording, login, messaging, calls, media, notifications and update installation remain unverified.
+
 ## 1.2.0-beta.3 — public testing
 
 - Connect the main chat-list search and menu controls to the selected graphics surfaces and remove the old Telegram branding from the normal header.
