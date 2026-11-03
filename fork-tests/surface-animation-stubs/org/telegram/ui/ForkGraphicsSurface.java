@@ -1,0 +1,1 @@
+package org.telegram.ui;public class ForkGraphicsSurface {public static String style="liquid";public static boolean suppressed;public static String effectiveStyle(){return style;}public static boolean effectsSuppressed(){return suppressed;}}

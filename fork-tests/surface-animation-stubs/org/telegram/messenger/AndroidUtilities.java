@@ -1,0 +1,1 @@
+package org.telegram.messenger;public class AndroidUtilities {public static float scale=1;public static float getAnimatorDurationScale(){return scale;}public static int dp(float v){return Math.round(v);}}

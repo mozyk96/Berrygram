@@ -1,0 +1,1 @@
+package android.animation; public class AnimatorSet extends Animator { Animator child; public void playTogether(Animator a){child=a;} public void setDuration(long d){} public void setInterpolator(Object o){} public void start(){child.start();} }

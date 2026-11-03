@@ -43,9 +43,10 @@ public final class ForkSurfaceAnimation {
         final float originalScaleX = view.getScaleX(), originalScaleY = view.getScaleY();
         final float originalX = view.getTranslationX(), originalY = view.getTranslationY();
         final float originalPivotX = view.getPivotX(), originalPivotY = view.getPivotY();
-        final float startScaleX = seedWidth / width, startScaleY = seedHeight / height;
-        view.setPivotX(width / 2f);
-        view.setPivotY(height / 2f);
+        final float seedCenterX = (seed.left + seed.right) / 2f;
+        final float seedCenterY = (seed.top + seed.bottom) / 2f;
+        view.setPivotX(seedCenterX);
+        view.setPivotY(seedCenterY);
         ViewOutlineProvider originalProvider = view.getOutlineProvider();
         boolean originalClip = view.getClipToOutline();
         float finalRadius = AndroidUtilities.dp(ForkPanelSettings.radiusDp());
@@ -66,10 +67,10 @@ public final class ForkSurfaceAnimation {
             // Transform the surface itself, including its background, from the real anchor.
             // The outline adds rounded expansion rather than revealing an already full-size menu.
             float stretch = liquid ? 0.035f * (float) Math.sin(Math.PI * p) : 0f;
-            view.setScaleX(originalScaleX * (startScaleX + (1 - startScaleX) * p + stretch));
-            view.setScaleY(originalScaleY * (startScaleY + (1 - startScaleY) * p));
-            view.setTranslationX(originalX + (sourceX - width / 2f) * (1 - p));
-            view.setTranslationY(originalY + (sourceY - height / 2f) * (1 - p));
+            view.setScaleX(originalScaleX * (0.92f + 0.08f * p + stretch));
+            view.setScaleY(originalScaleY * (0.92f + 0.08f * p));
+            view.setTranslationX(originalX + (sourceX - seedCenterX) * (1 - p));
+            view.setTranslationY(originalY + (sourceY - seedCenterY) * (1 - p));
             // Liquid stretches horizontally first, then settles; Blur has a quieter uniform reveal.
             float horizontal = liquid ? Math.min(1f, p + 0.16f * (float) Math.sin(Math.PI * p)) : p;
             bounds.set(seed.left * (1 - horizontal), seed.top * (1 - p),

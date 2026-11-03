@@ -1,0 +1,1 @@
+package android.graphics; public class Outline {public float left,top,right,bottom;public void setRoundRect(int l,int t,int r,int b,float radius){left=l;top=t;right=r;bottom=b;if(r<l||b<t||radius<0)throw new AssertionError("Invalid outline");}}
