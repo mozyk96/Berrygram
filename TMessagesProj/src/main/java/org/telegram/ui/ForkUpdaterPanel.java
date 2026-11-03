@@ -23,6 +23,7 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.messenger.fork.updater.GithubUpdateClient;
 import org.telegram.messenger.fork.updater.UpdatePolicy;
+import org.telegram.messenger.fork.updater.UpdateInstallIntent;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BottomSheet;
@@ -36,6 +37,30 @@ public final class ForkUpdaterPanel extends LinearLayout {
     private final BaseFragment parent;
     private final SharedPreferences preferences;
     private boolean expanded, busy, disposed, incompatible;
+    private final UpdateInstallIntent installIntent = new UpdateInstallIntent();
+    private boolean waitingPermission, permissionLeft, permissionSettingsOpened;
+    private int downloadPercent;
+    private final Runnable installWhenResumed = new Runnable() {
+        @Override public void run() {
+            if (disposed || !installIntent.pending() || !isAttachedToWindow()) return;
+            boolean active = !parent.isPaused() && hasWindowFocus();
+            if (waitingPermission && permissionSettingsOpened) {
+                if (!active) permissionLeft = true;
+                if (active && permissionLeft) {
+                    waitingPermission = false;
+                    if (Build.VERSION.SDK_INT >= 26 && !getContext().getPackageManager().canRequestPackageInstalls()) {
+                        installIntent.cancel();
+                        return;
+                    }
+                }
+            }
+            if (active && !waitingPermission && verified != null) {
+                if (!verified.isFile()) { fail(new java.io.IOException("Verified update is no longer available; retry Update")); return; }
+                install();
+            }
+
+        }
+    };
     private String status = "";
     private String version = "";
     private GithubUpdateClient.Release release;
@@ -62,7 +87,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         removeAllViews(); Context c = getContext();
         TextSettingsCell header = new TextSettingsCell(c);
         header.setBackground(Theme.getSelectorDrawable(false));
-        String headerValue = version + (release != null ? "  •  " + release.version + " ↑" : "") + (expanded ? "  ▴" : "  ▾");
+        String headerValue = (release != null ? release.version + (olderStable() ? " ↶" : " ↑") : version) + (expanded ? "  ▴" : "  ▾");
         header.setTextAndValue(ForkLocale.get(R.string.ForkUpdatePanel), headerValue, expanded);
         header.setIcon(R.drawable.msg_download);
         header.setOnClickListener(v -> { expanded = !expanded; preferences.edit().putBoolean("expanded", expanded).apply(); render(true); }); addView(header);
@@ -82,19 +107,24 @@ public final class ForkUpdaterPanel extends LinearLayout {
         channel.setBackground(Theme.getSelectorDrawable(false));
         channel.setOnClickListener(v -> ForkChoicePopup.show(parent, v,
             new CharSequence[]{ForkLocale.get(R.string.ForkUpdateChannelStable), ForkLocale.get(R.string.ForkUpdateChannelBeta)}, null, beta ? 1 : 0, index -> {
+                installIntent.cancel(); removeCallbacks(installWhenResumed);
                 preferences.edit().putBoolean("beta_channel", index == 1).apply();
                 release = null; verified = null; incompatible = false; saveRelease(null); status = ""; render(false);
             }));
         addView(channel);
-        if (busy) { progress = new ProgressBar(c, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(true); addView(progress); return; }
+        if (release != null && release.notes != null && !release.notes.isEmpty()) {
+            addAction(R.string.ForkUpdateChangelog, () -> parent.showDialog(new AlertDialog.Builder(getContext())
+                .setTitle(release.version).setMessage(release.notes)
+                .setPositiveButton(getContext().getString(android.R.string.ok), null).create()), false);
+        }
+        if (busy) { progress = new ProgressBar(c, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(verified == null && downloadPercent == 0); progress.setMax(100); progress.setProgress(downloadPercent); addView(progress); return; }
         addAction(R.string.ForkUpdateCheck, this::check, release != null || verified != null);
-        if (release != null && verified == null && !incompatible) addAction(R.string.ForkUpdateDownload, this::download, false);
-        if (olderStable()) addAction(R.string.ForkUpdateExportPhrases, () -> parent.presentFragment(new ForkCustomTextActivity()), false);
-        if (verified != null) addAction(R.string.ForkUpdateInstall, this::install, false);
+        if (release != null && verified == null && !incompatible) addAction(olderStable() ? R.string.ForkUpdateStableRecovery : R.string.ForkUpdateDownload, this::download, false);
+        if (verified != null) addAction(R.string.ForkUpdateInstall, this::download, false);
     }
     private void addAction(int label, Runnable action, boolean divider) {
         TextSettingsCell cell = new TextSettingsCell(getContext()); cell.setText(ForkLocale.get(label), divider);
-        cell.setIcon(label == R.string.ForkUpdateCheck ? R.drawable.msg_retry : label == R.string.ForkUpdateDownload ? R.drawable.msg_download : R.drawable.msg_check_s);
+        cell.setIcon(label == R.string.ForkUpdateCheck || label == R.string.ForkUpdateStableRecovery ? R.drawable.msg_retry : label == R.string.ForkUpdateDownload ? R.drawable.msg_download : label == R.string.ForkUpdateChangelog ? R.drawable.msg_info : R.drawable.msg_check_s);
         cell.setBackground(Theme.getSelectorDrawable(false));
         cell.setOnClickListener(v -> action.run()); addView(cell);
     }
@@ -112,7 +142,6 @@ public final class ForkUpdaterPanel extends LinearLayout {
         if (release != null) {
             text.append("\n").append(ForkLocale.get(R.string.ForkUpdateAvailable, release.version, release.size / 1048576f));
             if (olderStable()) text.append("\n").append(ForkLocale.get(R.string.ForkUpdateOlderStable));
-            if (release.notes != null && !release.notes.isEmpty()) text.append("\n\n").append(release.notes.length() > 600 ? release.notes.substring(0, 600) + "…" : release.notes);
         }
         details.setText(text);
     }
@@ -138,6 +167,8 @@ public final class ForkUpdaterPanel extends LinearLayout {
         edit.apply();
     }
     private void check() {
+        if (busy || disposed) return;
+        installIntent.cancel(); downloadPercent = 0;
         busy = true; preferences.edit().putBoolean("interrupted", true).apply(); release = null; verified = null; incompatible = false; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
         final boolean betaChannel = preferences.getBoolean("beta_channel", true);
         worker.execute(() -> {
@@ -152,21 +183,31 @@ public final class ForkUpdaterPanel extends LinearLayout {
         });
     }
     private void download() {
-        GithubUpdateClient.Release candidate = release; if (candidate == null) return;
+        GithubUpdateClient.Release candidate = release; if (candidate == null || busy || disposed || installIntent.pending()) return;
+        candidate.stableRecovery = !preferences.getBoolean("beta_channel", true) && !candidate.prerelease && UpdatePolicy.isPrerelease(version);
+        installIntent.request(); waitingPermission = false; permissionLeft = false; downloadPercent = 0; verified = null;
         Context app = getContext().getApplicationContext(); busy = true; preferences.edit().putBoolean("interrupted", true).apply(); status = ForkLocale.get(R.string.ForkUpdateDownloading, 0); render(false);
         worker.execute(() -> {
             try {
-                File file = GithubUpdateClient.downloadAndVerify(app, candidate, (received, total) -> AndroidUtilities.runOnUIThread(() -> {
-                    if (disposed) return; int percent = (int)(received * 100 / total);
-                    status = ForkLocale.get(R.string.ForkUpdateDownloading, percent); updateDetails();
-                    if (progress != null) { progress.setIndeterminate(false); progress.setProgress(percent); }
-                }));
+                final int[] reportedPercent = {-1};
+                File file = GithubUpdateClient.downloadAndVerify(app, candidate, (received, total) -> {
+                    final int percent = total > 0 ? (int) Math.min(100, received * 100 / total) : 0;
+                    if (reportedPercent[0] == percent) return;
+                    reportedPercent[0] = percent;
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (disposed) return; downloadPercent = percent;
+                        status = ForkLocale.get(R.string.ForkUpdateDownloading, percent); updateDetails();
+                        if (progress != null) { progress.setIndeterminate(false); progress.setProgress(percent); }
+                    });
+                });
                 AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); verified = file;
-                    status = ForkLocale.get(R.string.ForkUpdateVerified); render(false); });
+                    status = ForkLocale.get(R.string.ForkUpdateVerified); render(false);
+                    scheduleInstallerCheck(); });
             } catch (Exception e) { fail(e); }
         });
     }
     private void fail(Exception e) {
+        AndroidUtilities.runOnUIThread(() -> { installIntent.cancel(); waitingPermission = false; removeCallbacks(installWhenResumed); });
         if (e instanceof GithubUpdateClient.VersionNotNewerException) {
             AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; incompatible = true; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateIncompatibleVersion); render(false); });
             return;
@@ -185,20 +226,50 @@ public final class ForkUpdaterPanel extends LinearLayout {
         AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateFailure, detail); render(false); });
     }
     private void install() {
-        Context c = parent.getParentActivity(); if (c == null || verified == null || !verified.isFile()) return;
+        Context c = parent.getParentActivity(); if (disposed || !installIntent.pending() || parent.isPaused() || !isAttachedToWindow() || !hasWindowFocus() || c == null || verified == null || !verified.isFile()) return;
         try {
             if (Build.VERSION.SDK_INT >= 26 && !c.getPackageManager().canRequestPackageInstalls()) {
-                parent.showDialog(new AlertDialog.Builder(c).setTitle(ForkLocale.get(R.string.ForkUpdateInstall))
+                waitingPermission = true; permissionLeft = false; permissionSettingsOpened = false;
+                if (parent.showDialog(new AlertDialog.Builder(c).setTitle(ForkLocale.get(R.string.ForkUpdateInstall))
                     .setMessage(ForkLocale.get(R.string.ForkUpdatePermissionInfo))
                     .setPositiveButton(c.getString(android.R.string.ok), (dialog, which) -> {
+                        permissionSettingsOpened = true; permissionLeft = false;
                         try { c.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + c.getPackageName()))); }
                         catch (Exception e) { fail(e); }
-                    }).setNegativeButton(c.getString(android.R.string.cancel), null).create());
+                    }).setNegativeButton(c.getString(android.R.string.cancel), (dialog, which) -> { installIntent.cancel(); waitingPermission = false; }).create(), dialog -> {
+                        if (!permissionSettingsOpened) { installIntent.cancel(); waitingPermission = false; }
+                    }) == null) { installIntent.cancel(); waitingPermission = false; }
                 return;
             }
             Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".provider", verified);
+            // Consume the one-tap intent before leaving the app: cancellation never reopens it.
+            if (!installIntent.consume(isAttachedToWindow(), !parent.isPaused(), hasWindowFocus(), verified.isFile())) return;
+            removeCallbacks(installWhenResumed);
             c.startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
         } catch (Exception e) { fail(e); }
     }
-    public void dispose() { if (busy) preferences.edit().putBoolean("interrupted", true).apply(); disposed = true; worker.shutdownNow(); details = null; progress = null; }
+    private void scheduleInstallerCheck() {
+        removeCallbacks(installWhenResumed);
+        if (!disposed && installIntent.pending() && isAttachedToWindow()) post(installWhenResumed);
+    }
+    public void onParentResumed() { scheduleInstallerCheck(); }
+    public void onParentPaused() {
+        if (waitingPermission && permissionSettingsOpened) permissionLeft = true;
+        removeCallbacks(installWhenResumed);
+    }
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (!hasFocus && waitingPermission && permissionSettingsOpened) permissionLeft = true;
+        if (hasFocus) scheduleInstallerCheck();
+    }
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        scheduleInstallerCheck();
+    }
+    @Override protected void onDetachedFromWindow() {
+        installIntent.cancel(); waitingPermission = false;
+        removeCallbacks(installWhenResumed);
+        super.onDetachedFromWindow();
+    }
+    public void dispose() { installIntent.cancel(); removeCallbacks(installWhenResumed); if (busy) preferences.edit().putBoolean("interrupted", true).apply(); disposed = true; worker.shutdownNow(); details = null; progress = null; }
 }

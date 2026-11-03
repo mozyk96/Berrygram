@@ -37,6 +37,7 @@ public final class GithubUpdateClient {
         public String version, notes, url, digest;
         public long size;
         public boolean prerelease;
+        public boolean stableRecovery;
     }
     private GithubUpdateClient() {}
     private static boolean allowedHost(String host) {
@@ -129,7 +130,7 @@ public final class GithubUpdateClient {
         try {
             long offset=partial.isFile() ? partial.length() : 0;
             if (offset == release.size && matchesDigest(partial, release.digest)) {
-                verifyPackage(context, partial, release.version);
+                verifyPackage(context, partial, release.version, release.stableRecovery);
                 complete=true;
                 return partial;
             }
@@ -139,9 +140,12 @@ public final class GithubUpdateClient {
             if (!UpdatePolicy.enoughSpace(available, release.size, offset)) throw new InsufficientStorageException();
             connection=open(release.url,offset);
             boolean append=offset>0 && connection.getResponseCode()==206;
+            // A server may ignore Range. Recheck space for the full replacement.
+            if (!append && !UpdatePolicy.enoughSpace(dir.getUsableSpace() + partial.length(), release.size, 0)) throw new InsufficientStorageException();
             if (append && !("bytes " + offset + "-" + (release.size - 1) + "/" + release.size).equals(connection.getHeaderField("Content-Range"))) throw new SecurityException("Invalid update range");
             if (!append) offset=0;
             MessageDigest hash=MessageDigest.getInstance("SHA-256"); long received=offset, lastProgress=0;
+            if (progress != null) progress.update(offset, release.size);
             if (append) try (InputStream existing=new java.io.FileInputStream(partial)) { byte[] buffer=new byte[32768]; int n; while((n=existing.read(buffer))!=-1) hash.update(buffer,0,n); }
             try(InputStream in=connection.getInputStream(); FileOutputStream out=new FileOutputStream(partial,append)) {
                 byte[] buffer=new byte[32768]; int count;
@@ -158,13 +162,58 @@ public final class GithubUpdateClient {
             networkPhase=false;
             StringBuilder actual=new StringBuilder(); for(byte b:hash.digest()) actual.append(String.format(Locale.ROOT,"%02x",b & 255));
             if(!MessageDigest.isEqual(actual.toString().getBytes("US-ASCII"),release.digest.getBytes("US-ASCII"))) throw new SecurityException("Update digest mismatch");
-            verifyPackage(context,partial,release.version);
+            verifyPackage(context,partial,release.version,release.stableRecovery);
             complete=true;
             return partial;
         } catch (java.io.IOException | InterruptedException e) {
             retainPartial=networkPhase && partial.isFile() && partial.length()>0 && partial.length()<release.size;
             throw e;
         } finally { if(connection!=null) connection.disconnect(); if(!complete && !retainPartial && partial.exists()) partial.delete(); }
+    }
+    /** Read the compiled manifest even on API23, where ApplicationInfo has no minSdkVersion. */
+    private static int manifestMinSdk(java.util.zip.ZipFile zip) throws Exception {
+        java.util.zip.ZipEntry entry = zip.getEntry("AndroidManifest.xml");
+        if (entry == null || entry.getSize() > MAX_METADATA) throw new SecurityException("Missing update manifest");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (InputStream in = zip.getInputStream(entry)) {
+            byte[] bytes = new byte[8192]; int n;
+            while ((n = in.read(bytes)) != -1) {
+                if (out.size() + n > MAX_METADATA) throw new SecurityException("Update manifest too large");
+                out.write(bytes, 0, n);
+            }
+        }
+        byte[] bytes = out.toByteArray();
+        java.nio.ByteBuffer data = java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        if (bytes.length < 8 || data.getShort(0) != 3 || data.getInt(4) != bytes.length) throw new SecurityException("Invalid update manifest");
+        int offset = data.getShort(2) & 65535, minSdk = 1;
+        int[] resources = new int[0];
+        if (offset < 8) throw new SecurityException("Invalid update manifest header");
+        while (offset < bytes.length) {
+            if (bytes.length - offset < 8) throw new SecurityException("Truncated update manifest");
+            int type = data.getShort(offset) & 65535, header = data.getShort(offset + 2) & 65535, size = data.getInt(offset + 4);
+            if (header < 8 || size < header || size > bytes.length - offset) throw new SecurityException("Invalid manifest chunk");
+            if (type == 0x180) {
+                if ((size - header) % 4 != 0) throw new SecurityException("Invalid manifest resources");
+                resources = new int[(size - header) / 4];
+                for (int i = 0; i < resources.length; i++) resources[i] = data.getInt(offset + header + i * 4);
+            } else if (type == 0x102) {
+                if (header < 16 || size < 36) throw new SecurityException("Invalid manifest element");
+                int start = data.getShort(offset + 24) & 65535, stride = data.getShort(offset + 26) & 65535, count = data.getShort(offset + 28) & 65535;
+                if (start < 20 || stride < 20 || 16L + start + (long) stride * count > size) throw new SecurityException("Invalid manifest attributes");
+                for (int i = 0; i < count; i++) {
+                    int attribute = offset + 16 + start + i * stride, name = data.getInt(attribute + 4);
+                    if (name >= 0 && name < resources.length && resources[name] == 0x0101020c) {
+                        int valueType = bytes[attribute + 15] & 255;
+                        if (valueType != 16 && valueType != 17) throw new SecurityException("Preview Android update rejected");
+                        int value = data.getInt(attribute + 16);
+                        if (value < 1) throw new SecurityException("Invalid minimum Android version");
+                        minSdk = Math.max(minSdk, value);
+                    }
+                }
+            }
+            offset += size;
+        }
+        return minSdk;
     }
     private static boolean matchesDigest(File file, String expected) throws Exception {
         MessageDigest hash=MessageDigest.getInstance("SHA-256");
@@ -179,12 +228,17 @@ public final class GithubUpdateClient {
         return result;
     }
     private static void verifyPackage(Context context, File apk, String version) throws Exception {
+        verifyPackage(context, apk, version, false);
+    }
+    private static void verifyPackage(Context context, File apk, String version, boolean stableRecovery) throws Exception {
         PackageManager pm=context.getPackageManager(); int flags=Build.VERSION.SDK_INT>=28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
         PackageInfo candidate=pm.getPackageArchiveInfo(apk.getAbsolutePath(),flags), installed=pm.getPackageInfo(context.getPackageName(),flags);
         if(candidate==null || !context.getPackageName().equals(candidate.packageName) || !version.equals(candidate.versionName)) throw new SecurityException("Update package or version mismatch");
-        if(candidate.applicationInfo == null || (candidate.applicationInfo.flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) throw new SecurityException("Debug update rejected");
+        if(candidate.applicationInfo == null || (candidate.applicationInfo.flags & (android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE | android.content.pm.ApplicationInfo.FLAG_TEST_ONLY)) != 0) throw new SecurityException("Debug or test-only update rejected");
+        if (Build.VERSION.SDK_INT >= 24 && candidate.applicationInfo.minSdkVersion > Build.VERSION.SDK_INT) throw new SecurityException("Update requires a newer Android version");
         boolean hasArm64=false;
         try (java.util.zip.ZipFile zip=new java.util.zip.ZipFile(apk)) {
+            if (manifestMinSdk(zip) > Build.VERSION.SDK_INT) throw new SecurityException("Update requires a newer Android version");
             java.util.Enumeration<? extends java.util.zip.ZipEntry> entries=zip.entries();
             while(entries.hasMoreElements()) { String name=entries.nextElement().getName(); if(name.startsWith("lib/arm64-v8a/") && name.endsWith(".so")) { hasArm64=true; break; } }
         }
@@ -193,6 +247,6 @@ public final class GithubUpdateClient {
         long installedCode=Build.VERSION.SDK_INT>=28 ? installed.getLongVersionCode() : installed.versionCode;
         Set<String> expected=signers(installed), actual=signers(candidate);
         if (expected.isEmpty() || !expected.equals(actual)) throw new SecurityException("Update signing certificate mismatch");
-        if (candidateCode <= installedCode) throw new VersionNotNewerException();
+        if (!UpdatePolicy.compatibleCode(installedCode, candidateCode, stableRecovery && !UpdatePolicy.isPrerelease(version) && UpdatePolicy.isPrerelease(installed.versionName))) throw new VersionNotNewerException();
     }
 }

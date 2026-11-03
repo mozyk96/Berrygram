@@ -17,12 +17,12 @@ $sources = @(
     'text\CustomTextValidator.java', 'text\CustomTextPackValidator.java', 'text\LocalAliasPolicy.java',
     'text\CustomTextResolution.java', 'text\CustomTextContext.java', 'text\CustomTextScopePolicy.java',
     'text\CustomTextPackKeys.java', 'text\ForkLocalePolicy.java', 'camera\RoundCameraPolicy.java', 'camera\RoundVideoQualityPolicy.java',
-    'voice\VoiceQualityPolicy.java', 'panels\PanelPolicy.java', 'panels\GraphicsColorPolicy.java', 'updater\UpdatePolicy.java'
+    'voice\VoiceQualityPolicy.java', 'panels\PanelPolicy.java', 'panels\GraphicsColorPolicy.java', 'updater\UpdatePolicy.java', 'updater\UpdateInstallIntent.java'
 ) | ForEach-Object { Join-Path $base $_ }
 $tests = @('AuthDiagnosticsTest', 'BackendPolicyTest', 'SessionCredentialsTest', 'CustomTextValidatorTest',
     'CustomTextPackValidatorTest', 'CustomTextFormatTest', 'CustomTextSafetyTest', 'LocalAliasPolicyTest',
     'CustomTextResolutionTest', 'CustomTextContextTest', 'CustomTextScopePolicyTest', 'CustomTextOriginalTest',
-    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'VoiceQualityPolicyTest', 'PanelPolicyTest', 'GraphicsColorPolicyTest', 'UpdatePolicyTest')
+    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'VoiceQualityPolicyTest', 'PanelPolicyTest', 'GraphicsColorPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest')
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 & $javac -encoding UTF-8 -d $buildDir @sources @testFiles
 if ($LASTEXITCODE -ne 0) { throw 'Smoke-test compilation failed' }
@@ -59,6 +59,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Voice settings test failed' }
 & $java -cp $managerDir PanelSettingsTest
 if ($LASTEXITCODE -ne 0) { throw 'Panel settings test failed' }
 $python = if ($env:FORK_PYTHON) { $env:FORK_PYTHON } else { (Get-Command python -ErrorAction Stop).Source }
+& $python (Join-Path $PSScriptRoot 'test_beta8_updater_lifecycle.py')
+if ($LASTEXITCODE -ne 0) { throw 'Updater runnable lifecycle test failed' }
 & $python (Join-Path $PSScriptRoot 'test_berrygram_resources.py')
 if ($LASTEXITCODE -ne 0) { throw 'BerryGram resources test failed' }
 & $python (Join-Path $PSScriptRoot 'test_auth_privacy.py')
@@ -87,4 +89,12 @@ node (Join-Path $PSScriptRoot 'test_compact_stories.js')
 if ($LASTEXITCODE -ne 0) { throw 'Compact stories state test failed' }
 & (Join-Path $PSScriptRoot 'chat-header-geometry.ps1')
 if ($LASTEXITCODE -ne 0) { throw 'Chat header geometry test failed' }
+node (Join-Path $PSScriptRoot 'test_beta8_story_scroll.js')
+if ($LASTEXITCODE -ne 0) { throw 'test_beta8_story_scroll.js failed' }
+node (Join-Path $PSScriptRoot 'test_header_surface_restoration.js')
+if ($LASTEXITCODE -ne 0) { throw 'test_header_surface_restoration.js failed' }
+node (Join-Path $PSScriptRoot 'test_header_content_state.js')
+if ($LASTEXITCODE -ne 0) { throw 'test_header_content_state.js failed' }
+node (Join-Path $PSScriptRoot 'test_graphics_surface_state.js')
+if ($LASTEXITCODE -ne 0) { throw 'test_graphics_surface_state.js failed' }
 Write-Output 'Fork smoke tests passed (no Android device or account used)'

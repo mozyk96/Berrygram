@@ -7,6 +7,10 @@ public class UpdatePolicyTest {
   check(!UpdatePolicy.validIdentity("app",10,signer,"app",10,signer));
   check(!UpdatePolicy.validIdentity("app",10,signer,"app",11,java.util.Collections.singleton("cert-b")));
   check(!UpdatePolicy.validIdentity("app",10,java.util.Collections.emptySet(),"app",11,java.util.Collections.emptySet()));
+  check(UpdatePolicy.compatibleCode(100, 101, false));
+  check(!UpdatePolicy.compatibleCode(100, 100, false));
+  check(UpdatePolicy.compatibleCode(100, 100, true));
+  check(!UpdatePolicy.compatibleCode(100, 99, true));
   check(UpdatePolicy.enoughSpace(100, 100, 0));
   check(UpdatePolicy.enoughSpace(40, 100, 60));
   check(!UpdatePolicy.enoughSpace(39, 100, 60));

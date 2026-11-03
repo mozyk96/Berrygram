@@ -131,7 +131,7 @@
     <string name="ForkUpdateAvailable">Реліз %1$s · %2$.1f МБ</string>
     <string name="ForkUpdateConfigure">Налаштувати джерело GitHub</string>
     <string name="ForkUpdateCheck">Перевірити</string>
-    <string name="ForkUpdateDownload">Завантажити</string>
+    <string name="ForkUpdateDownload">Оновити</string>
     <string name="ForkUpdateInstall">Встановити</string>
     <string name="ForkUpdateInvalidSource">Введіть репозиторій GitHub у форматі owner/repository.</string>
     <string name="ForkUpdateChecking">Перевіряємо GitHub…</string>
@@ -187,15 +187,17 @@
     <string name="ForkVideoSubtitle">Камера та якість запису</string>
     <string name="ForkVoiceSubtitle">Режим і бітрейт запису</string>
     <string name="ForkTextSubtitle">Власні назви, фрази та статуси</string>
-    <string name="ForkUpdatePermissionInfo">Щоб установити перевірене оновлення, дозвольте Android встановлення з BerryGram. Поверніться сюди та натисніть «Установити» ще раз.</string>
+    <string name="ForkUpdatePermissionInfo">Дозвольте Android встановлювати застосунки з BerryGram. Після повернення з наданим дозволом перевірене оновлення відкриється в системному інсталяторі для підтвердження.</string>
     <string name="ForkUpdateChannel">Канал оновлень</string>
     <string name="ForkUpdateChannelStable">Стабільний</string>
     <string name="ForkUpdateChannelBeta">Бета</string>
     <string name="ForkUpdateNoSpace">Недостатньо вільного місця для завантаження оновлення.</string>
-    <string name="ForkUpdateOlderStable">Остання стабільна версія старіша за назвою. Завантажте її, щоб перевірити Android versionCode. Android може відхилити стару версію. Видалення застосунку може стерти локальні дані й вимагати повторного входу в Telegram. Ви можете експортувати підтримуваний набір фраз або зачекати на сумісний стабільний реліз.</string>
-    <string name="ForkUpdateIncompatibleVersion">Перевірений пакет має такий самий або менший Android versionCode. Встановити його як оновлення неможливо.</string>
+    <string name="ForkUpdateOlderStable">Останній стабільний реліз має старішу назву версії. Спершу буде перевірено Android versionCode. Замінити Beta зі збереженням даних може лише сумісний пакет із таким самим або вищим кодом. Інакше зачекайте на сумісний стабільний реліз.</string>
+    <string name="ForkUpdateIncompatibleVersion">Пакет має менший Android versionCode або такий самий код поза переходом Beta → Stable. Зачекайте на сумісний реліз; застосунок і дані збережено.</string>
     <string name="ForkUpdateExportPhrases">Експорт фраз у редакторі</string>
     <string name="ForkCameraChooseDuring">Вибір під час зйомки</string>
     <string name="ForkCameraFrontShort">Передня</string>
     <string name="ForkCameraBackShort">Задня</string>
+    <string name="ForkUpdateChangelog">Список змін</string>
+    <string name="ForkUpdateStableRecovery">Перевірити Stable</string>
 </resources>

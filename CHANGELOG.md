@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0-beta.8 — public testing
+
+- Recompose the real compact Stories/control row and restore owned surfaces after native search/background resets.
+- Remove obsolete81dp compact scroll/collapse offsets and retain the genuine self-story recorder entry.
+- Correct translated archive clipping and protect initial first-row anchors.
+- Refresh popup tint/ownership and Liquid strength/fallback state consistently.
+- One Update action downloads, verifies and requests the system installer; preserve explicit Stable/Beta recovery safeguards and full changelog.
+- Expanded source-method regression and updater validation coverage. Device/account/rendering/installer scenarios remain manual.
+
 ## 1.2.0-beta.7 — public testing
 
 - Restore native scrollable Stories in the compact floating header and move round controls4dp inward/down.

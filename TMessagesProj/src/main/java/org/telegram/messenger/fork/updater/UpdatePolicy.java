@@ -12,6 +12,10 @@ public final class UpdatePolicy {
         return installedPackage != null && installedPackage.equals(candidatePackage) && candidateVersion > installedVersion
             && installedSigners != null && !installedSigners.isEmpty() && installedSigners.equals(candidateSigners);
     }
+    /** Equal codes are allowed only for an explicit Beta to Stable recovery. */
+    public static boolean compatibleCode(long installed, long candidate, boolean stableRecovery) {
+        return candidate > installed || (stableRecovery && candidate == installed);
+    }
     private static final String VERSION = "(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?";
     private static final java.util.regex.Pattern VERSION_PATTERN = java.util.regex.Pattern.compile(VERSION);
     private static java.util.regex.Matcher version(String value) {
@@ -45,7 +49,7 @@ public final class UpdatePolicy {
     }
     public static boolean shouldShowRelease(String candidate, String installed, boolean betaChannel) {
         Integer comparison = compareVersions(candidate, installed);
-        return comparison != null && (comparison > 0 || (!betaChannel && comparison < 0));
+        return comparison != null && (comparison > 0 || (!betaChannel && isPrerelease(installed) && comparison < 0));
     }
     public static boolean isPrerelease(String value) { java.util.regex.Matcher m = version(value); return m != null && m.group(4) != null; }
     public static boolean validRepository(String value) {

@@ -131,7 +131,7 @@
     <string name="ForkUpdateAvailable">Release %1$s · %2$.1f MB</string>
     <string name="ForkUpdateConfigure">Configure GitHub source</string>
     <string name="ForkUpdateCheck">Check</string>
-    <string name="ForkUpdateDownload">Download</string>
+    <string name="ForkUpdateDownload">Update</string>
     <string name="ForkUpdateInstall">Install</string>
     <string name="ForkUpdateInvalidSource">Enter a GitHub repository as owner/repository.</string>
     <string name="ForkUpdateChecking">Checking GitHub…</string>
@@ -187,15 +187,17 @@
     <string name="ForkVideoSubtitle">Camera and recording quality</string>
     <string name="ForkVoiceSubtitle">Recording mode and bitrate</string>
     <string name="ForkTextSubtitle">Personal names, phrases and statuses</string>
-    <string name="ForkUpdatePermissionInfo">To install a verified update, allow Android to install apps from BerryGram. Return here and tap Install again.</string>
+    <string name="ForkUpdatePermissionInfo">Allow Android to install apps from BerryGram. After you return with permission granted, the verified update will open in the Android installer for your confirmation.</string>
     <string name="ForkUpdateChannel">Update channel</string>
     <string name="ForkUpdateChannelStable">Stable</string>
     <string name="ForkUpdateChannelBeta">Beta</string>
     <string name="ForkUpdateNoSpace">Not enough storage space to download the update.</string>
-    <string name="ForkUpdateOlderStable">The latest stable version is older by version name. Download to check its Android version code. Android may refuse an older version. Removing the app can erase local data and require Telegram sign-in again. You can export supported phrase packs or wait for a compatible stable release.</string>
-    <string name="ForkUpdateIncompatibleVersion">The verified package has an equal or older Android version code. It cannot be installed as an update.</string>
+    <string name="ForkUpdateOlderStable">The latest Stable release has an older version name. Update will verify its Android version code first. Only a compatible package with the same or a higher code can replace Beta and keep your data. Otherwise, wait for a compatible Stable release.</string>
+    <string name="ForkUpdateIncompatibleVersion">This package has an older Android version code, or an equal code outside Beta to Stable recovery. Wait for a compatible release; your app and data are unchanged.</string>
     <string name="ForkUpdateExportPhrases">Export phrases in editor</string>
     <string name="ForkCameraChooseDuring">Choose while recording</string>
     <string name="ForkCameraFrontShort">Front</string>
     <string name="ForkCameraBackShort">Rear</string>
+    <string name="ForkUpdateChangelog">Changelog</string>
+    <string name="ForkUpdateStableRecovery">Check Stable recovery</string>
 </resources>
