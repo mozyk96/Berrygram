@@ -26,10 +26,12 @@ final class ForkSettingsLayout {
         return section;
     }
     static void refreshSection(LinearLayout section, boolean card) {
+        String style = ForkGraphicsSurface.effectiveStyle();
+        // Settings sections have no captured backdrop; use an opaque theme fallback.
         int background = Theme.getColor(Theme.key_windowBackgroundWhite);
-        if ("material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())) background = ForkGraphicsSurface.materialColor(section.getContext(), background);
+        if ("material".equals(style)) background = ForkGraphicsSurface.materialColor(section.getContext(), background);
         int radius = org.telegram.messenger.fork.panels.PanelPolicy.surfaceRadiusDp(
-                org.telegram.messenger.fork.panels.ForkPanelSettings.style(),
+                style,
                 org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp());
         section.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(radius), background));
     }
@@ -51,6 +53,7 @@ final class ForkSettingsLayout {
         page.addView(card, params);
     }
     static void refreshPage(LinearLayout page) {
+        page.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
         for (int i = 0; i < page.getChildCount(); i++) {
             View child = page.getChildAt(i);
             if (child instanceof LinearLayout && child.getTag() instanceof Boolean) refreshSection((LinearLayout) child, (Boolean) child.getTag());

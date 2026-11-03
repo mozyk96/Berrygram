@@ -73,4 +73,18 @@ if ($LASTEXITCODE -ne 0) { throw 'Surface animation test compilation failed' }
 & $java -cp $surfaceDir SurfaceAnimationLifecycleTest
 if ($LASTEXITCODE -ne 0) { throw 'Surface animation lifecycle test failed' }
 
+& $javac -encoding UTF-8 -d $buildDir (Join-Path $base 'panels/HeaderGeometry.java') (Join-Path $PSScriptRoot 'HeaderGeometryTest.java')
+if ($LASTEXITCODE -ne 0) { throw 'Header geometry test compile failed' }
+& $java -cp $buildDir HeaderGeometryTest
+if ($LASTEXITCODE -ne 0) { throw 'Header geometry test failed' }
+& $javac -encoding UTF-8 -cp $managerDir -d $managerDir (Join-Path $base 'panels/ForkChatHeaderSettings.java') (Join-Path $base 'panels/ForkAnimationSettings.java') (Join-Path $PSScriptRoot 'GraphicsPreferencesPersistenceTest.java')
+if ($LASTEXITCODE -ne 0) { throw 'Graphics preferences compile failed' }
+& $java -cp $managerDir GraphicsPreferencesPersistenceTest
+if ($LASTEXITCODE -ne 0) { throw 'Graphics preferences test failed' }
+node (Join-Path $PSScriptRoot 'test_popup_animation_lifecycle.js')
+if ($LASTEXITCODE -ne 0) { throw 'Popup lifecycle test failed' }
+node (Join-Path $PSScriptRoot 'test_compact_stories.js')
+if ($LASTEXITCODE -ne 0) { throw 'Compact stories state test failed' }
+& (Join-Path $PSScriptRoot 'chat-header-geometry.ps1')
+if ($LASTEXITCODE -ne 0) { throw 'Chat header geometry test failed' }
 Write-Output 'Fork smoke tests passed (no Android device or account used)'

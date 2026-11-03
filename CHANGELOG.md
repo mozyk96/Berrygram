@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0-beta.7 — public testing
+
+- Restore native scrollable Stories in the compact floating header and move round controls4dp inward/down.
+- Place native chat actions before the far-right avatar and bound long title/status text.
+- Group Custom Phrases controls and show current/original/changed values with improved editor focus.
+- Refresh shared popup graphic policy and fix canceled-close/pre-draw lifecycle conflicts.
+- Expand executable geometry, preference-reload and popup/story state regression tests.
+- Backdrop-free settings surfaces retain opaque fallback; visual/account/device scenarios need manual testing.
+
 ## 1.2.0-beta.6 — public testing
 
 - Separate floating main-header drawing bounds from reserved list height and measure compact stories independently.

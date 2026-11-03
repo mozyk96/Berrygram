@@ -75,6 +75,8 @@ public class ActionBarPopupWindow extends PopupWindow {
     private Rect forkAnimationSource;
     private boolean forkFluidShown;
     private Integer forkOriginalAnimationStyle;
+    private ViewTreeObserver forkPreDrawObserver;
+    private ViewTreeObserver.OnPreDrawListener forkPreDrawListener;
 
     /** Explicit source for absolute-positioned menus (the showAtLocation parent is only a container). */
     public void setAnimationSource(View source) {
@@ -126,7 +128,22 @@ public class ActionBarPopupWindow extends PopupWindow {
         return true;
     }
 
+    private void clearForkPreDraw() {
+        if (forkPreDrawObserver != null && forkPreDrawObserver.isAlive() && forkPreDrawListener != null) {
+            forkPreDrawObserver.removeOnPreDrawListener(forkPreDrawListener);
+        }
+        forkPreDrawObserver = null;
+        forkPreDrawListener = null;
+    }
+
     private void prepareForkFluidAnimation() {
+        clearForkPreDraw();
+        // Clear ownership before cancel: Android also calls onAnimationEnd on cancellation.
+        AnimatorSet previous = windowAnimatorSet;
+        windowAnimatorSet = null;
+        if (previous != null) previous.cancel();
+        if (isClosingAnimated && pauseNotifications) notificationsLocker.unlock();
+        isClosingAnimated = false;
         forkFluidShown = false;
         if (animationEnabled && forkPopupLayout() != null && org.telegram.ui.ForkSurfaceAnimation.enabled()) {
             if (forkOriginalAnimationStyle == null) forkOriginalAnimationStyle = getAnimationStyle();
@@ -138,14 +155,18 @@ public class ActionBarPopupWindow extends PopupWindow {
     }
 
     private void postForkFluidAnimation() {
+        clearForkPreDraw();
         View root = getContentView();
-        root.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+        if (root == null || !animationEnabled || !org.telegram.ui.ForkSurfaceAnimation.enabled()) return;
+        forkPreDrawObserver = root.getViewTreeObserver();
+        forkPreDrawListener = new ViewTreeObserver.OnPreDrawListener() {
             @Override public boolean onPreDraw() {
-                if (root.getViewTreeObserver().isAlive()) root.getViewTreeObserver().removeOnPreDrawListener(this);
+                clearForkPreDraw();
                 if (isShowing() && !isClosingAnimated) startForkFluidAnimation();
                 return true;
             }
-        });
+        };
+        forkPreDrawObserver.addOnPreDrawListener(forkPreDrawListener);
     }
 
     static {
@@ -216,7 +237,6 @@ public class ActionBarPopupWindow extends PopupWindow {
         private int forkMaterialColor;
         private int forkMaterialRadius = -1;
         private int forkExperimentalRadius = -1;
-        private String forkRequestedStyle;
         private String forkResolvedStyle;
 
         private boolean fitItems;
@@ -551,7 +571,6 @@ public class ActionBarPopupWindow extends PopupWindow {
         }
 
         private void refreshForkStyle() {
-            forkRequestedStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
             forkResolvedStyle = org.telegram.ui.ForkGraphicsSurface.effectiveStyle();
         }
 
@@ -566,8 +585,8 @@ public class ActionBarPopupWindow extends PopupWindow {
         @Override
         protected void dispatchDraw(Canvas canvas) {
             // Action-bar popup layouts are cached, so refresh the surface when the
-            // preference changes instead of requiring the whole screen to reopen.
-            if (forkStyleEligible && !org.telegram.messenger.fork.panels.ForkPanelSettings.style().equals(forkRequestedStyle)) refreshForkStyle();
+            // preference or power/device policy changes instead of requiring the screen to reopen.
+            if (forkStyleEligible) refreshForkStyle();
             boolean glass = forkStyleEligible && !"material".equals(forkResolvedStyle);
             boolean material = forkStyleEligible && !glass;
             int radius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
@@ -869,7 +888,8 @@ public class ActionBarPopupWindow extends PopupWindow {
     private static int forkPopupDuration(int duration) {
         return org.telegram.messenger.fork.panels.PanelPolicy.popupAnimationDuration(
                 org.telegram.messenger.fork.panels.ForkPanelSettings.animationMode(), duration,
-                AndroidUtilities.getAnimatorDurationScale() > 0f);
+                AndroidUtilities.getAnimatorDurationScale() > 0f
+                        && !org.telegram.ui.ForkGraphicsSurface.effectsSuppressed());
     }
 
     @SuppressWarnings("PrivateAPI")
@@ -1133,7 +1153,7 @@ public class ActionBarPopupWindow extends PopupWindow {
             windowAnimatorSet.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    windowAnimatorSet = null;
+                    if (windowAnimatorSet == animation) windowAnimatorSet = null;
                     ViewGroup viewGroup = (ViewGroup) getContentView();
                     ActionBarPopupWindowLayout content = null;
                     if (viewGroup instanceof ActionBarPopupWindowLayout) {
@@ -1191,15 +1211,19 @@ public class ActionBarPopupWindow extends PopupWindow {
     }
 
     public void dismiss(boolean animated) {
-        animated = animated && AndroidUtilities.getAnimatorDurationScale() > 0f;
+        clearForkPreDraw();
+        animated = animated && AndroidUtilities.getAnimatorDurationScale() > 0f
+                && !org.telegram.ui.ForkGraphicsSurface.effectsSuppressed();
         setFocusable(false);
         dismissDim();
         if (windowAnimatorSet != null) {
             if (animated && isClosingAnimated) {
                 return;
             }
-            windowAnimatorSet.cancel();
+            AnimatorSet previous = windowAnimatorSet;
             windowAnimatorSet = null;
+            previous.cancel();
+            if (isClosingAnimated && pauseNotifications) notificationsLocker.unlock();
         }
         isClosingAnimated = false;
         ActionBarPopupWindowLayout fluidContent = forkPopupLayout();
@@ -1210,6 +1234,7 @@ public class ActionBarPopupWindow extends PopupWindow {
                 windowAnimatorSet = fluid;
                 fluid.addListener(new AnimatorListenerAdapter() {
                     @Override public void onAnimationEnd(Animator animation) {
+                        if (windowAnimatorSet != animation) return;
                         windowAnimatorSet = null;
                         isClosingAnimated = false;
                         forkFluidShown = false;
@@ -1263,6 +1288,7 @@ public class ActionBarPopupWindow extends PopupWindow {
             windowAnimatorSet.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
+                    if (windowAnimatorSet != animation) return;
                     windowAnimatorSet = null;
                     isClosingAnimated = false;
                     setFocusable(false);

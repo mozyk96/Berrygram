@@ -24,11 +24,9 @@ import android.widget.ImageView;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import org.telegram.ui.ActionBar.AlertDialog;
-import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Cells.TextDetailSettingsCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import java.util.Locale;
 import java.util.Map;
@@ -45,6 +43,7 @@ import static org.telegram.messenger.LocaleController.getString;
 
 public class ForkCustomTextActivity extends BaseFragment {
     private LinearLayout rows;
+    private LinearLayout controls;
     private EditText search;
     private boolean personalMode;
     private boolean addingPhrase;
@@ -67,9 +66,7 @@ public class ForkCustomTextActivity extends BaseFragment {
         resetButton.setScaleType(ImageView.ScaleType.CENTER);
         resetButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.MULTIPLY));
         resetButton.setOnClickListener(v -> confirmReset());
-        LinearLayout root = new LinearLayout(context);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        LinearLayout root = ForkSettingsLayout.page(context);
         LinearLayout tabs = new LinearLayout(context);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
         globalTab = new TextView(context);
@@ -82,9 +79,9 @@ public class ForkCustomTextActivity extends BaseFragment {
         }
         globalTab.setText(ForkLocale.get(R.string.ForkTextGlobalTab));
         personalTab.setText(ForkLocale.get(R.string.ForkTextPersonalTab));
-        globalTab.setOnClickListener(v -> { personalMode = false; selectedDialogId = 0; addingPhrase = false; renderRows(); });
-        personalTab.setOnClickListener(v -> { personalMode = true; selectedDialogId = 0; addingPhrase = false; renderRows(); });
-        root.addView(tabs);
+        globalTab.setOnClickListener(v -> { personalMode = false; selectedDialogId = 0; addingPhrase = false; search.setText(""); renderRows(); });
+        personalTab.setOnClickListener(v -> { personalMode = true; selectedDialogId = 0; addingPhrase = false; search.setText(""); renderRows(); });
+        ForkSettingsLayout.addSection(root, tabs);
         search = new EditText(context);
         search.setSingleLine(true);
         search.setHint(ForkLocale.get(R.string.ForkCustomTextSearch));
@@ -92,10 +89,15 @@ public class ForkCustomTextActivity extends BaseFragment {
         search.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         int pad = AndroidUtilities.dp(16);
         search.setPadding(pad, 0, pad, 0);
-        root.addView(search, new LinearLayout.LayoutParams(-1, AndroidUtilities.dp(54)));
+        search.setTextSize(16);
+        LinearLayout searchSurface = ForkSettingsLayout.section(context);
+        searchSurface.addView(search, new LinearLayout.LayoutParams(-1, AndroidUtilities.dp(48)));
+        ForkSettingsLayout.addSection(root, searchSurface);
         ScrollView scroll = new ScrollView(context);
         rows = new LinearLayout(context);
         rows.setOrientation(LinearLayout.VERTICAL);
+        scroll.setClipToPadding(false);
+        scroll.setPadding(0, 0, 0, AndroidUtilities.dp(12));
         scroll.addView(rows);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         search.addTextChangedListener(new TextWatcher() {
@@ -113,6 +115,7 @@ public class ForkCustomTextActivity extends BaseFragment {
         if (rows == null) return;
         Context context = rows.getContext();
         rows.removeAllViews();
+        controls = null;
         String query = search.getText().toString().trim().toLowerCase(Locale.ROOT);
         globalTab.setSelected(!personalMode);
         personalTab.setSelected(personalMode);
@@ -126,7 +129,7 @@ public class ForkCustomTextActivity extends BaseFragment {
                 TextSettingsCell add = new TextSettingsCell(context);
                 add.setText(ForkLocale.get(R.string.ForkTextAddChat), true);
                 add.setOnClickListener(v -> choosePersonalChat());
-                rows.addView(add);
+                addControl(add);
             }
             java.util.ArrayList<Long> ids = CustomTextManager.personalDialogs(currentAccount);
             for (long id : ids) {
@@ -135,7 +138,7 @@ public class ForkCustomTextActivity extends BaseFragment {
                 TextSettingsCell chat = new TextSettingsCell(context);
                 chat.setText(name, true);
                 chat.setOnClickListener(v -> { selectedDialogId = id; addingPhrase = false; search.setText(""); renderRows(); });
-                rows.addView(chat);
+                addControl(chat);
             }
             if (ids.isEmpty() && query.isEmpty()) {
                 TextView empty = new TextView(context);
@@ -150,27 +153,28 @@ public class ForkCustomTextActivity extends BaseFragment {
             TextSettingsCell title = new TextSettingsCell(context);
             title.setText(personalChatName(selectedDialogId), true);
             title.setOnClickListener(v -> { selectedDialogId = 0; addingPhrase = false; renderRows(); });
-            rows.addView(title);
+            addControl(title);
             TextSettingsCell add = new TextSettingsCell(context);
             add.setText(ForkLocale.get(R.string.ForkTextAddPhrase), true);
-            add.setOnClickListener(v -> { addingPhrase = true; renderRows(); search.requestFocus(); });
-            rows.addView(add);
+            add.setOnClickListener(v -> { addingPhrase = true; renderRows(); search.requestFocus(); AndroidUtilities.showKeyboard(search); });
+            addControl(add);
         }
         if (!personalMode && query.isEmpty()) {
             TextSettingsCell filter = new TextSettingsCell(context);
             filter.setText(ForkLocale.get(changedOnly ? R.string.ForkTextShowAll : R.string.ForkTextChangedOnly), true);
             filter.setOnClickListener(v -> { changedOnly = !changedOnly; renderRows(); });
-            rows.addView(filter);
+            addControl(filter);
+            controls = null;
             TextSettingsCell activePack = new TextSettingsCell(context);
             String packId = CustomTextManager.activePack();
             String packName = "custom".equals(packId) ? ForkLocale.get(R.string.ForkTextDefaultPack) : CustomTextManager.packName(packId);
             activePack.setTextAndValue(ForkLocale.get(R.string.ForkTextPacks), packName, true);
             activePack.setOnClickListener(this::selectPack);
-            rows.addView(activePack);
+            addControl(activePack);
             TextSettingsCell newPack = new TextSettingsCell(context);
             newPack.setText(ForkLocale.get(R.string.ForkTextNewPack), true);
             newPack.setOnClickListener(v -> createPack());
-            rows.addView(newPack);
+            addControl(newPack);
             if (!"custom".equals(packId)) {
                 TextSettingsCell deletePack = new TextSettingsCell(context);
                 deletePack.setText(ForkLocale.get(R.string.ForkTextDeletePack), true);
@@ -178,30 +182,31 @@ public class ForkCustomTextActivity extends BaseFragment {
                     .setMessage(ForkLocale.get(R.string.ForkTextDeletePackConfirm))
                     .setPositiveButton(getString(R.string.Delete), (d, w) -> { CustomTextManager.deletePack(packId); changed(); })
                     .setNegativeButton(getString(R.string.Cancel), null).show());
-                rows.addView(deletePack);
+                addControl(deletePack);
             }
             TextSettingsCell pack = new TextSettingsCell(context);
             pack.setText(ForkLocale.get(CustomTextManager.isEnabled() ? R.string.ForkTextUseStandard : R.string.ForkTextUseCustom), true);
             pack.setOnClickListener(v -> { CustomTextManager.setEnabled(!CustomTextManager.isEnabled()); changed(); });
-            rows.addView(pack);
+            addControl(pack);
             TextSettingsCell importCell = new TextSettingsCell(context);
             importCell.setText(ForkLocale.get(R.string.ForkTextImport), true);
             importCell.setOnClickListener(v -> {
                 Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(i, 701);
             });
-            rows.addView(importCell);
+            addControl(importCell);
             TextSettingsCell exportCell = new TextSettingsCell(context);
             exportCell.setText(ForkLocale.get(R.string.ForkTextExport), true);
             exportCell.setOnClickListener(v -> {
                 Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE, "fork-phrases.json");
                 startActivityForResult(i, 702);
             });
-            rows.addView(exportCell);
+            addControl(exportCell);
+            controls = null;
             TextSettingsCell aliases = new TextSettingsCell(context);
             aliases.setText(ForkLocale.get(R.string.ForkTextAliases), true);
             aliases.setOnClickListener(v -> chooseAliasDialog());
-            rows.addView(aliases);
+            addControl(aliases);
         }
         int activeCount = 0;
         if (CustomTextManager.isEnabled()) {
@@ -209,7 +214,7 @@ public class ForkCustomTextActivity extends BaseFragment {
                 if (personalMode && !entry.status) continue;
                 String value = personalMode ? CustomTextManager.getPersonal(currentAccount, selectedDialogId, entry.key) : CustomTextManager.get(entry.key);
                 String original = LocaleController.getOriginalForkString(entry.key, entry.fallback, entry.resource);
-                if (CustomTextValidator.valid(original, value)) activeCount++;
+                if (value != null && !value.equals(original) && CustomTextValidator.valid(original, value)) activeCount++;
             }
         }
         TextView counter = new TextView(context);
@@ -217,28 +222,51 @@ public class ForkCustomTextActivity extends BaseFragment {
         counter.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         counter.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(12), AndroidUtilities.dp(16), 0);
         rows.addView(counter);
+        int visiblePhrases = 0;
         for (CustomTextRegistry.Category category : CustomTextRegistry.Category.values()) {
             boolean header = false;
+            LinearLayout categoryRows = null;
             for (CustomTextRegistry.Entry entry : CustomTextRegistry.ENTRIES) {
                 if (entry.category != category || (personalMode && !entry.status)) continue;
                 String original = LocaleController.getOriginalForkString(entry.key, entry.fallback, entry.resource);
                 if (original == null) continue;
                 String custom = personalMode ? CustomTextManager.getPersonal(currentAccount, selectedDialogId, entry.key) : CustomTextManager.get(entry.key);
-                if ((personalMode && !addingPhrase || !personalMode && changedOnly) && custom == null) continue;
+                if (personalMode && !addingPhrase && custom == null) continue;
+                if (!personalMode && changedOnly && (custom == null || custom.equals(original))) continue;
                 if (!query.isEmpty() && !(entry.key + " " + original + " " + (custom == null ? "" : custom)).toLowerCase(Locale.ROOT).contains(query)) continue;
                 if (!header) {
                     TextView title = new TextView(context);
                     title.setText(categoryTitle(context, category));
                     title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
                     title.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(14), 0, AndroidUtilities.dp(8));
+                    title.setTextSize(14);
                     rows.addView(title);
+                    categoryRows = ForkSettingsLayout.section(context);
+                    ForkSettingsLayout.addSection(rows, categoryRows);
                     header = true;
                 }
-                TextDetailSettingsCell cell = new TextDetailSettingsCell(context);
-                cell.setTextAndValue(original, custom == null ? original : custom, true);
+                LinearLayout cell = new LinearLayout(context);
+                cell.setOrientation(LinearLayout.VERTICAL);
+                int horizontal = AndroidUtilities.dp(16);
+                cell.setPadding(horizontal, AndroidUtilities.dp(12), horizontal, AndroidUtilities.dp(12));
+                TextView current = new TextView(context);
+                current.setTextSize(16);
+                current.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+                current.setText(custom == null ? original : custom);
+                cell.addView(current);
+                TextView source = new TextView(context);
+                source.setTextSize(13);
+                source.setPadding(0, AndroidUtilities.dp(4), 0, 0);
+                boolean modified = custom != null && !custom.equals(original);
+                source.setTextColor(Theme.getColor(modified ? Theme.key_windowBackgroundWhiteBlueHeader : Theme.key_windowBackgroundWhiteGrayText));
+                source.setText((modified ? ForkLocale.get(R.string.ForkCustomTextChanged) + " · " : "")
+                        + ForkLocale.get(R.string.ForkCustomTextOriginal) + ": " + original);
+                cell.addView(source);
+                cell.setFocusable(true);
                 ForkSettingsLayout.interactive(cell);
                 cell.setOnClickListener(v -> edit(entry, original));
-                rows.addView(cell);
+                categoryRows.addView(cell);
+                visiblePhrases++;
             }
             if (header && query.isEmpty()) {
                 TextSettingsCell resetCategory = new TextSettingsCell(context);
@@ -247,16 +275,44 @@ public class ForkCustomTextActivity extends BaseFragment {
                     .setMessage(ForkLocale.get(R.string.ForkTextResetCategoryConfirm))
                     .setPositiveButton(getString(R.string.Reset), (d, w) -> { resetWithUndo(personalMode ? selectedDialogId : 0, category, null); })
                     .setNegativeButton(getString(R.string.Cancel), null).show());
-                rows.addView(resetCategory);
+                ForkSettingsLayout.interactive(resetCategory);
+                categoryRows.addView(resetCategory);
             }
+        }
+        if (visiblePhrases == 0) {
+            TextView empty = new TextView(context);
+            empty.setText(getString(R.string.NoResult));
+            empty.setTextSize(15);
+            empty.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+            empty.setGravity(android.view.Gravity.CENTER);
+            empty.setPadding(0, AndroidUtilities.dp(24), 0, AndroidUtilities.dp(24));
+            rows.addView(empty);
         }
         if (query.isEmpty()) {
             TextSettingsCell reset = new TextSettingsCell(context);
             reset.setText(ForkLocale.get(personalMode ? R.string.ForkTextResetChat : R.string.ForkCustomTextResetAll), false);
             reset.setOnClickListener(v -> confirmReset());
-            rows.addView(reset);
+            ForkSettingsLayout.interactive(reset);
+            ForkSettingsLayout.addCard(rows, reset);
         }
     }
+    private void addControl(View cell) {
+        if (controls == null) {
+            controls = ForkSettingsLayout.section(rows.getContext());
+            ForkSettingsLayout.addSection(rows, controls);
+        }
+        ForkSettingsLayout.interactive(cell);
+        controls.addView(cell);
+    }
+
+    private void focusInput(AlertDialog dialog, EditText input) {
+        input.requestFocus();
+        input.setSelection(input.length());
+        dialog.setOnShowListener(d -> AndroidUtilities.runOnUIThread(() -> {
+            if (dialog.isShowing()) AndroidUtilities.showKeyboard(input);
+        }, 100));
+    }
+
     private void confirmReset() {
         if (getParentActivity() == null || personalMode && selectedDialogId == 0) return;
         final long dialogId = personalMode ? selectedDialogId : 0;
@@ -321,6 +377,7 @@ public class ForkCustomTextActivity extends BaseFragment {
         builder.setNegativeButton(getString(R.string.Cancel), null);
         builder.setNeutralButton(ForkLocale.get(R.string.ForkCustomTextReset), (d, w) -> resetWithUndo(editDialogId, null, entry.key));
         AlertDialog dialog = builder.create();
+        focusInput(dialog, input);
         if (showDialog(dialog) != null) {
             View save = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
             if (save != null) save.setOnClickListener(v -> {
@@ -397,6 +454,7 @@ public class ForkCustomTextActivity extends BaseFragment {
         AlertDialog dialog = new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkTextNewPack))
             .setView(container).setPositiveButton(getString(R.string.Save), null)
             .setNegativeButton(getString(R.string.Cancel), null).create();
+        focusInput(dialog, name);
         if (showDialog(dialog) != null) {
             View save = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
             if (save != null) save.setOnClickListener(v -> {
@@ -472,6 +530,7 @@ public class ForkCustomTextActivity extends BaseFragment {
         b.setNegativeButton(getString(R.string.Cancel), null);
         b.setNeutralButton(ForkLocale.get(R.string.ForkCustomTextReset), (d, w) -> { CustomTextManager.setAlias(currentAccount, dialogId, null); changed(); });
         AlertDialog dialog = b.create();
+        focusInput(dialog, input);
         if (showDialog(dialog) != null) {
             View save = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
             if (save != null) save.setOnClickListener(v -> {

@@ -34,9 +34,11 @@ final class ForkFloatingHeader {
         root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
         for (int i = 0; i < header.getChildCount(); i++) {
             View child = header.getChildAt(i);
+            if (i == 0 || i > 1) {
+                child.setBackground(Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(48), color, Theme.getColor(Theme.key_actionBarDefaultSelector)));
+            }
             if (child instanceof ImageView) {
                 ((ImageView) child).setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.MULTIPLY));
-                child.setBackground(Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(48), color, Theme.getColor(Theme.key_actionBarDefaultSelector)));
             } else if (child instanceof TextView) {
                 ((TextView) child).setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
             }
