@@ -748,8 +748,9 @@ public class ActionBarMenuItem extends FrameLayout {
 
     private BlurredBackgroundDrawableViewFactory subMenuFactory;
     private BlurredBackgroundProvider subMenuProvider;
-    private Boolean forkMenuGlassApplied;
+    private String forkMenuStyleApplied;
     private int forkMenuRadiusApplied = -1;
+    private int forkMenuColorApplied;
     private android.graphics.Bitmap forkMenuBitmap;
     private Drawable forkMenuOriginalBackground;
     private int forkMenuOriginalColor;
@@ -768,21 +769,28 @@ public class ActionBarMenuItem extends FrameLayout {
 
     private void updateForkMenuBlur() {
         if (popupLayout == null || subMenuFactory == null) return;
-        boolean enabled = org.telegram.messenger.fork.panels.ForkPanelSettings.enabled();
-        int radius = org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(enabled, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp());
-        if (forkMenuGlassApplied != null && forkMenuGlassApplied == enabled && forkMenuRadiusApplied == radius) return;
-        popupLayout.setBackground(subMenuFactory.create(popupLayout, true)
-                .setColorProvider(subMenuProvider)
-                .setRadius(dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(enabled, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp())))
-                .setPadding(dp(8)));
-        forkMenuGlassApplied = enabled;
+        String style = org.telegram.ui.ForkGraphicsSurface.effectiveStyle();
+        int radius = org.telegram.messenger.fork.panels.PanelPolicy.surfaceRadiusDp(style, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp());
+        int color = "material".equals(style) ? org.telegram.ui.ForkGraphicsSurface.materialColor(getContext(), Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground, resourcesProvider)) : 0;
+        if (style.equals(forkMenuStyleApplied) && forkMenuRadiusApplied == radius && forkMenuColorApplied == color) return;
+        if ("material".equals(style)) {
+            popupLayout.setBackgroundDrawable(Theme.createRoundRectDrawable(dp(radius), android.graphics.Color.WHITE));
+            popupLayout.setBackgroundColor(color);
+        } else {
+            popupLayout.setBackground(subMenuFactory.create(popupLayout, true)
+                    .setColorProvider(subMenuProvider)
+                    .setRadius(dp(radius))
+                    .setPadding(dp(8)));
+        }
+        forkMenuStyleApplied = style;
         forkMenuRadiusApplied = radius;
+        forkMenuColorApplied = color;
     }
 
     public void setBlurredBackgroundFactory(BlurredBackgroundDrawableViewFactory subMenuFactory, BlurredBackgroundProvider subMenuProvider) {
         this.subMenuFactory = subMenuFactory;
         this.subMenuProvider = subMenuProvider;
-        forkMenuGlassApplied = null;
+        forkMenuStyleApplied = null;
         updateForkMenuBlur();
     }
 
