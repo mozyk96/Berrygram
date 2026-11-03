@@ -175,7 +175,7 @@ public class ActionBarPopupWindow extends PopupWindow {
             if (resId != 0) {
                 // Menus in the action bar use alert4, while chat/context menus also use
                 // alert and alert2. Leave custom/transparent popup surfaces untouched.
-                forkStyleEligible = resId == R.drawable.popup_fixed_alert || resId == R.drawable.popup_fixed_alert2 || resId == R.drawable.popup_fixed_alert4;
+                forkStyleEligible = resId == R.drawable.popup_fixed_alert || resId == R.drawable.popup_fixed_alert2 || resId == R.drawable.popup_fixed_alert3 || resId == R.drawable.popup_fixed_alert4;
                 forkStockBackground = getResources().getDrawable(resId).mutate();
                 if (forkStyleEligible) refreshForkStyle();
                 forkGlassBackground = forkStyleEligible && !"material".equals(forkResolvedStyle);
