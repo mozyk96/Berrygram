@@ -1,1 +1,1 @@
-package android.graphics; public class Paint { public static final int ANTI_ALIAS_FLAG=1,FILTER_BITMAP_FLAG=2; public Paint(int f){} public void setFilterBitmap(boolean b){} public void setShader(Shader s){} }
+package android.graphics; public class Paint { public Shader shader; public static final int ANTI_ALIAS_FLAG=1,FILTER_BITMAP_FLAG=2; public Paint(int f){} public void setFilterBitmap(boolean b){} public void setShader(Shader s){shader=s;} }

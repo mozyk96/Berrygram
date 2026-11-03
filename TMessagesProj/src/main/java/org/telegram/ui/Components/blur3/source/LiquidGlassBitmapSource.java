@@ -58,7 +58,8 @@ public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap
             if (shaderBitmap != null) clearShader();
             return;
         }
-        if (unavailable || !canvas.isHardwareAccelerated()) {
+        if (unavailable || !canvas.isHardwareAccelerated()
+                || !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS)) {
             drawFallback(canvas, left, top, right, bottom);
             return;
         }

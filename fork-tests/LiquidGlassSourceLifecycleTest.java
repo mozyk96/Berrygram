@@ -17,6 +17,12 @@ public class LiquidGlassSourceLifecycleTest {
   Canvas software=new Canvas(bitmap); software.hardware=false; linked.draw(software,0,0,30,40);
   if(software.draws!=1) throw new AssertionError("Linked source did not fall back to the original bitmap");
   linked.draw(new Canvas(bitmap),0,0,30,40);
+  org.telegram.messenger.LiteMode.liquid=false;
+  Canvas plain=new Canvas(bitmap); linked.draw(plain,0,0,30,40);
+  if(plain.draws!=1 || plain.liquidDraws!=0) throw new AssertionError("Blur/power state retained liquid shader");
+  org.telegram.messenger.LiteMode.liquid=true;
+  Canvas resumed=new Canvas(bitmap); linked.draw(resumed,0,0,30,40);
+  if(resumed.liquidDraws!=1) throw new AssertionError("Liquid shader did not resume");
   original.setBitmap(null);
   linked.draw(new Canvas(bitmap),0,0,30,40);
   if(retained.get(linked)!=null) throw new AssertionError("Linked shader retained cleared bitmap");

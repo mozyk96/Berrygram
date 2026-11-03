@@ -54,6 +54,11 @@ public class BlurredBackgroundDrawableRenderNode extends BlurredBackgroundDrawab
 
     private LiquidGlassEffect liquidGlassEffect;
     private boolean forkLiquidActive;
+    private int forkEffectStrength = org.telegram.messenger.fork.panels.ForkPanelSettings.effectStrength();
+
+    static float liquidIntensity(float intensity, int strength) {
+        return intensity * Math.max(0, Math.min(100, strength)) / 100f;
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     public void setLiquidGlassEffectAllowed() {
@@ -124,7 +129,7 @@ public class BlurredBackgroundDrawableRenderNode extends BlurredBackgroundDrawab
                 0, 0, boundProps.boundsWithPadding.width(), boundProps.boundsWithPadding.height(),
                 boundProps.shaderRadii[0], boundProps.shaderRadii[2], boundProps.shaderRadii[4], boundProps.shaderRadii[6],
                 thickness,
-                boundProps.liquidIntensity,
+                liquidIntensity(boundProps.liquidIntensity, forkEffectStrength),
                 boundProps.liquidIndex,
                 backgroundColor
             );
@@ -170,6 +175,12 @@ public class BlurredBackgroundDrawableRenderNode extends BlurredBackgroundDrawab
 
     @Override
     public void draw(@NonNull Canvas canvas) {
+        int strength = org.telegram.messenger.fork.panels.ForkPanelSettings.effectStrength();
+        if (forkEffectStrength != strength) {
+            forkEffectStrength = strength;
+            // Both tint and refraction depend on strength; refresh the cached display list.
+            updateColors();
+        }
         boolean liquid = org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS);
         if (forkLiquidActive != liquid) {
             forkLiquidActive = liquid;

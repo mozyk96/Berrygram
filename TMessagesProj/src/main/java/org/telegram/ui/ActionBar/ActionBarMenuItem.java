@@ -751,6 +751,7 @@ public class ActionBarMenuItem extends FrameLayout {
     private String forkMenuStyleApplied;
     private int forkMenuRadiusApplied = -1;
     private int forkMenuColorApplied;
+    private Drawable forkMenuBackgroundApplied;
     private android.graphics.Bitmap forkMenuBitmap;
     private Drawable forkMenuOriginalBackground;
     private int forkMenuOriginalColor;
@@ -771,8 +772,10 @@ public class ActionBarMenuItem extends FrameLayout {
         if (popupLayout == null || subMenuFactory == null) return;
         String style = org.telegram.ui.ForkGraphicsSurface.effectiveStyle();
         int radius = org.telegram.messenger.fork.panels.PanelPolicy.surfaceRadiusDp(style, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp());
-        int color = "material".equals(style) ? org.telegram.ui.ForkGraphicsSurface.materialColor(getContext(), Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground, resourcesProvider)) : 0;
-        if (style.equals(forkMenuStyleApplied) && forkMenuRadiusApplied == radius && forkMenuColorApplied == color) return;
+        int color = "material".equals(style) ? org.telegram.ui.ForkGraphicsSurface.materialColor(getContext(), Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground, resourcesProvider))
+                : org.telegram.ui.ForkGlassSurface.provider(resourcesProvider).getBackgroundColor();
+        if (style.equals(forkMenuStyleApplied) && forkMenuRadiusApplied == radius && forkMenuColorApplied == color
+                && popupLayout.getBackgroundDrawable() == forkMenuBackgroundApplied) return;
         if ("material".equals(style)) {
             popupLayout.setBackgroundDrawable(Theme.createRoundRectDrawable(dp(radius), android.graphics.Color.WHITE));
             popupLayout.setBackgroundColor(color);
@@ -794,6 +797,7 @@ public class ActionBarMenuItem extends FrameLayout {
         forkMenuStyleApplied = style;
         forkMenuRadiusApplied = radius;
         forkMenuColorApplied = color;
+        forkMenuBackgroundApplied = popupLayout.getBackgroundDrawable();
     }
 
     public void setBlurredBackgroundFactory(BlurredBackgroundDrawableViewFactory subMenuFactory, BlurredBackgroundProvider subMenuProvider) {
