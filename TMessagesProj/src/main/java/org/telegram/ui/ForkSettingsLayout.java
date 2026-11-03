@@ -9,7 +9,6 @@ import org.telegram.ui.ActionBar.Theme;
 /** Shared spacing and theme-aware surfaces for BerryGram settings. */
 final class ForkSettingsLayout {
     private static final int MARGIN_DP = 12;
-    private static final int RADIUS_DP = 14;
     private ForkSettingsLayout() {}
 
     static LinearLayout page(Context context) {
@@ -29,7 +28,9 @@ final class ForkSettingsLayout {
     static void refreshSection(LinearLayout section, boolean card) {
         int background = Theme.getColor(Theme.key_windowBackgroundWhite);
         if ("material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())) background = ForkGraphicsSurface.materialColor(section.getContext(), background);
-        int radius = card ? org.telegram.messenger.fork.panels.PanelPolicy.settingsRadiusDp() : RADIUS_DP;
+        int radius = org.telegram.messenger.fork.panels.PanelPolicy.surfaceRadiusDp(
+                org.telegram.messenger.fork.panels.ForkPanelSettings.style(),
+                org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp());
         section.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(radius), background));
     }
     static void addSection(LinearLayout page, View section) {

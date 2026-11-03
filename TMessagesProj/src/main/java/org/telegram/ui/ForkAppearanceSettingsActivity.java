@@ -122,6 +122,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
                 if (!fromUser) return;
                 ForkPanelSettings.setRadiusDp(value + 12);
+                ForkSettingsLayout.refreshSection(controls, false);
                 radius.setTextAndValue(ForkLocale.get(R.string.ForkAppearanceRadius), ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
             }
             @Override public void onStartTrackingTouch(SeekBar bar) { }

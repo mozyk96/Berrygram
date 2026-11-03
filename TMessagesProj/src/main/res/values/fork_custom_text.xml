@@ -28,7 +28,7 @@
     <string name="ForkAppearanceSubtitle">Menus and rounding</string>
     <string name="ForkAppearanceRadius">Menu rounding</string>
     <string name="ForkAppearanceRadiusValue">%1$d dp</string>
-    <string name="ForkAppearanceRadiusInfo">Rounding applies to supported menus in all three styles. Reopen a menu to see the change.</string>
+    <string name="ForkAppearanceRadiusInfo">Rounding applies to BerryGram panels and supported menus in all three styles. Reopen a menu to see the change.</string>
     <string name="ForkSettingsTitle">BerryGram Settings</string>
     <string name="ForkCustomTextTitle">Custom Text</string>
     <string name="ForkCustomTextSearch">Search phrases</string>
