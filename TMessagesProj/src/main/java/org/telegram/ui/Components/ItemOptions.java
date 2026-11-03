@@ -1806,6 +1806,7 @@ public class ItemOptions {
             return;
         }
         DimView dimViewFinal = dimView;
+        final ViewTreeObserver.OnPreDrawListener listenerAtDismiss = preDrawListener;
         dimView = null;
         if (dimAnimator != null) {
             dimAnimator.cancel();
@@ -1822,8 +1823,17 @@ public class ItemOptions {
                 dimViewFinal.invalidate();
 
                 AndroidUtilities.removeFromParent(dimViewFinal);
-                container.getViewTreeObserver().removeOnPreDrawListener(preDrawListener);
-                if (hideScrimUnder) {
+                container.getViewTreeObserver().removeOnPreDrawListener(listenerAtDismiss);
+                if (actionBarPopupWindow == null && dimView == null && forkOwnedMenuBlur) {
+                    if (lastLayout != null && lastLayout.getBackgroundDrawable() == forkAppliedMenuBackground) {
+                        lastLayout.setBackgroundDrawable(forkOriginalMenuBackground);
+                    }
+                    forkOriginalMenuBackground = null;
+                    forkAppliedMenuBackground = null;
+                    forkOwnedMenuBlur = false;
+                    if (scrimBlur3SourceBitmap != null) scrimBlur3SourceBitmap.setBitmap(null);
+                }
+                if (hideScrimUnder && dimView == null) {
                     scrimView.setVisibility(View.VISIBLE);
                     if (scrimView instanceof GiftSheet.GiftCell) {
                         ((GiftSheet.GiftCell) scrimView).invalidateCustom();

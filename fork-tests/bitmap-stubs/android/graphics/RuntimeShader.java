@@ -1,0 +1,1 @@
+package android.graphics; public class RuntimeShader extends Shader { public RuntimeShader(String p){} public void setInputShader(String n,Shader s){} public void setFloatUniform(String n,float a){} public void setFloatUniform(String n,float a,float b,float c,float d){} }

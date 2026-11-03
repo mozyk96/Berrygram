@@ -27,6 +27,16 @@ public final class LiquidGlassBitmapSource extends BlurredBackgroundSourceBitmap
     private final Matrix shaderMatrix = new Matrix();
     private boolean unavailable;
 
+    @Override public void setBitmap(Bitmap bitmap) {
+        if (bitmap != getBitmap()) {
+            paint.setShader(null);
+            shader = null;
+            bitmapShader = null;
+            shaderBitmap = null;
+        }
+        super.setBitmap(bitmap);
+    }
+
     @Override public void draw(Canvas canvas, float left, float top, float right, float bottom) {
         Bitmap bitmap = getBitmap();
         if (unavailable || !canvas.isHardwareAccelerated() || bitmap == null || bitmap.isRecycled()) {
