@@ -3462,6 +3462,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
 
+        if (isForkMainHeader()) {
+            configureForkHeaderButton(searchItem);
+            configureForkHeaderButton(optionsItem);
+        }
+
         searchItem.setSearchFieldHint(getString(R.string.Search));
         searchItem.setContentDescription(getString(R.string.Search));
         if (onlySelect) {
@@ -14197,6 +14202,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 && communityId == 0 && TextUtils.isEmpty(searchString);
     }
 
+    private void configureForkHeaderButton(ActionBarMenuItem item) {
+        if (item == null || !(item.getLayoutParams() instanceof LinearLayout.LayoutParams)) return;
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) item.getLayoutParams();
+        params.width = dp(48);
+        params.height = dp(48);
+        params.gravity = Gravity.CENTER_VERTICAL;
+        params.leftMargin = dp(2);
+        params.rightMargin = dp(2);
+        item.setLayoutParams(params);
+    }
+
     private boolean forkHeaderBackdropEnabled() {
         return SharedConfig.chatBlurEnabled()
                 || (isForkMainHeader() && !"material".equals(ForkGraphicsSurface.effectiveStyle()));
@@ -14232,7 +14248,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         } else {
             BlurredBackgroundDrawableViewFactory factory = "liquid".equals(style)
                     ? iBlur3FactoryLiquidGlass : iBlur3FactoryBlur;
-            item.setBackground(factory.create(item, ForkGlassSurface.provider(resourceProvider)).setRadius(dp(22)));
+            item.setBackground(factory.create(item, ForkGlassSurface.provider(resourceProvider)).setRadius(dp(24)));
             item.setForeground(Theme.createSelectorDrawable(selector));
         }
     }
