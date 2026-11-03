@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0-beta.5 — public testing
+
+- Separate the normal chat-list action menu into a floating layout, retaining native contextual/search states and quick lock.
+- Offer Blur and Liquid Glass, migrate Material preferences to Blur and synchronize native Liquid Glass settings.
+- Add optional chat title/avatar composition and icon-only Mini Dock.
+- Add optional anchored popup geometry reveals and select the round camera before recording starts.
+- Pre-release: device layout, recording, Telegram account flows and update installation require manual testing.
+
 ## 1.2.0-beta.4 — public testing
 
 - Remove the duplicate search-row space on the main chat list; size the search and menu controls equally and retain passcode locking in the menu.

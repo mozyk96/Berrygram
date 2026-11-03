@@ -68,18 +68,33 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
             @Override public void onStartTrackingTouch(SeekBar bar) { }
             @Override public void onStopTrackingTouch(SeekBar bar) { }
         });
-        TextSettingsCell animations = new TextSettingsCell(context);
-        animations.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsAnimations), animationLabel(), false);
+        TextCheckCell animations = new TextCheckCell(context);
+        animations.setTextAndCheck(ForkLocale.get(R.string.ForkAdvancedAnimations), org.telegram.messenger.fork.panels.ForkAnimationSettings.fluidPopupsEnabled(), false);
         ForkSettingsLayout.interactive(animations);
         animations.setOnClickListener(v -> {
-            String[] modes = {"system", "smooth", "minimal"};
-            CharSequence[] labels = {ForkLocale.get(R.string.ForkAnimationSystem), ForkLocale.get(R.string.ForkAnimationSmooth), ForkLocale.get(R.string.ForkAnimationMinimal)};
-            ForkChoicePopup.show(this, v, labels, null, java.util.Arrays.asList(modes).indexOf(ForkPanelSettings.animationMode()), index -> {
-                        ForkPanelSettings.setAnimationMode(modes[index]);
-                        animations.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsAnimations), animationLabel(), false);
-                    });
+            boolean enabled = !org.telegram.messenger.fork.panels.ForkAnimationSettings.fluidPopupsEnabled();
+            org.telegram.messenger.fork.panels.ForkAnimationSettings.setFluidPopupsEnabled(enabled);
+            animations.setChecked(enabled);
         });
         controls.addView(animations);
+        TextCheckCell dock = new TextCheckCell(context);
+        dock.setTextAndCheck(ForkLocale.get(R.string.ForkMiniDock), org.telegram.messenger.fork.panels.ForkDockSettings.miniDockEnabled(), false);
+        ForkSettingsLayout.interactive(dock);
+        dock.setOnClickListener(v -> {
+            boolean enabled = !org.telegram.messenger.fork.panels.ForkDockSettings.miniDockEnabled();
+            org.telegram.messenger.fork.panels.ForkDockSettings.setMiniDockEnabled(enabled);
+            dock.setChecked(enabled);
+        });
+        controls.addView(dock);
+        TextCheckCell chatHeader = new TextCheckCell(context);
+        chatHeader.setTextAndCheck(ForkLocale.get(R.string.ForkNewChatHeader), org.telegram.messenger.fork.panels.ForkChatHeaderSettings.enabled(), false);
+        ForkSettingsLayout.interactive(chatHeader);
+        chatHeader.setOnClickListener(v -> {
+            boolean enabled = !org.telegram.messenger.fork.panels.ForkChatHeaderSettings.enabled();
+            org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setEnabled(enabled);
+            chatHeader.setChecked(enabled);
+        });
+        controls.addView(chatHeader);
         TextCheckCell adaptive = new TextCheckCell(context);
         adaptive.setTextAndCheck(ForkLocale.get(R.string.ForkGraphicsAdaptive), ForkPanelSettings.adaptiveEffects(), false);
         ForkSettingsLayout.interactive(adaptive);
@@ -106,10 +121,10 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         applyAccent(slider, effect, preview, accent(context));
         color.setOnClickListener(v -> chooseAccent(context, slider, effect, color, preview));
         style.setOnClickListener(v -> {
-            String[] modes = {"material", "blur", "liquid"};
-            CharSequence[] labels = {ForkLocale.get(R.string.ForkGraphicsMaterial), ForkLocale.get(R.string.ForkGraphicsBlur), ForkLocale.get(R.string.ForkGraphicsLiquid)};
+            String[] modes = {"blur", "liquid"};
+            CharSequence[] labels = {ForkLocale.get(R.string.ForkGraphicsBlur), ForkLocale.get(R.string.ForkGraphicsLiquid)};
             ForkChoicePopup.show(this, v, labels, null, java.util.Arrays.asList(modes).indexOf(ForkPanelSettings.style()), index -> {
-                        ForkPanelSettings.setStyle(modes[index]);
+                        org.telegram.messenger.LiteMode.toggleFlag(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS, "liquid".equals(modes[index]));
                         style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
                         effect.setEnabled(effectsAvailable());
                         ForkSettingsLayout.refreshSection(controls, false);
@@ -144,7 +159,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
     }
     private static String styleLabel() {
         String style = ForkPanelSettings.style();
-        return ForkLocale.get("liquid".equals(style) ? R.string.ForkGraphicsLiquid : "blur".equals(style) ? R.string.ForkGraphicsBlur : R.string.ForkGraphicsMaterial);
+        return ForkLocale.get("liquid".equals(style) ? R.string.ForkGraphicsLiquid : R.string.ForkGraphicsBlur);
     }
     private static String animationLabel() {
         String mode = ForkPanelSettings.animationMode();
@@ -165,7 +180,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
     }
     private static boolean effectsAvailable() {
         return org.telegram.messenger.fork.panels.PanelPolicy.useGlass(ForkPanelSettings.enabled(),
-                !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS) || ForkGraphicsSurface.systemPowerSaver(),
+                ForkGraphicsSurface.effectsSuppressed(),
                 Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()));
     }
     private static void applyAccent(SeekBar slider, SeekBar effect, TextSettingsCell preview, int color) {
