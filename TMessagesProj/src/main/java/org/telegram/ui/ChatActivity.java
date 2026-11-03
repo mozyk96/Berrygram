@@ -47040,6 +47040,7 @@ public class ChatActivity extends BaseFragment implements
         }
         floatingChatHeader = enabled;
         actionBar.setDrawGlassTitle(!enabled);
+        actionBar.setFloatingChatHeader(enabled);
         avatarContainer.setTranslationX(0);
         avatarContainer.setFloatingChatHeader(enabled);
         actionBar.requestLayout();

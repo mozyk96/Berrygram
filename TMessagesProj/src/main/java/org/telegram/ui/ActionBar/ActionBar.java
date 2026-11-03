@@ -1373,6 +1373,16 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         super.onViewAdded(child);
     }
 
+    private boolean floatingChatHeader;
+
+    public void setFloatingChatHeader(boolean enabled) {
+        if (floatingChatHeader != enabled) {
+            floatingChatHeader = enabled;
+            requestLayout();
+            invalidate();
+        }
+    }
+
     private int additionalTextLeft;
 
     public void setAdditionalTextLeft(int x) {
@@ -1501,7 +1511,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             if (child.getVisibility() == GONE || child == titleTextView[0] || child == titleTextView[1] || child == additionalSubTitleOverlayContainer || child == subtitleTextView || child == menu || child == backButtonImageView || child == additionalSubtitleTextView || child == avatarSearchImageView) {
                 continue;
             }
-            measureChildWithMargins(child, widthMeasureSpec, 0, MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY), 0);
+            if (floatingChatHeader && child == chatAvatarContainer) {
+                chatAvatarContainer.setFloatingHeaderMenuWidth(menu == null || menu.getVisibility() == GONE ? 0 : menu.getMeasuredWidth());
+                child.measure(MeasureSpec.makeMeasureSpec(Math.max(0, width - dp(58)), MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY));
+            } else {
+                measureChildWithMargins(child, widthMeasureSpec, 0, MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY), 0);
+            }
         }
     }
 
@@ -1530,7 +1546,19 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         if (menu != null && menu.getVisibility() != GONE) {
             int menuLeft = menu.searchFieldVisible() ? dp(menuOccupyBack ? 0 : AndroidUtilities.isTablet() ? 74 : 66) : (getMeasuredWidth()) - menu.getMeasuredWidth();
+            if (floatingChatHeader) menuLeft -= dp(58);
+            // Reapply native child positions before the optional visual ordering.
+            menu.forceLayout();
             menu.layout(menuLeft, additionalTop, menuLeft + menu.getMeasuredWidth(), additionalTop + menu.getMeasuredHeight());
+            if (floatingChatHeader) {
+                // Preserve native controls and listeners, with overflow before call.
+                for (int i = 0; i < menu.getChildCount(); i++) {
+                    View item = menu.getChildAt(i);
+                    if (item.getVisibility() != GONE) {
+                        item.offsetLeftAndRight(menu.getMeasuredWidth() - item.getRight() - item.getLeft());
+                    }
+                }
+            }
         }
 
         for (int i = 0; i < 2; i++) {
@@ -1615,6 +1643,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 default:
                     childTop = lp.topMargin;
             }
+            if (floatingChatHeader && child == chatAvatarContainer) childLeft = dp(58);
             child.layout(childLeft, childTop, childLeft + width, childTop + height);
         }
     }
@@ -1864,7 +1893,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (chatAvatarContainer != null && glassMode) {
+        if (chatAvatarContainer != null && glassMode && !floatingChatHeader) {
             if (ev.getAction() == MotionEvent.ACTION_DOWN) {
                 final int x = (int) ev.getX();
                 final int y = (int) ev.getY();
@@ -2274,7 +2303,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             glassDrawableBack.draw(canvas);
         }
         if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu) {
-            glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
+            final int menuRight = getWidth() - (floatingChatHeader ? dp(58) : 0);
+            glassDrawableMenu.setBounds(menuRight - Math.max(s, menuWidth) - p * 2, t, menuRight, b);
             glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
             glassDrawableMenu.draw(canvas);
         }
