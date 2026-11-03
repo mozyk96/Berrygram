@@ -1268,7 +1268,7 @@ public class ItemOptions {
             forkAppliedMenuBackground = null;
             forkOwnedMenuBlur = false;
         }
-        blurForMenu = explicitBlurForMenu || (fragment != null && scrimView != null && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout
+        blurForMenu = explicitBlurForMenu || ((fragment != null || container != null) && scrimView != null && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout
                 && lastLayout.hasForkStyleBackground()
                 && PanelPolicy.useGlass(ForkPanelSettings.enabled(), !LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) || org.telegram.ui.ForkGraphicsSurface.systemPowerSaver(), Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!SharedConfig.deviceIsLow())));
         setupSelectors();
