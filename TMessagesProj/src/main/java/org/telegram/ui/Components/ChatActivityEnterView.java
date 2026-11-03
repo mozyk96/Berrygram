@@ -898,30 +898,43 @@ public class ChatActivityEnterView extends FrameLayout implements
         forkCameraChoice = null;
         return choice;
     }
-    private final Runnable forkCameraPickerRunnable = () -> {
+    private org.telegram.ui.Components.ItemOptions forkCameraOptions;
+    private boolean forkCameraAwaitingChoice;
+    private final Runnable forkCameraPickerRunnable = () -> showForkCameraSelector();
+
+    private void showForkCameraSelector() {
         recordAudioVideoRunnableStarted = false;
-        if (parentActivity == null || !isInVideoMode() || audioVideoButtonContainer == null || !audioVideoButtonContainer.isAttachedToWindow()) return;
-        android.widget.LinearLayout content = new android.widget.LinearLayout(getContext());
-        content.setOrientation(android.widget.LinearLayout.VERTICAL);
-        content.setBackground(Theme.createRoundRectDrawable(dp(18), getThemedColor(Theme.key_windowBackgroundWhite)));
-        int[] labels = {R.string.ForkCameraFront, R.string.ForkCameraBack};
-        for (int label : labels) {
-            TextView text = new TextView(getContext());
-            text.setText(org.telegram.ui.ForkLocale.get(label));
-            text.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
-            text.setGravity(Gravity.CENTER);
-            text.setTextSize(14);
-            text.setSingleLine(true);
-            text.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            content.addView(text, new android.widget.LinearLayout.LayoutParams(dp(160), dp(48)));
-        }
-        forkCameraPickerContent = content;
-        forkCameraPicker = new android.widget.PopupWindow(content, dp(160), dp(96), false);
-        forkCameraPicker.setTouchable(false);
-        forkCameraPicker.setClippingEnabled(true);
-        forkCameraPicker.showAsDropDown(audioVideoButtonContainer, -dp(112), -audioVideoButtonContainer.getHeight() - dp(104));
-    };
+        if (parentActivity == null || parentFragment == null || !isInVideoMode()
+                || audioVideoButtonContainer == null || !audioVideoButtonContainer.isAttachedToWindow()) return;
+        forkCameraAwaitingChoice = true;
+        forkCameraOptions = org.telegram.ui.Components.ItemOptions.makeOptions(parentFragment, audioVideoButtonContainer)
+                .setDimAlpha(0).setDrawScrim(false);
+        forkCameraOptions.add(R.drawable.fork_camera_front, org.telegram.ui.ForkLocale.get(R.string.ForkCameraFrontShort), () -> startForkCameraRecording(true));
+        forkCameraOptions.add(R.drawable.camera, org.telegram.ui.ForkLocale.get(R.string.ForkCameraBackShort), () -> startForkCameraRecording(false));
+        forkCameraOptions.setOnDismiss(() -> { forkCameraAwaitingChoice = false; forkCameraOptions = null; });
+        forkCameraOptions.show();
+    }
+
+    private void startForkCameraRecording(boolean front) {
+        // Selection happens before camera initialization. The released gesture is
+        // replaced by Telegram's existing locked-recording state.
+        AndroidUtilities.runOnUIThread(() -> {
+            if (parentActivity == null || !audioVideoButtonContainer.isAttachedToWindow() || !isInVideoMode()) return;
+            boolean permitted = Build.VERSION.SDK_INT < 23 || parentActivity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                    && parentActivity.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+            forkCameraChoice = permitted ? front : null;
+            recordAudioVideoRunnable.run();
+            if (permitted && recordingAudioVideo && recordCircle != null) {
+                recordCircle.setLockTranslation(0);
+                recordCircle.setLockTranslation(-dp(60));
+                startLockTransition();
+            }
+        }, 150);
+    }
     private void dismissForkCameraPicker() {
+        if (forkCameraOptions != null) forkCameraOptions.dismiss();
+        forkCameraOptions = null;
+        forkCameraAwaitingChoice = false;
         if (forkCameraPicker != null) forkCameraPicker.dismiss();
         forkCameraPicker = null;
         forkCameraPickerContent = null;
@@ -3045,6 +3058,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             public boolean onTouchEvent(MotionEvent motionEvent) {
                 if (isLiveComment) return false;
                 createRecordCircle();
+                if (forkCameraAwaitingChoice) return true;
                 if (forkCameraPicker != null) {
                     if (motionEvent.getActionMasked() == MotionEvent.ACTION_MOVE) {
                         highlightForkCamera(forkCameraChoiceAt(motionEvent));
@@ -3133,13 +3147,13 @@ public class ChatActivityEnterView extends FrameLayout implements
                     if (hasRecordVideo) {
                         calledRecordRunnable = false;
                         recordAudioVideoRunnableStarted = true;
-                        AndroidUtilities.runOnUIThread(isInVideoMode() && "gesture".equals(org.telegram.messenger.fork.camera.RoundCameraSettings.mode()) ? forkCameraPickerRunnable : recordAudioVideoRunnable, 150);
+                        AndroidUtilities.runOnUIThread(isInVideoMode() && "choose".equals(org.telegram.messenger.fork.camera.RoundCameraSettings.mode()) ? forkCameraPickerRunnable : recordAudioVideoRunnable, 150);
                     } else {
                         recordAudioVideoRunnable.run();
                     }
                     return true;
                 } else if (motionEvent.getAction() == MotionEvent.ACTION_UP || motionEvent.getAction() == MotionEvent.ACTION_CANCEL) {
-                    if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL && recordAudioVideoRunnableStarted && isInVideoMode() && "gesture".equals(org.telegram.messenger.fork.camera.RoundCameraSettings.mode())) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL && recordAudioVideoRunnableStarted && isInVideoMode() && "choose".equals(org.telegram.messenger.fork.camera.RoundCameraSettings.mode())) {
                         AndroidUtilities.cancelRunOnUIThread(forkCameraPickerRunnable);
                         recordAudioVideoRunnableStarted = false;
                         return false;

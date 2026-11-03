@@ -18,7 +18,7 @@
     <string name="ForkColorHex">Колір у форматі HEX</string>
     <string name="ForkColorPreview">Попередній перегляд</string>
     <string name="ForkColorInvalid">Введіть шість шістнадцяткових символів.</string>
-    <string name="ForkCameraChoiceTitle">Камера для відеоповідомлень</string>
+    <string name="ForkCameraChoiceTitle">Камера для кружечків</string>
     <string name="ForkCameraBehavior">Початкова поведінка</string>
     <string name="ForkCameraChoiceAuto">За режимом</string>
     <string name="ForkCameraBehaviorFixed">Обрана камера</string>
@@ -196,4 +196,6 @@
     <string name="ForkUpdateIncompatibleVersion">Перевірений пакет має такий самий або менший Android versionCode. Встановити його як оновлення неможливо.</string>
     <string name="ForkUpdateExportPhrases">Експорт фраз у редакторі</string>
     <string name="ForkCameraChooseDuring">Вибір під час зйомки</string>
+    <string name="ForkCameraFrontShort">Передня</string>
+    <string name="ForkCameraBackShort">Задня</string>
 </resources>

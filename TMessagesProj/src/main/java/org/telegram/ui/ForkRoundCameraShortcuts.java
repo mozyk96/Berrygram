@@ -12,7 +12,7 @@ public final class ForkRoundCameraShortcuts {
 
     public static void show(BaseFragment parent, View anchor, Runnable onChanged) {
         String[] modes = {"back", "front", "choose"};
-        CharSequence[] names = {ForkLocale.get(R.string.ForkCameraBack), ForkLocale.get(R.string.ForkCameraFront), ForkLocale.get(R.string.ForkCameraChooseDuring)};
+        CharSequence[] names = {ForkLocale.get(R.string.ForkCameraBackShort), ForkLocale.get(R.string.ForkCameraFrontShort), ForkLocale.get(R.string.ForkCameraChooseDuring)};
         int[] icons = {R.drawable.camera, R.drawable.fork_camera_front, R.drawable.msg_photo_switch2};
         int selected = java.util.Arrays.asList(modes).indexOf(RoundCameraSettings.mode());
         ForkChoicePopup.show(parent, anchor, names, icons, selected, i -> {

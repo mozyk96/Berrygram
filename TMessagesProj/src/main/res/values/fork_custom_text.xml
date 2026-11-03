@@ -18,7 +18,7 @@
     <string name="ForkColorHex">Hexadecimal color</string>
     <string name="ForkColorPreview">Preview</string>
     <string name="ForkColorInvalid">Enter a six-digit hexadecimal color.</string>
-    <string name="ForkCameraChoiceTitle">Video message camera</string>
+    <string name="ForkCameraChoiceTitle">Round video camera</string>
     <string name="ForkCameraBehavior">Starting behavior</string>
     <string name="ForkCameraChoiceAuto">Based on behavior</string>
     <string name="ForkCameraBehaviorFixed">Selected camera</string>
@@ -196,4 +196,6 @@
     <string name="ForkUpdateIncompatibleVersion">The verified package has an equal or older Android version code. It cannot be installed as an update.</string>
     <string name="ForkUpdateExportPhrases">Export phrases in editor</string>
     <string name="ForkCameraChooseDuring">Choose while recording</string>
+    <string name="ForkCameraFrontShort">Front</string>
+    <string name="ForkCameraBackShort">Rear</string>
 </resources>
