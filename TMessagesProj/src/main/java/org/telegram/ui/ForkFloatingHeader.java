@@ -34,9 +34,10 @@ final class ForkFloatingHeader {
         LinearLayout header = new LinearLayout(context);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setMinimumHeight(AndroidUtilities.dp(56));
         int side = AndroidUtilities.dp(12);
         header.setPadding(side, 0, side, 0);
-        root.addView(header, new LinearLayout.LayoutParams(-1, AndroidUtilities.dp(56)));
+        root.addView(header, new LinearLayout.LayoutParams(-1, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         ImageView back = new ImageView(context);
         back.setImageResource(R.drawable.ic_ab_back);
@@ -45,23 +46,23 @@ final class ForkFloatingHeader {
         back.setContentDescription(LocaleController.getString(R.string.AccDescrGoBack));
         int surface = Theme.getColor(Theme.key_windowBackgroundWhite);
         if ("material".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())) surface = ForkGraphicsSurface.materialColor(context, surface);
-        back.setBackground(Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(44), surface, Theme.getColor(Theme.key_actionBarDefaultSelector)));
+        back.setBackground(Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(48), surface, Theme.getColor(Theme.key_actionBarDefaultSelector)));
         back.setOnClickListener(v -> onBack.run());
-        header.addView(back, new LinearLayout.LayoutParams(AndroidUtilities.dp(44), AndroidUtilities.dp(44)));
+        header.addView(back, new LinearLayout.LayoutParams(AndroidUtilities.dp(48), AndroidUtilities.dp(48)));
 
         TextView label = new TextView(context);
         label.setText(title);
         label.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         label.setTextSize(20);
         label.setTypeface(AndroidUtilities.bold());
-        label.setSingleLine(true);
+        label.setMaxLines(2);
         label.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(0, -2, 1);
         titleParams.setMarginStart(AndroidUtilities.dp(14));
         header.addView(label, titleParams);
         if (action != null) {
-            action.setBackground(Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(44), surface, Theme.getColor(Theme.key_actionBarDefaultSelector)));
-            header.addView(action, new LinearLayout.LayoutParams(AndroidUtilities.dp(44), AndroidUtilities.dp(44)));
+            action.setBackground(Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(48), surface, Theme.getColor(Theme.key_actionBarDefaultSelector)));
+            header.addView(action, new LinearLayout.LayoutParams(AndroidUtilities.dp(48), AndroidUtilities.dp(48)));
         }
         root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1));
         return root;
