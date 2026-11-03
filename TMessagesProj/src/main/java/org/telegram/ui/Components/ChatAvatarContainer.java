@@ -780,7 +780,12 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     private int floatingHeaderMenuWidth;
 
     public void setFloatingHeaderMenuWidth(int width) {
-        floatingHeaderMenuWidth = width;
+        if (floatingHeaderMenuWidth != width) {
+            floatingHeaderMenuWidth = width;
+            // ActionBar may measure us with the same specs after native actions change.
+            // Invalidate this child's cached measure without requesting a parent loop.
+            forceLayout();
+        }
     }
 
     private int floatingHeaderTextWidth() {
@@ -802,6 +807,11 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     public void setFloatingChatHeader(boolean enabled) {
         if (floatingChatHeader != enabled) {
             floatingChatHeader = enabled;
+            // The floating text region is bounded by native actions and the avatar.
+            // Use a readable ellipsis; stock Telegram keeps its gradient truncation.
+            titleTextView.setEllipsizeByGradient(!enabled);
+            if (subtitleTextView != null) subtitleTextView.setEllipsizeByGradient(!enabled);
+            if (animatedSubtitleTextView != null) animatedSubtitleTextView.setEllipsizeByGradient(!enabled);
             requestLayout();
             invalidate();
         }

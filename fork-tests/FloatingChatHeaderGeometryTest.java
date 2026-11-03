@@ -6,6 +6,13 @@ public class FloatingChatHeaderGeometryTest {
     }
 
     public static void main(String[] args) {
+        FloatingChatHeaderGeometry view = new FloatingChatHeaderGeometry();
+        view.setFloatingHeaderMenuWidth(96);
+        if (view.layoutCalls != 1 || view.floatingHeaderMenuWidth != 96) throw new AssertionError("Menu change did not invalidate child measurement");
+        view.setFloatingHeaderMenuWidth(96);
+        if (view.layoutCalls != 1) throw new AssertionError("Unchanged menu causes relayout loop");
+        view.setFloatingHeaderMenuWidth(0);
+        if (view.layoutCalls != 2) throw new AssertionError("Hidden actions do not release title width");
         int cases = 0;
         for (float density : new float[]{1, 1.5f, 2, 3}) {
             for (int screenDp : new int[]{320, 360, 412, 600, 960}) {
