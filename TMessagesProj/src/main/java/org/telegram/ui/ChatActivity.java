@@ -501,6 +501,8 @@ public class ChatActivity extends BaseFragment implements
     private ChatBigEmptyView bigEmptyView;
     private ArrayList<View> actionModeViews = new ArrayList<>();
     public ChatAvatarContainer avatarContainer;
+    private boolean floatingChatHeader;
+    private boolean floatingChatHeaderDrawablesReady;
     private AnimatedTextView selectedMessagesCountTextView;
     private RecyclerListView.OnItemClickListener mentionsOnItemClickListener;
     private SuggestEmojiView suggestEmojiPanel;
@@ -4212,6 +4214,9 @@ public class ChatActivity extends BaseFragment implements
             }
         };
         avatarContainer.setGlassMode();
+        floatingChatHeader = false;
+        floatingChatHeaderDrawablesReady = false;
+        actionBar.setDrawGlassTitle(true);
         avatarContainer.allowShorterStatus = true;
         avatarContainer.premiumIconHiddable = true;
         avatarContainer.allowDrawStories = dialog_id < 0 && !isTopic;
@@ -17959,6 +17964,7 @@ public class ChatActivity extends BaseFragment implements
         @Override
         protected void dispatchDraw(Canvas canvas) {
             chatActivityEnterView.checkAnimation();
+            updateFloatingChatHeader();
             updateChatListViewTopPadding();
             if (invalidateMessagesVisiblePart || (chatListItemAnimator != null && chatListItemAnimator.isRunning())) {
                 invalidateMessagesVisiblePart = false;
@@ -18559,6 +18565,7 @@ public class ChatActivity extends BaseFragment implements
                 ((LayoutParams) webBotTitle.getLayoutParams()).topMargin = AndroidUtilities.statusBarHeight;
                 webBotTitle.setTextSize(!AndroidUtilities.isTablet() && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 18 : 20);
             }
+            updateFloatingChatHeader();
             measureChildWithMargins(actionBar, widthMeasureSpec, 0, heightMeasureSpec, 0);
             int actionBarHeight = actionBar.getMeasuredHeight();
             if (actionBar.getVisibility() == VISIBLE) {
@@ -30058,6 +30065,7 @@ public class ChatActivity extends BaseFragment implements
     @Override
     public void onResume() {
         super.onResume();
+        updateFloatingChatHeader();
         checkShowBlur(false);
         activityResumeTime = System.currentTimeMillis();
         if (openImport && getSendMessagesHelper().getImportingHistory(dialog_id) != null) {
@@ -46995,6 +47003,7 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private void checkUi_avatarContainerVisibility() {
+        updateFloatingChatHeader();
         if (avatarContainer != null) {
             final float factor1 = 1f - actionBar.getActionModeFactor();
             final float factor2 = 1f - animatorSearchFieldVisibility.getFloatValue();
@@ -47005,6 +47014,31 @@ public class ChatActivity extends BaseFragment implements
             avatarContainer.setAlpha(factor);
             avatarContainer.setVisibility(factor > 0 ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private void updateFloatingChatHeader() {
+        if (avatarContainer == null || contentView == null || actionBar == null) return;
+        // Keep Telegram's existing geometry throughout search/selection transitions and
+        // whenever extra header controls need the space. No controls are removed.
+        final boolean enabled = org.telegram.messenger.fork.panels.ForkChatHeaderSettings.enabled()
+                && chatMode == MODE_DEFAULT && !isReport() && !isComments && !isThreadChat()
+                && !inPreviewMode && !inBubbleMode && !isInsideContainer && startLoadFromDate == 0
+                && !ChatObject.isForum(currentChat) && !UserObject.isBotForumWithEditableTopics(currentUser)
+                && currentEncryptedChat == null && avatarContainer.hasVisibleAvatar()
+                && !UserObject.isReplyUser(currentUser) && (currentUser == null || currentUser.id != UserObject.VERIFY)
+                && !showAudioCallAsIcon && !showSearchAsIcon
+                && !searching && !actionBar.isSearchFieldVisible() && animatorSearchFieldVisibility.getFloatValue() == 0
+                && !actionBar.isActionModeShowed() && actionBar.getActionModeFactor() == 0
+                && contentView.getMeasuredWidth() >= dp(360);
+        if (floatingChatHeader == enabled) return;
+        if (enabled && !floatingChatHeaderDrawablesReady) {
+            avatarContainer.setupFloatingChatHeader(glassBackgroundDrawableFactory,
+                    BlurredBackgroundProviderImpl.topPanelChatActivity(themeDelegate));
+            floatingChatHeaderDrawablesReady = true;
+        }
+        floatingChatHeader = enabled;
+        actionBar.setDrawGlassTitle(!enabled);
+        avatarContainer.setFloatingChatHeader(enabled);
     }
 
 
