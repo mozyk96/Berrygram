@@ -85,16 +85,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Graphics preferences compile failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Graphics preferences test failed' }
 node (Join-Path $PSScriptRoot 'test_popup_animation_lifecycle.js')
 if ($LASTEXITCODE -ne 0) { throw 'Popup lifecycle test failed' }
-node (Join-Path $PSScriptRoot 'test_compact_stories.js')
-if ($LASTEXITCODE -ne 0) { throw 'Compact stories state test failed' }
 & (Join-Path $PSScriptRoot 'chat-header-geometry.ps1')
 if ($LASTEXITCODE -ne 0) { throw 'Chat header geometry test failed' }
-node (Join-Path $PSScriptRoot 'test_beta8_story_scroll.js')
-if ($LASTEXITCODE -ne 0) { throw 'test_beta8_story_scroll.js failed' }
-node (Join-Path $PSScriptRoot 'test_header_surface_restoration.js')
-if ($LASTEXITCODE -ne 0) { throw 'test_header_surface_restoration.js failed' }
-node (Join-Path $PSScriptRoot 'test_header_content_state.js')
-if ($LASTEXITCODE -ne 0) { throw 'test_header_content_state.js failed' }
 node (Join-Path $PSScriptRoot 'test_graphics_surface_state.js')
 if ($LASTEXITCODE -ne 0) { throw 'test_graphics_surface_state.js failed' }
+node (Join-Path $PSScriptRoot 'test_native_main_header.js')
+if ($LASTEXITCODE -ne 0) { throw 'Native main header test failed' }
 Write-Output 'Fork smoke tests passed (no Android device or account used)'

@@ -1,5 +1,5 @@
 from pathlib import Path
-root=Path('TMessagesProj/src/main/java/org/telegram')
+root=Path(__file__).resolve().parent.parent / 'TMessagesProj/src/main/java/org/telegram'
 checks={
  'ui/ForkSettingsActivity.java': ['ForkVideoSettingsActivity', 'ForkVoiceSettingsActivity', 'ForkPanelSettings', 'ForkCustomTextActivity', 'ForkUpdaterPanel'],
  'ui/ChatActivity.java': ['CustomTextManager.aliasDisplay', 'consumeForkCameraChoice'],

@@ -65,9 +65,6 @@ import org.telegram.ui.ProfileActivity;
 import org.telegram.ui.Stories.StoriesUtilities;
 import org.telegram.ui.TopicsFragment;
 import org.telegram.ui.community.CommunityArrowDrawable;
-import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
-import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
-import org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProvider;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -273,9 +270,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 ScaleStateListAnimator.apply(avatarImageView, .05f, 1.2f);
             }
             avatarImageView.setOnClickListener(v -> {
-                if (floatingChatHeader) {
-                    openProfile(false);
-                } else if (!onAvatarClick()) {
+                if (!onAvatarClick()) {
                     openProfile(true);
                 }
             });
@@ -434,15 +429,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         canvas.save();
         final float s = bounce.getScale(.02f);
         canvas.scale(s, s, getPivotX(), getHeight() - ActionBar.getCurrentActionBarHeight() / 2f);
-        if (floatingChatHeader && floatingTitleBackground != null) {
-            final int centerY = getHeight() - ActionBar.getCurrentActionBarHeight() / 2;
-            final int titleWidth = Math.max(0, Math.min(Math.max(0, floatingHeaderTextWidth() - dp(12)), Math.max(titleTextView.getMeasuredWidth(), getSubtitleTextView().getMeasuredWidth()) + dp(24)));
-            final int titleLeft = (floatingHeaderTextWidth() - titleWidth) / 2;
-            floatingTitleBackground.setBounds(titleLeft - dp(6), centerY - dp(29), titleLeft + titleWidth + dp(6), centerY + dp(29));
-            floatingTitleBackground.draw(canvas);
-            floatingAvatarBackground.setBounds(avatarImageView.getLeft() - dp(9), centerY - dp(29), avatarImageView.getRight() + dp(9), centerY + dp(29));
-            floatingAvatarBackground.draw(canvas);
-        }
         super.dispatchDraw(canvas);
         canvas.restore();
     }
@@ -686,7 +672,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         final int width = MeasureSpec.getSize(widthMeasureSpec);
-        final int availableWidth = Math.max(0, floatingChatHeader ? floatingHeaderTextWidth(width, floatingHeaderMenuWidth, dp(64)) - dp(24) : width - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16));
+        final int availableWidth = width - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16);
         avatarImageView.measure(MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY));
         titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
@@ -707,7 +693,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
             starFgItem.measure(MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.EXACTLY));
         }
         setMeasuredDimension(width, MeasureSpec.getSize(heightMeasureSpec));
-        if (!floatingChatHeader && lastWidth != -1 && lastWidth != width && lastWidth > width) {
+        if (lastWidth != -1 && lastWidth != width && lastWidth > width) {
             fadeOutToLessWidth(lastWidth);
         }
         SimpleTextView titleTextLargerCopyView = this.titleTextLargerCopyView.get();
@@ -776,47 +762,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     private boolean glassMode;
-    private boolean floatingChatHeader;
-    private int floatingHeaderMenuWidth;
-
-    public void setFloatingHeaderMenuWidth(int width) {
-        if (floatingHeaderMenuWidth != width) {
-            floatingHeaderMenuWidth = width;
-            // ActionBar may measure us with the same specs after native actions change.
-            // Invalidate this child's cached measure without requesting a parent loop.
-            forceLayout();
-        }
-    }
-
-    private int floatingHeaderTextWidth() {
-        return floatingHeaderTextWidth(getMeasuredWidth(), floatingHeaderMenuWidth, dp(64));
-    }
-
-    // Kept independent of Android so the same width policy can be exercised on the JVM.
-    static int floatingHeaderTextWidth(int containerWidth, int menuWidth, int avatarSlotWidth) {
-        return Math.max(0, containerWidth - menuWidth - avatarSlotWidth);
-    }
-    private BlurredBackgroundDrawable floatingTitleBackground;
-    private BlurredBackgroundDrawable floatingAvatarBackground;
-
-    public void setupFloatingChatHeader(BlurredBackgroundDrawableViewFactory factory, BlurredBackgroundColorProvider provider) {
-        floatingTitleBackground = factory.create(this, provider).setRadius(dp(23)).setPadding(dp(6));
-        floatingAvatarBackground = factory.create(this, provider).setRadius(dp(23)).setPadding(dp(6));
-    }
-
-    public void setFloatingChatHeader(boolean enabled) {
-        if (floatingChatHeader != enabled) {
-            floatingChatHeader = enabled;
-            // The floating text region is bounded by native actions and the avatar.
-            // Use a readable ellipsis; stock Telegram keeps its gradient truncation.
-            titleTextView.setEllipsizeByGradient(!enabled);
-            if (subtitleTextView != null) subtitleTextView.setEllipsizeByGradient(!enabled);
-            if (animatedSubtitleTextView != null) animatedSubtitleTextView.setEllipsizeByGradient(!enabled);
-            requestLayout();
-            invalidate();
-        }
-    }
-
     public void setGlassMode() {
         if (titleTextView != null) {
             titleTextView.setTextSizePx(dp(17.5f));
@@ -877,22 +822,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (subtitleTextLargerCopyView != null) {
             subtitleTextLargerCopyView.layout(l, subtitleTop, l + subtitleTextLargerCopyView.getMeasuredWidth(), subtitleTop + subtitleTextLargerCopyView.getTextHeight());
         }
-        if (floatingChatHeader) {
-            final int avatarOffset = getMeasuredWidth() - dp(8) - avatarImageView.getRight();
-            avatarImageView.offsetLeftAndRight(avatarOffset);
-            if (timeItem != null) timeItem.offsetLeftAndRight(avatarOffset);
-            if (communityItem != null) communityItem.offsetLeftAndRight(avatarOffset);
-            if (starBgItem != null) starBgItem.offsetLeftAndRight(avatarOffset);
-            if (starFgItem != null) starFgItem.offsetLeftAndRight(avatarOffset);
-            centerFloatingHeaderText(titleTextView);
-            centerFloatingHeaderText(getSubtitleTextView());
-            if (titleTextLargerCopyView != null) centerFloatingHeaderText(titleTextLargerCopyView);
-            if (subtitleTextLargerCopyView != null) centerFloatingHeaderText(subtitleTextLargerCopyView);
-        }
-    }
-
-    private void centerFloatingHeaderText(View view) {
-        view.offsetLeftAndRight((floatingHeaderTextWidth() - view.getMeasuredWidth()) / 2 - view.getLeft());
     }
 
     public void setLeftPadding(int value) {

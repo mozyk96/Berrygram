@@ -168,24 +168,6 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     BaseFragment fragment;
     private CharSequence currentTitle;
     private boolean hasOverlayText;
-    private boolean forkHideBranding;
-    private boolean floatingCompactHeader;
-    public void setFloatingCompactHeader(boolean compact) {
-        if (floatingCompactHeader == compact) return;
-        floatingCompactHeader = compact;
-        if (recyclerListView != null && listViewMini != null) {
-            recyclerListView.setVisibility(compact || currentState != COLLAPSED_STATE ? VISIBLE : INVISIBLE);
-            listViewMini.setVisibility(!compact && currentState == COLLAPSED_STATE ? VISIBLE : INVISIBLE);
-            recyclerListView.setClipChildren(compact);
-            recyclerListView.setClipToPadding(compact);
-            setClipChildren(compact);
-            FrameLayout.LayoutParams listParams = (FrameLayout.LayoutParams) recyclerListView.getLayoutParams();
-            listParams.topMargin = compact ? 0 : dp(FAKE_TOP_PADDING);
-            recyclerListView.setLayoutParams(listParams);
-            adapter.notifyDataSetChanged();
-        }
-        requestLayout();
-    }
     private int overlayTextId;
     private SpannableStringBuilder uploadingString;
     private ValueAnimator textAnimator;
@@ -226,7 +208,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
 
             @Override
             public boolean dispatchTouchEvent(MotionEvent ev) {
-                if (ev.getAction() == MotionEvent.ACTION_DOWN && ((!floatingCompactHeader && collapsedProgress1 > 0.2f) || DialogStoriesCell.this.getAlpha() == 0)) {
+                if (ev.getAction() == MotionEvent.ACTION_DOWN && (collapsedProgress1 > 0.2f || DialogStoriesCell.this.getAlpha() == 0)) {
                     return false;
                 }
                 return super.dispatchTouchEvent(ev);
@@ -331,7 +313,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         };
         recyclerListView.setOnItemClickListener(itemClickListener);
         recyclerListView.setOnItemLongClickListener((view, position) -> {
-            if ((floatingCompactHeader || collapsedProgress == 0) && overscrollProgress == 0) {
+            if (collapsedProgress == 0 && overscrollProgress == 0) {
                 onUserLongPressed(view, ((StoryCell) view).dialogId);
             }
             return false;
@@ -698,32 +680,12 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
-        if (floatingCompactHeader) {
-            // The native full peer list preserves pagination, unread rings and story-viewer
-            // transitions. The old three-avatar mini strip is not a scrollable list.
-            viewsDrawInParent.clear();
-            listViewMini.setVisibility(INVISIBLE);
-            recyclerListView.setVisibility(VISIBLE);
-            recyclerListView.setAlpha(1f);
-            recyclerListView.setTranslationX(0);
-            recyclerListView.setTranslationY(0);
-            for (int i = 0; i < recyclerListView.getChildCount(); i++) {
-                StoryCell cell = (StoryCell) recyclerListView.getChildAt(i);
-                cell.drawInParent = false;
-                cell.setTranslationX(0);
-                cell.setTranslationY(0);
-                cell.setAlpha(1f);
-                cell.setProgressToCollapsed(0f, 0f, 0f, false);
-            }
-            super.dispatchDraw(canvas);
-            return;
-        }
         canvas.save();
         if (clipTop > 0) {
             canvas.clipRect(0, clipTop, getMeasuredWidth(), getMeasuredHeight());
         }
         float maxY = getMeasuredHeight() - ActionBar.getCurrentActionBarHeight() - dp(4);
-        float bottomY = floatingCompactHeader ? 0 : AndroidUtilities.lerp(0, maxY, collapsedProgress1);
+        float bottomY = AndroidUtilities.lerp(0, maxY, collapsedProgress1);
         recyclerListView.setTranslationY(bottomY);
         listViewMini.setTranslationY(bottomY);
         listViewMini.setTranslationX(menuItemsOffset);
@@ -1049,9 +1011,9 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         titleView.setTextSize(dp(!AndroidUtilities.isTablet() && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 18 : 20));
-        currentCellWidth = dp(floatingCompactHeader ? 56 : ITEM_WIDTH);
+        currentCellWidth = dp(ITEM_WIDTH);
         AndroidUtilities.rectTmp.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
-        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(floatingCompactHeader ? 56 : 85 + FAKE_TOP_PADDING), MeasureSpec.EXACTLY));
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(85 + FAKE_TOP_PADDING), MeasureSpec.EXACTLY));
     }
 
     @Override
@@ -1392,11 +1354,6 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         return true;
     }
 
-    public void setForkHideBranding(boolean hide) {
-        forkHideBranding = hide;
-        checkUi_titleVisibility();
-    }
-
     public void setActionBar(ActionBar actionBar) {
         this.actionBar = actionBar;
     }
@@ -1473,7 +1430,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
 
     public StoryCell findStoryCell(long dialogId) {
         RecyclerListView parent = recyclerListView;
-        if (currentState == COLLAPSED_STATE && !floatingCompactHeader) {
+        if (currentState == COLLAPSED_STATE) {
             parent = listViewMini;
         }
         for (int i = 0; i < parent.getChildCount(); ++i) {
@@ -1681,7 +1638,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            super.onMeasure(MeasureSpec.makeMeasureSpec(mini ? dp(ITEM_WIDTH) : currentCellWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(floatingCompactHeader ? 56 : HEIGHT_IN_DP), MeasureSpec.EXACTLY));
+            super.onMeasure(MeasureSpec.makeMeasureSpec(mini ? dp(ITEM_WIDTH) : currentCellWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(HEIGHT_IN_DP), MeasureSpec.EXACTLY));
         }
 
         float getCy() {
@@ -2014,7 +1971,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
                 invalidate();
                 recyclerListView.invalidate();
             }
-            textAlphaTransition = mini || floatingCompactHeader ? 0 : 1f - Utilities.clamp(collapsedProgress / K, 1f, 0);
+            textAlphaTransition = mini ? 0 : 1f - Utilities.clamp(collapsedProgress / K, 1f, 0);
             final float alpha = textAlphaTransition * textAlpha;
             textViewContainer.setAlpha(alpha);
             textViewContainer.setVisibility(alpha > 0 ? View.VISIBLE : View.INVISIBLE);
@@ -2101,9 +2058,9 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
             listViewMini.setVisibility(View.INVISIBLE);
             recyclerListView.setVisibility(View.VISIBLE);
         } else if (currentState == COLLAPSED_STATE) {
-            listViewMini.setVisibility(floatingCompactHeader ? View.INVISIBLE : View.VISIBLE);
-            recyclerListView.setVisibility(floatingCompactHeader ? View.VISIBLE : View.INVISIBLE);
-            if (!floatingCompactHeader) layoutManager.scrollToPositionWithOffset(0,  0);
+            listViewMini.setVisibility(View.VISIBLE);
+            recyclerListView.setVisibility(View.INVISIBLE);
+            layoutManager.scrollToPositionWithOffset(0,  0);
             MessagesController.getInstance(currentAccount).getStoriesController().scheduleSort();
             if (globalCancelable != null) {
                 globalCancelable.cancel();
@@ -2187,7 +2144,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (currentState == COLLAPSED_STATE && !floatingCompactHeader) {
+        if (currentState == COLLAPSED_STATE) {
             int k = miniItems.size();
             int width = dp(COLLAPSED_SIZE * k - COLLAPSED_DIS * Math.max(0,  k - 1));
             miniItemsClickArea.setRect((int) listViewMini.getX(), (int) listViewMini.getY(), (int) (listViewMini.getX() + width), (int) (listViewMini.getY() + listViewMini.getHeight()));
@@ -2249,11 +2206,11 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     }
 
     private void checkUi_titleVisibility() {
-        final float progress = floatingCompactHeader ? 0f : MathUtils.clamp(Math.min(collapsedProgress, collapsedProgress2), 0, 1);
+        final float progress = MathUtils.clamp(Math.min(collapsedProgress, collapsedProgress2), 0, 1);
         final float titleVisibility = animatorHasTitleText.getFloatValue();
         final float logoVisibility = 1f - titleVisibility;
         final float titleAlpha = titleVisibility * progress;
-        final float logoAlpha = forkHideBranding ? 0f : logoVisibility * progress;
+        final float logoAlpha = logoVisibility * progress;
 
         if (titleView != null) {
             titleView.setAlpha(titleAlpha);

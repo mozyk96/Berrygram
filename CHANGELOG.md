@@ -1,3 +1,10 @@
+## 1.2.0-beta.9 — Release candidate
+
+- Restore Telegram native chat-list ActionBar, title, search and native Stories/search collapse and scroll reservation. Remove floating overlay and compact Stories overrides.
+- Keep quick lock in the native ActionBar; preserve Mini Dock, camera, updater, phrases and graphic popup effects.
+- Restore Telegram native open-chat header and contextual states. Remove experimental chat-header toggle and ignore old saved opt-in.
+- No new header morphing or redesign. Device layout/account/installer acceptance remains manual; this is not Stable.
+
 # Changelog
 
 ## 1.2.0-beta.8 — public testing

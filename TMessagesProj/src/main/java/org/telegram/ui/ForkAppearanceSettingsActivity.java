@@ -86,15 +86,6 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
             dock.setChecked(enabled);
         });
         controls.addView(dock);
-        TextCheckCell chatHeader = new TextCheckCell(context);
-        chatHeader.setTextAndCheck(ForkLocale.get(R.string.ForkNewChatHeader), org.telegram.messenger.fork.panels.ForkChatHeaderSettings.enabled(), false);
-        ForkSettingsLayout.interactive(chatHeader);
-        chatHeader.setOnClickListener(v -> {
-            boolean enabled = !org.telegram.messenger.fork.panels.ForkChatHeaderSettings.enabled();
-            org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setEnabled(enabled);
-            chatHeader.setChecked(enabled);
-        });
-        controls.addView(chatHeader);
         TextCheckCell adaptive = new TextCheckCell(context);
         adaptive.setTextAndCheck(ForkLocale.get(R.string.ForkGraphicsAdaptive), ForkPanelSettings.adaptiveEffects(), false);
         ForkSettingsLayout.interactive(adaptive);
