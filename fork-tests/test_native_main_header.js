@@ -13,7 +13,7 @@ const fixture=`public class NativeMainHeaderTest {
  static class ActionBar { static int getCurrentActionBarHeight(){return 56;} }
  static class List {boolean atTop;boolean canScrollVertically(int d){return !atTop;}}
  static class ViewPage {List listView=new List();} static class Content {void invalidate(){}}
- ViewPage[] viewPages={new ViewPage()};Content contentView=new Content();float forkHeaderScrollOffset;int forkPendingHeaderDy;boolean eligible=true;boolean canScrollNativeHeader(){return eligible;}
+ ViewPage[] viewPages={new ViewPage()};Content fragmentView=new Content();float forkHeaderScrollOffset;int forkPendingHeaderDy;boolean eligible=true;boolean canScrollNativeHeader(){return eligible;}
  ${method('private void applyPendingNativeHeaderScroll(')}
  ${method('private void scrollNativeHeader(')}
  static final int SEARCH_FIELD_HEIGHT=48;int dp(int x){return x;}float getY(){return y;}float headerOffset;float getNativeHeaderOffset(){return headerOffset;}

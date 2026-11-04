@@ -5783,7 +5783,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private void scrollNativeHeader(ViewPage page, int dy) {
         if (page != viewPages[0]) return;
         forkPendingHeaderDy += dy;
-        if (contentView != null) contentView.invalidate();
+        if (fragmentView != null) fragmentView.invalidate();
     }
 
     private int getMaxScrollYOffsetWithoutSearch() {
