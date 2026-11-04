@@ -52,7 +52,12 @@ public class UpdatePolicyTest {
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, digest, 0));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", "https://evil.test/file", digest, 100));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, "invalid", 100));
-  System.out.println("UpdatePolicyTest passed");
+  check(UpdatePolicy.shouldShowRelease("1.2.0", "1.2.0-beta.9", false));
+  check(UpdatePolicy.shouldShowRelease("1.2.0", "1.2.0-beta.9", true));
+  check(UpdatePolicy.compareVersions("1.2.0", "1.2.0-beta.9") > 0);
+  check(UpdatePolicy.validIdentity("org.example.forkclient",72569,signer,"org.example.forkclient",72579,signer));
+  check(UpdatePolicy.validAsset("v1.2.0","BerryGram-1.2.0-arm64-v8a.apk"));
+  System.out.println("UpdatePolicyTest passed (including Beta9 to Stable promotion)");
  }
  static void check(boolean v){if(!v) throw new AssertionError();}
 }

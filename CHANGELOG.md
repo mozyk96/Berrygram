@@ -1,3 +1,15 @@
+## 1.2.0 Stable
+
+Promotes the owner-tested Beta9 code without functional or design changes.
+
+- Native Telegram main/chat headers with bounded toolbar scrolling.
+- Mini Dock, video-message camera/quality selection and voice quality settings.
+- Blur and Liquid Glass on supported surfaces, with device/power fallbacks.
+- Custom phrases/names/statuses and verified GitHub Updater (Stable/Beta channels).
+- Android6+ (API23), ARM64, same app identity and permanent release certificate; code72579 > Beta9 72569.
+
+Owner tested Beta9 on a physical phone and approved Stable. This Stable APK's physical installation is not automated; package/version/signer compatibility is checked separately. Backdrop-free surfaces retain opaque fallback. Graphics depend on device/power capabilities.
+
 ## 1.2.0-beta.9 â€” Release candidate
 
 - Restore Telegram native chat-list ActionBar, title, search and native Stories/search collapse and scroll reservation. Remove floating overlay and compact Stories overrides.
