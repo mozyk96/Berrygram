@@ -881,7 +881,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 rightSlidingProgress = rightSlidingDialogContainer.openedProgress;
             }
             scrollY *= (1f - progressToActionMode) * (1f - rightSlidingProgress);
-            return (int) (-getY() + scrollY * (1f - searchAnimationProgress));
+            return (int) (-getY() + scrollY * (1f - searchAnimationProgress) - getNativeHeaderOffset());
         }
 
         private Rect blurBounds = new Rect();
@@ -952,6 +952,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         @Override
         protected void dispatchDraw(Canvas canvas) {
+            final float previousNativeOffset = scrollYOffset;
             if (Build.VERSION.SDK_INT >= 31 && scrollableViewNoiseSuppressor != null) {
                 blur3_InvalidateBlur();
             }
@@ -1002,6 +1003,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     DialogsActivity.this.setScrollY(-getMaxScrollYOffset());
                 }
             }
+            applyPendingNativeHeaderScroll(previousNativeOffset);
             final int actionBarHeight = getActionBarFullHeight();
             final int top;
             if (inPreviewMode) {
@@ -1044,8 +1046,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     drawBlurRect(canvas, 0, blurBounds, actionBarDefaultPaint, true);
                 }
             }
-            tabsYOffset = 0;
-            storiesYOffset = 0;
+            tabsYOffset = -getNativeHeaderOffset();
+            storiesYOffset = tabsYOffset;
             tabsYOffset -= Math.min(
                 dp(hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0) + dp(SEARCH_FIELD_HEIGHT) + scrollYOffset,
                 progressToActionMode * (dp(hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0) + dp(SEARCH_FIELD_HEIGHT))
@@ -1652,16 +1654,16 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     containersAlpha = (1f - pHalf);
                 }
             }
-            actionBar.setTranslationY(0);
+            actionBar.setTranslationY(-getNativeHeaderOffset());
         } else {
             if (hasOnlySlefStories) {
-                dialogStoriesCell.setTranslationY(-dp(DialogStoriesCell.HEIGHT_IN_DP) + Math.max(scrollYOffset, -getMaxScrollYOffsetWithoutSearch()) - dp(8));
+                dialogStoriesCell.setTranslationY(-dp(DialogStoriesCell.HEIGHT_IN_DP) + Math.max(scrollYOffset, -getMaxScrollYOffsetWithoutSearch()) - dp(8) - getNativeHeaderOffset());
                 dialogStoriesCell.setProgressToCollapse(1f);
                 dialogStoriesCell.setClipTop((int) (AndroidUtilities.statusBarHeight - dialogStoriesCell.getY()));
             }
             containersAlpha = 1f - progressToDialogStoriesCell;
 
-            actionBar.setTranslationY(0);
+            actionBar.setTranslationY(-getNativeHeaderOffset());
         }
         containersAlpha *= (1f - factorSearch);
         if (containersAlpha != 1f) {
@@ -4497,6 +4499,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     if (contentView != null) {
                         contentView.updateBlurContent();
                     }
+                    scrollNativeHeader(viewPage, dy);
                     viewPage.dialogsItemAnimator.onListScroll(-dy);
                     int firstVisiblePosition = -1;
                     int lastVisiblePosition = -1;
@@ -5732,6 +5735,55 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
         }
         return false;
+    }
+
+    // A bounded translation of the native toolbar, not a second header layout.
+    private float forkHeaderScrollOffset;
+    private int forkPendingHeaderDy;
+
+    private boolean canScrollNativeHeader() {
+        return actionBar != null && initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect && folderId == 0
+                && communityId == 0 && TextUtils.isEmpty(searchString) && !inPreviewMode
+                && !disableActionBarScrolling && !searching && !searchIsShowed && searchAnimationProgress == 0f
+                && progressToActionMode == 0f && !actionBar.isActionModeShowed()
+                && !animatorDoneButtonVisible.getValue() && panTranslationY == 0f
+                && (rightSlidingDialogContainer == null || !rightSlidingDialogContainer.hasFragment());
+    }
+
+    private static float nextNativeHeaderOffset(float current, int dy, int limit, boolean enabled,
+                                               boolean nativeRowsCollapsed, boolean atTop) {
+        if (!enabled || atTop || !nativeRowsCollapsed) return 0f;
+        return Math.max(0f, Math.min(limit, current + dy));
+    }
+
+    private static int nativeHeaderDelta(int dy, float previousNativeOffset, int nativeCollapseRange) {
+        return dy > 0 ? Math.max(0, dy - (int) Math.max(0, nativeCollapseRange + previousNativeOffset)) : dy;
+    }
+
+    private float getNativeHeaderOffset() {
+        if (!canScrollNativeHeader() || scrollYOffset > -getMaxScrollYOffset()) {
+            forkHeaderScrollOffset = 0f;
+        }
+        return forkHeaderScrollOffset;
+    }
+
+    private void applyPendingNativeHeaderScroll(float previousNativeOffset) {
+        if (viewPages == null || viewPages[0] == null) {
+            forkPendingHeaderDy = 0;
+            forkHeaderScrollOffset = 0;
+            return;
+        }
+        int delta = nativeHeaderDelta(forkPendingHeaderDy, previousNativeOffset, getMaxScrollYOffset());
+        forkPendingHeaderDy = 0;
+        forkHeaderScrollOffset = nextNativeHeaderOffset(forkHeaderScrollOffset, delta,
+                ActionBar.getCurrentActionBarHeight(), canScrollNativeHeader(),
+                scrollYOffset <= -getMaxScrollYOffset(), !viewPages[0].listView.canScrollVertically(-1));
+    }
+
+    private void scrollNativeHeader(ViewPage page, int dy) {
+        if (page != viewPages[0]) return;
+        forkPendingHeaderDy += dy;
+        if (contentView != null) contentView.invalidate();
     }
 
     private int getMaxScrollYOffsetWithoutSearch() {
@@ -6976,7 +7028,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 viewPages[a].setTranslationY(0);
             }
             if (!onlySelect) {
-                actionBar.setTranslationY(0);
+                actionBar.setTranslationY(-getNativeHeaderOffset());
                 if (topBulletin != null) {
                     topBulletin.updatePosition();
                 }
@@ -6989,7 +7041,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 viewPages[a].setTranslationY(y);
             }
             if (!onlySelect) {
-                actionBar.setTranslationY(y);
+                actionBar.setTranslationY(y - getNativeHeaderOffset());
                 if (topBulletin != null) {
                     topBulletin.updatePosition();
                 }
@@ -14233,7 +14285,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             + dp(hasStories ? DialogStoriesCell.HEIGHT_IN_DP : 0)
             + (filterTabsView != null && filterTabsView.getVisibility() == View.VISIBLE ? filterTabsView.getMeasuredHeight() : 0)
             + (topPanelLayout != null && topPanelLayout.getVisibility() == View.VISIBLE ? topPanelLayout.getSumHeightOfAllVisibleChild() : 0)
-            + ((int) scrollYOffset);
+            + ((int) (scrollYOffset - getNativeHeaderOffset()));
 
         final int actionBarHeightSearch = actionBar.getMeasuredHeight()
             + (searchTabsAndFiltersLayout != null ? searchTabsAndFiltersLayout.getMeasuredHeight() : 0)
