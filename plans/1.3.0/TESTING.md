@@ -1,0 +1,4 @@
+# Verification
+Pure registry/settings/presentation tests: known IDs, native-option parity, unknown/stale IDs, reset, account separation, persisted reload, reaction1..4 order/dedup/native-allowed filtering, hidden menu fallback and tuple alignment. Source-extracted or Android tests for dispatch/cancellation/interactive targets and tap arbitration. Existing relevant camera/text/graphics/updater regression smoke retained; do not mistake compilation/preferences for real gestures.
+
+Group changes then incremental Java/resources compilation. One principal Release/R8 per meaningful Beta. Verify APK source/identity/code/min23/ARM64/non-debug/non-testOnly/alignment/ZIP/permanent signer/API23/SHA; actual GitHub asset/updater channels. No physical phone automation. Owner manually tests media/links/bot buttons/gestures/permissions/reactions/menu/data isolation after Beta. Record unavailable emulator/device scenarios; no fabricated FPS or account tests.

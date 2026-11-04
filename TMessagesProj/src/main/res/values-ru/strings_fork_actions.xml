@@ -1,0 +1,14 @@
+<resources>
+    <string name="ForkGestureTitle">Жесты и действия</string>
+    <string name="ForkGestureTap">Одиночное нажатие</string>
+    <string name="ForkGestureDoubleTap">Двойное нажатие</string>
+    <string name="ForkGestureLongPress">Долгое нажатие</string>
+    <string name="ForkGestureLeft">Свайп влево</string>
+    <string name="ForkGestureRight">Свайп вправо</string>
+    <string name="ForkActionNative">Стандарт Telegram</string>
+    <string name="ForkActionNone">Без действия</string>
+    <string name="ForkActionMenu">Меню сообщения</string>
+    <string name="ForkActionSave">Сохранить медиа</string>
+    <string name="ForkActionUnavailable">Это действие недоступно для сообщения.</string>
+    <string name="ForkGestureInfo">Настройки этого аккаунта. Свои нажатия действуют только на обычном тексте; ссылки, медиа и кнопки ботов работают как в Telegram. Опасные действия сохраняют подтверждение. Свайп требует горизонтального движения; недоступные действия не выполняются. Сброс возвращает стандарт Telegram.</string>
+</resources>

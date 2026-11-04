@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ForkReactionTitle">Reactions</string>
+    <string name="ForkReactionQuick">Quick reactions</string>
+    <string name="ForkReactionCustom">Custom</string>
+    <string name="ForkReactionNative">Telegram default</string>
+    <string name="ForkReactionPosition">Reaction %1$d</string>
+    <string name="ForkReactionAdd">Add reaction</string>
+    <string name="ForkReactionDoubleTap">Double-tap reaction</string>
+    <string name="ForkReactionReset">Reset reactions</string>
+    <string name="ForkReactionReplace">Replace reaction</string>
+    <string name="ForkReactionUp">Move up</string>
+    <string name="ForkReactionDown">Move down</string>
+    <string name="ForkReactionRemove">Remove reaction</string>
+    <string name="ForkReactionInfo">Choose one to four standard quick message reactions. Only reactions allowed in the chat appear; the full picker remains available. Paid reactions, tags, effects and chats at the reaction limit keep Telegram behavior. Choosing an emoji assigns the double-tap gesture to Reaction. Choosing Telegram default restores the native double-tap gesture. Chat permissions still apply.</string>
+</resources>

@@ -1707,12 +1707,54 @@ public class ChatActivity extends BaseFragment implements
 
     private final static int id_chat_compose_panel = 1000;
 
+    private String forkRequestedAction;
+    private boolean forkExecutingReaction;
+    private int forkSlidingDirection = 1;
+    private Drawable forkSwipeActionDrawable;
+    private String forkSwipeActionDrawableId;
+    private int forkSwipeActionTint;
+
+    private boolean forkPlainMessageBody(View view, float x, float y) {
+        if (!(view instanceof ChatMessageCell)) return false;
+        ChatMessageCell cell = (ChatMessageCell) view;
+        MessageObject m = cell.getMessageObject();
+        boolean clickable = m != null && m.messageText instanceof Spanned
+                && ((Spanned)m.messageText).getSpans(0, m.messageText.length(), ClickableSpan.class).length != 0;
+        return m != null && !clickable && m.type == MessageObject.TYPE_TEXT && cell.isInsideBackground(x, y)
+                && x >= cell.getTextX() && x <= cell.getTextX() + m.textWidth
+                && y >= cell.getTextY() && y <= cell.getTextY() + m.textHeight()
+                && (m.messageOwner.media == null || m.messageOwner.media instanceof TLRPC.TL_messageMediaEmpty)
+                && (m.messageOwner.entities == null || m.messageOwner.entities.isEmpty())
+                && m.messageOwner.reply_markup == null && !m.isSponsored();
+    }
+
+    private boolean forkHandleGesture(View view, float x, float y, String gesture, boolean bodyOnly) {
+        if (forkExecutingReaction || getParentActivity() == null || actionBar.isActionModeShowed()
+                || searching || inPreviewMode || isReport() || hasTextSelection() || isTryingTextSelection()) return false;
+        if (!(view instanceof ChatMessageCell) || bodyOnly && !forkPlainMessageBody(view, x, y)) return false;
+        String action = org.telegram.messenger.fork.actions.ActionSettings.gesture(currentAccount, gesture);
+        if ("native".equals(action)) return false;
+        if ("none".equals(action)) return true;
+        if ("menu".equals(action)) { createMenu(view, false, false, x, y, false); return true; }
+        if ("reaction".equals(action)) {
+            forkExecutingReaction = true;
+            try { onItemClickListener.onDoubleTap(view, -1, x + view.getX(), y + view.getY()); }
+            finally { forkExecutingReaction = false; }
+            return true;
+        }
+        forkRequestedAction = action;
+        try { createMenu(view, false, false, x, y, false); }
+        finally { forkRequestedAction = null; }
+        return true;
+    }
+
     RecyclerListView.OnItemLongClickListenerExtended onItemLongClickListener = new RecyclerListView.OnItemLongClickListenerExtended() {
         @Override
         public boolean onItemClick(View view, int position, float x, float y) {
             if (isTryingTextSelection() || hasTextSelection() || inPreviewMode || isInsideContainer) {
                 return false;
             }
+            if (forkHandleGesture(view, x, y, "long_press", true)) return true;
             wasManualScroll = true;
             boolean result = true;
             boolean showMenu = true;
@@ -1934,13 +1976,19 @@ public class ChatActivity extends BaseFragment implements
                     return;
                 }
             }
+            if (forkHandleGesture(view, x, y, "tap", true)) return;
             createMenu(view, true, false, x, y, false);
         }
 
         @Override
         public boolean hasDoubleTap(View view, int position) {
             if (isQuickRepliesOrWelcomeMessagesMode()) return false;
-            String reactionStringSetting = getMediaDataController().getDoubleTapReaction();
+            if (view instanceof ChatMessageCell && !actionBar.isActionModeShowed() && !searching && !inPreviewMode) {
+                MessageObject body = ((ChatMessageCell)view).getMessageObject();
+                if (body != null && forkPlainMessageBody(view, ((ChatMessageCell)view).getLastTouchX(), ((ChatMessageCell)view).getLastTouchY())
+                        && !"native".equals(org.telegram.messenger.fork.actions.ActionSettings.gesture(currentAccount, "double_tap"))) return true;
+            }
+            String reactionStringSetting = org.telegram.messenger.fork.actions.ForkReactionSettings.doubleTapReaction(currentAccount, getMediaDataController().getDoubleTapReaction());
             TLRPC.TL_availableReaction reaction = getMediaDataController().getReactionsMap().get(reactionStringSetting);
             if (reaction == null && (reactionStringSetting == null || !reactionStringSetting.startsWith("animated_"))) {
                 return false;
@@ -1965,6 +2013,8 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public void onDoubleTap(View view, int position, float x, float y) {
+            // RecyclerListView supplies confirmed single taps and consumes double taps once.
+            if (forkHandleGesture(view, x - view.getX(), y - view.getY(), "double_tap", true)) return;
             if (getParentActivity() == null || isSecretChat() || isInScheduleMode() || isInPreviewMode() || isQuickRepliesOrWelcomeMessagesMode()) {
                 return;
             }
@@ -1979,7 +2029,8 @@ public class ChatActivity extends BaseFragment implements
             } else {
                 return;
             }
-            if (messageObject.isSecret() || !messageObject.canSetReaction() || messageObject.isExpiredStory() || messageObject.type == MessageObject.TYPE_JOINED_CHANNEL) {
+            if (messageObject.isDateObject || messageObject.isSending() || messageObject.isEditing() || messageObject.isSponsored()
+                    || messageObject.isSecret() || !messageObject.canSetReaction() || messageObject.isExpiredStory() || messageObject.type == MessageObject.TYPE_JOINED_CHANNEL) {
                 return;
             }
             if (!(currentChat == null || ChatObject.isChannelAndNotMegaGroup(currentChat) || ChatObject.canUserDoAction(currentChat, ChatObject.ACTION_SEND_REACTIONS))) {
@@ -1987,7 +2038,8 @@ public class ChatActivity extends BaseFragment implements
             }
 
             ReactionsEffectOverlay.removeCurrent(false);
-            String reactionString = getMediaDataController().getDoubleTapReaction();
+            String reactionString = org.telegram.messenger.fork.actions.ForkReactionSettings.doubleTapReaction(currentAccount, getMediaDataController().getDoubleTapReaction());
+            if (reactionString == null) return;
             if (reactionString.startsWith("animated_")) {
                 boolean available = dialog_id >= 0;
                 if (!available && chatInfo != null) {
@@ -4873,7 +4925,7 @@ public class ChatActivity extends BaseFragment implements
                     slidingBeyondMax = true;
                 }
 
-                float translationX = getSlidingNonAnimationTranslationX(false);
+                float translationX = getSlidingNonAnimationTranslationX(false) * forkSlidingDirection;
                 if (slidingDrawableVisibilityProgress.getValue() == 0) {
                     slidingFillProgressSpring.cancel();
                     slidingFillProgressSpring.getSpring().setFinalPosition(0);
@@ -4909,7 +4961,9 @@ public class ChatActivity extends BaseFragment implements
 
                 float iconProgress = slidingDrawableVisibilityProgress.getValue() / springMultiplier;
                 MessageObject slidingMsg = getSlidingMessageObject();
-                float x = getMeasuredWidth() + translationX * (slidingMsg != null && slidingMsg.isOut() ? 0.5f : 1f);
+                float x = forkSlidingDirection == 1
+                        ? getMeasuredWidth() + translationX * (slidingMsg != null && slidingMsg.isOut() ? 0.5f : 1f)
+                        : -translationX * (slidingMsg != null && slidingMsg.isOut() ? 0.5f : 1f);
                 float y = slidingView.getTop() + slidingView.getMeasuredHeight() / 2f;
                 float scale = slidingBeyondMax ? fillProgress : iconProgress;
 
@@ -5021,7 +5075,20 @@ public class ChatActivity extends BaseFragment implements
                 }
 
                 int alpha = (int) (iconProgress * 0xFF);
-                Drawable replyIconDrawable = getThemedDrawable(Theme.key_drawable_replyIcon);
+                String actionId = org.telegram.messenger.fork.actions.ActionSettings.gesture(currentAccount, forkSlidingDirection == 1 ? "swipe_left" : "swipe_right");
+                Drawable replyIconDrawable;
+                if ("native".equals(actionId) || "reply".equals(actionId)) {
+                    replyIconDrawable = getThemedDrawable(Theme.key_drawable_replyIcon);
+                } else {
+                    int tint = getThemedColor(Theme.key_chat_serviceText);
+                    if (!actionId.equals(forkSwipeActionDrawableId) || forkSwipeActionTint != tint || forkSwipeActionDrawable == null) {
+                        forkSwipeActionDrawable = getContext().getDrawable(ForkActionLabels.icon(actionId)).mutate();
+                        forkSwipeActionDrawable.setColorFilter(tint, PorterDuff.Mode.SRC_IN);
+                        forkSwipeActionDrawableId = actionId;
+                        forkSwipeActionTint = tint;
+                    }
+                    replyIconDrawable = forkSwipeActionDrawable;
+                }
                 replyIconDrawable.setAlpha(alpha);
                 replyIconDrawable.setBounds((int) (x - replyIconDrawable.getIntrinsicWidth() / 2 * scale), (int) (y - replyIconDrawable.getIntrinsicHeight() / 2 * scale), (int) (x + replyIconDrawable.getIntrinsicWidth() / 2 * scale), (int) (y + replyIconDrawable.getIntrinsicHeight() / 2 * scale));
                 replyIconDrawable.draw(canvas);
@@ -5064,7 +5131,11 @@ public class ChatActivity extends BaseFragment implements
                         startedTrackingY = (int) e.getY();
                     }
                 } else if (slidingView != null && e != null && e.getAction() == MotionEvent.ACTION_MOVE && e.getPointerId(0) == startedTrackingPointerId) {
-                    int dx = Math.max(AndroidUtilities.dp(-80), Math.min(0, (int) (e.getX() - startedTrackingX)));
+                    int rawDx = (int) (e.getX() - startedTrackingX);
+                    if (!startedTrackingSlidingView) forkSlidingDirection = rawDx > 0 ? -1 : 1;
+                    String swipeBinding = org.telegram.messenger.fork.actions.ActionSettings.gesture(currentAccount, forkSlidingDirection == 1 ? "swipe_left" : "swipe_right");
+                    boolean enabledDirection = !"none".equals(swipeBinding) && (forkSlidingDirection == 1 || slidingView instanceof ChatMessageCell && !"native".equals(swipeBinding) && startedTrackingX > AndroidUtilities.dp(24) && startedTrackingX < getWidth() - AndroidUtilities.dp(24));
+                    int dx = enabledDirection ? Math.max(AndroidUtilities.dp(-80), Math.min(0, rawDx * forkSlidingDirection)) : 0;
                     int dy = Math.abs((int) e.getY() - startedTrackingY);
                     if (getScrollState() == SCROLL_STATE_IDLE && maybeStartTrackingSlidingView && !startedTrackingSlidingView && dx <= -AndroidUtilities.getPixelsInCM(0.4f, true) && Math.abs(dx) / 3 > dy) {
                         MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0, 0, 0);
@@ -5089,18 +5160,21 @@ public class ChatActivity extends BaseFragment implements
                         } else {
                             wasTrackingVibrate = false;
                         }
-                        slidingViewSetOffset(dx);
+                        slidingViewSetOffset(dx * forkSlidingDirection);
                         MessageObject messageObject = getSlidingMessageObject();
                         if (messageObject != null && (messageObject.isRoundVideo() || messageObject.isVideo())) {
                             updateTextureViewPosition(false, false);
                         }
                         if (slidingView instanceof ChatMessageCell) {
-                            setGroupTranslationX((ChatMessageCell) slidingView, dx);
+                            setGroupTranslationX((ChatMessageCell) slidingView, dx * forkSlidingDirection);
                         }
                         invalidate();
                     }
                 } else if (slidingView != null && (e == null || e.getPointerId(0) == startedTrackingPointerId && (e.getAction() == MotionEvent.ACTION_CANCEL || e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_POINTER_UP))) {
                     if (e != null && e.getAction() != MotionEvent.ACTION_CANCEL && Math.abs(getSlidingNonAnimationTranslationX(false)) >= AndroidUtilities.dp(50)) {
+                        if (!forkHandleGesture(slidingView, slidingView instanceof ChatMessageCell ? ((ChatMessageCell)slidingView).getLastTouchX() : 0,
+                                slidingView instanceof ChatMessageCell ? ((ChatMessageCell)slidingView).getLastTouchY() : 0,
+                                forkSlidingDirection == 1 ? "swipe_left" : "swipe_right", false)) {
                         MessageObject message = getSlidingMessageObject();
                         final boolean allowReplyOnOpenTopic = canSendMessageToTopic(message);
                         if (
@@ -5134,6 +5208,7 @@ public class ChatActivity extends BaseFragment implements
                             presentFragment(fragment);
                         } else {
                             showFieldPanelForReply(getSlidingMessageObject());
+                        }
                         }
                     }
                     endTrackingX = slidingViewGetOffsetX();
@@ -31268,6 +31343,19 @@ public class ChatActivity extends BaseFragment implements
                 }
             }
 
+            if (forkRequestedAction != null) {
+                int nativeOption = org.telegram.messenger.fork.actions.ActionRegistry.availableOption(forkRequestedAction, options);
+                if (nativeOption == OPTION_DELETE && selectedObject != null && showWelcomeMessageRevertOption(selectedObject)) nativeOption = -1;
+                if (nativeOption >= 0 && selectedObject != null) {
+                    processSelectedOption(nativeOption);
+                } else {
+                    selectedObject = null;
+                    selectedObjectGroup = null;
+                    BulletinFactory.of(this).createErrorBulletin(ForkLocale.get(R.string.ForkActionUnavailable)).show();
+                }
+                return true;
+            }
+
             if (suggestEdit) {
                 items.clear();
                 options.clear();
@@ -32110,14 +32198,40 @@ public class ChatActivity extends BaseFragment implements
                         popupLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
                     }
                 }
-                scrimPopupWindowItems = new ActionBarMenuSubItem[items.size()];
-                for (int a = 0, N = items.size(); a < N; a++) {
+                final org.telegram.messenger.fork.actions.ActionMenuPolicy.Plan forkMenuPlan = org.telegram.messenger.fork.actions.ActionMenuSettings.plan(currentAccount, options);
+                final java.util.ArrayList<Integer> forkMoreIndices = new java.util.ArrayList<>(forkMenuPlan.moreIndices);
+                if (selectedObject != null && showWelcomeMessageRevertOption(selectedObject)) {
+                    forkMoreIndices.removeIf(index -> options.get(index) == OPTION_DELETE);
+                }
+                scrimPopupWindowItems = new ActionBarMenuSubItem[items.size() + (forkMoreIndices.isEmpty() ? 0 : 1)];
+                final LinearLayout forkMorePage = forkMoreIndices.isEmpty() ? null : new LinearLayout(getParentActivity());
+                final java.util.HashSet<Integer> forkHiddenIndices = new java.util.HashSet<>(forkMoreIndices);
+                final java.util.ArrayList<Integer> forkMenuIndices = new java.util.ArrayList<>(forkMenuPlan.mainIndices);
+                forkMenuIndices.addAll(forkMoreIndices);
+                if (forkMorePage != null) {
+                    forkMorePage.setOrientation(LinearLayout.VERTICAL);
+                    ActionBarMenuSubItem back = new ActionBarMenuSubItem(getParentActivity(), true, false, themeDelegate);
+                    back.setTextAndIcon(LocaleController.getString(R.string.Back), R.drawable.ic_ab_back);
+                    forkMorePage.addView(back);
+                    back.setOnClickListener(v1 -> popupLayout.getSwipeBack().closeForeground());
+                    android.widget.ScrollView moreScroll = new android.widget.ScrollView(getParentActivity());
+                    moreScroll.setFillViewport(false);
+                    moreScroll.addView(forkMorePage);
+                    final int morePageIndex = popupLayout.addViewToSwipeBack(moreScroll);
+                    ActionBarMenuSubItem more = new ActionBarMenuSubItem(getParentActivity(), true, false, themeDelegate);
+                    more.setTextAndIcon(ForkLocale.get(R.string.ForkMenuEditorMore), R.drawable.msg_settings);
+                    popupLayout.addView(more);
+                    scrimPopupWindowItems[0] = more;
+                    more.setOnClickListener(v1 -> popupLayout.getSwipeBack().openForeground(morePageIndex));
+                }
+                for (int position = 0, N = forkMenuIndices.size(); position < N; position++) {
+                    final int a = forkMenuIndices.get(position);
                     final Integer option = options.get(a);
                     if (option == OPTION_DELETE && showWelcomeMessageRevertOption(selectedObject)) {
                         continue;
                     }
 
-                    ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), a == 0, a == N - 1, themeDelegate);
+                    ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), position == 0, position == N - 1, themeDelegate);
                     cell.setMinimumWidth(AndroidUtilities.dp(200));
                     cell.setTextAndIcon(items.get(a), icons.get(a));
 
@@ -32147,11 +32261,12 @@ public class ChatActivity extends BaseFragment implements
                             cell.setSubtextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText6));
                         }
                     }
-                    scrimPopupWindowItems[a] = cell;
+                    scrimPopupWindowItems[position + (forkMoreIndices.isEmpty() ? 0 : 1)] = cell;
                     if (option == OPTION_REMOVE_ADS) {
                         popupLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
                     }
-                    popupLayout.addView(cell);
+                    if (forkHiddenIndices.contains(a)) forkMorePage.addView(cell);
+                    else popupLayout.addView(cell);
                     final int i = a;
                     cell.setOnClickListener(v1 -> {
                         if (selectedObject == null || i >= options.size()) {
@@ -40977,6 +41092,7 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public void didLongPress(ChatMessageCell cell, float x, float y) {
+            if (forkHandleGesture(cell, x, y, "long_press", true)) return;
             createMenu(cell, false, false, x, y, false);
             startMultiselect(chatListView.getChildAdapterPosition(cell));
         }
@@ -42866,6 +42982,7 @@ public class ChatActivity extends BaseFragment implements
             }
             if (scrimPopupWindowItems != null) {
                 for (int a = 0; a < scrimPopupWindowItems.length; a++) {
+                    if (scrimPopupWindowItems[a] == null) continue;
                     scrimPopupWindowItems[a].setColors(getThemedColor(Theme.key_actionBarDefaultSubmenuItem), getThemedColor(Theme.key_actionBarDefaultSubmenuItemIcon));
                     scrimPopupWindowItems[a].setSelectorColor(getThemedColor(Theme.key_dialogButtonSelector));
                 }

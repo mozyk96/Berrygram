@@ -1,3 +1,13 @@
+## 1.3.0-beta.1 — Android Total Customization
+
+- Shared native-action registry and preferences isolated by account slot plus signed-in user identity.
+- Gesture editor for confirmed taps, double taps, long press and horizontal swipes. Plain-text tap overrides preserve interactive media/links/bot controls; native selection and edge navigation retain priority. Native menu permissions and destructive confirmations remain authoritative.
+- Opt-in1..4 ordered quick standard reactions from the native enabled catalog, native allowed-list intersection and full-picker access; double-tap reaction shares the gesture binding.
+- Message-menu drag ordering, visibility, pinning, structure preview/reset. Hidden supported actions remain in scrollable More; native unknown/special actions and native Delete warnings/suppression are retained.
+- Localized en/uk/ru editors; existing1.2.0 headers, MiniDock, graphics/camera/voice/text/updater retained.
+
+Beta for owner acceptance, not Stable. Actual gesture timing, touch, accessibility, reaction sending, menus and restart/account scenarios require device testing. Tap overrides intentionally apply only to noninteractive plain text; paid/tag/effect reaction panels remain native. No Desktop implementation until Android1.3.0 Stable is approved and published.
+
 ## 1.2.0 Stable
 
 Promotes the owner-tested Beta9 code without functional or design changes.

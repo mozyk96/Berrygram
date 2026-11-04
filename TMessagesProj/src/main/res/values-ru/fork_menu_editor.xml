@@ -1,0 +1,15 @@
+<resources>
+  <string name="ForkMenuEditorTitle">Меню сообщения</string>
+  <string name="ForkMenuEditorInfo">Перетаскивайте стрелки для изменения порядка. Выключенные действия доступны в «Ещё». Закреплённые действия идут первыми. Показываются только разрешённые для сообщения действия.</string>
+  <string name="ForkMenuEditorPreview">Посмотреть структуру</string>
+  <string name="ForkMenuEditorReset">Сбросить меню</string>
+  <string name="ForkMenuEditorPreviewInfo">Только предварительный просмотр структуры. Доступные действия зависят от сообщения; другие стандартные действия остаются доступными.</string>
+  <string name="ForkMenuEditorMain">Основное меню</string>
+  <string name="ForkMenuEditorMore">Ещё</string>
+  <string name="ForkMenuEditorVisible">Показывать в основном меню</string>
+  <string name="ForkMenuEditorPin">Закрепить</string>
+  <string name="ForkMenuEditorUnpin">Открепить</string>
+  <string name="ForkMenuEditorReorder">Изменить порядок</string>
+  <string name="ForkMenuEditorUp">Переместить вверх</string>
+  <string name="ForkMenuEditorDown">Переместить вниз</string>
+</resources>

@@ -1,0 +1,14 @@
+<resources>
+    <string name="ForkGestureTitle">Жести та дії</string>
+    <string name="ForkGestureTap">Одинарне натискання</string>
+    <string name="ForkGestureDoubleTap">Подвійне натискання</string>
+    <string name="ForkGestureLongPress">Довге утримання</string>
+    <string name="ForkGestureLeft">Свайп ліворуч</string>
+    <string name="ForkGestureRight">Свайп праворуч</string>
+    <string name="ForkActionNative">Стандарт Telegram</string>
+    <string name="ForkActionNone">Без дії</string>
+    <string name="ForkActionMenu">Меню повідомлення</string>
+    <string name="ForkActionSave">Зберегти медіа</string>
+    <string name="ForkActionUnavailable">Ця дія недоступна для повідомлення.</string>
+    <string name="ForkGestureInfo">Налаштування цього акаунта. Власні натискання діють лише на звичайному тексті; посилання, медіа й кнопки ботів працюють як у Telegram. Небезпечні дії зберігають підтвердження. Свайп потребує горизонтального руху; недоступні дії не виконуються. Скидання повертає стандарт Telegram.</string>
+</resources>

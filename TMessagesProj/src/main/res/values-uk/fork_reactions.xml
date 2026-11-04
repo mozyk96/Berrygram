@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ForkReactionTitle">Реакції</string>
+    <string name="ForkReactionQuick">Швидкі реакції</string>
+    <string name="ForkReactionCustom">Власні</string>
+    <string name="ForkReactionNative">Як у Telegram</string>
+    <string name="ForkReactionPosition">Реакція %1$d</string>
+    <string name="ForkReactionAdd">Додати реакцію</string>
+    <string name="ForkReactionDoubleTap">Реакція на подвійний дотик</string>
+    <string name="ForkReactionReset">Скинути реакції</string>
+    <string name="ForkReactionReplace">Замінити реакцію</string>
+    <string name="ForkReactionUp">Перемістити вище</string>
+    <string name="ForkReactionDown">Перемістити нижче</string>
+    <string name="ForkReactionRemove">Вилучити реакцію</string>
+    <string name="ForkReactionInfo">Оберіть від однієї до чотирьох звичайних швидких реакцій на повідомлення. Показуються лише дозволені в чаті реакції; повний вибір залишається доступним. Платні реакції, теги, ефекти та чати з досягнутим лімітом працюють як у Telegram. Вибір емодзі призначає подвійному дотику дію «Реакція». Вибір «Як у Telegram» відновлює стандартний жест подвійного дотику. Дозволи чату залишаються чинними.</string>
+</resources>

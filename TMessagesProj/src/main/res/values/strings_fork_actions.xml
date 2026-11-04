@@ -1,0 +1,14 @@
+<resources>
+    <string name="ForkGestureTitle">Gestures and actions</string>
+    <string name="ForkGestureTap">Single tap</string>
+    <string name="ForkGestureDoubleTap">Double tap</string>
+    <string name="ForkGestureLongPress">Long press</string>
+    <string name="ForkGestureLeft">Swipe left</string>
+    <string name="ForkGestureRight">Swipe right</string>
+    <string name="ForkActionNative">Telegram default</string>
+    <string name="ForkActionNone">No action</string>
+    <string name="ForkActionMenu">Message menu</string>
+    <string name="ForkActionSave">Save media</string>
+    <string name="ForkActionUnavailable">This action is not available for this message.</string>
+    <string name="ForkGestureInfo">Account-specific settings. Tap overrides apply to plain message bodies only; links, media and bot controls keep Telegram behavior. Destructive actions retain confirmation. Swipe actions require a horizontal gesture; unavailable actions are never forced. Reset restores Telegram defaults.</string>
+</resources>

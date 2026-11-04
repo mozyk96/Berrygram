@@ -9,7 +9,7 @@ for path,required in checks.items():
  text=(root/path).read_text(encoding='utf-8')
  for term in required:
   assert term in text, (path,term)
-retired=('org.telegram.messenger.fork.gestures','org.telegram.messenger.fork.menu','org.telegram.messenger.fork.player','org.telegram.messenger.fork.performance','org.telegram.messenger.fork.privacy','org.telegram.messenger.fork.appearance','ForkMessageMenu','ForkUpdaterActivity','ForkQuickReactionShortcuts')
+retired=('org.telegram.messenger.fork.gestures','org.telegram.messenger.fork.menu','org.telegram.messenger.fork.player','org.telegram.messenger.fork.performance','org.telegram.messenger.fork.privacy','org.telegram.messenger.fork.appearance','ForkMessageMenu.', 'new ForkMessageMenu(','ForkUpdaterActivity','ForkQuickReactionShortcuts')
 for path in root.rglob('*.java'):
  text=path.read_text(encoding='utf-8',errors='replace')
  for term in retired:

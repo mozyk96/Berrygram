@@ -91,4 +91,18 @@ node (Join-Path $PSScriptRoot 'test_graphics_surface_state.js')
 if ($LASTEXITCODE -ne 0) { throw 'test_graphics_surface_state.js failed' }
 node (Join-Path $PSScriptRoot 'test_native_main_header.js')
 if ($LASTEXITCODE -ne 0) { throw 'Native main header test failed' }
+
+$actionSources = Get-ChildItem (Join-Path $base 'actions') -Filter '*.java' | ForEach-Object { $_.FullName }
+$actionTests = @('ActionMenuPolicyTest', 'ActionMenuSettingsTest', 'ForkReactionSettingsTest')
+$actionTestFiles = $actionTests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
+& $javac -encoding UTF-8 -cp $managerDir -d $managerDir @actionSources @actionTestFiles
+if ($LASTEXITCODE -ne 0) { throw 'Action system test compilation failed' }
+foreach ($test in $actionTests) {
+    & $java -cp $managerDir $test
+    if ($LASTEXITCODE -ne 0) { throw "Action test failed: $test" }
+}
+node (Join-Path $PSScriptRoot 'test_gesture_dispatch.js')
+if ($LASTEXITCODE -ne 0) { throw 'Gesture dispatch test failed' }
+node (Join-Path $PSScriptRoot 'test_reaction_integration.js')
+if ($LASTEXITCODE -ne 0) { throw 'Reaction integration test failed' }
 Write-Output 'Fork smoke tests passed (no Android device or account used)'

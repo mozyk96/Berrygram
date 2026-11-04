@@ -1,0 +1,15 @@
+<resources>
+  <string name="ForkMenuEditorTitle">Message menu</string>
+  <string name="ForkMenuEditorInfo">Drag the arrows to reorder. Turn off an action to move it to More. Pinned actions appear first. Only actions allowed for each message are shown.</string>
+  <string name="ForkMenuEditorPreview">Preview structure</string>
+  <string name="ForkMenuEditorReset">Reset menu</string>
+  <string name="ForkMenuEditorPreviewInfo">Structure preview only. Actual actions depend on the selected message; other native actions remain available.</string>
+  <string name="ForkMenuEditorMain">Main menu</string>
+  <string name="ForkMenuEditorMore">More</string>
+  <string name="ForkMenuEditorVisible">Show in main menu</string>
+  <string name="ForkMenuEditorPin">Pin</string>
+  <string name="ForkMenuEditorUnpin">Unpin</string>
+  <string name="ForkMenuEditorReorder">Reorder</string>
+  <string name="ForkMenuEditorUp">Move up</string>
+  <string name="ForkMenuEditorDown">Move down</string>
+</resources>

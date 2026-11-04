@@ -1,3 +1,7 @@
+## Active: Android1.3.0 Total Customization
+
+Action Registry -> Gesture Engine -> Reaction Editor -> Menu Editor -> Settings UI -> Beta/owner testing -> approved Android Stable. Details: plans/1.3.0. Desktop development is gated until Android Stable1.3.0 is published; Desktop planning only. Stable1.2.0 remains immutable. No1.4.0 work.
+
 ## Current release: 1.2.0 Stable — published
 
 Experimental floating main/chat headers are retired from1.2.0. Native Telegram headers plus bounded toolbar scroll behavior are used. Future iOS-style header redesign is deferred pending an explicit new request. Owner accepted Beta9 on a physical phone and authorized Stable1.2.0. Runtime is frozen. No next-version work starts without a new instruction.

@@ -1,8 +1,8 @@
 package android.content;
 import java.util.HashMap; import java.util.Map;
 public class Context {
- public static final int MODE_PRIVATE=0; private final Prefs prefs=new Prefs();
- public SharedPreferences getSharedPreferences(String name,int mode) { return prefs; }
+ public static final int MODE_PRIVATE=0; private final Map<String,Prefs> prefs=new HashMap<>();
+ public SharedPreferences getSharedPreferences(String name,int mode) { return prefs.computeIfAbsent(name, k -> new Prefs()); }
  public static class Prefs implements SharedPreferences {
   final Map<String,Object> values=new HashMap<>();
   public String getString(String k,String d) { Object v=values.get(k); return v instanceof String ? (String)v:d; }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ForkReactionTitle">Реакции</string>
+    <string name="ForkReactionQuick">Быстрые реакции</string>
+    <string name="ForkReactionCustom">Свои</string>
+    <string name="ForkReactionNative">Как в Telegram</string>
+    <string name="ForkReactionPosition">Реакция %1$d</string>
+    <string name="ForkReactionAdd">Добавить реакцию</string>
+    <string name="ForkReactionDoubleTap">Реакция на двойное нажатие</string>
+    <string name="ForkReactionReset">Сбросить реакции</string>
+    <string name="ForkReactionReplace">Заменить реакцию</string>
+    <string name="ForkReactionUp">Переместить выше</string>
+    <string name="ForkReactionDown">Переместить ниже</string>
+    <string name="ForkReactionRemove">Убрать реакцию</string>
+    <string name="ForkReactionInfo">Выберите от одной до четырёх обычных быстрых реакций на сообщения. Показываются только разрешённые в чате реакции; полный выбор остаётся доступным. Платные реакции, теги, эффекты и чаты с достигнутым лимитом работают как в Telegram. Выбор эмодзи назначает двойному нажатию действие «Реакция». Выбор «Как в Telegram» восстанавливает стандартный жест двойного нажатия. Разрешения чата по-прежнему действуют.</string>
+</resources>
