@@ -6,8 +6,9 @@
 [~] Menu drag/visibility/pin/preview/reset and shared native-cell More integrated. Policy/persistence tests passed; device menu/drag acceptance pending.
 [x] en/uk/ru editor resources and settings entrypoints implemented; smoke tests passed.
 [x] Initial incremental Android compilation passed after fixing an invalid icon name to real menu_reply. Subsequent More/native Delete/icon polish is included in the upcoming full build.
-[~] Principal Release/R8 Beta1 build and signing/source/security/updater verification.
-[ ] Publish verified Beta1 and owner manual acceptance.
+[x] Release/R8 Beta1, signature/source/security/upgrade metadata and live updater channels verified.
+[x] Publish Beta1 and independently download/checksum the public APK.
+[~] Owner manual acceptance of gestures, reactions, menus, touch and account/restart behavior.
 [ ] Fix owner findings and publish further Beta if needed.
 [ ] Android Stable1.3.0: requires owner acceptance and final technical checks.
 ## Desktop — gate closed

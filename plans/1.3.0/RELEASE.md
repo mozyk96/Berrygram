@@ -1,2 +1,6 @@
 # Release gates
+
+Beta1 published from0ce1f164567809050a30f7ec132752b90c5f11f3, code72589, same permanent certificate, Android6+/ARM64. SHA-256: 0a31242c7df6466cfe1408a0f3a3106a26721b174eba9849b2c3077090146c07. Smoke/R8 and artifact/public/channel checks passed; owner device acceptance remains pending.
+
+Build caution: AGP may fail to read packed branch refs. Re-extract version-control metadata from the exact detached source commit using extractAfatReleaseVersionControlInfo --rerun, then assemble/re-sign and verify the embedded revision. This Beta used a39s incremental repack with R8 up-to-date. Restore the development branch afterward; do not change published tags/assets.
 Android development stays on dev/1.3.0; preserve v1.2.0 tag/artifacts. Set beta version/code only when preparing an integrated Beta; do not create a version per commit. Publish signed ARM64 Beta prerelease after relevant tests/R8/source/secret/signature/updater checks; give verified direct URL. Owner then tests. Stable v1.3.0 requires explicit owner acceptance. Do not use 1.3.0 Stable tag early. Desktop starts only after that actual Stable publication, with separate alpha/beta release names/assets and independent Windows signing.
