@@ -36,3 +36,20 @@ Update Center staged by isolated worker with helper/package/download tests green
 
 Integration checkpoint: Update Center now uses ephemeral explicit intent and event-driven verification/resume/focus/attach checks; no installer polling or recreation launch. API23 compiled manifest minSdk, testOnly/debug flags, package/cert/code/ABI/SHA validation and safe explicit Beta-to-Stable recovery remain enforced. Older Stable uses recovery labeling rather than normal update arrow/action. Download progress posts only changed integer percent to avoid repeated UI formatting. Package/download fixtures and production runnable lifecycle pass; system installer remains manual.
 All P0/graphics/persistence/text/camera/voice/policy smoke tests pass; new production regression paths include repeated search/native background resets, compact visibility/scroll, translated archive clip and first anchor, popup tint/style and101 shader strength steps. Existing emulator acceleration check still reports missing hypervisor; known software-boot failure not retried excessively. No phone accessed. Next: commit integration, main Release/R8, fix any compile errors, verify source/signature/APK, publish Beta8 prerelease.
+
+## Final verified publication
+
+# Beta 8 publication checkpoint — 2026-11-04
+
+- Published Pre-release: https://github.com/mozyk96/Berrygram/releases/tag/v1.2.0-beta.8
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.2.0-beta.8/BerryGram-1.2.0-beta.8-arm64-v8a.apk
+- Exact built/tagged source: b11ce12213f5e3dc77fa4323d6c47bdde8c9e3a8. Version 1.2.0-beta.8; APK versionCode 72559 (base 7255).
+- SHA-256: 343854ddfe6c76c13fc58d3f463661ec0988ef9a01166a918bc8802706b42f4c
+- Release/R8 BUILD SUCCESSFUL (8m21s). ZIP, ARM64-only, applicationId org.example.forkclient, minSdk23, resources, non-debug/non-testOnly, 16KB alignment, API23 v1/v2 signature and permanent signer passed. Embedded revision matches tag. New-code secret checks had zero findings.
+- Public asset downloaded without authorization and SHA matched; GitHub asset digest matched. Actual GitHub release JSON selected Beta8 through the older Beta1 updater parser; Beta1..7 version ordering accepted. This does not prove installer interaction.
+- Targeted production-method/header/stories/archive-coordinate/graphics/Updater lifecycle and mocked package/download checks passed. Main smoke suite passed before final event-driven updater followup; changed updater lifecycle/package checks then passed separately.
+- Device graphics, authenticated Stories/archive/chat, calls/media, installer and real recovery remain MANUAL TEST REQUIRED. No physical phone used. Missing hypervisor; prior offline software emulator was not retried. Backdrop-free surfaces keep opaque fallback. No measured performance claim.
+- No build remains running. Stop new feature work for owner testing; no Stable, 1.2.1 or 1.3.0. Keep release tag/APK immutable.
+
+
+Earlier visual checklist criteria remain manual, not device passes. Changed implementation/source tests and release publication are completed. Existing chat/dock/morph retained. Await owner testing.
