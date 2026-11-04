@@ -1,3 +1,7 @@
+## Current release decision: Beta9 native headers
+
+Experimental floating main/chat headers are retired from1.2.0. Native Telegram headers plus bounded toolbar scroll behavior are used. Future iOS-style header redesign is deferred pending an explicit new request. Beta9 is a release candidate; Stable1.2.0 requires owner acceptance and final checks. No1.2.1 or1.3.0 work starts now.
+
 # BerryGram roadmap
 
 The next planned release is 1.0.2. Retain Android API 23, existing identity and signing key, and the four established custom areas plus the updater. Prior 1.0.0 and 1.0.1 acceptance remains incomplete.
