@@ -1,10 +1,10 @@
-## Current release: 1.2.0 Stable promotion
+## Current release: 1.2.0 Stable — published
 
 Experimental floating main/chat headers are retired from1.2.0. Native Telegram headers plus bounded toolbar scroll behavior are used. Future iOS-style header redesign is deferred pending an explicit new request. Owner accepted Beta9 on a physical phone and authorized Stable1.2.0. Runtime is frozen. No next-version work starts without a new instruction.
 
 # BerryGram roadmap
 
-Current milestone: verify and publish1.2.0 Stable. Preserve API23, identity and permanent key. Historical plans below do not authorize new work.
+Milestone complete:1.2.0 Stable published and public APK verified. Preserve API23, identity and permanent key. Historical plans below do not authorize new work.
 
 ## 1.0.2 — in development
 
