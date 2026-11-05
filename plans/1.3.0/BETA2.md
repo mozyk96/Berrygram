@@ -1,32 +1,36 @@
-# BerryGram Android 1.3.0 Beta 2 — actionable plan
+# BerryGram Android 1.3.0 Beta 2 — result
 
-Branch: `dev/1.3.0`. Baseline: `9118a39` (Beta 1 published). Owner findings are P0 and override cosmetic work.
+Branch: `dev/1.3.0`. Source/tag: `b1ce28e55e9755b95631cfe009e21f01156aea3b`. Published pre-release `v1.3.0-beta.2`.
 
-## P0-1 Gesture engine
+## P0-1 Gesture engine — fixed and verified
 
-- Files: `TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java`, `fork/actions/ActionSettings.java`, `fork-tests/test_gesture_dispatch.js`.
-- Evidence: dispatching a gesture re-entered `createMenu`; a reaction gesture re-entered `onDoubleTap`; unavailable actions could consume the event without feedback; tap used the wrong `single` menu flag. Re-entry and stale `forkRequestedAction` could dispatch twice or execute against a second, incomplete menu build.
-- Fix: one dispatch path with an explicit re-entry guard, native tap/long-press flags, capture-and-clear of `forkRequestedAction` before `processSelectedOption`, direct double-tap reaction helper (no recursive callback), visible unavailable bulletin when menu construction exits early.
-- Verify: production `forkHandleGesture` compiled against a fake Android host; native option IDs; re-entry; local coordinates; action available/unavailable; long-press flags. Device timing remains owner-tested.
+- Files: `TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java`, `fork/actions/ActionSettings.java`, `fork-tests/test_gesture_dispatch.js`, `fork-tests/test_gesture_native_path.js`.
+- Root causes found: explicit actions on message types ≥2 never reached native option construction (`createMenu` gate); reaction gestures re-entered the double-tap callback; missing message/owner/account validation could act on a recycled/mismatched cell; unavailable actions could be swallowed without feedback; selected state could leak; swipe tracking read SharedPreferences on every move.
+- Fix: native option gate includes `forkRequestedAction != null`; message/owner/account/date/sending/editing validation; one-shot re-entry guard; direct double-tap reaction helper; unavailable bulletin; selected-state cleanup; per-account/user gesture cache.
+- Verification: production `forkHandleGesture` fake-host test and extracted native gate/initialization/reply/forward/copy-path test passed. Device touch timing remains owner-tested.
 
-## P0-2 Reaction engine
+## P0-2 Reaction engine — fixed and verified
 
-- Files: `org/telegram/ui/Components/ReactionsContainerLayout.java`, `fork/actions/ReactionFilterPolicy.java`, `fork-tests/ReactionFilterPolicyTest.java`, `fork-tests/test_reaction_integration.js`.
-- Evidence: filtered favorites were rebuilt with a nested scan and could produce an empty/short panel while `showExpandableReactions`/full-picker state was mutated late; callers could alias the mutable `visibleReactionsList`.
-- Fix: pure index policy over the native allowed list, stable order, duplicate suppression, empty-result fallback to native, defensive copy, expander state only when the panel is genuinely narrowed. Native list stays authoritative for the full picker.
-- Verify: 0..4 favorites, disallowed/all-disallowed, duplicates, reorder, empty native list, fallback, narrowed flag; source integration checks.
+- Files: `org/telegram/ui/Components/ReactionsContainerLayout.java`, `fork/actions/ReactionFilterPolicy.java`, tests.
+- Root causes found: favorites were rebuilt through a nested scan, could yield an empty panel, and could alias the mutable visible list; layout params were assumed non-null.
+- Fix: pure native-index policy, stable order, duplicate suppression, empty-result fallback to the native allowed list, defensive copy, null layout-params guard, expander only when genuinely narrowed. Full native picker retained.
+- Verification: 0..4 favorites, disallowed/all-disallowed, duplicates, reorder, empty native list, fallback, narrowed flag, source integration checks.
 
-## P0-3 Regression checks
+## P1 Performance Engine — implemented
 
-- Message menu tuples/More/delete suppression; per-account/user settings; settings persistence; native fallbacks.
-- Smoke tests that do not require a real Telegram account. Python fixtures need a local Python interpreter; report the gap if unavailable.
+- `PerformancePolicy`/`PerformanceSettings` profiles: Automatic, Maximum smoothness, Battery saver, Custom.
+- Performance Center in BerryGram Settings with non-sensitive diagnostics.
+- Runtime reduction feeds `ForkGraphicsSurface`, which already gates optional glass and reveal animations. Telegram Lite Mode storage and native rendering are not replaced.
+- No FPS, thermal or battery benchmark claims.
 
-## P1 Performance engine (only after P0 verification)
+## Release verification
 
-- Keep Telegram Lite Mode as the storage/behavior base; do not build a parallel renderer.
-- Implement a device-local performance profile with real effects on supported flags, an explicit opt-in for changing Telegram Lite Mode presets, safe defaults, and a Performance Center entry that exposes only working controls.
-- No forced FPS, no thermal polling loops, no telemetry, no permanent preference changes for temporary battery-saver state.
+- Full `fork-tests/smoke.ps1` passed.
+- Debug Java compile and Release/R8 passed (8m28s).
+- APK `BerryGram-1.3.0-beta.2-arm64-v8a.apk`, SHA-256 `7b25f4ad97592b1e88a998dea09c754cafd02d2c3ced6aec3c9ea8d2762670fd`.
+- Package `org.example.forkclient`; version `1.3.0-beta.2`; code `72599`; minSdk 23; ARM64; non-debug/non-testOnly; permanent certificate; v1/v2 signatures; 16 KB alignment; source revision embedded; native libs identical to Beta 1; public unauthenticated download matched.
+- GitHub latest Stable remains 1.2.0; Beta 2 is a pre-release. No Stable 1.3.0 or Desktop work started.
 
-## Release gate
+## Remaining
 
-Version `1.3.0-beta.2`, code `72599` (Beta 1 was 72589), ARM64, minSdk 23, same package and signing identity. Run smoke + Release/R8, verify APK metadata/signature/checksum, then publish a GitHub pre-release only if valid. Owner device acceptance remains mandatory.
+Owner manual device acceptance and subsequent fixes. No physical phone, real account or crash log was used.
