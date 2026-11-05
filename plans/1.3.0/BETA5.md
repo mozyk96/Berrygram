@@ -28,7 +28,7 @@ Boundary: `BottomSheet` and every `AlertDialog` are not converted to blur3 surfa
 
 - `ForkRoundVideoPreviewPanel`: two circular icon-only controls (power, switch camera) in a vertical column on the left; large circular live preview on the right.
 - No visible button labels; accessibility descriptions are provided.
-- Preview starts only on request, stops on pause/detach/invisible, releases `CameraView` and the camera controller callback, and handles permission denial/timeout.
+- Preview starts only on request, stops on pause/detach/window invisibility, releases `CameraView` and the camera controller callback, and handles permission denial/timeout. A post-Beta-5 branch commit also stops it when the panel is scrolled out of view; that scroll check is not in the published Beta 5 APK.
 - Integrated at the bottom of `ForkVideoSettingsActivity`; the separate test screen entry point was removed.
 - Front-camera preview keeps Telegram's mirroring and aspect handling through the existing `CameraView`.
 

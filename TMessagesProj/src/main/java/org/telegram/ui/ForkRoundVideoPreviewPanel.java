@@ -6,11 +6,13 @@ import android.content.pm.PackageManager;
 import android.graphics.Outline;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.Rect;
 import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -50,7 +52,10 @@ public final class ForkRoundVideoPreviewPanel extends ViewGroup {
     private boolean cameraInitRequested;
     private boolean availableFront, availableBack;
     private boolean currentFront;
+    private boolean scrollVisible = true;
     private int previewDiameter;
+    private final ViewTreeObserver.OnScrollChangedListener scrollListener =
+            this::updateScrollVisibility;
 
     private final Runnable onInitialized = this::attachCamera;
     private final Runnable onTimeout = () -> {
@@ -143,8 +148,8 @@ public final class ForkRoundVideoPreviewPanel extends ViewGroup {
     }
 
     private void startCamera() {
-        if (!resumed || !previewOn || attached == false || getWindowVisibility() != VISIBLE
-                || camera != null || context() == null) {
+        if (!resumed || !previewOn || !scrollVisible || attached == false
+                || getWindowVisibility() != VISIBLE || camera != null || context() == null) {
             return;
         }
         if (Build.VERSION.SDK_INT >= 23
@@ -254,14 +259,30 @@ public final class ForkRoundVideoPreviewPanel extends ViewGroup {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         attached = true;
+        getViewTreeObserver().addOnScrollChangedListener(scrollListener);
+        post(this::updateScrollVisibility);
         if (previewOn) startCamera();
     }
 
     @Override
     protected void onDetachedFromWindow() {
         attached = false;
+        if (getViewTreeObserver().isAlive()) {
+            getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
+        }
         stopCamera();
         super.onDetachedFromWindow();
+    }
+
+    private void updateScrollVisibility() {
+        if (!attached || getWidth() == 0 || getHeight() == 0) return;
+        Rect visible = new Rect();
+        boolean shown = getGlobalVisibleRect(visible)
+                && visible.height() > AndroidUtilities.dp(24);
+        if (shown == scrollVisible) return;
+        scrollVisible = shown;
+        if (!shown) stopCamera();
+        else if (previewOn && resumed) startCamera();
     }
 
     @Override
@@ -281,6 +302,7 @@ public final class ForkRoundVideoPreviewPanel extends ViewGroup {
                 && cameraInitRequested) {
             attachCamera();
         }
+        updateScrollVisibility();
     }
 
     @Override
