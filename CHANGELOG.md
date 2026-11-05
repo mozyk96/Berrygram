@@ -1,8 +1,19 @@
+## 1.3.0-beta.2 — Android stability and performance
+
+- Gesture dispatch now uses one re-entrant-safe path with native tap/long-press eligibility, correct unavailable-action feedback, and a dedicated double-tap reaction helper instead of a recursive callback.
+- Quick-reaction filtering is policy-driven over the native allowed list: ordered favorites, duplicate suppression, and a native fallback when no favorite is allowed. The full picker and server-side restrictions remain native.
+- Added the BerryGram Performance Engine profile policy (Automatic, Maximum smoothness, Battery saver, Custom) with a Performance Center, non-sensitive diagnostics and device-local persistence. Battery/automatic/custom reduction affects only optional BerryGram surfaces and reveal animations; Telegram Lite Mode settings are not overwritten.
+- Gesture preferences are cached per account/user so swipe tracking no longer reads SharedPreferences on every touch move.
+- New regression coverage for gesture re-entry/flags, reaction filtering/fallback and performance profile resolution.
+- Existing 1.2.0 headers, Mini Dock, graphics, camera, voice, custom text, updater, menus and per-account isolation retained.
+
+Beta for owner acceptance, not Stable. Physical touch timing, reaction sending, menus, account switching and restart behavior still require owner testing. No Desktop implementation until Android 1.3.0 Stable is approved and published.
+
 ## 1.3.0-beta.1 — Android Total Customization
 
 - Shared native-action registry and preferences isolated by account slot plus signed-in user identity.
 - Gesture editor for confirmed taps, double taps, long press and horizontal swipes. Plain-text tap overrides preserve interactive media/links/bot controls; native selection and edge navigation retain priority. Native menu permissions and destructive confirmations remain authoritative.
-- Opt-in1..4 ordered quick standard reactions from the native enabled catalog, native allowed-list intersection and full-picker access; double-tap reaction shares the gesture binding.
+- Opt-in 1..4 ordered quick standard reactions from the native enabled catalog, native allowed-list intersection and full-picker access; double-tap reaction shares the gesture binding.
 - Message-menu drag ordering, visibility, pinning, structure preview/reset. Hidden supported actions remain in scrollable More; native unknown/special actions and native Delete warnings/suppression are retained.
 - Localized en/uk/ru editors; existing1.2.0 headers, MiniDock, graphics/camera/voice/text/updater retained.
 

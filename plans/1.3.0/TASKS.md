@@ -9,7 +9,9 @@
 [x] Release/R8 Beta1, signature/source/security/upgrade metadata and live updater channels verified.
 [x] Publish Beta1 and independently download/checksum the public APK.
 [~] Owner manual acceptance of gestures, reactions, menus, touch and account/restart behavior.
-[ ] Fix owner findings and publish further Beta if needed.
+[~] Beta2: gesture dispatch re-entry/flags/feedback and reaction filter/fallback fixed; Java/Node/full smoke passed. Device acceptance pending.
+[~] Beta2: Performance Engine profile policy, Performance Center, diagnostics and effect integration implemented; pure tests passed. No FPS benchmark.
+[ ] Fix remaining owner findings and publish Beta2 if Release/R8/APK checks pass.
 [ ] Android Stable1.3.0: requires owner acceptance and final technical checks.
 ## Desktop — gate closed
 [ ] Research official code/build/licenses only after Android Stable1.3.0 publication.

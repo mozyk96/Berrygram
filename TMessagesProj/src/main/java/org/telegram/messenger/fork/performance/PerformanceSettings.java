@@ -1,0 +1,69 @@
+package org.telegram.messenger.fork.performance;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.PowerManager;
+
+import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.SharedConfig;
+
+/**
+ * BerryGram Performance Engine profile storage. It reuses Telegram's existing
+ * rendering/lightweight-mode decisions instead of introducing a second renderer.
+ */
+public final class PerformanceSettings {
+    private static final String PREFS = "fork_performance";
+    private static final String KEY_PROFILE = "profile";
+    private static final String KEY_CUSTOM_REDUCE_EFFECTS = "custom_reduce_effects";
+
+    private PerformanceSettings() { }
+
+    private static SharedPreferences preferences() {
+        return ApplicationLoader.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    public static String profile() {
+        String value;
+        try {
+            value = preferences().getString(KEY_PROFILE, PerformancePolicy.AUTOMATIC);
+        } catch (ClassCastException corrupt) {
+            return PerformancePolicy.AUTOMATIC;
+        }
+        return PerformancePolicy.normalize(value);
+    }
+
+    public static void setProfile(String profile) {
+        String normalized = PerformancePolicy.normalize(profile);
+        preferences().edit().putString(KEY_PROFILE, normalized).apply();
+    }
+
+    public static boolean customReduceEffects() {
+        return preferences().getBoolean(KEY_CUSTOM_REDUCE_EFFECTS, false);
+    }
+
+    public static void setCustomReduceEffects(boolean value) {
+        preferences().edit().putBoolean(KEY_CUSTOM_REDUCE_EFFECTS, value).apply();
+    }
+
+    public static boolean systemPowerSaver() {
+        Context context = ApplicationLoader.applicationContext;
+        if (context == null) return false;
+        PowerManager power = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        return power != null && power.isPowerSaveMode();
+    }
+
+    public static boolean reduceEffects() {
+        return PerformancePolicy.reduceEffects(profile(), systemPowerSaver(), SharedConfig.deviceIsLow(), customReduceEffects());
+    }
+
+    public static void reset() {
+        preferences().edit().remove(KEY_PROFILE).remove(KEY_CUSTOM_REDUCE_EFFECTS).apply();
+    }
+
+    public static String deviceClassLabel() {
+        int deviceClass = SharedConfig.getDevicePerformanceClass();
+        if (deviceClass == SharedConfig.PERFORMANCE_CLASS_LOW) return "low";
+        if (deviceClass == SharedConfig.PERFORMANCE_CLASS_HIGH) return "high";
+        return "average";
+    }
+}

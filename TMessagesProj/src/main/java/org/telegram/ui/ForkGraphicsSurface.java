@@ -23,7 +23,8 @@ public final class ForkGraphicsSurface {
                 org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()));
     }
     public static boolean effectsSuppressed() {
-        return systemPowerSaver() || org.telegram.messenger.LiteMode.isPowerSaverApplied();
+        return org.telegram.messenger.fork.performance.PerformanceSettings.reduceEffects()
+                || systemPowerSaver() || org.telegram.messenger.LiteMode.isPowerSaverApplied();
     }
     public static boolean systemPowerSaver() {
         Context context = org.telegram.messenger.ApplicationLoader.applicationContext;

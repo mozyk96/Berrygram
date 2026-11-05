@@ -1,1 +1,1 @@
-package org.telegram.messenger; public class SharedConfig { public static boolean low; public static boolean deviceIsLow(){return low;} }
+package org.telegram.messenger; public class SharedConfig { public static final int PERFORMANCE_CLASS_LOW=0, PERFORMANCE_CLASS_AVERAGE=1, PERFORMANCE_CLASS_HIGH=2; public static boolean low; public static int performanceClass=PERFORMANCE_CLASS_HIGH; public static boolean deviceIsLow(){return low;} public static int getDevicePerformanceClass(){return performanceClass;} }

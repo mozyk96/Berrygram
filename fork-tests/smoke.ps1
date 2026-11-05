@@ -24,6 +24,9 @@ $tests = @('AuthDiagnosticsTest', 'BackendPolicyTest', 'SessionCredentialsTest',
     'CustomTextResolutionTest', 'CustomTextContextTest', 'CustomTextScopePolicyTest', 'CustomTextOriginalTest',
     'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'VoiceQualityPolicyTest', 'PanelPolicyTest', 'GraphicsColorPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest')
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
+$sources += (Join-Path $base 'performance\PerformancePolicy.java')
+$tests += 'PerformancePolicyTest'
+$testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 & $javac -encoding UTF-8 -d $buildDir @sources @testFiles
 if ($LASTEXITCODE -ne 0) { throw 'Smoke-test compilation failed' }
 foreach ($test in $tests) {
@@ -93,7 +96,7 @@ node (Join-Path $PSScriptRoot 'test_native_main_header.js')
 if ($LASTEXITCODE -ne 0) { throw 'Native main header test failed' }
 
 $actionSources = Get-ChildItem (Join-Path $base 'actions') -Filter '*.java' | ForEach-Object { $_.FullName }
-$actionTests = @('ActionMenuPolicyTest', 'ActionMenuSettingsTest', 'ForkReactionSettingsTest')
+$actionTests = @('ActionMenuPolicyTest', 'ActionMenuSettingsTest', 'ForkReactionSettingsTest', 'ReactionFilterPolicyTest')
 $actionTestFiles = $actionTests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 & $javac -encoding UTF-8 -cp $managerDir -d $managerDir @actionSources @actionTestFiles
 if ($LASTEXITCODE -ne 0) { throw 'Action system test compilation failed' }
@@ -101,8 +104,23 @@ foreach ($test in $actionTests) {
     & $java -cp $managerDir $test
     if ($LASTEXITCODE -ne 0) { throw "Action test failed: $test" }
 }
+$performanceDir = Join-Path $buildDir 'performance'
+New-Item -ItemType Directory -Force $performanceDir | Out-Null
+$performanceStubs = @(Get-ChildItem (Join-Path $PSScriptRoot 'performance-stubs') -Filter '*.java' -Recurse | ForEach-Object { $_.FullName })
+$performanceSources = @(
+    (Join-Path $base 'performance\PerformancePolicy.java'),
+    (Join-Path $base 'performance\PerformanceSettings.java'),
+    (Join-Path $PSScriptRoot 'PerformanceSettingsTest.java')
+)
+& $javac -encoding UTF-8 -d $performanceDir ($stubs + $performanceStubs + $performanceSources)
+if ($LASTEXITCODE -ne 0) { throw 'Performance settings test compilation failed' }
+& $java -cp $performanceDir PerformanceSettingsTest
+if ($LASTEXITCODE -ne 0) { throw 'Performance settings test failed' }
+
 node (Join-Path $PSScriptRoot 'test_gesture_dispatch.js')
 if ($LASTEXITCODE -ne 0) { throw 'Gesture dispatch test failed' }
+node (Join-Path $PSScriptRoot 'test_gesture_native_path.js')
+if ($LASTEXITCODE -ne 0) { throw 'Gesture native path test failed' }
 node (Join-Path $PSScriptRoot 'test_reaction_integration.js')
 if ($LASTEXITCODE -ne 0) { throw 'Reaction integration test failed' }
 Write-Output 'Fork smoke tests passed (no Android device or account used)'

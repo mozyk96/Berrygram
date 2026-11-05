@@ -37,6 +37,11 @@ public final class ForkSettingsActivity extends BaseFragment {
         appearance.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkAppearanceTitle), ForkLocale.get(R.string.ForkAppearanceSubtitle), R.drawable.msg_palette, false);
         appearance.setOnClickListener(v -> presentFragment(new ForkAppearanceSettingsActivity()));
         ForkSettingsLayout.addCard(content, appearance);
+        TextDetailSettingsCell performance = new TextDetailSettingsCell(context);
+        ForkSettingsLayout.interactive(performance);
+        performance.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkPerformanceTitle), ForkLocale.get(R.string.ForkPerformanceSubtitle), R.drawable.msg_speed, false);
+        performance.setOnClickListener(v -> presentFragment(new ForkPerformanceSettingsActivity()));
+        ForkSettingsLayout.addCard(content, performance);
         TextDetailSettingsCell video = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(video);
         video.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkVideoTitle), ForkLocale.get(R.string.ForkVideoSubtitle), R.drawable.msg_video, false);
@@ -61,7 +66,7 @@ public final class ForkSettingsActivity extends BaseFragment {
         ForkSettingsLayout.interactive(messageMenu);
         messageMenu.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkMenuEditorTitle), ForkLocale.get(R.string.ForkMenuEditorPreview), R.drawable.msg_settings, false);
         messageMenu.setOnClickListener(v -> presentFragment(new ForkMessageMenuSettingsActivity())); ForkSettingsLayout.addCard(content, messageMenu);
-        accentCells = new TextDetailSettingsCell[]{appearance, video, voice, text, gestures, reactions, messageMenu};
+        accentCells = new TextDetailSettingsCell[]{appearance, performance, video, voice, text, gestures, reactions, messageMenu};
         updateAccent(context);
         LinearLayout updates = ForkSettingsLayout.section(context);
         updater = new ForkUpdaterPanel(context, this); updates.addView(updater);

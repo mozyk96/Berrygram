@@ -1708,7 +1708,7 @@ public class ChatActivity extends BaseFragment implements
     private final static int id_chat_compose_panel = 1000;
 
     private String forkRequestedAction;
-    private boolean forkExecutingReaction;
+    private boolean forkGestureDispatching;
     private int forkSlidingDirection = 1;
     private Drawable forkSwipeActionDrawable;
     private String forkSwipeActionDrawableId;
@@ -1720,7 +1720,7 @@ public class ChatActivity extends BaseFragment implements
         MessageObject m = cell.getMessageObject();
         boolean clickable = m != null && m.messageText instanceof Spanned
                 && ((Spanned)m.messageText).getSpans(0, m.messageText.length(), ClickableSpan.class).length != 0;
-        return m != null && !clickable && m.type == MessageObject.TYPE_TEXT && cell.isInsideBackground(x, y)
+        return m != null && m.messageOwner != null && !clickable && m.type == MessageObject.TYPE_TEXT && cell.isInsideBackground(x, y)
                 && x >= cell.getTextX() && x <= cell.getTextX() + m.textWidth
                 && y >= cell.getTextY() && y <= cell.getTextY() + m.textHeight()
                 && (m.messageOwner.media == null || m.messageOwner.media instanceof TLRPC.TL_messageMediaEmpty)
@@ -1728,23 +1728,96 @@ public class ChatActivity extends BaseFragment implements
                 && m.messageOwner.reply_markup == null && !m.isSponsored();
     }
 
+    private void forkShowActionUnavailable() {
+        if (getParentActivity() == null || fragmentView == null) return;
+        BulletinFactory.of(this).createErrorBulletin(ForkLocale.get(R.string.ForkActionUnavailable)).show();
+    }
+
+    /**
+     * Returns false only when the gesture must fall through to Telegram's native
+     * handler. Every configured binding consumes the gesture exactly once; menu
+     * construction and dispatch therefore never re-enter this method.
+     */
     private boolean forkHandleGesture(View view, float x, float y, String gesture, boolean bodyOnly) {
-        if (forkExecutingReaction || getParentActivity() == null || actionBar.isActionModeShowed()
+        if (forkGestureDispatching) return true;
+        if (getParentActivity() == null || actionBar == null || actionBar.isActionModeShowed()
                 || searching || inPreviewMode || isReport() || hasTextSelection() || isTryingTextSelection()) return false;
         if (!(view instanceof ChatMessageCell) || bodyOnly && !forkPlainMessageBody(view, x, y)) return false;
         String action = org.telegram.messenger.fork.actions.ActionSettings.gesture(currentAccount, gesture);
         if ("native".equals(action)) return false;
         if ("none".equals(action)) return true;
-        if ("menu".equals(action)) { createMenu(view, false, false, x, y, false); return true; }
-        if ("reaction".equals(action)) {
-            forkExecutingReaction = true;
-            try { onItemClickListener.onDoubleTap(view, -1, x + view.getX(), y + view.getY()); }
-            finally { forkExecutingReaction = false; }
+        MessageObject message = ((ChatMessageCell) view).getMessageObject();
+        if (message == null || message.messageOwner == null || message.currentAccount != currentAccount
+                || message.isDateObject || message.isSending() || message.isEditing()) return true;
+        forkGestureDispatching = true;
+        try {
+            if ("menu".equals(action)) {
+                // Single-item flags make the menu reachable for message types whose
+                // native long press would otherwise start multiselect.
+                createMenu(view, true, false, x, y, false);
+                return true;
+            }
+            if ("reaction".equals(action)) {
+                MessageObject reactionMessage = ((ChatMessageCell) view).getPrimaryMessageObject();
+                if (!forkSendDoubleTapReaction(view, reactionMessage, x, y)) {
+                    forkShowActionUnavailable();
+                }
+                return true;
+            }
+            forkRequestedAction = action;
+            try {
+                // Explicit actions always build the native option tuples; single=false
+                // avoids hijacking service messages into their tap-only handlers.
+                createMenu(view, false, false, x, y, false);
+            } finally {
+                if (forkRequestedAction != null) {
+                    // createMenu exited before the native option could be resolved.
+                    forkRequestedAction = null;
+                    forkShowActionUnavailable();
+                }
+                selectedObject = null;
+                selectedObjectGroup = null;
+                selectedObjectToEditCaption = null;
+            }
+            return true;
+        } finally {
+            forkGestureDispatching = false;
+        }
+    }
+
+    private boolean forkSendDoubleTapReaction(View view, MessageObject messageObject, float x, float y) {
+        if (getParentActivity() == null || isSecretChat() || isInScheduleMode() || isInPreviewMode() || isQuickRepliesOrWelcomeMessagesMode()) {
+            return false;
+        }
+        if (messageObject == null || messageObject.isDateObject || messageObject.isSending() || messageObject.isEditing()
+                || messageObject.isSponsored() || messageObject.isSecret() || !messageObject.canSetReaction()
+                || messageObject.isExpiredStory() || messageObject.type == MessageObject.TYPE_JOINED_CHANNEL) {
+            return false;
+        }
+        if (!(currentChat == null || ChatObject.isChannelAndNotMegaGroup(currentChat) || ChatObject.canUserDoAction(currentChat, ChatObject.ACTION_SEND_REACTIONS))) {
+            return false;
+        }
+        String reactionString = org.telegram.messenger.fork.actions.ForkReactionSettings.doubleTapReaction(currentAccount, getMediaDataController().getDoubleTapReaction());
+        if (reactionString == null) return false;
+        if (reactionString.startsWith("animated_")) {
+            boolean available = dialog_id >= 0;
+            if (!available && chatInfo != null) {
+                available = ChatObject.reactionIsAvailable(chatInfo, reactionString);
+            }
+            if (!available) return false;
+            ReactionsEffectOverlay.removeCurrent(false);
+            selectReaction(view, messageObject, null, null, x, y, ReactionsLayoutInBubble.VisibleReaction.fromEmojicon(reactionString), true, false, false, false);
             return true;
         }
-        forkRequestedAction = action;
-        try { createMenu(view, false, false, x, y, false); }
-        finally { forkRequestedAction = null; }
+        TLRPC.TL_availableReaction reaction = getMediaDataController().getReactionsMap().get(reactionString);
+        if (reaction == null) return false;
+        boolean available = dialog_id >= 0;
+        if (!available && chatInfo != null) {
+            available = ChatObject.reactionIsAvailable(chatInfo, reaction.reaction);
+        }
+        if (!available) return false;
+        ReactionsEffectOverlay.removeCurrent(false);
+        selectReaction(view, messageObject, null, null, x, y, ReactionsLayoutInBubble.VisibleReaction.fromEmojicon(reaction), true, false, false, false);
         return true;
     }
 
@@ -2015,53 +2088,19 @@ public class ChatActivity extends BaseFragment implements
         public void onDoubleTap(View view, int position, float x, float y) {
             // RecyclerListView supplies confirmed single taps and consumes double taps once.
             if (forkHandleGesture(view, x - view.getX(), y - view.getY(), "double_tap", true)) return;
-            if (getParentActivity() == null || isSecretChat() || isInScheduleMode() || isInPreviewMode() || isQuickRepliesOrWelcomeMessagesMode()) {
-                return;
-            }
             MessageObject messageObject;
             if (view instanceof ChatMessageCell) {
                 messageObject = ((ChatMessageCell) view).getPrimaryMessageObject();
             } else if (view instanceof ChatActionCell) {
                 messageObject = ((ChatActionCell) view).getMessageObject();
-                if (messageObject.isDateObject) {
-                    return;
-                }
             } else {
                 return;
             }
-            if (messageObject.isDateObject || messageObject.isSending() || messageObject.isEditing() || messageObject.isSponsored()
-                    || messageObject.isSecret() || !messageObject.canSetReaction() || messageObject.isExpiredStory() || messageObject.type == MessageObject.TYPE_JOINED_CHANNEL) {
-                return;
-            }
-            if (!(currentChat == null || ChatObject.isChannelAndNotMegaGroup(currentChat) || ChatObject.canUserDoAction(currentChat, ChatObject.ACTION_SEND_REACTIONS))) {
-                return;
-            }
-
-            ReactionsEffectOverlay.removeCurrent(false);
-            String reactionString = org.telegram.messenger.fork.actions.ForkReactionSettings.doubleTapReaction(currentAccount, getMediaDataController().getDoubleTapReaction());
-            if (reactionString == null) return;
-            if (reactionString.startsWith("animated_")) {
-                boolean available = dialog_id >= 0;
-                if (!available && chatInfo != null) {
-                    available = ChatObject.reactionIsAvailable(chatInfo, reactionString);
-                }
-                if (!available) {
-                    return;
-                }
-                selectReaction(view, messageObject, null, null, x, y, ReactionsLayoutInBubble.VisibleReaction.fromEmojicon(reactionString), true, false, false, false);
-            } else {
-                TLRPC.TL_availableReaction reaction = getMediaDataController().getReactionsMap().get(reactionString);
-                if (reaction == null || messageObject.isSponsored()) {
-                    return;
-                }
-                boolean available = dialog_id >= 0;
-                if (!available && chatInfo != null) {
-                    available = ChatObject.reactionIsAvailable(chatInfo, reaction.reaction);
-                }
-                if (!available) {
-                    return;
-                }
-                selectReaction(view, messageObject, null, null, x, y, ReactionsLayoutInBubble.VisibleReaction.fromEmojicon(reaction), true, false, false, false);
+            forkGestureDispatching = true;
+            try {
+                forkSendDoubleTapReaction(view, messageObject, x - view.getX(), y - view.getY());
+            } finally {
+                forkGestureDispatching = false;
             }
         }
     };
@@ -31258,7 +31297,9 @@ public class ChatActivity extends BaseFragment implements
             allowChatActions = false;
         }
 
-        if (single || type < 2 || type == 20) {
+        // Explicit gesture actions need native options even for types whose long press
+        // would otherwise start multiselect instead of building a menu.
+        if (single || forkRequestedAction != null || type < 2 || type == 20) {
             if (getParentActivity() == null) {
                 return false;
             }
@@ -31343,15 +31384,19 @@ public class ChatActivity extends BaseFragment implements
                 }
             }
 
-            if (forkRequestedAction != null) {
-                int nativeOption = org.telegram.messenger.fork.actions.ActionRegistry.availableOption(forkRequestedAction, options);
+            final String forkAction = forkRequestedAction;
+            if (forkAction != null) {
+                // Clear before dispatch: native handlers may open another screen or
+                // menu synchronously and must not re-run the same requested action.
+                forkRequestedAction = null;
+                int nativeOption = org.telegram.messenger.fork.actions.ActionRegistry.availableOption(forkAction, options);
                 if (nativeOption == OPTION_DELETE && selectedObject != null && showWelcomeMessageRevertOption(selectedObject)) nativeOption = -1;
                 if (nativeOption >= 0 && selectedObject != null) {
                     processSelectedOption(nativeOption);
                 } else {
                     selectedObject = null;
                     selectedObjectGroup = null;
-                    BulletinFactory.of(this).createErrorBulletin(ForkLocale.get(R.string.ForkActionUnavailable)).show();
+                    forkShowActionUnavailable();
                 }
                 return true;
             }

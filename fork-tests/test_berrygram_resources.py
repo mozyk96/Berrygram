@@ -24,8 +24,8 @@ for line in (root / 'gradle.properties').read_text(encoding='utf-8').splitlines(
         key, value = line.split('=', 1)
         if key in {'APP_VERSION_NAME', 'APP_VERSION_CODE', 'APP_PACKAGE'}:
             properties[key] = value.strip()
-assert properties.get('APP_VERSION_NAME') == '1.3.0-beta.1'
-assert int(properties['APP_VERSION_CODE']) > 7257
+assert properties.get('APP_VERSION_NAME') == '1.3.0-beta.2'
+assert int(properties['APP_VERSION_CODE']) > 7258
 assert int(properties.get('APP_VERSION_CODE', '0')) > 0
 assert properties.get('APP_PACKAGE') == 'org.example.forkclient'
 resources = root / 'TMessagesProj/src/main/res'
@@ -34,6 +34,11 @@ def strings(path):
 english = strings(resources / 'values/fork_custom_text.xml')
 ukrainian = strings(resources / 'values-uk/fork_custom_text.xml')
 russian = strings(resources / 'values-ru/fork_custom_text.xml')
+action_en = strings(resources / 'values/strings_fork_actions.xml')
+action_uk = strings(resources / 'values-uk/strings_fork_actions.xml')
+action_ru = strings(resources / 'values-ru/strings_fork_actions.xml')
+for key in ('ForkPerformanceTitle', 'ForkPerformanceAutomatic', 'ForkPerformanceSmooth', 'ForkPerformanceBattery', 'ForkPerformanceCustom', 'ForkPerformanceInfo'):
+    assert key in action_en and key in action_uk and key in action_ru, f'Missing action translation: {key}'
 for key in ('ForkSettingsTitle', 'ForkVideoTitle', 'ForkVoiceTitle', 'ForkPanelsTitle', 'ForkCustomTextTitle', 'ForkUpdatePanel'):
     assert key in russian, f'Missing Russian setting: {key}'
 assert english.keys() == ukrainian.keys(), 'Ukrainian BerryGram translations are incomplete'

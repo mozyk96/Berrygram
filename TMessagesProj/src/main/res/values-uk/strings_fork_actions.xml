@@ -11,4 +11,23 @@
     <string name="ForkActionSave">Зберегти медіа</string>
     <string name="ForkActionUnavailable">Ця дія недоступна для повідомлення.</string>
     <string name="ForkGestureInfo">Налаштування цього акаунта. Власні натискання діють лише на звичайному тексті; посилання, медіа й кнопки ботів працюють як у Telegram. Небезпечні дії зберігають підтвердження. Свайп потребує горизонтального руху; недоступні дії не виконуються. Скидання повертає стандарт Telegram.</string>
+    <string name="ForkPerformanceTitle">Продуктивність</string>
+    <string name="ForkPerformanceSubtitle">Профіль, ефекти та діагностика</string>
+    <string name="ForkPerformanceProfile">Профіль продуктивності</string>
+    <string name="ForkPerformanceAutomatic">Автоматично</string>
+    <string name="ForkPerformanceSmooth">Максимальна плавність</string>
+    <string name="ForkPerformanceBattery">Економія батареї</string>
+    <string name="ForkPerformanceCustom">Власний</string>
+    <string name="ForkPerformanceReduceEffects">Зменшити візуальні ефекти</string>
+    <string name="ForkPerformanceDiagnostics">Діагностика</string>
+    <string name="ForkPerformanceDeviceClass">Клас пристрою</string>
+    <string name="ForkPerformanceActiveProfile">Активний профіль</string>
+    <string name="ForkPerformancePowerSaver">Системна економія</string>
+    <string name="ForkPerformanceGraphics">Фактична графіка</string>
+    <string name="ForkPerformanceAnimations">Анімації появи</string>
+    <string name="ForkPerformanceOn">Увімкнено</string>
+    <string name="ForkPerformanceOff">Вимкнено</string>
+    <string name="ForkPerformanceOpaque">Непрозорий режим</string>
+    <string name="ForkPerformanceReset">Скинути налаштування продуктивності</string>
+    <string name="ForkPerformanceInfo">На слабких пристроях або в режимі економії BerryGram зберігає рідний рендеринг Telegram і переходить на непрозорі поверхні. Профілі змінюють лише необов\'язкову графіку й анімації появи; вони не впливають на доставку повідомлень, безпеку, медіа чи налаштування Lite Mode Telegram. Діагностика не містить даних акаунта чи повідомлень.</string>
 </resources>

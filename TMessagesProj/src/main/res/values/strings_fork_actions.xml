@@ -11,4 +11,23 @@
     <string name="ForkActionSave">Save media</string>
     <string name="ForkActionUnavailable">This action is not available for this message.</string>
     <string name="ForkGestureInfo">Account-specific settings. Tap overrides apply to plain message bodies only; links, media and bot controls keep Telegram behavior. Destructive actions retain confirmation. Swipe actions require a horizontal gesture; unavailable actions are never forced. Reset restores Telegram defaults.</string>
+    <string name="ForkPerformanceTitle">Performance</string>
+    <string name="ForkPerformanceSubtitle">Profile, effects and diagnostics</string>
+    <string name="ForkPerformanceProfile">Performance profile</string>
+    <string name="ForkPerformanceAutomatic">Automatic</string>
+    <string name="ForkPerformanceSmooth">Maximum smoothness</string>
+    <string name="ForkPerformanceBattery">Battery saver</string>
+    <string name="ForkPerformanceCustom">Custom</string>
+    <string name="ForkPerformanceReduceEffects">Reduce visual effects</string>
+    <string name="ForkPerformanceDiagnostics">Diagnostics</string>
+    <string name="ForkPerformanceDeviceClass">Device class</string>
+    <string name="ForkPerformanceActiveProfile">Active profile</string>
+    <string name="ForkPerformancePowerSaver">System battery saver</string>
+    <string name="ForkPerformanceGraphics">Effective graphics</string>
+    <string name="ForkPerformanceAnimations">Reveal animations</string>
+    <string name="ForkPerformanceOn">On</string>
+    <string name="ForkPerformanceOff">Off</string>
+    <string name="ForkPerformanceOpaque">Opaque fallback</string>
+    <string name="ForkPerformanceReset">Reset performance settings</string>
+    <string name="ForkPerformanceInfo">On low-end or battery-saving devices BerryGram keeps Telegram\'s native rendering and falls back to opaque surfaces. Profiles only change optional graphics and reveal animations; they do not affect message delivery, security, media, or Telegram Lite Mode settings. Diagnostics contain no account or message data.</string>
 </resources>

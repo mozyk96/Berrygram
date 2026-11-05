@@ -582,26 +582,32 @@ public class ReactionsContainerLayout extends FrameLayout implements Notificatio
     @SuppressLint("NotifyDataSetChanged")
     private void setVisibleReactionsList(List<ReactionsLayoutInBubble.VisibleReaction> visibleReactionsList, boolean animated) {
         // Retain the native allowed list for the full picker and native eligibility.
-        List<ReactionsLayoutInBubble.VisibleReaction> nativeReactions = visibleReactionsList;
+        // Copy first: callers must never be able to alias the panel's mutable field.
+        List<ReactionsLayoutInBubble.VisibleReaction> nativeReactions = visibleReactionsList == this.visibleReactionsList
+                ? new ArrayList<>(visibleReactionsList) : visibleReactionsList;
         if (type == TYPE_DEFAULT && !hitLimit && !hasStar &&
                 org.telegram.messenger.fork.actions.ForkReactionSettings.customized(currentAccount)) {
-            ArrayList<String> allowed = new ArrayList<>();
+            ArrayList<ReactionsLayoutInBubble.VisibleReaction> nativeEmojiReactions = new ArrayList<>();
+            ArrayList<String> nativeEmojis = new ArrayList<>();
             for (ReactionsLayoutInBubble.VisibleReaction reaction : nativeReactions) {
-                if (reaction.documentId == 0 && !reaction.isStar) allowed.add(reaction.emojicon);
-            }
-            List<String> favorites = org.telegram.messenger.fork.actions.ForkReactionSettings.allowedFavorites(
-                    org.telegram.messenger.fork.actions.ForkReactionSettings.favorites(currentAccount), allowed);
-            visibleReactionsList = new ArrayList<>();
-            for (String favorite : favorites) {
-                for (ReactionsLayoutInBubble.VisibleReaction reaction : nativeReactions) {
-                    if (reaction.documentId == 0 && !reaction.isStar && favorite.equals(reaction.emojicon)) {
-                        visibleReactionsList.add(reaction);
-                        break;
-                    }
+                if (reaction.documentId == 0 && !reaction.isStar && reaction.emojicon != null) {
+                    nativeEmojiReactions.add(reaction);
+                    nativeEmojis.add(reaction.emojicon);
                 }
             }
-            // Empty and single-item panels also need access to the full allowed picker.
-            if (!allReactionsAvailable && visibleReactionsList.size() < nativeReactions.size()) showExpandableReactions = true;
+            List<Integer> indices = org.telegram.messenger.fork.actions.ReactionFilterPolicy.indices(
+                    org.telegram.messenger.fork.actions.ForkReactionSettings.favorites(currentAccount), nativeEmojis);
+            visibleReactionsList = new ArrayList<>(indices.size());
+            for (int index : indices) {
+                if (index >= 0 && index < nativeEmojiReactions.size()) {
+                    visibleReactionsList.add(nativeEmojiReactions.get(index));
+                }
+            }
+            // A narrowed list needs the full native picker; an empty result already
+            // falls back to the native list inside the policy.
+            if (!allReactionsAvailable && org.telegram.messenger.fork.actions.ReactionFilterPolicy.narrowed(indices, nativeEmojis.size())) {
+                showExpandableReactions = true;
+            }
         }
         this.visibleReactionsList.clear();
         if (showCustomEmojiReaction()) {
@@ -631,9 +637,11 @@ public class ReactionsContainerLayout extends FrameLayout implements Notificatio
         allReactionsList.clear();
         allReactionsList.addAll(nativeReactions);
         // checkPremiumReactions(this.visibleReactionsList);
-        int size = getLayoutParams().height - (int) getTopOffset() - getPaddingTop() - getPaddingBottom();
-        if (size * (this.visibleReactionsList.size() + (showCustomEmojiReaction() ? 1 : 0)) < dp(200)) {
-            getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        if (getLayoutParams() != null) {
+            int size = getLayoutParams().height - (int) getTopOffset() - getPaddingTop() - getPaddingBottom();
+            if (size * (this.visibleReactionsList.size() + (showCustomEmojiReaction() ? 1 : 0)) < dp(200)) {
+                getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            }
         }
         listAdapter.updateItems(animated);
     }
