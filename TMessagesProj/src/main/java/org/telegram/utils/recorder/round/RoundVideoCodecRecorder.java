@@ -286,6 +286,8 @@ final class RoundVideoCodecRecorder implements RoundVideoGlProcessor.FrameTiming
         android.util.Range<Integer> bitrateRange = capabilities.getBitrateRange();
         forkAutoMinBitrate = bitrateRange.getLower(); forkAutoMaxBitrate = bitrateRange.getUpper();
         int selectedBitrate = org.telegram.messenger.fork.camera.RoundVideoQualityPolicy.supported(standardBitrate, videoBitrate, bitrateRange.getLower(), bitrateRange.getUpper());
+        selectedBitrate = org.telegram.messenger.fork.camera.CameraProfileSettings.scaleBitrate(
+                selectedBitrate, bitrateRange.getLower(), bitrateRange.getUpper());
         format.setInteger(MediaFormat.KEY_BIT_RATE, selectedBitrate);
         diagnostics.log("video encoder configure: codec=" + videoCodec.getName()
                 + ", format=" + format);

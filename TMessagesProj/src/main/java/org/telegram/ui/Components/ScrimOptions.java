@@ -360,7 +360,8 @@ public class ScrimOptions extends Dialog {
             bitmapBg.setHasAlpha(false);
 
             final ColorMatrix colorMatrixOptions = new ColorMatrix();
-            colorMatrixOptions.setSaturation(Theme.isCurrentThemeDark() ? 2 : 3);
+            colorMatrixOptions.setSaturation(org.telegram.ui.ForkGlassSurface.backdropSaturation(
+                    Theme.isCurrentThemeDark() ? 2 : 3));
             if (!Theme.isCurrentThemeDark()) {
                 AndroidUtilities.adjustBrightnessColorMatrix(colorMatrixOptions, Theme.isCurrentThemeDark() ? -.2f : -.07f);
             }
@@ -369,7 +370,7 @@ public class ScrimOptions extends Dialog {
 
             bitmap.recycle();
             bitmaps.run(bitmapBg, bitmapOptions);
-        }, 15);
+        }, org.telegram.ui.ForkGlassSurface.captureBlurAmount(15));
     }
 
     public static void makeGlobalBlurBitmaps(View cutToContainer, Utilities.Callback2<Bitmap, Bitmap> bitmaps) {
@@ -410,14 +411,15 @@ public class ScrimOptions extends Dialog {
             }
 
             final ColorMatrix colorMatrixOptions = new ColorMatrix();
-            colorMatrixOptions.setSaturation(Theme.isCurrentThemeDark() ? 2 : 3);
+            colorMatrixOptions.setSaturation(org.telegram.ui.ForkGlassSurface.backdropSaturation(
+                    Theme.isCurrentThemeDark() ? 2 : 3));
             AndroidUtilities.adjustBrightnessColorMatrix(colorMatrixOptions, Theme.isCurrentThemeDark() ? -.2f : -.07f);
             final Bitmap bitmapOptions = AndroidUtilities.applyColorMatrix(bitmap, colorMatrixOptions);
             bitmapOptions.setHasAlpha(false);
 
             bitmap.recycle();
             bitmaps.run(bitmapBg, bitmapOptions);
-        }, 15);
+        }, org.telegram.ui.ForkGlassSurface.captureBlurAmount(15));
     }
 
     private void checkBitmapMatrix() {

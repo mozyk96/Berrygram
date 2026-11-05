@@ -20,6 +20,9 @@ public final class VoiceQualitySettings {
         prefs().edit().putString("bitrate", Integer.toString(value)).putString("mode", "custom").apply();
     }
     public static int recordingBitrate() {
-        return VoiceQualityPolicy.resolve(mode(), customBitrate(), SharedConfig.deviceIsLow(), ApplicationLoader.isConnectionSlow());
+        int resolved = VoiceQualityPolicy.resolve(mode(), customBitrate(),
+                SharedConfig.deviceIsLow(), ApplicationLoader.isConnectionSlow());
+        if ("custom".equals(mode())) return resolved;
+        return VoiceProfilePolicy.bitrate(VoiceProfileSettings.profile(), resolved);
     }
 }

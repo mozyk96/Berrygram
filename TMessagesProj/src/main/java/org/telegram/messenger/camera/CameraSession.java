@@ -380,8 +380,8 @@ public class CameraSession {
                     params.setPreviewSize(previewSize.getWidth(), previewSize.getHeight());
                     params.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
                     params.setPictureFormat(pictureFormat);
-                    params.setJpegQuality(100);
-                    params.setJpegThumbnailQuality(100);
+                    params.setJpegQuality(org.telegram.messenger.fork.camera.CameraProfileSettings.jpegQuality());
+                    params.setJpegThumbnailQuality(90);
                     maxZoom = params.getMaxZoom();
                     params.setZoom((int) (currentZoom * maxZoom));
 

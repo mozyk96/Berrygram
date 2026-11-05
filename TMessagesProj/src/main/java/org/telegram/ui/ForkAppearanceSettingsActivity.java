@@ -37,6 +37,14 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         style.setIcon(R.drawable.msg_palette);
         ForkSettingsLayout.interactive(style);
         controls.addView(style);
+        TextSettingsCell glass = new TextSettingsCell(context);
+        glass.setTextAndValue(ForkLocale.get(R.string.ForkGlassTitle),
+                ForkLocale.get(R.string.ForkGlassSubtitle), false);
+        glass.setIcon(R.drawable.msg_palette);
+        ForkSettingsLayout.interactive(glass);
+        glass.setVisibility("experimental".equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
+        glass.setOnClickListener(v -> presentFragment(new ForkExperimentalGlassActivity()));
+        controls.addView(glass);
         TextSettingsCell radius = new TextSettingsCell(context);
         radius.setTextAndValue(ForkLocale.get(R.string.ForkAppearanceRadius), ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
         controls.addView(radius);
@@ -127,6 +135,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                             org.telegram.messenger.LiteMode.toggleFlag(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS, "liquid".equals(modes[index]));
                         }
                         style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
+                        glass.setVisibility("experimental".equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
                         effect.setEnabled(effectsAvailable());
                         ForkSettingsLayout.refreshSection(controls, false);
                         ForkFloatingHeader.refresh(fragmentView);

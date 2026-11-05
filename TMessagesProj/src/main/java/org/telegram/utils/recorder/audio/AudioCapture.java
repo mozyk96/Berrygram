@@ -11,6 +11,8 @@ import android.os.SystemClock;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.telegram.messenger.fork.voice.VoiceProcessing;
+
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -67,6 +69,7 @@ final class AudioCapture {
 
     // Capture thread.
     private AudioRecord audioRecord;
+    private VoiceProcessing.Handle audioEffects;
     private long capturedSamples;
     private long lastProgressMs;
 
@@ -140,7 +143,7 @@ final class AudioCapture {
             }
             int audioRecordBufferSize = Math.max(minimumBufferSize * 2, FRAME_BYTES * 4);
             audioRecord = new AudioRecord(
-                    MediaRecorder.AudioSource.DEFAULT,
+                    VoiceProcessing.source(),
                     SAMPLE_RATE,
                     AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT,
@@ -153,9 +156,13 @@ final class AudioCapture {
             if (audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
                 throw new IllegalStateException("Unable to start AudioRecord");
             }
+            audioEffects = VoiceProcessing.attach(audioRecord.getAudioSessionId(),
+                    noiseSuppression == AudioRecordingSession.NoiseSuppression.RNNOISE);
             diagnostics.log("AudioRecord started: minBufferBytes=" + minimumBufferSize
                     + ", bufferBytes=" + audioRecordBufferSize
-                    + ", sessionId=" + audioRecord.getAudioSessionId());
+                    + ", sessionId=" + audioRecord.getAudioSessionId()
+                    + ", effects=" + VoiceProcessing.availabilitySummary()
+                    + ", attached=" + (audioEffects != null && audioEffects.hasAny()));
             lastProgressMs = SystemClock.elapsedRealtime();
             callback.onStarted();
             captureHandler.post(this::readOnce);
@@ -217,6 +224,8 @@ final class AudioCapture {
             } catch (Throwable error) {
                 if (failure == null) failure = asException(error);
             } finally {
+                VoiceProcessing.release(audioEffects);
+                audioEffects = null;
                 audioRecord.release();
                 audioRecord = null;
             }

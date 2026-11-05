@@ -3331,6 +3331,8 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                     android.util.Range<Integer> range = videoEncoder.getCodecInfo().getCapabilitiesForType(VIDEO_MIME_TYPE).getVideoCapabilities().getBitrateRange();
                     forkAutoMinBitrate = range.getLower(); forkAutoMaxBitrate = range.getUpper();
                     selectedBitrate = org.telegram.messenger.fork.camera.RoundVideoQualityPolicy.supported(standardBitrate, videoBitrate, range.getLower(), range.getUpper());
+                    selectedBitrate = org.telegram.messenger.fork.camera.CameraProfileSettings.scaleBitrate(
+                            selectedBitrate, range.getLower(), range.getUpper());
                 } catch (RuntimeException ignored) { }
                 format.setInteger(MediaFormat.KEY_BIT_RATE, selectedBitrate);
                 format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);

@@ -1,3 +1,13 @@
+## 1.3.0-beta.5 — Glass 2.0, adaptive camera and voice engine
+
+- Experimental Glass 2.0: independent transparency, blur, frost/matte, saturation, edge light, highlight, shadow depth, tint and corner radius, plus Clear/Frosted/Balanced/Deep presets and an in-place live preview. Existing Experimental Glass appearance is migrated, and popup, Mini Dock and reaction surfaces use the real Telegram blur path with safe fallbacks.
+- Round-video settings now embed the requested panel: two circular icon-only controls on the left (preview power and camera switch) and a large circular live preview on the right, with strict pause/detach cleanup.
+- Adaptive Camera Engine: real Camera2 capability discovery, Automatic/Quality/Balanced/Performance/Custom profiles, JPEG quality, round-video bitrate and FPS limits, validated Camera2 FPS ranges and advertised OIS/EIS stabilization.
+- Berry Voice Engine: Standard/Automatic/Clear/Natural/Custom profiles, real platform noise suppression, AGC, echo cancellation on request, microphone source selection, profile-aware Opus bitrate and a local record/play/delete test tool.
+- New pure-policy tests for glass, camera profiles and voice profiles; full smoke, Debug compile and Release/R8 passed. Beta 5 is a pre-release for owner acceptance; device camera/voice/glass behaviour still needs physical testing.
+
+Beta for owner acceptance, not Stable.
+
 ## 1.3.0-beta.4 — updater/API hotfix
 
 - Version/code bump so the in-app updater can move from the installed Beta 3 test build (`72609`) to the credential-bearing release.

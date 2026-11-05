@@ -1092,6 +1092,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
 
     private boolean audioRecorderPaused;
     private AudioRecord audioRecorder;
+    private org.telegram.messenger.fork.voice.VoiceProcessing.Handle forkVoiceEffects;
     public TLRPC.TL_document recordingAudio;
     private int recordingGuid = -1;
     private int recordingCurrentAccount;
@@ -1133,6 +1134,19 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
     private Runnable recordStartRunnable;
     private DispatchQueue recordQueue;
     private DispatchQueue fileEncodingQueue;
+
+    private void attachForkVoiceEffects() {
+        releaseForkVoiceEffects();
+        if (audioRecorder == null) return;
+        forkVoiceEffects = org.telegram.messenger.fork.voice.VoiceProcessing.attach(
+                audioRecorder.getAudioSessionId(), false);
+    }
+
+    private void releaseForkVoiceEffects() {
+        org.telegram.messenger.fork.voice.VoiceProcessing.release(forkVoiceEffects);
+        forkVoiceEffects = null;
+    }
+
     private Runnable recordRunnable = new Runnable() {
         @Override
         public void run() {
@@ -4964,6 +4978,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 recordingAudioFile.delete();
                 recordingAudioFile = null;
                 try {
+                    releaseForkVoiceEffects();
                     audioRecorder.release();
                     audioRecorder = null;
                 } catch (Exception e2) {
@@ -5112,7 +5127,8 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 }
                 sendAfterDone = 4;
                 audioRecorder.stop();
-                audioRecorder.release();
+                releaseForkVoiceEffects();
+                    audioRecorder.release();
                 audioRecorder = null;
                 recordQueue.postRunnable(() -> {
                     stopRecord();
@@ -5173,12 +5189,13 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                         requestRecordAudioFocus(true);
 //                        MediaDataController.getInstance(recordingCurrentAccount).pushDraftVoiceMessage(recordDialogId, recordTopicId, null);
 //
-                        audioRecorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, recordBufferSize);
+                        audioRecorder = new AudioRecord(org.telegram.messenger.fork.voice.VoiceProcessing.source(), sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, recordBufferSize);
                         recordStartTime = System.currentTimeMillis();
                         writtenFrame = 0;
                         samplesCount = 0;
                         fileBuffer.rewind();
                         audioRecorder.startRecording();
+                        attachForkVoiceEffects();
                         recordQueue.postRunnable(recordRunnable);
 
                         NotificationCenter.getInstance(recordingCurrentAccount).postNotificationName(NotificationCenter.recordResumed);
@@ -5276,7 +5293,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 }
 
                 audioRecorderPaused = false;
-                audioRecorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, recordBufferSize);
+                audioRecorder = new AudioRecord(org.telegram.messenger.fork.voice.VoiceProcessing.source(), sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, recordBufferSize);
                 recordStartTime = System.currentTimeMillis();
                 recordTimeCount = 0;
                 writtenFrame = 0;
@@ -5293,6 +5310,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                 fileBuffer.rewind();
 
                 audioRecorder.startRecording();
+                        attachForkVoiceEffects();
             } catch (Exception e) {
                 FileLog.e(e);
                 recordingAudio = null;
@@ -5305,6 +5323,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                     recordingPrevAudioFile = null;
                 }
                 try {
+                    releaseForkVoiceEffects();
                     audioRecorder.release();
                     audioRecorder = null;
                 } catch (Exception e2) {
@@ -5476,7 +5495,8 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         }
         try {
             if (audioRecorder != null) {
-                audioRecorder.release();
+                releaseForkVoiceEffects();
+                    audioRecorder.release();
                 audioRecorder = null;
             }
         } catch (Exception e) {

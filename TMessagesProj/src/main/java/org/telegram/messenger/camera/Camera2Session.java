@@ -468,6 +468,68 @@ public class Camera2Session {
         }
     }
 
+    private Range<Integer> selectVideoFpsRange() {
+        if (cameraCharacteristics == null) return null;
+        Range<Integer>[] ranges = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        if (ranges == null || ranges.length == 0) return null;
+        boolean supports60 = false;
+        for (Range<Integer> range : ranges) {
+            if (range != null && range.getUpper() >= 60) {
+                supports60 = true;
+                break;
+            }
+        }
+        String profile = org.telegram.messenger.fork.camera.CameraProfileSettings.mode();
+        int[] target = org.telegram.messenger.fork.camera.CameraProfilePolicy.preferredFpsBounds(
+                profile, supports60, org.telegram.messenger.SharedConfig.deviceIsLow());
+        int[] lowers = new int[ranges.length];
+        int[] uppers = new int[ranges.length];
+        for (int i = 0; i < ranges.length; i++) {
+            lowers[i] = ranges[i] == null ? 0 : ranges[i].getLower();
+            uppers[i] = ranges[i] == null ? 0 : ranges[i].getUpper();
+        }
+        int index = org.telegram.messenger.fork.camera.CameraProfilePolicy.selectFpsRange(
+                lowers, uppers, target[1]);
+        return index >= 0 ? ranges[index] : null;
+    }
+
+    private void applyStabilization(CaptureRequest.Builder builder) {
+        if (cameraCharacteristics == null || builder == null) return;
+        int[] videoModes = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES);
+        int[] opticalModes = cameraCharacteristics.get(
+                CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION);
+        boolean videoSupported = contains(videoModes,
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+        boolean opticalSupported = contains(opticalModes,
+                CameraCharacteristics.LENS_OPTICAL_STABILIZATION_MODE_ON);
+        boolean enabled = org.telegram.messenger.fork.camera.CameraProfileSettings
+                .stabilizationEnabled(videoSupported || opticalSupported);
+        if (!enabled) {
+            if (videoSupported) {
+                builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
+            }
+            return;
+        }
+        if (videoSupported) {
+            builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+        } else if (opticalSupported) {
+            builder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON);
+        }
+    }
+
+    private static boolean contains(int[] values, int target) {
+        if (values == null) return false;
+        for (int value : values) {
+            if (value == target) return true;
+        }
+        return false;
+    }
+
     private void updateCaptureRequest() {
         if (cameraDevice == null || surface == null || captureSession == null) return;
         try {
@@ -490,7 +552,11 @@ public class Camera2Session {
             captureRequestBuilder.set(CaptureRequest.FLASH_MODE, flashing ? (recordingVideo ? CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_SINGLE) : CaptureRequest.FLASH_MODE_OFF);
 
             if (recordingVideo) {
-                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<Integer>(30, 60));
+                Range<Integer> fps = selectVideoFpsRange();
+                if (fps != null) {
+                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fps);
+                }
+                applyStabilization(captureRequestBuilder);
                 captureRequestBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD);
             }
 

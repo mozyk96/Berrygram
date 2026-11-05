@@ -931,7 +931,9 @@ public class ActionBarMenuItem extends FrameLayout {
                 org.telegram.ui.ForkGraphicsSurface.effectsSuppressed(),
                 Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()), subMenuFactory != null,
                 topView == null && popupLayout.hasForkStyleBackground());
-        if (captureGlass) AndroidUtilities.makeGlobalBlurBitmap(bitmap -> capture[0] = bitmap, 15);
+        if (captureGlass) AndroidUtilities.makeGlobalBlurBitmap(
+                bitmap -> capture[0] = org.telegram.ui.ForkGlassSurface.processBackdrop(bitmap),
+                org.telegram.ui.ForkGlassSurface.captureBlurAmount(15));
         updateOrShowPopup(true, container.getMeasuredWidth() == 0);
         if (capture[0] != null && popupWindow.isShowing()) {
             forkMenuBitmap = capture[0];
