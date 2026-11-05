@@ -1,3 +1,15 @@
+## 1.3.0-beta.3 — Android stability, performance and glass
+
+- Fixed the message-menu crash caused by the custom More page being added to a popup without a swipe-back container (NPE in `addViewToSwipeBack`). Hidden actions remain reachable; the popup requests the container whenever hidden menu actions exist and degrades safely otherwise.
+- Gesture actions now validate message/account/edit eligibility before native dispatch, use a single scoped execution path, show an accurate edit-unavailable message, and never recurse through the double-tap callback. Verified on device: tap→Edit opens the native edit flow and reports a server-side edit refusal without crashing.
+- Removed the unwanted dynamic-neutral "Material" surface tint. Settings now derive from Telegram theme colors; legacy `style=material` migrates to Blur. Fixed double-encoded Ukrainian/Russian BerryGram graphics labels.
+- Lock screen: evicted/missing wallpapers or invalid bitmaps fall back to the Telegram theme wallpaper color instead of an opaque black frame; darkening overlay is applied only after a wallpaper was actually drawn.
+- Performance Center rebuilt to update rows in place instead of recreating the page. Removed nonfunctional controls; profile, custom effects, Lite Mode, storage/cache and privacy-safe diagnostics copy are wired to real actions. Added thermal/low-RAM-aware effect reduction and cached gesture/reaction/performance preferences.
+- Added optional Experimental Glass style alongside Blur and Liquid Glass: higher translucency, stronger edge light and softer shadows using the existing Telegram blur source, with API/capability fallback to theme colours.
+- Existing 1.2.0 headers, Mini Dock, camera, voice, custom text, updater and account isolation retained.
+
+Beta for owner acceptance, not Stable. Device lock-screen and Experimental Glass visual quality still require owner confirmation; no Stable or Desktop release.
+
 ## 1.3.0-beta.2 — Android stability and performance
 
 - Gesture dispatch now uses one re-entrant-safe path with native tap/long-press eligibility, correct unavailable-action feedback, and a dedicated double-tap reaction helper instead of a recursive callback.

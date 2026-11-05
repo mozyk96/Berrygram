@@ -573,17 +573,20 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
             }
 
             private void drawBackground(Canvas canvas) {
+                // Start with a theme color; only apply the darkening overlay after a
+                // usable wallpaper was actually drawn. An evicted bitmap must not
+                // produce an opaque black passcode screen.
+                paint.setColor(passcodeFallbackColor());
+                boolean wallpaperDrawn = false;
                 if (backgroundDrawable != null) {
                     if (backgroundDrawable instanceof MotionBackgroundDrawable || backgroundDrawable instanceof ColorDrawable || backgroundDrawable instanceof GradientDrawable) {
                         backgroundDrawable.setBounds(0, 0, getMeasuredWidth(), getMeasuredHeight());
                         backgroundDrawable.draw(canvas);
+                        wallpaperDrawn = true;
                     } else {
                         int intrinsicWidth = backgroundDrawable.getIntrinsicWidth();
                         int intrinsicHeight = backgroundDrawable.getIntrinsicHeight();
-                        if (intrinsicWidth <= 0 || intrinsicHeight <= 0) {
-                            // Missing/evicted wallpaper bitmap must not leave a black frame.
-                            paint.setColor(passcodeFallbackColor());
-                        } else {
+                        if (intrinsicWidth > 0 && intrinsicHeight > 0) {
                             float scaleX = (float) getMeasuredWidth() / (float) intrinsicWidth;
                             float scaleY = (float) (getMeasuredHeight() + keyboardHeight) / (float) intrinsicHeight;
                             float scale = Math.max(scaleX, scaleY);
@@ -593,10 +596,14 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
                             int y = (getMeasuredHeight() - height + keyboardHeight) / 2;
                             backgroundDrawable.setBounds(x, y, x + width, y + height);
                             backgroundDrawable.draw(canvas);
+                            wallpaperDrawn = true;
                         }
                     }
                 } else {
                     super.onDraw(canvas);
+                }
+                if (wallpaperDrawn && backgroundFrameLayoutColor != 0) {
+                    paint.setColor(backgroundFrameLayoutColor);
                 }
                 canvas.drawRect(0, 0, getMeasuredWidth(), getMeasuredHeight(), paint);
             }

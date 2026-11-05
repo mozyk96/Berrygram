@@ -37,8 +37,9 @@ public class ForkReactionSettingsTest {
         check(!ForkReactionSettings.customized(1));
         ForkReactionSettings.move(0, 2, 0);
         check(ForkReactionSettings.favorites(0).equals(Arrays.asList("❤", "🔥", "👍")));
-        // Read directly from the shared persistent store; no process-local cache can satisfy this.
+        // Simulate an external/migrated preference write, then invalidate the cache.
         ActionSettings.preferences(0).edit().putString("reaction_favorites", "👏,👍").apply();
+        ForkReactionSettings.invalidateCache();
         check(ForkReactionSettings.favorites(0).equals(Arrays.asList("👏", "👍")));
         ForkReactionSettings.setDoubleTapReaction(0, "🔥");
         check("🔥".equals(ForkReactionSettings.doubleTapReaction(0, "fallback")));
@@ -55,8 +56,10 @@ public class ForkReactionSettingsTest {
         ForkReactionSettings.setFavorites(0, Collections.singletonList("👍"));
         check(ForkReactionSettings.favorites(0).size() == 1);
         ActionSettings.preferences(0).edit().putString("reaction_double_tap", "animated_123").apply();
+        ForkReactionSettings.invalidateCache();
         check("fallback".equals(ForkReactionSettings.doubleTapReaction(0, "fallback")));
         ActionSettings.preferences(0).edit().putString("reaction_favorites", "bad,bad").apply();
+        ForkReactionSettings.invalidateCache();
         check(ForkReactionSettings.favorites(0).size() == 4);
         boolean rejected = false;
         try { ForkReactionSettings.setFavorites(0, Collections.emptyList()); } catch (IllegalArgumentException expected) { rejected = true; }

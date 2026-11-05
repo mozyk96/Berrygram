@@ -1,5 +1,7 @@
 package org.telegram.messenger.fork.actions;
 
+import org.telegram.messenger.UserConfig;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,6 +15,12 @@ public final class ForkReactionSettings {
     private static final String FAVORITES = "reaction_favorites";
     private static final String DOUBLE_TAP = "reaction_double_tap";
     private static final List<String> DEFAULTS = Collections.unmodifiableList(Arrays.asList("👍", "❤", "🔥", "👏"));
+    private static final Object CACHE_LOCK = new Object();
+    private static int cacheAccount = -1;
+    private static long cacheUserId = Long.MIN_VALUE;
+    private static boolean cachedCustomized;
+    private static List<String> cachedFavorites;
+    private static String cachedDoubleTap;
     private ForkReactionSettings() { }
 
     /** Syntax guard only: Telegram's enabled catalog and chat allowed list remain authoritative. */
@@ -48,11 +56,40 @@ public final class ForkReactionSettings {
         return base;
     }
 
-    public static boolean customized(int account) { return ActionSettings.preferences(account).contains(FAVORITES); }
-    public static List<String> favorites(int account) {
+    private static void ensureCache(int account) {
+        long userId = UserConfig.getInstance(account).getClientUserId();
+        if (account == cacheAccount && userId == cacheUserId) return;
         String raw = read(account, FAVORITES, "");
-        List<String> result = normalize(Arrays.asList(raw.split(",")));
-        return result.isEmpty() ? new ArrayList<>(DEFAULTS) : result;
+        List<String> normalized = normalize(Arrays.asList(raw.split(",")));
+        cachedFavorites = normalized.isEmpty() ? new ArrayList<>(DEFAULTS) : normalized;
+        cachedCustomized = ActionSettings.preferences(account).contains(FAVORITES);
+        cachedDoubleTap = read(account, DOUBLE_TAP, "");
+        cacheAccount = account;
+        cacheUserId = userId;
+    }
+
+    /** Visible for tests and external preference migrations. */
+    public static void invalidateCache() {
+        synchronized (CACHE_LOCK) {
+            cacheAccount = -1;
+            cacheUserId = Long.MIN_VALUE;
+            cachedFavorites = null;
+            cachedDoubleTap = null;
+        }
+    }
+
+    public static boolean customized(int account) {
+        synchronized (CACHE_LOCK) {
+            ensureCache(account);
+            return cachedCustomized;
+        }
+    }
+
+    public static List<String> favorites(int account) {
+        synchronized (CACHE_LOCK) {
+            ensureCache(account);
+            return new ArrayList<>(cachedFavorites);
+        }
     }
     private static String read(int account, String key, String fallback) {
         try { return ActionSettings.preferences(account).getString(key, fallback); }
@@ -78,8 +115,12 @@ public final class ForkReactionSettings {
         StringBuilder encoded = new StringBuilder();
         for (String value : normalized) { if (encoded.length() > 0) encoded.append(','); encoded.append(value); }
         ActionSettings.preferences(account).edit().putString(FAVORITES, encoded.toString()).apply();
+        invalidateCache();
     }
-    public static void useNativeFavorites(int account) { ActionSettings.preferences(account).edit().remove(FAVORITES).apply(); }
+    public static void useNativeFavorites(int account) {
+        ActionSettings.preferences(account).edit().remove(FAVORITES).apply();
+        invalidateCache();
+    }
     public static void move(int account, int from, int to) {
         List<String> values = favorites(account);
         if (from < 0 || to < 0 || from >= values.size() || to >= values.size()) return;
@@ -87,8 +128,10 @@ public final class ForkReactionSettings {
         setFavorites(account, values);
     }
     public static String doubleTapReaction(int account, String fallback) {
-        String value = read(account, DOUBLE_TAP, "");
-        return standardEmoji(value) ? value : fallback;
+        synchronized (CACHE_LOCK) {
+            ensureCache(account);
+            return standardEmoji(cachedDoubleTap) ? cachedDoubleTap : fallback;
+        }
     }
     public static void setDoubleTapReaction(int account, String value) {
         if (value == null) {
@@ -100,11 +143,13 @@ public final class ForkReactionSettings {
             ActionSettings.preferences(account).edit().putString(DOUBLE_TAP, value).apply();
             ActionSettings.setGesture(account, "double_tap", ActionRegistry.REACTION);
         }
+        invalidateCache();
     }
     public static void reset(int account) {
         ActionSettings.preferences(account).edit().remove(FAVORITES).remove(DOUBLE_TAP).apply();
         if (ActionRegistry.REACTION.equals(ActionSettings.gesture(account, "double_tap"))) {
             ActionSettings.setGesture(account, "double_tap", "native");
         }
+        invalidateCache();
     }
 }
