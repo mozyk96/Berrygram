@@ -6,7 +6,8 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(!PanelPolicy.useGlass(true,false,32,true));
  check(!PanelPolicy.useGlass(true,false,33,false));
  check("liquid".equals(PanelPolicy.effectiveStyle("liquid", false, 33, true)));
- check("blur".equals(PanelPolicy.effectiveStyle("blur", false, 33, true)));
+ check("experimental".equals(PanelPolicy.effectiveStyle("experimental", false, 33, true)));
+ check("material".equals(PanelPolicy.effectiveStyle("experimental", true, 33, true)));
  check("material".equals(PanelPolicy.effectiveStyle("liquid", true, 33, true)));
  check("material".equals(PanelPolicy.effectiveStyle("liquid", false, 32, true)));
  check("material".equals(PanelPolicy.effectiveStyle("invalid", false, 33, true)));
@@ -22,6 +23,7 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(PanelPolicy.surfaceRadiusDp("material", 30) == 30);
  check(PanelPolicy.surfaceRadiusDp("blur", 8) == 12);
  check(PanelPolicy.surfaceRadiusDp("liquid", 99) == 32);
+ check(PanelPolicy.surfaceRadiusDp("experimental", 99) == 32);
  check(PanelPolicy.surfaceRadiusDp("unknown", 30) == 12);
  check(PanelPolicy.effectStrength(-5) == 0);
  check(PanelPolicy.effectStrength(120) == 100);

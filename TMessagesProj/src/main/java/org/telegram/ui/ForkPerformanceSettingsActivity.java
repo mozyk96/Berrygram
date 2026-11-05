@@ -162,6 +162,7 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
     private static String styleLabel() {
         String style = ForkGraphicsSurface.effectiveStyle();
         if ("liquid".equals(style)) return ForkLocale.get(R.string.ForkGraphicsLiquid);
+        if ("experimental".equals(style)) return ForkLocale.get(R.string.ForkGraphicsExperimental);
         if ("blur".equals(style)) return ForkLocale.get(R.string.ForkGraphicsBlur);
         return ForkLocale.get(R.string.ForkPerformanceOpaque);
     }

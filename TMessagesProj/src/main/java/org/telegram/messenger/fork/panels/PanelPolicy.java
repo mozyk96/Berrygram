@@ -5,7 +5,7 @@ public final class PanelPolicy {
     public static int popupRadiusDp(boolean experimental) { return experimental ? 26 : 12; }
     public static int popupRadiusDp(boolean experimental, int requested) { return experimental ? Math.max(12, Math.min(32, requested)) : 12; }
     public static int surfaceRadiusDp(String style, int requested) {
-        return "material".equals(style) || "blur".equals(style) || "liquid".equals(style) ? popupRadiusDp(true, requested) : 12;
+        return "material".equals(style) || "blur".equals(style) || "liquid".equals(style) || "experimental".equals(style) ? popupRadiusDp(true, requested) : 12;
     }
     public static int settingsRadiusDp() { return 18; }
     public static int settingsGapDp() { return 6; }
@@ -29,7 +29,10 @@ public final class PanelPolicy {
         return enabled && !savingPower && sdk >= 33 && capable;
     }
     public static String effectiveStyle(String requested, boolean savingPower, int sdk, boolean capable) {
-        if (("liquid".equals(requested) || "blur".equals(requested)) && useGlass(true, savingPower, sdk, capable)) return requested;
+        if (("liquid".equals(requested) || "blur".equals(requested) || "experimental".equals(requested))
+                && useGlass(true, savingPower, sdk, capable)) {
+            return requested;
+        }
         return "material";
     }
     public static boolean captureMenuGlass(boolean enabled, boolean savingPower, int sdk, boolean capable, boolean hasFactory, boolean eligible) {

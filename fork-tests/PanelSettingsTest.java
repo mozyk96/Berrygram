@@ -28,6 +28,7 @@ public class PanelSettingsTest {
   styleCache.set(null, null); enabledCache.set(null, null);
   check(ForkPanelSettings.enabled() && "liquid".equals(ForkPanelSettings.style()));
   ForkPanelSettings.setStyle("material"); check(ForkPanelSettings.enabled() && "blur".equals(ForkPanelSettings.style()));
+  ForkPanelSettings.setStyle("experimental"); check(ForkPanelSettings.enabled() && "experimental".equals(ForkPanelSettings.style()));
   ForkPanelSettings.setStyle("blur"); check(ForkPanelSettings.enabled() && "blur".equals(ForkPanelSettings.style()));
   boolean rejected=false; try { ForkPanelSettings.setStyle("invalid"); } catch (IllegalArgumentException expected) { rejected=true; }
   check(rejected && "blur".equals(ForkPanelSettings.style()));

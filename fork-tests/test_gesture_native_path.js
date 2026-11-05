@@ -31,7 +31,7 @@ public class GestureNativePathTest {
  static final int OPTION_REPLY=8,OPTION_FORWARD=2,OPTION_COPY=3,OPTION_DELETE=1;
  static class View {float getX(){return 15;} float getY(){return 100;}}
  static class Owner {boolean noforwards;}
- static class MessageObject {Owner messageOwner=new Owner(); int currentAccount;boolean isDateObject;boolean isMediaEmpty(){return true;}boolean isSending(){return false;}boolean isEditing(){return false;} long getGroupId(){return 0;} Object getFromPeer(){return null;} boolean isTodo(){return false;} boolean isPoll(){return false;} boolean isPublicPoll(){return false;} boolean isInvoice(){return false;} static class GroupedMessages{MessageObject captionMessage;}}
+ static class MessageObject {Owner messageOwner=new Owner(); int currentAccount;boolean isDateObject;boolean isMediaEmpty(){return true;}boolean isSending(){return false;}boolean isEditing(){return false;}boolean canEditMessage(Object c){return true;} long getGroupId(){return 0;} Object getFromPeer(){return null;} boolean isTodo(){return false;} boolean isPoll(){return false;} boolean isPublicPoll(){return false;} boolean isInvoice(){return false;} static class GroupedMessages{MessageObject captionMessage;}}
  static class ChatMessageCell extends View {MessageObject message=new MessageObject();MessageObject getMessageObject(){return message;}MessageObject getPrimaryMessageObject(){return message;}}
  static class Bar {boolean isActionModeShowed(){return false;}}
  static class Chat {long linked_monoforum_id;boolean megagroup;}
@@ -50,6 +50,7 @@ public class GestureNativePathTest {
  Bar actionBar=new Bar(); boolean searching,inPreviewMode,forkGestureDispatching;String forkRequestedAction;int currentAccount;Chat currentChat;UndoView undoView;
  boolean forkSendDoubleTapReaction(View v,MessageObject m,float x,float y){return true;}
  void forkShowActionUnavailable(){unavailable++;}
+ void forkShowActionUnavailable(String action){unavailable++;}
  MessageObject selectedObject,selectedObjectToEditCaption,forwardingMessage,replyingMessageObject,replied;MessageObject.GroupedMessages selectedObjectGroup,forwardingMessageGroup;
  int multiselect,unavailable,executions;DialogsActivity destination;boolean closed;
  interface Listener {void onDoubleTap(View v,int p,float x,float y);}Listener onItemClickListener=(v,p,x,y)->{};

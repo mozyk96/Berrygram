@@ -10,6 +10,7 @@
     <string name="ForkGraphicsStyle">Menu style</string>
     <string name="ForkGraphicsBlur">Blur</string>
     <string name="ForkGraphicsLiquid">Liquid Glass (experimental)</string>
+    <string name="ForkGraphicsExperimental">Experimental Glass (beta)</string>
     <string name="ForkColorTitle">Accent color</string>
     <string name="ForkColorSystem">System color</string>
     <string name="ForkColorSquare">Saturation and brightness</string>

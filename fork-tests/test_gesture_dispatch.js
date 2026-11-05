@@ -10,7 +10,7 @@ public class GestureDispatchTest {
  static class LinkedText implements Spanned{public int length(){return 4;}public char charAt(int i){return 'x';}public CharSequence subSequence(int a,int b){return "xx";}public <T>T[]getSpans(int a,int b,Class<T> c){return (T[])new ClickableSpan[]{new ClickableSpan()};}}
  static class TLRPC{static class TL_messageMediaEmpty{}}
  static class Owner{Object media,reply_markup;ArrayList<Object> entities=new ArrayList<>();}
- static class MessageObject{static final int TYPE_TEXT=0;int type,textWidth=100,currentAccount;CharSequence messageText="body";Owner messageOwner=new Owner();boolean sponsored,isDateObject;boolean isSending(){return false;}boolean isEditing(){return false;}boolean isSponsored(){return sponsored;}int textHeight(){return 40;}}
+ static class MessageObject{static final int TYPE_TEXT=0;int type,textWidth=100,currentAccount;CharSequence messageText="body";Owner messageOwner=new Owner();boolean sponsored,isDateObject;boolean isSending(){return false;}boolean isEditing(){return false;}boolean isSponsored(){return sponsored;}boolean canEditMessage(Object c){return true;}int textHeight(){return 40;}}
  static class ChatMessageCell extends View{MessageObject m=new MessageObject();MessageObject getMessageObject(){return m;}MessageObject getPrimaryMessageObject(){return m;}boolean isInsideBackground(float x,float y){return x>=0&&x<200;}int getTextX(){return 10;}int getTextY(){return 20;}}
  static class Bar{boolean mode;boolean isActionModeShowed(){return mode;}}
  Bar actionBar=new Bar();boolean searching,inPreviewMode,selection,trying,forkGestureDispatching;String forkRequestedAction;Object selectedObject,selectedObjectGroup,selectedObjectToEditCaption;int currentAccount,lastOption=-1,reactions,unavailable;float reactionX,reactionY;
@@ -18,6 +18,8 @@ public class GestureDispatchTest {
  List<Integer> allowed=new ArrayList<>();boolean reentered;
  boolean forkSendDoubleTapReaction(View v,MessageObject m,float x,float y){reactions++;reactionX=x;reactionY=y;return true;}
  void forkShowActionUnavailable(){unavailable++;}
+ void forkShowActionUnavailable(String action){unavailable++;}
+ Object currentChat;
  boolean lastSingle,lastListView,lastLongpress,failMenu;
  boolean createMenu(View v,boolean single,boolean listView,float x,float y,boolean longpress){
   lastOption=ActionRegistry.availableOption(forkRequestedAction,allowed);lastSingle=single;lastListView=listView;lastLongpress=longpress;

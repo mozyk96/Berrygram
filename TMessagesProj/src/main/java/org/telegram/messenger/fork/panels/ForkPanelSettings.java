@@ -21,7 +21,7 @@ public final class ForkPanelSettings {
             if (value == null) {
                 android.content.SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE);
                 value = prefs.getString("style", prefs.getBoolean("enabled", false) ? "blur" : "material");
-                if (!"blur".equals(value) && !"liquid".equals(value)) {
+                if (!"blur".equals(value) && !"liquid".equals(value) && !"experimental".equals(value)) {
                     value = "blur";
                     prefs.edit().putString("style", value).putBoolean("enabled", true).apply();
                 }
@@ -32,7 +32,7 @@ public final class ForkPanelSettings {
     }
     public static synchronized void setStyle(String value) {
         if ("material".equals(value)) value = "blur";
-        if (!"blur".equals(value) && !"liquid".equals(value)) throw new IllegalArgumentException("Invalid graphics style");
+        if (!"blur".equals(value) && !"liquid".equals(value) && !"experimental".equals(value)) throw new IllegalArgumentException("Invalid graphics style");
         boolean active = true;
         ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("style", value).putBoolean("enabled", active).apply();
         cached = active;

@@ -1729,8 +1729,13 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private void forkShowActionUnavailable() {
+        forkShowActionUnavailable(null);
+    }
+
+    private void forkShowActionUnavailable(String action) {
         if (getParentActivity() == null || fragmentView == null) return;
-        BulletinFactory.of(this).createErrorBulletin(ForkLocale.get(R.string.ForkActionUnavailable)).show();
+        int text = "edit".equals(action) ? R.string.ForkActionEditUnavailable : R.string.ForkActionUnavailable;
+        BulletinFactory.of(this).createErrorBulletin(ForkLocale.get(text)).show();
     }
 
     /**
@@ -1749,6 +1754,10 @@ public class ChatActivity extends BaseFragment implements
         MessageObject message = ((ChatMessageCell) view).getMessageObject();
         if (message == null || message.messageOwner == null || message.currentAccount != currentAccount
                 || message.isDateObject || message.isSending() || message.isEditing()) return true;
+        if ("edit".equals(action) && !message.canEditMessage(currentChat)) {
+            forkShowActionUnavailable("edit");
+            return true;
+        }
         forkGestureDispatching = true;
         try {
             if ("menu".equals(action)) {
@@ -1772,8 +1781,8 @@ public class ChatActivity extends BaseFragment implements
             } finally {
                 if (forkRequestedAction != null) {
                     // createMenu exited before the native option could be resolved.
+                    forkShowActionUnavailable(action);
                     forkRequestedAction = null;
-                    forkShowActionUnavailable();
                 }
                 selectedObject = null;
                 selectedObjectGroup = null;
@@ -31396,7 +31405,7 @@ public class ChatActivity extends BaseFragment implements
                 } else {
                     selectedObject = null;
                     selectedObjectGroup = null;
-                    forkShowActionUnavailable();
+                    forkShowActionUnavailable(forkAction);
                 }
                 return true;
             }

@@ -153,7 +153,8 @@ public class LiteMode {
         }
         int active = getValue();
         if (flag == FLAG_LIQUID_GLASS) {
-            return "liquid".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style())
+            String forkStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
+            return ("liquid".equals(forkStyle) || "experimental".equals(forkStyle))
                     && org.telegram.messenger.fork.panels.PanelPolicy.useGlass(true, lastPowerSaverApplied,
                     Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(
                     SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE));
@@ -162,7 +163,10 @@ public class LiteMode {
     }
 
     public static boolean isEnabledSetting(int flag) {
-        if (flag == FLAG_LIQUID_GLASS) return "liquid".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
+        if (flag == FLAG_LIQUID_GLASS) {
+            String forkStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
+            return "liquid".equals(forkStyle) || "experimental".equals(forkStyle);
+        }
         return (getValue(true) & flag) > 0;
     }
 
@@ -177,7 +181,11 @@ public class LiteMode {
 
     public static void setAllFlags(int flags) {
         if (((getValue(true) ^ flags) & FLAG_LIQUID_GLASS) != 0) {
-            org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle((flags & FLAG_LIQUID_GLASS) != 0 ? "liquid" : "blur");
+            boolean keepExperimental = (flags & FLAG_LIQUID_GLASS) != 0
+                    && "experimental".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
+            if (!keepExperimental) {
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle((flags & FLAG_LIQUID_GLASS) != 0 ? "liquid" : "blur");
+            }
         }
         // in settings it is already handled. would you handle it? 🫵
         // onFlagsUpdate(value, flags);

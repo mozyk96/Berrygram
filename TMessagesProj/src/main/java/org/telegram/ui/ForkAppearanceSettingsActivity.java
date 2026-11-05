@@ -112,10 +112,20 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         applyAccent(slider, effect, preview, accent(context));
         color.setOnClickListener(v -> chooseAccent(context, slider, effect, color, preview));
         style.setOnClickListener(v -> {
-            String[] modes = {"blur", "liquid"};
-            CharSequence[] labels = {ForkLocale.get(R.string.ForkGraphicsBlur), ForkLocale.get(R.string.ForkGraphicsLiquid)};
+            String[] modes = {"blur", "liquid", "experimental"};
+            CharSequence[] labels = {
+                    ForkLocale.get(R.string.ForkGraphicsBlur),
+                    ForkLocale.get(R.string.ForkGraphicsLiquid),
+                    ForkLocale.get(R.string.ForkGraphicsExperimental)
+            };
             ForkChoicePopup.show(this, v, labels, null, java.util.Arrays.asList(modes).indexOf(ForkPanelSettings.style()), index -> {
-                        org.telegram.messenger.LiteMode.toggleFlag(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS, "liquid".equals(modes[index]));
+                        if ("experimental".equals(modes[index])) {
+                            ForkPanelSettings.setStyle("experimental");
+                            org.telegram.messenger.LiteMode.setAllFlags(
+                                    org.telegram.messenger.LiteMode.getValue(true) | org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS);
+                        } else {
+                            org.telegram.messenger.LiteMode.toggleFlag(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS, "liquid".equals(modes[index]));
+                        }
                         style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
                         effect.setEnabled(effectsAvailable());
                         ForkSettingsLayout.refreshSection(controls, false);
@@ -150,7 +160,9 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
     }
     private static String styleLabel() {
         String style = ForkPanelSettings.style();
-        return ForkLocale.get("liquid".equals(style) ? R.string.ForkGraphicsLiquid : R.string.ForkGraphicsBlur);
+        if ("liquid".equals(style)) return ForkLocale.get(R.string.ForkGraphicsLiquid);
+        if ("experimental".equals(style)) return ForkLocale.get(R.string.ForkGraphicsExperimental);
+        return ForkLocale.get(R.string.ForkGraphicsBlur);
     }
     private static String animationLabel() {
         String mode = ForkPanelSettings.animationMode();

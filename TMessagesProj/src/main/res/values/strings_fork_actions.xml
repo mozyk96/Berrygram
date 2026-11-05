@@ -10,6 +10,7 @@
     <string name="ForkActionMenu">Message menu</string>
     <string name="ForkActionSave">Save media</string>
     <string name="ForkActionUnavailable">This action is not available for this message.</string>
+    <string name="ForkActionEditUnavailable">This message cannot be edited. You can edit only your own messages within the allowed time.</string>
     <string name="ForkGestureInfo">Account-specific settings. Tap overrides apply to plain message bodies only; links, media and bot controls keep Telegram behavior. Destructive actions retain confirmation. Swipe actions require a horizontal gesture; unavailable actions are never forced. Reset restores Telegram defaults.</string>
     <string name="ForkPerformanceTitle">Performance</string>
     <string name="ForkPerformanceSubtitle">Profile, effects and diagnostics</string>

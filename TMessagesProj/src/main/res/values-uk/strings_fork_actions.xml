@@ -10,6 +10,7 @@
     <string name="ForkActionMenu">Меню повідомлення</string>
     <string name="ForkActionSave">Зберегти медіа</string>
     <string name="ForkActionUnavailable">Ця дія недоступна для повідомлення.</string>
+    <string name="ForkActionEditUnavailable">Це повідомлення не можна редагувати. Редагувати можна лише власні повідомлення в дозволений час.</string>
     <string name="ForkGestureInfo">Налаштування цього акаунта. Власні натискання діють лише на звичайному тексті; посилання, медіа й кнопки ботів працюють як у Telegram. Небезпечні дії зберігають підтвердження. Свайп потребує горизонтального руху; недоступні дії не виконуються. Скидання повертає стандарт Telegram.</string>
     <string name="ForkPerformanceTitle">Продуктивність</string>
     <string name="ForkPerformanceSubtitle">Профіль, ефекти та діагностика</string>

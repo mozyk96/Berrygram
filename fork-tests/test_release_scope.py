@@ -15,4 +15,14 @@ for path in root.rglob('*.java'):
  text=path.read_text(encoding='utf-8',errors='replace')
  for term in retired:
   assert term not in text, (path,term)
+passcode = (root / 'ui/Components/PasscodeView.java').read_text(encoding='utf-8')
+assert 'passcodeFallbackColor()' in passcode
+assert '0xff517c9e' not in passcode
+surface = (root / 'ui/ForkGraphicsSurface.java').read_text(encoding='utf-8')
+assert 'system_neutral1_' not in surface
+popup = (root / 'ui/ActionBar/ActionBarPopupWindow.java').read_text(encoding='utf-8')
+assert 'if (swipeBackLayout == null)' in popup
+performance = (root / 'ui/ForkPerformanceSettingsActivity.java').read_text(encoding='utf-8')
+assert 'removeAllViews' not in performance
+assert 'LiteModeSettingsActivity' in performance and 'CacheControlActivity' in performance
 print('BerryGram release scope checks passed')

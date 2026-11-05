@@ -1,7 +1,7 @@
 package android.content;
 import java.util.HashMap; import java.util.Map;
 public class Context {
- public static final int MODE_PRIVATE=0; public static final String POWER_SERVICE="power"; private final Map<String,Prefs> prefs=new HashMap<>();
+ public static final int MODE_PRIVATE=0; public static final String POWER_SERVICE="power"; public static final String ACTIVITY_SERVICE="activity"; private final Map<String,Prefs> prefs=new HashMap<>();
  public Object getSystemService(String name) { return null; }
  public SharedPreferences getSharedPreferences(String name,int mode) { return prefs.computeIfAbsent(name, k -> new Prefs()); }
  public static class Prefs implements SharedPreferences {

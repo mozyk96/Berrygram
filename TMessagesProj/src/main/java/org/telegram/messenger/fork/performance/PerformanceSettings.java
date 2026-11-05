@@ -1,7 +1,9 @@
 package org.telegram.messenger.fork.performance;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.PowerManager;
 
 import org.telegram.messenger.ApplicationLoader;
@@ -17,6 +19,9 @@ public final class PerformanceSettings {
     private static final String KEY_CUSTOM_REDUCE_EFFECTS = "custom_reduce_effects";
     private static volatile String cachedProfile;
     private static volatile Boolean cachedCustomReduce;
+    private static volatile Boolean cachedLowRam;
+    private static volatile long thermalCheckedAt;
+    private static volatile boolean cachedThermalPressure;
 
     private PerformanceSettings() { }
 
@@ -63,8 +68,40 @@ public final class PerformanceSettings {
         return power != null && power.isPowerSaveMode();
     }
 
+    private static boolean lowRamDevice() {
+        Boolean cached = cachedLowRam;
+        if (cached == null) {
+            Context context = ApplicationLoader.applicationContext;
+            if (context == null) return false;
+            ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            cachedLowRam = cached = activityManager != null && activityManager.isLowRamDevice();
+        }
+        return cached;
+    }
+
+    /** Thermal status is sampled at most every 15 seconds; never polled per frame. */
+    private static boolean thermalPressure() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false;
+        long now = System.currentTimeMillis();
+        if (now - thermalCheckedAt < 15000) return cachedThermalPressure;
+        thermalCheckedAt = now;
+        Context context = ApplicationLoader.applicationContext;
+        if (context == null) return cachedThermalPressure = false;
+        PowerManager power = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        if (power == null) return cachedThermalPressure = false;
+        int status;
+        try {
+            status = power.getCurrentThermalStatus();
+        } catch (RuntimeException unavailable) {
+            return cachedThermalPressure = false;
+        }
+        return cachedThermalPressure = status >= PowerManager.THERMAL_STATUS_MODERATE;
+    }
+
     public static boolean reduceEffects() {
-        return PerformancePolicy.reduceEffects(profile(), systemPowerSaver(), SharedConfig.deviceIsLow(), customReduceEffects());
+        boolean pressure = systemPowerSaver() || thermalPressure();
+        return PerformancePolicy.reduceEffects(profile(), pressure,
+                SharedConfig.deviceIsLow() || lowRamDevice(), customReduceEffects());
     }
 
     public static void reset() {
