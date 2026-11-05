@@ -1,30 +1,40 @@
-# BerryGram continuation — Android 1.3.0 Beta 2
+# BerryGram continuation — Android 1.3.0 Beta 3
 
 ## Published
 
-- Branch: `dev/1.3.0`; source/tag commit `b1ce28e55e9755b95631cfe009e21f01156aea3b`.
-- Release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.2
-- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.2/BerryGram-1.3.0-beta.2-arm64-v8a.apk
-- SHA-256: `7b25f4ad97592b1e88a998dea09c754cafd02d2c3ced6aec3c9ea8d2762670fd`.
+- Branch `dev/1.3.0`; source/tag `ec5517afa8147fd9688be2904b0bc19112ec8e0c`.
+- Release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.3
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.3/BerryGram-1.3.0-beta.3-arm64-v8a.apk
+- SHA-256: `5700cbd0c209645097089129af4bb7db516f7eccf40788a397b051b8b7d69323`.
 
-## Completed
+## Confirmed on physical SM-A256B
 
-- Gesture dispatch: native option gate for media-type messages, active-account/message/owner validation, one-shot execution, re-entry guard, no recursive reaction callback, unavailable-action bulletin, selected-state cleanup, per-account gesture preference cache.
-- Quick reactions: native-index filter policy with configured order, duplicate suppression, empty-result native fallback, defensive list copy, layout-params null guard, full native picker retained.
-- Performance Engine: Automatic/Smooth/Battery/Custom profiles, Performance Center, non-sensitive diagnostics, runtime effect reduction integrated into existing BerryGram surfaces; Telegram Lite Mode storage not overwritten.
-- Prior unpublished Beta2 work from `work/public-candidate` was recovered and integrated; backup at `work/public-candidate-beta2-prior`.
-- Tests added: gesture native-path, reaction filter policy, performance policy/settings, updated smoke/resource/release-scope fixtures.
+- Logcat captured the Beta 2 crash: `NullPointerException` in `ActionBarPopupWindowLayout.addViewToSwipeBack` from the custom More page. Beta 3 menu with `Ще` opens without crash.
+- Lock screen background is normal after the passcode fallback.
+- Performance Center opens and switches profiles without the previous full-page rebuild; Lite Mode and storage rows navigate.
+- Experimental Glass is selectable alongside Blur/Liquid.
+- Tap→Edit reached Telegram's native edit path and displayed a server edit refusal without crashing. The installed test build lacked API credentials; final APK restores them.
 
-## Verified
+## Implemented
 
-- `fork-tests/smoke.ps1`: full pass (Python 3.12 installed for fixtures).
-- `:TMessagesProj_App:compileAfatDebugJavaWithJavac`: pass.
-- Release/R8: BUILD SUCCESSFUL in 8m28s.
-- APK: package `org.example.forkclient`, version `1.3.0-beta.2`, code `72599`, minSdk 23, ARM64 only, non-debug/non-testOnly; v1/v2 signatures; permanent certificate `b3ea9ca2…`; 16 KB alignment; embedded revision matches commit; native libraries byte-identical to Beta 1; public download SHA matches.
-- GitHub latest Stable remains 1.2.0; Beta 2 is a pre-release. No Stable 1.3.0 or Desktop work started.
+- Menu swipe-back flag + defensive fallback.
+- Edit eligibility/account validation and accurate unavailable message.
+- Restored approved fork API credentials from Stable 1.2.0 into the Beta 3 build (not committed/logged).
+- Passcode wallpaper fallback (theme color; no opaque black from evicted/invalid bitmap).
+- Removed dynamic-neutral Material tint, migrated `material` to Blur, removed Material resource.
+- Fixed double-encoded Ukrainian/Russian `fork_custom_text.xml` labels.
+- Rewrote Performance Center to update controls in place; real Lite Mode/cache/diagnostics actions; thermal and low-RAM-aware Automatic effects.
+- Cached gesture/reaction/performance preferences.
+- Added optional Experimental Glass with theme-aware translucent tint, stronger edge light, API/capability fallback.
+
+## Verification
+
+- Full `fork-tests/smoke.ps1` passed.
+- Release/R8 passed; APK package/version code `72609`, minSdk 23, ARM64, non-debug/non-testOnly, permanent certificate, v1/v2 signatures, 16 KB alignment, source revision, native libs identical to Beta 2, SHA verified.
+- Final credential-bearing APK was **not installed** before publication at the owner's request. Prior Beta 3 build (same code minus credentials) was installed over existing data for device checks.
 
 ## Pending
 
-- Owner physical-device acceptance: gestures on text/media/groups/channels, unavailable actions, quick reactions and full picker, reaction permissions, message menu/More, account switching, restart persistence, accessibility, in-place install/update.
-- No crash log, real account or phone was used. Fix further owner findings before any Stable 1.3.0.
-- Artifacts/logs: `work/release-130-beta2`; build workspace `work/public-candidate` (detached at b1ce28e with native cache).
+- Owner manual test of final credential build: Edit/network actions, every gesture, reactions/picker, Experimental Glass visual quality, themes, in-place update.
+- No Stable 1.3.0, no Desktop, no data clearing, no destructive account actions.
+- If final credential build has issues, fix in Beta 4; do not rewrite Beta 3 tag/assets.

@@ -12,6 +12,8 @@
 [x] Beta2: gesture native-path gate/validation/re-entry/feedback and reaction filter/fallback fixed; full smoke, Java compile and Release/R8 passed.
 [~] Beta2: Performance Engine profile policy, Performance Center, diagnostics and effect integration implemented; pure tests passed. No FPS benchmark.
 [x] Beta2 published: `v1.3.0-beta.2`, source `b1ce28e`, code72599, ARM64, SHA256 `7b25f4ad97592b1e88a998dea09c754cafd02d2c3ced6aec3c9ea8d2762670fd`. Owner device acceptance pending.
+[x] Beta3: fixed device-confirmed More/menu `addViewToSwipeBack` crash, edit validation, empty API credentials, Material tint/mojibake, lock-screen black fallback, Performance Center responsiveness/functionality, Experimental Glass, preference/thermal/low-RAM work.
+[x] Beta3 published: `v1.3.0-beta.3`, source `ec5517a`, code72609, ARM64, SHA256 `5700cbd0c209645097089129af4bb7db516f7eccf40788a397b051b8b7d69323`. Final credential build not installed before publication; owner acceptance pending.
 [ ] Android Stable1.3.0: requires owner acceptance and final technical checks.
 ## Desktop — gate closed
 [ ] Research official code/build/licenses only after Android Stable1.3.0 publication.

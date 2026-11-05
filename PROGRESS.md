@@ -1,3 +1,14 @@
+# Android 1.3.0 Beta 3 published — 2026-11-06
+
+- Branch `dev/1.3.0`; source/tag `ec5517afa8147fd9688be2904b0bc19112ec8e0c`.
+- Pre-release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.3
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.3/BerryGram-1.3.0-beta.3-arm64-v8a.apk
+- SHA-256: `5700cbd0c209645097089129af4bb7db516f7eccf40788a397b051b8b7d69323`.
+- Device-confirmed: Beta 2 menu crash (`addViewToSwipeBack` NPE) fixed; lock-screen themed background normal; Performance Center responsive; Experimental Glass selectable. Final credential-bearing APK not installed before publication at owner request.
+- Fixed empty Beta 2 API credentials (`CONNECTION_API_ID_INVALID`), removed dynamic-neutral Material tint, migrated `material`→Blur, fixed Ukrainian/Russian mojibake labels, added passcode wallpaper fallback, cached preferences, thermal/low-RAM awareness, and optional Experimental Glass.
+- Smoke, Debug compile, Release/R8, APK identity/signature/ABI/minSdk/flags/source/native-lib/SHA/alignment checks passed. No Stable 1.3.0; no Desktop; no data clearing or destructive account actions.
+- Owner manual acceptance remains pending, especially network Edit after credential restoration, all gestures, reactions, Experimental Glass visual quality, themes and in-place update.
+
 # Android 1.3.0 Beta 2 published — 2026-11-05
 
 - Branch: `dev/1.3.0`. Source/tag commit: `b1ce28e55e9755b95631cfe009e21f01156aea3b`.
