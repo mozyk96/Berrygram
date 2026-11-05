@@ -1,3 +1,17 @@
+# Android 1.3.0 Beta 5 published — 2026-11-06
+
+- Pre-release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.5
+- Source/tag `93794233dffb3ff53622792a023718124ee8e18d`; version `1.3.0-beta.5`, code `72629`.
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.5/BerryGram-1.3.0-beta.5-arm64-v8a.apk
+- SHA-256: `dacc6aac28e214e14c9c0e31eb575f92069703a22c6e4d85eec44f57b0f81d6f`.
+- Experimental Glass 2.0: independent transparency, blur, frost, saturation, edge/highlight, shadow, tint and radius; presets; live preview; popup/Mini Dock/reaction coverage with fallback.
+- Embedded round-video preview with two circular icon-only controls and circular live preview; separate test-screen entry removed.
+- Adaptive Camera Engine: Camera2 capability discovery, Automatic/Quality/Balanced/Performance/Custom profiles, JPEG quality, round-video bitrate/FPS limits, validated Camera2 FPS ranges and advertised OIS/EIS.
+- Voice Engine: Standard/Automatic/Clear/Natural/Custom profiles, platform NS/AGC/AEC when available, source selection, profile-aware Opus bitrate and a local record/play/delete test tool.
+- Verified: full smoke (including new Glass/Camera/Voice policy tests), Debug compile, Release/R8, APK identity/signature/ABI/minSdk/flags/alignment/source/API credentials, public download digest. Latest Stable remains 1.2.0.
+- Not verified: physical-device behaviour of this exact APK. The owner's phone was not connected over ADB, and the local emulator could not start because the Windows Android Emulator hypervisor driver is not installed.
+- Post-release branch commit `533d604` stops the embedded camera preview when scrolled out of view; it is not included in the published Beta 5 APK.
+
 # Android 1.3.0 Beta 4 published — 2026-11-06
 
 - Hotfix over Beta 3: version `1.3.0-beta.4`, code `72619`, source/tag `7bf93d3cff1490f93b9f67032a08819669974b55`.

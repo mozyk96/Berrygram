@@ -15,6 +15,7 @@
 [x] Beta3: fixed device-confirmed More/menu `addViewToSwipeBack` crash, edit validation, empty API credentials, Material tint/mojibake, lock-screen black fallback, Performance Center responsiveness/functionality, Experimental Glass, preference/thermal/low-RAM work.
 [x] Beta3 published: `v1.3.0-beta.3`, source `ec5517a`, code72609, ARM64, SHA256 `5700cbd0c209645097089129af4bb7db516f7eccf40788a397b051b8b7d69323`. Final credential build not installed before publication; owner acceptance pending.
 [x] Beta4 updater/API hotfix published: `v1.3.0-beta.4`, source `7bf93d3`, code72619, ARM64, SHA256 `4e10c9f3a43604fe039f00205c77e817d85218867f50bfcf5e154bfb5659c604`. Credential-bearing build; updater release list selects it. Owner acceptance pending.
+[x] Beta5 published: `v1.3.0-beta.5`, source `9379423`, code72629, ARM64, SHA256 `dacc6aac28e214e14c9c0e31eb575f92069703a22c6e4d85eec44f57b0f81d6f`. Glass 2.0, embedded round preview, adaptive camera profiles and voice profiles/effects. Smoke/Debug/Release/R8/APK checks passed; no physical-device test. Post-release `533d604` adds scroll-away preview stop (not in Beta 5 APK). Owner acceptance pending.
 [ ] Android Stable1.3.0: requires owner acceptance and final technical checks.
 ## Desktop — gate closed
 [ ] Research official code/build/licenses only after Android Stable1.3.0 publication.
