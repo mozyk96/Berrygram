@@ -8,7 +8,6 @@
     <string name="ForkGraphicsIntensityValue">%1$d%%</string>
     <string name="ForkGraphicsInfo">Styles apply to supported menus. Blur and refraction use a simpler surface when the device or power settings do not support them.</string>
     <string name="ForkGraphicsStyle">Menu style</string>
-    <string name="ForkGraphicsMaterial">Material</string>
     <string name="ForkGraphicsBlur">Blur</string>
     <string name="ForkGraphicsLiquid">Liquid Glass (experimental)</string>
     <string name="ForkColorTitle">Accent color</string>
@@ -128,17 +127,17 @@
     <string name="ForkUpdateCurrent">Version %1$s</string>
     <string name="ForkUpdateNoSource">Update source is not configured.</string>
     <string name="ForkUpdateSource">Source: %1$s</string>
-    <string name="ForkUpdateAvailable">Release %1$s · %2$.1f MB</string>
+    <string name="ForkUpdateAvailable">Release %1$s Â· %2$.1f MB</string>
     <string name="ForkUpdateConfigure">Configure GitHub source</string>
     <string name="ForkUpdateCheck">Check</string>
     <string name="ForkUpdateDownload">Update</string>
     <string name="ForkUpdateInstall">Install</string>
     <string name="ForkUpdateInvalidSource">Enter a GitHub repository as owner/repository.</string>
-    <string name="ForkUpdateChecking">Checking GitHub…</string>
+    <string name="ForkUpdateChecking">Checking GitHubâ€¦</string>
     <string name="ForkUpdateDownloading">Downloading and verifying: %1$d%%</string>
     <string name="ForkUpdateVerified">File and signature verified.</string>
     <string name="ForkUpdateFailure">Update failed: %1$s</string>
-    <string name="ForkUpdateLatest">You’re up to date.</string>
+    <string name="ForkUpdateLatest">Youâ€™re up to date.</string>
     <string name="ForkUpdateNoStableRelease">No compatible release was found, or the repository is unavailable.</string>
     <string name="ForkLongPress">Long-press message</string>
     <string name="ForkLongPressChat">Long-press for a chat</string>
@@ -161,7 +160,7 @@
     <string name="ForkCameraPreviewInfo">Preview only. No video is recorded or sent.</string>
     <string name="ForkCameraPreviewStart">Start camera preview</string>
     <string name="ForkCameraPreviewFlip">Switch camera</string>
-    <string name="ForkCameraPreviewLoading">Opening camera…</string>
+    <string name="ForkCameraPreviewLoading">Opening cameraâ€¦</string>
     <string name="ForkCameraPreviewWaiting">Camera preview is still unavailable. Check camera permission and try again.</string>
     <string name="ForkCameraPreviewUnavailable">The camera is unavailable or is in use by another feature.</string>
     <string name="ForkCameraPreviewPermission">Camera permission is needed for preview.</string>

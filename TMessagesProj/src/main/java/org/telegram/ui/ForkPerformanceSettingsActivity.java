@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.messenger.fork.performance.PerformancePolicy;
 import org.telegram.messenger.fork.performance.PerformanceSettings;
@@ -16,8 +17,14 @@ import org.telegram.ui.Cells.TextSettingsCell;
 
 /** BerryGram Performance Engine profile and non-sensitive diagnostics. */
 public final class ForkPerformanceSettingsActivity extends BaseFragment {
-    private LinearLayout rows;
-    private LinearLayout diagnostics;
+    private static final int DIAG_COUNT = 5;
+
+    private TextSettingsCell profileRow;
+    private TextCheckCell reduceRow;
+    private TextSettingsCell liteModeRow;
+    private TextSettingsCell cacheRow;
+    private TextSettingsCell copyDiagnosticsRow;
+    private final TextSettingsCell[] diagnosticRows = new TextSettingsCell[DIAG_COUNT];
 
     @Override public View createView(Context context) {
         actionBar.setTitle(ForkLocale.get(R.string.ForkPerformanceTitle));
@@ -25,93 +32,124 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
         });
-        LinearLayout page = ForkSettingsLayout.page(context);
-        rows = ForkSettingsLayout.section(context);
-        diagnostics = ForkSettingsLayout.section(context);
-        ForkSettingsLayout.addSection(page, rows);
-        ForkSettingsLayout.addSection(page, diagnostics);
-        TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
-        info.setText(ForkLocale.get(R.string.ForkPerformanceInfo));
-        page.addView(info);
-        ScrollView scroll = new ScrollView(context);
-        scroll.setFillViewport(true);
-        scroll.addView(page);
-        fragmentView = scroll;
-        rebuild(context);
-        return fragmentView;
-    }
 
-    private void rebuild(Context context) {
-        if (rows == null || diagnostics == null) return;
-        rows.removeAllViews();
-        final String profile = PerformanceSettings.profile();
-        addRow(context, ForkLocale.get(R.string.ForkPerformanceProfile), profileLabel(profile), v -> {
-            CharSequence[] labels = {
-                    ForkLocale.get(R.string.ForkPerformanceAutomatic),
-                    ForkLocale.get(R.string.ForkPerformanceSmooth),
-                    ForkLocale.get(R.string.ForkPerformanceBattery),
-                    ForkLocale.get(R.string.ForkPerformanceCustom)
-            };
-            String[] values = {PerformancePolicy.AUTOMATIC, PerformancePolicy.SMOOTH, PerformancePolicy.BATTERY, PerformancePolicy.CUSTOM};
-            int selected = 0;
-            for (int i = 0; i < values.length; i++) if (values[i].equals(profile)) selected = i;
-            ForkChoicePopup.show(this, v, labels, null, selected, index -> {
-                PerformanceSettings.setProfile(values[index]);
-                rebuild(context);
-                if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
-            });
+        LinearLayout page = ForkSettingsLayout.page(context);
+        LinearLayout rows = ForkSettingsLayout.section(context);
+        profileRow = new TextSettingsCell(context);
+        profileRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceProfile), "", false);
+        ForkSettingsLayout.interactive(profileRow);
+        profileRow.setOnClickListener(this::chooseProfile);
+        rows.addView(profileRow);
+
+        reduceRow = new TextCheckCell(context);
+        reduceRow.setTextAndCheck(ForkLocale.get(R.string.ForkPerformanceReduceEffects), false, false);
+        ForkSettingsLayout.interactive(reduceRow);
+        reduceRow.setOnClickListener(v -> {
+            PerformanceSettings.setCustomReduceEffects(!PerformanceSettings.customReduceEffects());
+            refresh();
         });
-        if (PerformancePolicy.CUSTOM.equals(profile)) {
-            TextCheckCell reduce = new TextCheckCell(context);
-            reduce.setTextAndCheck(ForkLocale.get(R.string.ForkPerformanceReduceEffects), PerformanceSettings.customReduceEffects(), false);
-            ForkSettingsLayout.interactive(reduce);
-            reduce.setOnClickListener(v -> {
-                boolean enabled = !PerformanceSettings.customReduceEffects();
-                PerformanceSettings.setCustomReduceEffects(enabled);
-                reduce.setChecked(enabled);
-                rebuild(context);
-                if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
-            });
-            rows.addView(reduce);
-        }
+        rows.addView(reduceRow);
+
+        liteModeRow = new TextSettingsCell(context);
+        liteModeRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceLiteMode), ForkLocale.get(R.string.ForkPerformanceLiteModeValue), true);
+        ForkSettingsLayout.interactive(liteModeRow);
+        liteModeRow.setOnClickListener(v -> presentFragment(new LiteModeSettingsActivity()));
+        rows.addView(liteModeRow);
+
+        cacheRow = new TextSettingsCell(context);
+        cacheRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceStorage), ForkLocale.get(R.string.ForkPerformanceStorageValue), true);
+        ForkSettingsLayout.interactive(cacheRow);
+        cacheRow.setOnClickListener(v -> presentFragment(new CacheControlActivity()));
+        rows.addView(cacheRow);
+
         TextSettingsCell reset = new TextSettingsCell(context);
         reset.setText(ForkLocale.get(R.string.ForkPerformanceReset), false);
         ForkSettingsLayout.interactive(reset);
         reset.setOnClickListener(v -> {
             PerformanceSettings.reset();
-            rebuild(context);
-            if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
+            refresh();
         });
         rows.addView(reset);
-        rebuildDiagnostics(context);
-    }
+        ForkSettingsLayout.addSection(page, rows);
 
-    private void rebuildDiagnostics(Context context) {
-        diagnostics.removeAllViews();
+        LinearLayout diagnostics = ForkSettingsLayout.section(context);
         TextSettingsCell title = new TextSettingsCell(context);
         title.setText(ForkLocale.get(R.string.ForkPerformanceDiagnostics), true);
         diagnostics.addView(title);
-        addDiagnostic(context, R.string.ForkPerformanceDeviceClass, PerformanceSettings.deviceClassLabel());
-        addDiagnostic(context, R.string.ForkPerformanceActiveProfile, profileLabel(PerformanceSettings.profile()));
-        addDiagnostic(context, R.string.ForkPerformancePowerSaver,
-                ForkLocale.get(PerformanceSettings.systemPowerSaver() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff));
-        addDiagnostic(context, R.string.ForkPerformanceGraphics, styleLabel());
-        addDiagnostic(context, R.string.ForkPerformanceAnimations,
-                ForkLocale.get(ForkSurfaceAnimation.enabled() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff));
+        for (int i = 0; i < DIAG_COUNT; i++) {
+            TextSettingsCell cell = new TextSettingsCell(context);
+            cell.setTextAndValue("", "", false);
+            diagnosticRows[i] = cell;
+            diagnostics.addView(cell);
+        }
+        copyDiagnosticsRow = new TextSettingsCell(context);
+        copyDiagnosticsRow.setText(ForkLocale.get(R.string.ForkPerformanceCopyDiagnostics), true);
+        ForkSettingsLayout.interactive(copyDiagnosticsRow);
+        copyDiagnosticsRow.setOnClickListener(v -> copyDiagnostics());
+        diagnostics.addView(copyDiagnosticsRow);
+        ForkSettingsLayout.addSection(page, diagnostics);
+
+        TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
+        info.setText(ForkLocale.get(R.string.ForkPerformanceInfo));
+        page.addView(info);
+
+        ScrollView scroll = new ScrollView(context);
+        scroll.setFillViewport(true);
+        scroll.addView(page);
+        fragmentView = scroll;
+        refresh();
+        return fragmentView;
     }
 
-    private void addRow(Context context, CharSequence title, CharSequence value, View.OnClickListener listener) {
-        TextSettingsCell cell = new TextSettingsCell(context);
-        cell.setTextAndValue(title, value, true);
-        ForkSettingsLayout.interactive(cell);
-        cell.setOnClickListener(listener);
-        rows.addView(cell);
+    private void chooseProfile(View anchor) {
+        String profile = PerformanceSettings.profile();
+        CharSequence[] labels = {
+                ForkLocale.get(R.string.ForkPerformanceAutomatic),
+                ForkLocale.get(R.string.ForkPerformanceSmooth),
+                ForkLocale.get(R.string.ForkPerformanceBattery),
+                ForkLocale.get(R.string.ForkPerformanceCustom)
+        };
+        String[] values = {PerformancePolicy.AUTOMATIC, PerformancePolicy.SMOOTH, PerformancePolicy.BATTERY, PerformancePolicy.CUSTOM};
+        int selected = 0;
+        for (int i = 0; i < values.length; i++) if (values[i].equals(profile)) selected = i;
+        ForkChoicePopup.show(this, anchor, labels, null, selected, index -> {
+            PerformanceSettings.setProfile(values[index]);
+            refresh();
+        });
     }
 
-    private void addDiagnostic(Context context, int title, String value) {
-        TextSettingsCell cell = new TextSettingsCell(context);
-        cell.setTextAndValue(ForkLocale.get(title), value, false);
-        diagnostics.addView(cell);
+    private void refresh() {
+        if (profileRow == null) return;
+        String profile = PerformanceSettings.profile();
+        profileRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceProfile), profileLabel(profile), false);
+        boolean custom = PerformancePolicy.CUSTOM.equals(profile);
+        reduceRow.setVisibility(custom ? View.VISIBLE : View.GONE);
+        if (custom) reduceRow.setChecked(PerformanceSettings.customReduceEffects());
+
+        diagnosticRows[0].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceDeviceClass), PerformanceSettings.deviceClassLabel(), false);
+        diagnosticRows[1].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceActiveProfile), profileLabel(profile), false);
+        diagnosticRows[2].setTextAndValue(ForkLocale.get(R.string.ForkPerformancePowerSaver),
+                ForkLocale.get(PerformanceSettings.systemPowerSaver() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
+        diagnosticRows[3].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceGraphics), styleLabel(), false);
+        diagnosticRows[4].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceAnimations),
+                ForkLocale.get(ForkSurfaceAnimation.enabled() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
+    }
+
+    private void copyDiagnostics() {
+        StringBuilder text = new StringBuilder();
+        text.append("BerryGram ").append(org.telegram.messenger.BuildVars.BUILD_VERSION_STRING).append('\n');
+        text.append("Performance profile: ").append(profileLabel(PerformanceSettings.profile())).append('\n');
+        text.append("Device class: ").append(PerformanceSettings.deviceClassLabel()).append('\n');
+        text.append("System power saver: ").append(PerformanceSettings.systemPowerSaver()).append('\n');
+        text.append("Effective graphics: ").append(styleLabel()).append('\n');
+        text.append("Reveal animations: ").append(ForkSurfaceAnimation.enabled()).append('\n');
+        text.append("Android SDK: ").append(android.os.Build.VERSION.SDK_INT);
+        AndroidUtilities.addToClipboard(text.toString());
+        if (getParentActivity() != null) {
+            org.telegram.ui.Components.BulletinFactory.of(this)
+                    .createSimpleBulletin(R.raw.copy, ForkLocale.get(R.string.ForkPerformanceDiagnosticsCopied))
+                    .show();
+        }
     }
 
     private static String profileLabel(String profile) {
@@ -130,9 +168,6 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
 
     @Override public void onResume() {
         super.onResume();
-        if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
-        if (rows != null) rebuild(rows.getContext());
+        refresh();
     }
-
-    @Override public void onFragmentDestroy() { rows = null; diagnostics = null; super.onFragmentDestroy(); }
 }

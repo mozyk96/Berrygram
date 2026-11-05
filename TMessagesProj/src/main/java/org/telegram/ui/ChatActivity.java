@@ -31483,7 +31483,9 @@ public class ChatActivity extends BaseFragment implements
             final boolean isReactionsAvailableFinal = !suggestEdit && isReactionsAvailable;
 
             int flags = 0;
-            if (isReactionsViewAvailable || showMessageSeen || showSponsorInfo) {
+            if (isReactionsViewAvailable || showMessageSeen || showSponsorInfo
+                    || org.telegram.messenger.fork.actions.ActionMenuSettings.hasHidden(currentAccount)) {
+                // The custom More page lives inside the popup swipe-back container.
                 flags |= ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK;
             }
 

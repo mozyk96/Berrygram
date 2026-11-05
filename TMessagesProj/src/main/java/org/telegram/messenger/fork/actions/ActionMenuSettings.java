@@ -30,6 +30,7 @@ public final class ActionMenuSettings {
         return result;
     }
     public static boolean visible(int account, String id) { return !read(account, HIDDEN).contains(id); }
+    public static boolean hasHidden(int account) { return !read(account, HIDDEN).isEmpty(); }
     public static boolean pinned(int account, String id) { return read(account, PINNED).contains(id); }
     public static void setVisible(int account, String id, boolean visible) { set(account, HIDDEN, id, !visible); }
     public static void setPinned(int account, String id, boolean pinned) { set(account, PINNED, id, pinned); }

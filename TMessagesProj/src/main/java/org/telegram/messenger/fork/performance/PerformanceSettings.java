@@ -15,6 +15,8 @@ public final class PerformanceSettings {
     private static final String PREFS = "fork_performance";
     private static final String KEY_PROFILE = "profile";
     private static final String KEY_CUSTOM_REDUCE_EFFECTS = "custom_reduce_effects";
+    private static volatile String cachedProfile;
+    private static volatile Boolean cachedCustomReduce;
 
     private PerformanceSettings() { }
 
@@ -23,26 +25,35 @@ public final class PerformanceSettings {
     }
 
     public static String profile() {
-        String value;
-        try {
-            value = preferences().getString(KEY_PROFILE, PerformancePolicy.AUTOMATIC);
-        } catch (ClassCastException corrupt) {
-            return PerformancePolicy.AUTOMATIC;
+        String value = cachedProfile;
+        if (value == null) {
+            try {
+                value = preferences().getString(KEY_PROFILE, PerformancePolicy.AUTOMATIC);
+            } catch (ClassCastException corrupt) {
+                value = PerformancePolicy.AUTOMATIC;
+            }
+            cachedProfile = value = PerformancePolicy.normalize(value);
         }
-        return PerformancePolicy.normalize(value);
+        return value;
     }
 
     public static void setProfile(String profile) {
         String normalized = PerformancePolicy.normalize(profile);
         preferences().edit().putString(KEY_PROFILE, normalized).apply();
+        cachedProfile = normalized;
     }
 
     public static boolean customReduceEffects() {
-        return preferences().getBoolean(KEY_CUSTOM_REDUCE_EFFECTS, false);
+        Boolean value = cachedCustomReduce;
+        if (value == null) {
+            cachedCustomReduce = value = preferences().getBoolean(KEY_CUSTOM_REDUCE_EFFECTS, false);
+        }
+        return value;
     }
 
     public static void setCustomReduceEffects(boolean value) {
         preferences().edit().putBoolean(KEY_CUSTOM_REDUCE_EFFECTS, value).apply();
+        cachedCustomReduce = value;
     }
 
     public static boolean systemPowerSaver() {
@@ -58,6 +69,8 @@ public final class PerformanceSettings {
 
     public static void reset() {
         preferences().edit().remove(KEY_PROFILE).remove(KEY_CUSTOM_REDUCE_EFFECTS).apply();
+        cachedProfile = PerformancePolicy.AUTOMATIC;
+        cachedCustomReduce = false;
     }
 
     public static String deviceClassLabel() {

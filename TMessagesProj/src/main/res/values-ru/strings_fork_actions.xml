@@ -29,5 +29,11 @@
     <string name="ForkPerformanceOff">Выключено</string>
     <string name="ForkPerformanceOpaque">Непрозрачный режим</string>
     <string name="ForkPerformanceReset">Сбросить настройки производительности</string>
+    <string name="ForkPerformanceLiteMode">Lite Mode Telegram</string>
+    <string name="ForkPerformanceLiteModeValue">Настройки Telegram</string>
+    <string name="ForkPerformanceStorage">Хранилище и кеш</string>
+    <string name="ForkPerformanceStorageValue">Настройки Telegram</string>
+    <string name="ForkPerformanceCopyDiagnostics">Копировать диагностику</string>
+    <string name="ForkPerformanceDiagnosticsCopied">Диагностика скопирована</string>
     <string name="ForkPerformanceInfo">На слабых устройствах или в режиме экономии BerryGram сохраняет родной рендеринг Telegram и переходит на непрозрачные поверхности. Профили меняют только необязательную графику и анимации появления; они не влияют на доставку сообщений, безопасность, медиа или настройки Lite Mode Telegram. Диагностика не содержит данных аккаунта или сообщений.</string>
 </resources>

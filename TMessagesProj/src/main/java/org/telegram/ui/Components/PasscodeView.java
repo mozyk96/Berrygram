@@ -578,15 +578,22 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
                         backgroundDrawable.setBounds(0, 0, getMeasuredWidth(), getMeasuredHeight());
                         backgroundDrawable.draw(canvas);
                     } else {
-                        float scaleX = (float) getMeasuredWidth() / (float) backgroundDrawable.getIntrinsicWidth();
-                        float scaleY = (float) (getMeasuredHeight() + keyboardHeight) / (float) backgroundDrawable.getIntrinsicHeight();
-                        float scale = Math.max(scaleX, scaleY);
-                        int width = (int) Math.ceil(backgroundDrawable.getIntrinsicWidth() * scale);
-                        int height = (int) Math.ceil(backgroundDrawable.getIntrinsicHeight() * scale);
-                        int x = (getMeasuredWidth() - width) / 2;
-                        int y = (getMeasuredHeight() - height + keyboardHeight) / 2;
-                        backgroundDrawable.setBounds(x, y, x + width, y + height);
-                        backgroundDrawable.draw(canvas);
+                        int intrinsicWidth = backgroundDrawable.getIntrinsicWidth();
+                        int intrinsicHeight = backgroundDrawable.getIntrinsicHeight();
+                        if (intrinsicWidth <= 0 || intrinsicHeight <= 0) {
+                            // Missing/evicted wallpaper bitmap must not leave a black frame.
+                            paint.setColor(passcodeFallbackColor());
+                        } else {
+                            float scaleX = (float) getMeasuredWidth() / (float) intrinsicWidth;
+                            float scaleY = (float) (getMeasuredHeight() + keyboardHeight) / (float) intrinsicHeight;
+                            float scale = Math.max(scaleX, scaleY);
+                            int width = (int) Math.ceil(intrinsicWidth * scale);
+                            int height = (int) Math.ceil(intrinsicHeight * scale);
+                            int x = (getMeasuredWidth() - width) / 2;
+                            int y = (getMeasuredHeight() - height + keyboardHeight) / 2;
+                            backgroundDrawable.setBounds(x, y, x + width, y + height);
+                            backgroundDrawable.draw(canvas);
+                        }
                     }
                 } else {
                     super.onDraw(canvas);
@@ -1421,6 +1428,10 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
         }
     }
 
+    private static int passcodeFallbackColor() {
+        return Theme.getColor(Theme.key_chat_wallpaper);
+    }
+
     public void onShow(boolean fingerprint, boolean animated) {
         onShow(fingerprint, animated, -1, -1, null, null);
     }
@@ -1486,23 +1497,26 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
             }
             if (backgroundDrawable instanceof BackgroundGradientDrawable) {
                 backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = 0x22000000);
-            } else {
+            } else if (backgroundDrawable != null) {
                 backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = 0xbf000000);
             }
         } else {
             String selectedBackgroundSlug = Theme.getSelectedBackgroundSlug();
             if (Theme.DEFAULT_BACKGROUND_SLUG.equals(selectedBackgroundSlug) || Theme.isPatternWallpaper()) {
-                backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = 0xff517c9e);
+                backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = passcodeFallbackColor());
             } else {
                 backgroundDrawable = Theme.getCachedWallpaper();
                 if (backgroundDrawable instanceof BackgroundGradientDrawable) {
                     backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = 0x22000000);
                 } else if (backgroundDrawable != null) {
                     backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = 0xbf000000);
-                } else {
-                    backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = 0xff517c9e);
                 }
             }
+        }
+        if (backgroundDrawable == null) {
+            // Cached wallpaper can be evicted while the app is locked. Keep the normal
+            // Telegram theme color instead of falling through to an opaque black frame.
+            backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = passcodeFallbackColor());
         }
         if (backgroundDrawable instanceof MotionBackgroundDrawable) {
             MotionBackgroundDrawable drawable = (MotionBackgroundDrawable) backgroundDrawable;
