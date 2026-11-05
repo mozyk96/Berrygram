@@ -1,3 +1,14 @@
+# Android 1.3.0 Beta 2 published — 2026-11-05
+
+- Branch: `dev/1.3.0`. Source/tag commit: `b1ce28e55e9755b95631cfe009e21f01156aea3b`.
+- Pre-release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.2
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.2/BerryGram-1.3.0-beta.2-arm64-v8a.apk
+- SHA-256: `7b25f4ad97592b1e88a998dea09c754cafd02d2c3ced6aec3c9ea8d2762670fd`. Public unauthenticated download and GitHub asset digest matched.
+- Fixed gesture dispatch (native option gate for media types, account/message validation, single execution, no recursive reaction callback, unavailable feedback, selected-state cleanup) and quick-reaction filtering (native-index policy, order/dedup, empty fallback, defensive state). Added performance profiles/Performance Center and gesture preference cache.
+- Full smoke suite passed; debug Java compilation and Release/R8 passed (8m28s). Package `org.example.forkclient`, code `72599` > Beta 1 `72589`, minSdk 23, ARM64, non-debug/non-testOnly, existing permanent certificate, v1/v2 signatures, 16 KB ZIP alignment, source revision and native-library identity to Beta 1 verified.
+- Live GitHub data: Beta 2 is a pre-release; `releases/latest` remains Stable 1.2.0. No Stable 1.3.0 published; Desktop remains gated.
+- No physical phone, real Telegram account or crash log was used. Device touch/reaction/menu/account/restart behavior and in-place installation remain owner manual tests. No measured FPS/battery/thermal claim.
+
 # Android 1.3.0 Beta 1 published — 2026-11-04
 
 - Branch: dev/1.3.0. Built and tagged source: 0ce1f164567809050a30f7ec132752b90c5f11f3.
