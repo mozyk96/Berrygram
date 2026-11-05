@@ -1,3 +1,11 @@
+## 1.3.0-beta.4 — updater/API hotfix
+
+- Version/code bump so the in-app updater can move from the installed Beta 3 test build (`72609`) to the credential-bearing release.
+- Includes all Beta 3 fixes: message-menu swipe-back crash, Edit validation, restored Telegram API credentials, themed passcode fallback, Material tint removal, Ukrainian/Russian label repair, responsive Performance Center, thermal/low-RAM awareness, preference caches and optional Experimental Glass.
+- Beta 3's published final APK had the same version as the installed device test build, so the updater correctly treated it as already current. No updater logic was weakened; this is a standard version increment.
+
+Beta for owner acceptance, not Stable.
+
 ## 1.3.0-beta.3 — Android stability, performance and glass
 
 - Fixed the message-menu crash caused by the custom More page being added to a popup without a swipe-back container (NPE in `addViewToSwipeBack`). Hidden actions remain reachable; the popup requests the container whenever hidden menu actions exist and degrades safely otherwise.
