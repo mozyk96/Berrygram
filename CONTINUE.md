@@ -1,11 +1,12 @@
-# BerryGram continuation — Android 1.3.0 Beta 3
+# BerryGram continuation — Android 1.3.0 Beta 4
 
 ## Published
 
-- Branch `dev/1.3.0`; source/tag `ec5517afa8147fd9688be2904b0bc19112ec8e0c`.
-- Release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.3
-- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.3/BerryGram-1.3.0-beta.3-arm64-v8a.apk
-- SHA-256: `5700cbd0c209645097089129af4bb7db516f7eccf40788a397b051b8b7d69323`.
+- Branch `dev/1.3.0`; source/tag `7bf93d3cff1490f93b9f67032a08819669974b55`.
+- Release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.4
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.4/BerryGram-1.3.0-beta.4-arm64-v8a.apk
+- SHA-256: `4e10c9f3a43604fe039f00205c77e817d85218867f50bfcf5e154bfb5659c604`.
+- Beta 3 remains published/immutable: `ec5517a`, code `72609`, SHA `5700cbd0c209645097089129af4bb7db516f7eccf40788a397b051b8b7d69323`.
 
 ## Confirmed on physical SM-A256B
 
@@ -19,7 +20,7 @@
 
 - Menu swipe-back flag + defensive fallback.
 - Edit eligibility/account validation and accurate unavailable message.
-- Restored approved fork API credentials from Stable 1.2.0 into the Beta 3 build (not committed/logged).
+- Restored approved fork API credentials from Stable 1.2.0 into the Beta 3/Beta 4 builds (not committed/logged).
 - Passcode wallpaper fallback (theme color; no opaque black from evicted/invalid bitmap).
 - Removed dynamic-neutral Material tint, migrated `material` to Blur, removed Material resource.
 - Fixed double-encoded Ukrainian/Russian `fork_custom_text.xml` labels.
@@ -30,11 +31,11 @@
 ## Verification
 
 - Full `fork-tests/smoke.ps1` passed.
-- Release/R8 passed; APK package/version code `72609`, minSdk 23, ARM64, non-debug/non-testOnly, permanent certificate, v1/v2 signatures, 16 KB alignment, source revision, native libs identical to Beta 2, SHA verified.
-- Final credential-bearing APK was **not installed** before publication at the owner's request. Prior Beta 3 build (same code minus credentials) was installed over existing data for device checks.
+- Release/R8 passed; Beta 4 APK version code `72619`, minSdk 23, ARM64, non-debug/non-testOnly, permanent certificate, v1/v2 signatures, 16 KB alignment, source revision, native libs identical to Beta 2, API credentials present, SHA verified.
+- Final Beta 3/Beta 4 credential-bearing APK was **not installed** before publication at the owner's request. Prior Beta 3 test build (same code minus credentials) was installed over existing data for device checks.
 
 ## Pending
 
 - Owner manual test of final credential build: Edit/network actions, every gesture, reactions/picker, Experimental Glass visual quality, themes, in-place update.
 - No Stable 1.3.0, no Desktop, no data clearing, no destructive account actions.
-- If final credential build has issues, fix in Beta 4; do not rewrite Beta 3 tag/assets.
+- Beta 4 is the updater/credential hotfix. If the new build has issues, fix in Beta 5; do not rewrite Beta 3/Beta 4 tags/assets.

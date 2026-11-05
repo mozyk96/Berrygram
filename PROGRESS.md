@@ -1,3 +1,13 @@
+# Android 1.3.0 Beta 4 published — 2026-11-06
+
+- Hotfix over Beta 3: version `1.3.0-beta.4`, code `72619`, source/tag `7bf93d3cff1490f93b9f67032a08819669974b55`.
+- Pre-release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.4
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.4/BerryGram-1.3.0-beta.4-arm64-v8a.apk
+- SHA-256: `4e10c9f3a43604fe039f00205c77e817d85218867f50bfcf5e154bfb5659c604`.
+- Reason: the Beta 3 phone test build already had version `1.3.0-beta.3`/code `72609`; the updater correctly saw the published Beta 3 as already installed. Beta 4 is a normal version bump and carries all Beta 3 fixes plus the restored API credentials.
+- Verified: Debug/Release/R8, smoke, APK identity/signature/ABI/minSdk/flags/source/native-lib/alignment/API credentials, GitHub digest and independent public download. Updater release list now starts with Beta 4; latest Stable remains 1.2.0.
+- Final Beta 4 APK was not installed before publication; owner should update from the in-app updater and verify network Edit, gestures, reactions, Experimental Glass and themes.
+
 # Android 1.3.0 Beta 3 published — 2026-11-06
 
 - Branch `dev/1.3.0`; source/tag `ec5517afa8147fd9688be2904b0bc19112ec8e0c`.

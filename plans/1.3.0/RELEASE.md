@@ -1,6 +1,8 @@
 # Release gates
 
-Beta 3 published from `ec5517afa8147fd9688be2904b0bc19112ec8e0c`, code `72609`, same permanent certificate, Android 6+/ARM64. SHA-256: `5700cbd0c209645097089129af4bb7db516f7eccf40788a397b051b8b7d69323`. Full smoke, Release/R8, APK identity/signature/ABI/minSdk/flags/source/native-lib/alignment checks passed. Final credential-bearing APK was not installed before publication at the owner's request; prior same-code build was device-tested for lock screen, Performance Center, Experimental Glass selection and menu/Edit paths. Owner acceptance remains pending.
+Beta 4 published from `7bf93d3cff1490f93b9f67032a08819669974b55`, code `72619`, same permanent certificate, Android 6+/ARM64. SHA-256: `4e10c9f3a43604fe039f00205c77e817d85218867f50bfcf5e154bfb5659c604`. It is the updater/API hotfix over Beta 3. Full smoke, Release/R8, APK identity/signature/ABI/minSdk/flags/source/native-lib/alignment/API-credential checks passed. Beta 4 was not installed before publication; Beta 3 test code was device-tested for lock screen, Performance Center, Experimental Glass selection and menu/Edit paths. Owner acceptance remains pending.
+
+Beta 3 (immutable): source `ec5517afa8147fd9688be2904b0bc19112ec8e0c`, code `72609`, SHA-256 `5700cbd0c209645097089129af4bb7db516f7eccf40788a397b051b8b7d69323`. Its installed test build already had the same version, so the updater correctly did not offer a reinstall.
 
 Beta 2 (immutable): source `b1ce28e55e9755b95631cfe009e21f01156aea3b`, code `72599`, SHA-256 `7b25f4ad97592b1e88a998dea09c754cafd02d2c3ced6aec3c9ea8d2762670fd`. Its APK was built with empty fork API credentials; do not reuse that build.
 
