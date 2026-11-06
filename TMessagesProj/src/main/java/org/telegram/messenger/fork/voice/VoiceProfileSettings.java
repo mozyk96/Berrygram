@@ -22,7 +22,13 @@ public final class VoiceProfileSettings {
             synchronized (VoiceProfileSettings.class) {
                 value = cachedProfile;
                 if (value == null) {
-                    String stored = prefs().getString("profile", VoiceProfilePolicy.STANDARD);
+                    String stored;
+                    try {
+                        stored = prefs().getString("profile", VoiceProfilePolicy.STANDARD);
+                    } catch (ClassCastException corrupt) {
+                        prefs().edit().remove("profile").apply();
+                        stored = VoiceProfilePolicy.STANDARD;
+                    }
                     value = VoiceProfilePolicy.normalize(stored);
                     if (!value.equals(stored)) prefs().edit().putString("profile", value).apply();
                     cachedProfile = value;
@@ -39,7 +45,7 @@ public final class VoiceProfileSettings {
     }
 
     public static boolean customNoiseSuppression() {
-        return prefs().getBoolean("custom_ns", true);
+        return safeBoolean("custom_ns", true);
     }
 
     public static void setCustomNoiseSuppression(boolean value) {
@@ -47,7 +53,7 @@ public final class VoiceProfileSettings {
     }
 
     public static boolean customGain() {
-        return prefs().getBoolean("custom_agc", false);
+        return safeBoolean("custom_agc", false);
     }
 
     public static void setCustomGain(boolean value) {
@@ -55,7 +61,7 @@ public final class VoiceProfileSettings {
     }
 
     public static boolean customEcho() {
-        return prefs().getBoolean("custom_aec", false);
+        return safeBoolean("custom_aec", false);
     }
 
     public static void setCustomEcho(boolean value) {
@@ -65,10 +71,28 @@ public final class VoiceProfileSettings {
     public static int customSource() {
         int stored = VoiceProfilePolicy.SOURCE_DEFAULT;
         try {
-            stored = Integer.parseInt(prefs().getString("custom_source", "0"));
+            stored = Integer.parseInt(safeString("custom_source", "0"));
         } catch (NumberFormatException ignored) { }
         return VoiceProfilePolicy.validSource(stored) ? stored
                 : VoiceProfilePolicy.SOURCE_DEFAULT;
+    }
+
+    private static boolean safeBoolean(String key, boolean fallback) {
+        try {
+            return prefs().getBoolean(key, fallback);
+        } catch (ClassCastException corrupt) {
+            prefs().edit().remove(key).apply();
+            return fallback;
+        }
+    }
+
+    private static String safeString(String key, String fallback) {
+        try {
+            return prefs().getString(key, fallback);
+        } catch (ClassCastException corrupt) {
+            prefs().edit().remove(key).apply();
+            return fallback;
+        }
     }
 
     public static void setCustomSource(int value) {

@@ -23,7 +23,13 @@ public final class CameraProfileSettings {
             synchronized (CameraProfileSettings.class) {
                 value = cached;
                 if (value == null) {
-                    String stored = prefs().getString("mode", CameraProfilePolicy.AUTO);
+                    String stored;
+                    try {
+                        stored = prefs().getString("mode", CameraProfilePolicy.AUTO);
+                    } catch (ClassCastException corrupt) {
+                        prefs().edit().remove("mode").apply();
+                        stored = CameraProfilePolicy.AUTO;
+                    }
                     value = CameraProfilePolicy.normalize(stored);
                     if (!value.equals(stored)) prefs().edit().putString("mode", value).apply();
                     cached = value;
