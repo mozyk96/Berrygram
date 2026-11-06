@@ -1,57 +1,42 @@
-# BerryGram continuation — Android 1.3.0 Beta 5
+# BerryGram continuation — Android 1.3.0 Stable
 
 ## Published
 
-- Branch `dev/1.3.0`; Beta 5 source/tag `93794233dffb3ff53622792a023718124ee8e18d`.
-- Release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.5
-- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0-beta.5/BerryGram-1.3.0-beta.5-arm64-v8a.apk
-- SHA-256: `dacc6aac28e214e14c9c0e31eb575f92069703a22c6e4d85eec44f57b0f81d6f`; code `72629`.
+- Branch `dev/1.3.0`; Stable source/tag `v1.3.0` at `dd0f71a04154dc39ee016a0e9ea80a6b7cf83738`.
+- Release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0/BerryGram-1.3.0-arm64-v8a.apk
+- SHA-256: `80e0be6a5aa1afc3f8251aedad686f9c42cb5e62c42c3c61c3582aa7ec7f882d`; versionName `1.3.0`, versionCode `72639`.
+- Beta 5 remains published/immutable: tag `9379423`, code `72629`, SHA `dacc6aac28e214e14c9c0e31eb575f92069703a22c6e4d85eec44f57b0f81d6f`.
 - Beta 4 remains published/immutable: `7bf93d3`, code `72619`, SHA `4e10c9f3a43604fe039f00205c77e817d85218867f50bfcf5e154bfb5659c604`.
 
-## Beta 5 implemented
+## Stable 1.3.0 contents
 
-- Experimental Glass 2.0 with persisted transparency, blur, frost, saturation, edge light, highlight, shadow depth, tint and radius; Clear/Frosted/Balanced/Deep presets and a live preview. Legacy effect strength is migrated.
-- Real blur-path coverage for BerryGram popups, Mini Dock and reaction panel; opaque/Telegram fallback under power saving or unsupported devices.
-- Embedded round-video panel at the bottom of Video messages: circular power and switch-camera buttons on the left, large circular live preview on the right; stops on pause/detach/window invisibility and releases camera resources.
-- Adaptive Camera Engine with Camera2 capability discovery, five profiles, JPEG quality, round-video bitrate/FPS limits, validated FPS ranges and advertised OIS/EIS.
-- Voice profiles with real platform noise suppression/AGC/AEC where available, source selection, profile-aware Opus bitrate and a local test recorder.
-- Post-release branch commit `533d604` adds stopping the embedded preview when scrolled off-screen. It is **not** in the published Beta 5 APK and should be included in the next build.
+- Everything in Beta 5: Experimental Glass 2.0, embedded round-video preview panel, Adaptive Camera Engine and Voice Engine.
+- Includes post-Beta-5 commit `533d604` (preview stops when the panel scrolls out of view), plus an extra guard against late camera callbacks while off-screen or window-hidden.
+- Removed the nonfunctional Appearance “preview” row that only showed a “Done” popup.
+- Glass provider wrappers now re-evaluate style/config on every color refresh, so switching to/from Experimental Glass applies without recreating the host screen.
+- Glass preview drawing no longer allocates paints/rectangles per frame; colors, radii, stroke widths and shadows are cached on config change.
+- Appearance “Intensity” and the Experimental Glass “Blur” control now stay consistent for the selected style.
+- Corrupt/mistyped preference values in Glass, camera and voice settings are repaired instead of crashing.
+- Round-video power toggle turns off after denied permission or camera timeout.
+- Voice settings preserve scroll position on refresh; stale record-permission results and pending test starts are cancelled on pause/destroy.
+- Voice effect availability is cached (bounded, static) instead of re-querying platform effects repeatedly.
+
+## Verification completed
+
+- Full `fork-tests/smoke.ps1` including new `GlassSettingsTest` and all existing gesture/reaction/glass/camera/voice/updater/performance suites.
+- Debug Java compilation and Release/R8 build with credentials injected at build time (values never printed).
+- APK: `org.example.forkclient`, versionName `1.3.0`, code `72639` (> Beta 5 `72629`), minSdk 23, targetSdk 36, ARM64 only, v1+v2 signatures, permanent certificate `b3ea9ca2…c722a5`, not debuggable, not testOnly, 16 KB ZIP alignment, no keystore packaged, non-zero API credentials present, embedded revision `dd0f71a`.
 
 ## Open items
 
-- Owner must install the published Beta 5 APK and verify: glass controls/presets/themes, Mini Dock/reaction panels, round-video preview lifecycle and rotation, photo/ordinary/round capture, voice profiles/effects/test recorder, account switching, restart persistence and in-place update.
-- Beta 5 was not device-tested before publication. The owner's phone was not connected over ADB; the emulator failed due to a missing Windows Android Emulator hypervisor driver.
-- Manual ISO/exposure/focus UI, physical-lens selection, camera extensions/HDR/Night and full BottomSheet/AlertDialog glass remain out of scope for this beta.
-- Do not publish Stable 1.3.0 until owner acceptance; Desktop remains gated.
+- No physical-device test of this exact Stable APK was possible: the owner's SM-A256B was not connected over ADB and the local emulator cannot start (Windows Android Emulator hypervisor driver missing). The owner explicitly chose to publish with this gap disclosed in the release notes.
+- Device-only checks still to be reported by the owner: in-place upgrade from Beta 4/Beta 5, glass visuals per theme, Mini Dock/reaction panels, round-video start/stop/switch/scroll-away, photo/round-video capture, voice profiles/effects/local test, account switching, restart persistence, updater detection.
+- Baseline/Startup Profiles and broader R8 rule pruning were investigated and deliberately deferred: real profiles require device/macrobenchmark generation, and hand-written profiles would be fabricated.
+- Known feature limits: no manual ISO/exposure/focus UI, no physical-lens selection, no camera extensions/HDR/Night; BottomSheet/AlertDialog glass not converted; Desktop remains gated.
 
-## Confirmed on physical SM-A256B
+## Next
 
-- Logcat captured the Beta 2 crash: `NullPointerException` in `ActionBarPopupWindowLayout.addViewToSwipeBack` from the custom More page. Beta 3 menu with `Ще` opens without crash.
-- Lock screen background is normal after the passcode fallback.
-- Performance Center opens and switches profiles without the previous full-page rebuild; Lite Mode and storage rows navigate.
-- Experimental Glass is selectable alongside Blur/Liquid.
-- Tap→Edit reached Telegram's native edit path and displayed a server edit refusal without crashing. The installed test build lacked API credentials; final APK restores them.
-
-## Implemented
-
-- Menu swipe-back flag + defensive fallback.
-- Edit eligibility/account validation and accurate unavailable message.
-- Restored approved fork API credentials from Stable 1.2.0 into the Beta 3/Beta 4 builds (not committed/logged).
-- Passcode wallpaper fallback (theme color; no opaque black from evicted/invalid bitmap).
-- Removed dynamic-neutral Material tint, migrated `material` to Blur, removed Material resource.
-- Fixed double-encoded Ukrainian/Russian `fork_custom_text.xml` labels.
-- Rewrote Performance Center to update controls in place; real Lite Mode/cache/diagnostics actions; thermal and low-RAM-aware Automatic effects.
-- Cached gesture/reaction/performance preferences.
-- Added optional Experimental Glass with theme-aware translucent tint, stronger edge light, API/capability fallback.
-
-## Verification
-
-- Full `fork-tests/smoke.ps1` passed.
-- Release/R8 passed; Beta 4 APK version code `72619`, minSdk 23, ARM64, non-debug/non-testOnly, permanent certificate, v1/v2 signatures, 16 KB alignment, source revision, native libs identical to Beta 2, API credentials present, SHA verified.
-- Final Beta 3/Beta 4 credential-bearing APK was **not installed** before publication at the owner's request. Prior Beta 3 test build (same code minus credentials) was installed over existing data for device checks.
-
-## Pending
-
-- Owner manual test of final credential build: Edit/network actions, every gesture, reactions/picker, Experimental Glass visual quality, themes, in-place update.
-- No Stable 1.3.0, no Desktop, no data clearing, no destructive account actions.
-- Beta 4 is the updater/credential hotfix. If the new build has issues, fix in Beta 5; do not rewrite Beta 3/Beta 4 tags/assets.
+1. Owner installs Stable 1.3.0 and reports any reproducible issue; fixes go into 1.3.1 (do not rewrite the `v1.3.0` tag or assets).
+2. Do not publish further Stable without device evidence or explicit owner direction.
+3. Desktop work stays gated until the owner starts it explicitly.

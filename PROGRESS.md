@@ -1,3 +1,15 @@
+# Android 1.3.0 Stable published — 2026-11-06
+
+- Release (not pre-release): https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0
+- Source/tag `dd0f71a04154dc39ee016a0e9ea80a6b7cf83738`; version `1.3.0`, code `72639` (> Beta 5 `72629`).
+- APK: https://github.com/mozyk96/Berrygram/releases/download/v1.3.0/BerryGram-1.3.0-arm64-v8a.apk
+- SHA-256: `80e0be6a5aa1afc3f8251aedad686f9c42cb5e62c42c3c61c3582aa7ec7f882d`; 41874894 bytes.
+- Stable audit fixes: removed the decorative Appearance preview row; glass provider wrappers re-evaluate style/config on each color refresh; glass preview no longer allocates paint/rect objects per frame (cached colors, radii, strokes, shadow); Appearance intensity stays consistent with the Experimental Glass blur value; corrupt preference values in Glass/camera/voice settings are repaired instead of throwing; round-video power state turns off on denied permission or timeout; preview also refuses to start camera while off-screen or window-hidden; voice settings keep scroll position, and stale record-permission results/pending starts are cancelled; platform voice-effect availability cached.
+- Performance work: bounded existing caches retained, per-frame allocations removed from the glass preview, header drawables no longer rebuilt on every slider tick, round-video camera/GL work stops when off-screen. Baseline/Startup Profiles and R8 rule pruning were evaluated and deliberately deferred (no fabricated profiles; reflection/JNI risk).
+- Verified: full `fork-tests/smoke.ps1` (new `GlassSettingsTest` plus gesture/reaction/glass/camera/voice/updater/performance suites), Debug Java compile, Release/R8 with injected credentials, APK identity/version/minSdk/ABI/v1+v2 signature/permanent certificate/non-debug/non-testOnly/16 KB alignment/no keystore/API credentials/embedded revision.
+- Not verified: physical-device behaviour of this exact APK — owner's phone was not connected over ADB and the local emulator cannot start (hypervisor driver missing). Published with this gap explicitly disclosed at the owner's direction.
+- Previous tags/assets (v1.2.0, v1.3.0-beta.1…beta.5) unchanged. Desktop remains gated.
+
 # Android 1.3.0 Beta 5 published — 2026-11-06
 
 - Pre-release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.5

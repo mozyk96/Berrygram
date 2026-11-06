@@ -2,14 +2,21 @@
 
 Branch: `dev/1.3.0`
 Beta 5 baseline: `9379423` (code `72629`)
-Target: versionName `1.3.0`, versionCode above `72629`, tag `v1.3.0`
+Release source: `dd0f71a04154dc39ee016a0e9ea80a6b7cf83738`
+Published tag: `v1.3.0`; versionName `1.3.0`, versionCode `72639`
+APK: `BerryGram-1.3.0-arm64-v8a.apk`, 41874894 bytes
+SHA-256: `80e0be6a5aa1afc3f8251aedad686f9c42cb5e62c42c3c61c3582aa7ec7f882d`
 
 ## P0 — Correctness and preservation
 
 - Preserved Beta 5 and every earlier tag/artifact; no tag or asset is rewritten.
 - Included the post-Beta-5 preview scroll fix (`533d604`) in Stable: the embedded round-video camera now stops when its panel is scrolled out of view, in addition to pause/detach/window invisibility.
 - Removed the nonfunctional Appearance “preview” row that only opened a “Done” popup. Experimental Glass has the real live preview screen instead.
-- Tightened round-preview state: denied permission and camera timeout now switch the power state off instead of leaving a misleading active toggle.
+- Tightened round-preview state: denied permission and camera timeout now switch the power state off instead of leaving a misleading active toggle; the preview also refuses to start the camera while off-screen or window-hidden, so late callbacks cannot reopen it.
+- Made the Glass provider wrapper dynamic: it re-checks style/config on every color refresh, so switching to or from Experimental Glass applies without recreating the host view, and its shadow/stroke/alpha values no longer freeze at wrapper creation.
+- Unified the Appearance “Intensity” slider with the Experimental Glass blur value, so the row never shows a stale number for the active style.
+- Repaired corrupt preference values: mistyped Glass/camera/voice keys are removed and replaced with validated defaults instead of throwing `ClassCastException` during settings or recorder initialization.
+- Cancelled stale voice-test state: pending record-permission starts are cleared on pause/destroy and late permission results no longer start or update a destroyed screen.
 - Preserved Telegram data, account sessions, signing identity, minSdk 23, ARM64 and updater policy.
 
 ## P1 — Regression and settings audit
@@ -34,6 +41,8 @@ Implemented, low-risk changes only:
 
 - `ForkGlassPreview` no longer allocates `Paint`/`RectF` objects inside `onDraw`; colors, radii, stroke widths and shadow parameters are cached when settings change.
 - Glass preview slider updates no longer recreate the floating-header selector drawables on every progress event.
+- Glass provider wrappers evaluate configuration lazily instead of capturing a stale snapshot, which also removes repeated per-refresh allocations.
+- Voice effect availability (`NoiseSuppressor`, `AutomaticGainControl`, `AcousticEchoCanceler`) is resolved once and cached in bounded static fields instead of being re-queried on every recorder start.
 - Appearance screen has one less redundant interactive row.
 - Voice settings preserve scroll position across its configuration refresh instead of jumping to the top.
 - Round-video preview stops when off-screen; camera and GL resources are released rather than kept alive while the panel is invisible.
