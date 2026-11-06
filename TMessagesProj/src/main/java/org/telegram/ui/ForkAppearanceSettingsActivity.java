@@ -19,7 +19,6 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
-import org.telegram.ui.Components.ItemOptions;
 
 /** Controls the supported popup graphics and their preview. */
 public final class ForkAppearanceSettingsActivity extends BaseFragment {
@@ -109,16 +108,8 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         color.setIcon(R.drawable.msg_palette);
         ForkSettingsLayout.interactive(color);
         controls.addView(color);
-        TextSettingsCell preview = new TextSettingsCell(context);
-        preview.setText(ForkLocale.get(R.string.ForkAppearancePreview), false);
-        preview.setIcon(R.drawable.msg_palette);
-        ForkSettingsLayout.interactive(preview);
-        preview.setOnClickListener(v -> ItemOptions.makeOptions(this, v)
-                .add(R.drawable.msg_check_s, ForkLocale.get(R.string.ForkAppearancePreviewItem), () -> { })
-                .show());
-        controls.addView(preview);
-        applyAccent(slider, effect, preview, accent(context));
-        color.setOnClickListener(v -> chooseAccent(context, slider, effect, color, preview));
+        applyAccent(slider, effect, accent(context));
+        color.setOnClickListener(v -> chooseAccent(context, slider, effect, color));
         style.setOnClickListener(v -> {
             String[] modes = {"blur", "liquid", "experimental"};
             CharSequence[] labels = {
@@ -139,7 +130,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                         effect.setEnabled(effectsAvailable());
                         ForkSettingsLayout.refreshSection(controls, false);
                         ForkFloatingHeader.refresh(fragmentView);
-                        applyAccent(slider, effect, preview, accent(context));
+                        applyAccent(slider, effect, accent(context));
                     });
         });
         slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -195,26 +186,25 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                 ForkGraphicsSurface.effectsSuppressed(),
                 Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()));
     }
-    private static void applyAccent(SeekBar slider, SeekBar effect, TextSettingsCell preview, int color) {
+    private static void applyAccent(SeekBar slider, SeekBar effect, int color) {
         int background = Theme.getColor(Theme.key_windowBackgroundWhite);
         if ("material".equals(ForkPanelSettings.style())) background = ForkGraphicsSurface.materialColor(slider.getContext(), background);
         int readable = GraphicsColorPolicy.readableAccent(color, background);
         tint(slider, readable);
         tint(effect, readable);
-        preview.getTextView().setTextColor(readable);
     }
-    private void chooseAccent(Context context, SeekBar slider, SeekBar effect, TextSettingsCell row, TextSettingsCell preview) {
-        ForkHsvPicker picker = new ForkHsvPicker(context, accent(context), value -> applyAccent(slider, effect, preview, value));
+    private void chooseAccent(Context context, SeekBar slider, SeekBar effect, TextSettingsCell row) {
+        ForkHsvPicker picker = new ForkHsvPicker(context, accent(context), value -> applyAccent(slider, effect, value));
         AlertDialog dialog = new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkColorTitle))
                 .setView(picker)
                 .setPositiveButton(org.telegram.messenger.LocaleController.getString(R.string.Save), null)
-                .setNegativeButton(org.telegram.messenger.LocaleController.getString(R.string.Cancel), (d, w) -> applyAccent(slider, effect, preview, accent(context)))
+                .setNegativeButton(org.telegram.messenger.LocaleController.getString(R.string.Cancel), (d, w) -> applyAccent(slider, effect, accent(context)))
                 .setNeutralButton(ForkLocale.get(R.string.ForkColorSystem), (d, w) -> {
                     ForkPanelSettings.setCustomAccent(null);
-                    applyAccent(slider, effect, preview, accent(context));
+                    applyAccent(slider, effect, accent(context));
                     row.setTextAndValue(ForkLocale.get(R.string.ForkColorTitle), accentLabel(), false);
                 }).create();
-        if (showDialog(dialog, d -> applyAccent(slider, effect, preview, accent(context))) != null) {
+        if (showDialog(dialog, d -> applyAccent(slider, effect, accent(context))) != null) {
             View save = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
             if (save != null) save.setOnClickListener(v -> {
                 if (!picker.valid()) { picker.showError(); return; }
@@ -222,7 +212,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                 row.setTextAndValue(ForkLocale.get(R.string.ForkColorTitle), accentLabel(), false);
                 dialog.dismiss();
             });
-        } else applyAccent(slider, effect, preview, accent(context));
+        } else applyAccent(slider, effect, accent(context));
     }
     @Override public void onResume() { super.onResume(); if (effectControl != null) effectControl.setEnabled(effectsAvailable()); if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView); }
     @Override public void onFragmentDestroy() { effectControl = null; super.onFragmentDestroy(); }

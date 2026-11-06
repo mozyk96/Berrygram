@@ -40,13 +40,16 @@ final class ForkGlassPreview extends FrameLayout {
 
     void setConfig(ForkGlassSettings.Config config) {
         backdrop.setBlur(GlassPolicy.captureBlurAmount(config.blur, config.frost,
-                config.adaptive, org.telegram.messenger.SharedConfig.deviceIsLow()));
+                config.adaptive && org.telegram.messenger.fork.panels.ForkPanelSettings.adaptiveEffects(),
+                org.telegram.messenger.SharedConfig.deviceIsLow()));
         glass.setConfig(config);
     }
 
     private static final class BackdropView extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint shape = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF upperBar = new RectF();
+        private final RectF lowerBar = new RectF();
         private LinearGradient gradient;
         private int blurAmount;
 
@@ -74,6 +77,8 @@ final class ForkGlassPreview extends FrameLayout {
             int light = ColorUtils.blendARGB(accent, Color.WHITE, 0.55f);
             gradient = new LinearGradient(0, 0, w, h,
                     new int[]{deep, accent, light}, null, Shader.TileMode.CLAMP);
+            lowerBar.set(w * 0.08f, h * 0.62f, w * 0.46f, h * 0.70f);
+            upperBar.set(w * 0.54f, h * 0.18f, w * 0.92f, h * 0.26f);
         }
 
         @Override
@@ -87,11 +92,9 @@ final class ForkGlassPreview extends FrameLayout {
             shape.setColor(0x33000000);
             canvas.drawCircle(getWidth() * 0.82f, getHeight() * 0.72f, getHeight() * 0.30f, shape);
             shape.setColor(0x44FFFFFF);
-            canvas.drawRoundRect(new RectF(getWidth() * 0.08f, getHeight() * 0.62f,
-                    getWidth() * 0.46f, getHeight() * 0.70f), dp(8), dp(8), shape);
+            canvas.drawRoundRect(lowerBar, dp(8), dp(8), shape);
             shape.setColor(0x33000000);
-            canvas.drawRoundRect(new RectF(getWidth() * 0.54f, getHeight() * 0.18f,
-                    getWidth() * 0.92f, getHeight() * 0.26f), dp(8), dp(8), shape);
+            canvas.drawRoundRect(upperBar, dp(8), dp(8), shape);
         }
 
         private float dp(float value) {
@@ -104,8 +107,21 @@ final class ForkGlassPreview extends FrameLayout {
         private final Paint frost = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF rect = new RectF();
+        private final RectF lowerRect = new RectF();
         private ForkGlassSettings.Config config;
+        private float cachedRadius;
+        private float cachedShadowRadius;
+        private float cachedShadowDy;
+        private float cachedStrokeWidth;
+        private int cachedShadowAlpha;
+        private int cachedFill;
+        private int cachedFrost;
+        private int cachedStrokeTop;
+        private int cachedStrokeBottom;
+        private int cachedText;
+        private int cachedLine;
 
         GlassView(Context context) {
             super(context);
@@ -113,10 +129,35 @@ final class ForkGlassPreview extends FrameLayout {
             stroke.setStyle(Paint.Style.STROKE);
             text.setTextSize(AndroidUtilities.dp(20));
             text.setFakeBoldText(true);
+            line.setStrokeWidth(AndroidUtilities.dp(2));
         }
 
         void setConfig(ForkGlassSettings.Config config) {
             this.config = config;
+            float opacity = GlassPolicy.opacity(config.transparency);
+            int base = Theme.getColor(Theme.key_windowBackgroundWhite);
+            if (config.customTintEnabled()) {
+                Integer tint = GraphicsColorPolicy.parseHex(config.customTint);
+                if (tint != null) base = ColorUtils.blendARGB(base, tint, 0.55f);
+            }
+            cachedFill = ColorUtils.setAlphaComponent(base, Math.round(255 * opacity));
+            cachedFrost = ColorUtils.setAlphaComponent(
+                    Theme.getColor(Theme.key_windowBackgroundWhite),
+                    Math.round(28f * GlassPolicy.clampPercent(config.frost) / 100f));
+            cachedStrokeTop = ColorUtils.setAlphaComponent(Color.WHITE,
+                    GlassPolicy.strokeAlpha(config.edge, config.highlight, true));
+            cachedStrokeBottom = ColorUtils.setAlphaComponent(Color.WHITE,
+                    GlassPolicy.strokeAlpha(config.edge, config.highlight, false));
+            cachedText = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText);
+            cachedLine = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText3);
+            cachedRadius = AndroidUtilities.dpf2(GlassPolicy.radiusDp(
+                    org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp()));
+            cachedShadowRadius = AndroidUtilities.dpf2(
+                    GlassPolicy.shadowRadiusDp(config.shadow));
+            cachedShadowDy = AndroidUtilities.dpf2(1.5f);
+            cachedShadowAlpha = ColorUtils.setAlphaComponent(Color.BLACK,
+                    GlassPolicy.shadowAlpha(config.shadow));
+            cachedStrokeWidth = AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(config.edge));
             invalidate();
         }
 
@@ -124,46 +165,30 @@ final class ForkGlassPreview extends FrameLayout {
         protected void onDraw(Canvas canvas) {
             if (config == null) return;
             float inset = AndroidUtilities.dp(12);
-            float radius = AndroidUtilities.dpf2(GlassPolicy.radiusDp(
-                    org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp()));
             rect.set(inset, inset, getWidth() - inset, getHeight() - inset);
-            float opacity = GlassPolicy.opacity(config.transparency);
-            int base = Theme.getColor(Theme.key_windowBackgroundWhite);
-            if (config.customTintEnabled()) {
-                Integer tint = GraphicsColorPolicy.parseHex(config.customTint);
-                if (tint != null) base = ColorUtils.blendARGB(base, tint, 0.55f);
-            }
-            fill.setColor(ColorUtils.setAlphaComponent(base, Math.round(255 * opacity)));
-            fill.setShadowLayer(AndroidUtilities.dpf2(GlassPolicy.shadowRadiusDp(config.shadow)),
-                    0, AndroidUtilities.dpf2(1.5f),
-                    ColorUtils.setAlphaComponent(Color.BLACK, GlassPolicy.shadowAlpha(config.shadow)));
-            canvas.drawRoundRect(rect, radius, radius, fill);
+            fill.setColor(cachedFill);
+            fill.setShadowLayer(cachedShadowRadius, 0, cachedShadowDy, cachedShadowAlpha);
+            canvas.drawRoundRect(rect, cachedRadius, cachedRadius, fill);
             fill.clearShadowLayer();
 
-            int frostAlpha = Math.round(28f * GlassPolicy.clampPercent(config.frost) / 100f);
-            frost.setColor(ColorUtils.setAlphaComponent(
-                    Theme.getColor(Theme.key_windowBackgroundWhite), frostAlpha));
-            canvas.drawRoundRect(rect, radius, radius, frost);
+            frost.setColor(cachedFrost);
+            canvas.drawRoundRect(rect, cachedRadius, cachedRadius, frost);
 
-            stroke.setStrokeWidth(AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(config.edge)));
-            stroke.setColor(ColorUtils.setAlphaComponent(Color.WHITE,
-                    GlassPolicy.strokeAlpha(config.edge, config.highlight, true)));
-            canvas.drawRoundRect(rect, radius, radius, stroke);
-            stroke.setColor(ColorUtils.setAlphaComponent(Color.WHITE,
-                    GlassPolicy.strokeAlpha(config.edge, config.highlight, false)));
-            RectF lower = new RectF(rect);
-            lower.top = rect.centerY();
+            stroke.setStrokeWidth(cachedStrokeWidth);
+            stroke.setColor(cachedStrokeTop);
+            canvas.drawRoundRect(rect, cachedRadius, cachedRadius, stroke);
+            stroke.setColor(cachedStrokeBottom);
+            lowerRect.set(rect);
+            lowerRect.top = rect.centerY();
             canvas.save();
-            canvas.clipRect(lower);
-            canvas.drawRoundRect(rect, radius, radius, stroke);
+            canvas.clipRect(lowerRect);
+            canvas.drawRoundRect(rect, cachedRadius, cachedRadius, stroke);
             canvas.restore();
 
-            text.setColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+            text.setColor(cachedText);
             canvas.drawText("Aa", rect.left + AndroidUtilities.dp(18),
                     rect.centerY() + AndroidUtilities.dp(7), text);
-            Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
-            line.setColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText3));
-            line.setStrokeWidth(AndroidUtilities.dp(2));
+            line.setColor(cachedLine);
             canvas.drawLine(rect.left + AndroidUtilities.dp(54), rect.centerY() - AndroidUtilities.dp(4),
                     rect.right - AndroidUtilities.dp(18), rect.centerY() - AndroidUtilities.dp(4), line);
             canvas.drawLine(rect.left + AndroidUtilities.dp(54), rect.centerY() + AndroidUtilities.dp(9),

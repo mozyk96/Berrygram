@@ -265,7 +265,6 @@ public final class ForkExperimentalGlassActivity extends BaseFragment {
 
     private void refreshPreview() {
         if (preview != null) preview.setConfig(ForkGlassSettings.config());
-        if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
     }
 
     @Override
@@ -273,6 +272,7 @@ public final class ForkExperimentalGlassActivity extends BaseFragment {
         super.onResume();
         refreshPreview();
         syncRows();
+        if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
     }
 
     @Override

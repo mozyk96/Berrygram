@@ -63,6 +63,7 @@ public final class ForkVoiceSettingsActivity extends BaseFragment {
     private void render() {
         if (rows == null) return;
         Context context = rows.getContext();
+        final int previousScroll = currentScroll();
         rows.removeAllViews();
 
         TextSettingsCell profile = new TextSettingsCell(context);
@@ -122,6 +123,27 @@ public final class ForkVoiceSettingsActivity extends BaseFragment {
                 + ForkLocale.get(R.string.ForkVoiceProfileInfo) + "\n\n"
                 + VoiceProcessing.availabilitySummary());
         rows.addView(info);
+        if (previousScroll > 0) {
+            rows.post(() -> {
+                ScrollView scroll = findScroll();
+                if (scroll != null) scroll.scrollTo(0, previousScroll);
+            });
+        }
+    }
+
+    private int currentScroll() {
+        ScrollView scroll = findScroll();
+        return scroll == null ? 0 : scroll.getScrollY();
+    }
+
+    private ScrollView findScroll() {
+        View parent = rows;
+        while (parent != null) {
+            if (parent instanceof ScrollView) return (ScrollView) parent;
+            if (!(parent.getParent() instanceof View)) return null;
+            parent = (View) parent.getParent();
+        }
+        return null;
     }
 
     private void addEffectToggle(Context context, int title, boolean checked,

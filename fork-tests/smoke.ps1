@@ -62,6 +62,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Voice and panel settings test compilation fail
 if ($LASTEXITCODE -ne 0) { throw 'Voice settings test failed' }
 & $java -cp $managerDir PanelSettingsTest
 if ($LASTEXITCODE -ne 0) { throw 'Panel settings test failed' }
+& $javac -encoding UTF-8 -cp $managerDir -d $managerDir (Join-Path $base 'panels\GlassPolicy.java') (Join-Path $base 'panels\ForkGlassSettings.java') (Join-Path $PSScriptRoot 'GlassSettingsTest.java')
+if ($LASTEXITCODE -ne 0) { throw 'Glass settings test compilation failed' }
+& $java -cp $managerDir GlassSettingsTest
+if ($LASTEXITCODE -ne 0) { throw 'Glass settings test failed' }
 $python = if ($env:FORK_PYTHON) { $env:FORK_PYTHON } else { (Get-Command python -ErrorAction Stop).Source }
 & $python (Join-Path $PSScriptRoot 'test_beta8_updater_lifecycle.py')
 if ($LASTEXITCODE -ne 0) { throw 'Updater runnable lifecycle test failed' }

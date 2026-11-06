@@ -60,6 +60,7 @@ public final class ForkRoundVideoPreviewPanel extends ViewGroup {
     private final Runnable onInitialized = this::attachCamera;
     private final Runnable onTimeout = () -> {
         if (!resumed || !previewOn) return;
+        previewOn = false;
         stopCamera();
         updatePowerState();
     };
@@ -143,8 +144,12 @@ public final class ForkRoundVideoPreviewPanel extends ViewGroup {
 
     public void onCameraPermissionResult(boolean granted) {
         permissionPending = false;
-        if (granted && previewOn && resumed) startCamera();
-        else updatePowerState();
+        if (granted && previewOn && resumed) {
+            startCamera();
+        } else {
+            if (!granted) previewOn = false;
+            updatePowerState();
+        }
     }
 
     private void startCamera() {
