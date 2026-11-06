@@ -226,6 +226,11 @@ public class MessageObject {
     public String monthKey;
     public boolean deleted;
     public boolean deletedByThanos;
+    public boolean isForkDeleted;
+
+    public boolean isForkDeleted() {
+        return isForkDeleted;
+    }
     public float audioProgress;
     public float forceSeekTo = -1;
     public int audioProgressMs;
@@ -1953,6 +1958,9 @@ public class MessageObject {
         monthKey = String.format("%d_%02d", dateYear, dateMonth);
 
         createMessageSendInfo();
+        if (messageOwner != null && org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled()) {
+            isForkDeleted = org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).isDeleted(getDialogId(), messageOwner.id);
+        }
         generateCaption();
         if (generateLayout) {
             TextPaint paint;

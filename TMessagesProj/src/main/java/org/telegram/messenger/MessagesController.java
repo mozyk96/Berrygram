@@ -14577,6 +14577,13 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     private void completeReadTask(ReadTask task) {
+        if (!DialogObject.isEncryptedDialog(task.dialogId)) {
+            TLRPC.InputPeer inputPeer = getInputPeer(task.dialogId);
+            boolean isChannelOrGroup = task.monoForumPeerId != 0 || inputPeer instanceof TLRPC.TL_inputPeerChannel || task.dialogId < 0;
+            if (org.telegram.messenger.fork.stealth.ForkStealthSettings.shouldSuppressRead(task.dialogId, isChannelOrGroup, false)) {
+                return;
+            }
+        }
         if (task.replyId != 0 && task.monoForumPeerId == 0) {
             TLRPC.TL_messages_readDiscussion req = new TLRPC.TL_messages_readDiscussion();
             req.msg_id = (int) task.replyId;
@@ -18555,6 +18562,18 @@ public class MessagesController extends BaseController implements NotificationCe
                 if (message instanceof TLRPC.TL_messageEmpty) {
                     continue;
                 }
+                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled() && message.message != null && !android.text.TextUtils.isEmpty(message.message)) {
+                    long did = MessageObject.getDialogId(message);
+                    long senderId = DialogObject.getPeerDialogId(message.from_id);
+                    org.telegram.messenger.fork.storage.ForkArchiveManager.getInstance(currentAccount).archiveMessage(
+                            did,
+                            message.id,
+                            message.date,
+                            senderId,
+                            null,
+                            message.message
+                    );
+                }
                 if (newMessageCallback != null && newMessageCallback.onMessageReceived(message)) {
                     newMessageCallback = null;
                 }
@@ -19548,6 +19567,31 @@ public class MessagesController extends BaseController implements NotificationCe
                     message.attachPath = "";
                 }
 
+                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.editHistoryEnabled()) {
+                    final long did = message.dialog_id;
+                    final int mid = message.id;
+                    final String newText = message.message;
+                    getMessagesStorage().getStorageQueue().postRunnable(() -> {
+                        try {
+                            org.telegram.SQLite.SQLiteCursor cursor = getMessagesStorage().getDatabase().queryFinalized("SELECT data FROM messages_v2 WHERE uid = " + did + " AND mid = " + mid + " LIMIT 1");
+                            if (cursor != null && cursor.next()) {
+                                org.telegram.tgnet.NativeByteBuffer data = cursor.byteBufferValue(0);
+                                if (data != null) {
+                                    TLRPC.Message oldMsg = TLRPC.Message.TLdeserialize(data, data.readInt32(false), false);
+                                    data.reuse();
+                                    if (oldMsg != null && oldMsg.message != null && newText != null && !oldMsg.message.equals(newText)) {
+                                        org.telegram.messenger.fork.storage.ForkEditHistoryStorage.getInstance(currentAccount)
+                                                .recordPriorVersion(did, mid, oldMsg.date, oldMsg.message);
+                                    }
+                                }
+                            }
+                            if (cursor != null) {
+                                cursor.dispose();
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                    });
+                }
                 ImageLoader.saveMessageThumbs(message);
                 AndroidUtilities.runOnUIThread(() -> {
                     getSendMessagesHelper().onMessageEdited(message);

@@ -1,3 +1,31 @@
+# BerryGram continuation — Android 1.4.0 Beta 1
+
+## State
+- Branch: feature/berrygram-1.4.0
+- Checkpoints saved: backup-initial-state-9365c4c, backup-initial-state-130-stable
+- Version: 1.4.0-beta.1, versionCode: 7271
+
+## Implemented in 1.4.0 Beta 1
+- Ghost Mode: read receipt suppression for private chats & groups, secret chats preserved.
+- Deleted Messages: AyuGram-style preservation, 38% bubble alpha, readable text, deletion mark.
+- Message Edit History: local SQLite storage, revision viewer dialog, context menu item.
+- Berry Archive: local SQLite storage, dialog & message browsers, full-text search.
+- 1-Tap Translator: enabled by default, native alert integration.
+- Glass 2.0 & 3 Visual Modes: Glass 2.0, Blur, No effects; obsolete controls removed.
+- Device Analyzer: hardware assessment, Galaxy A25 tier correction, scan dialog.
+- Performance Center 2.0: Auto vs Manual profiles (Low, Medium, High).
+- Advanced Animations 2.0: continuous spring tab indicator on MainTabsLayout.
+- Kotlin Transition: all new fork modules written in Kotlin.
+
+## Verification
+- All smoke tests passed (fork-tests/smoke.ps1).
+- Resource and scope checks passed.
+- APK assembleAfatDebug succeeded.
+
+## Next Steps
+- Owner testing on device.
+- Beta 2 phase will focus exclusively on bug fixes and stabilization based on owner feedback.
+
 # BerryGram continuation — Android 1.3.0 Beta 5
 
 ## Published

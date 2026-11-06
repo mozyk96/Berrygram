@@ -35,9 +35,9 @@ public final class ForkGlassSurface {
     /** Builds a provider from an explicit snapshot, used by the live preview. */
     public static BlurredBackgroundProvider provider(Theme.ResourcesProvider resourcesProvider,
                                                      ForkGlassSettings.Config config) {
-        String style = ForkPanelSettings.style();
-        boolean experimental = "experimental".equals(style)
-                && "experimental".equals(ForkGraphicsSurface.effectiveStyle());
+        String eff = ForkGraphicsSurface.effectiveStyle();
+        boolean experimental = org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) || "experimental".equals(eff);
+        boolean isNone = org.telegram.messenger.fork.panels.PanelPolicy.STYLE_NONE.equals(eff);
         float strength = ForkPanelSettings.effectStrength() / 100f;
         final float opacity;
         final int strokeTop, strokeBottom, shadow;
@@ -84,8 +84,8 @@ public final class ForkGlassSurface {
         // from Experimental Glass takes effect without recreating the host view.
         return new BlurredBackgroundProvider() {
             private boolean experimental() {
-                return "experimental".equals(ForkPanelSettings.style())
-                        && "experimental".equals(ForkGraphicsSurface.effectiveStyle());
+                String eff = ForkGraphicsSurface.effectiveStyle();
+                return org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) || "experimental".equals(eff);
             }
 
             @Override public int getShadowColor() {
@@ -145,12 +145,14 @@ public final class ForkGlassSurface {
 
     /** Blur intensity for one-shot popup captures; keeps the caller's base when not experimental. */
     public static int captureBlurAmount(int base) {
-        if (!"experimental".equals(ForkGraphicsSurface.effectiveStyle())) return base;
+        String eff = ForkGraphicsSurface.effectiveStyle();
+        if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) && !"experimental".equals(eff)) return base;
         return ForkGlassSettings.captureBlurAmount(base);
     }
 
     public static float backdropSaturation(float base) {
-        if (!"experimental".equals(ForkGraphicsSurface.effectiveStyle())) return base;
+        String eff = ForkGraphicsSurface.effectiveStyle();
+        if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) && !"experimental".equals(eff)) return base;
         return ForkGlassSettings.backdropSaturation(base);
     }
 
@@ -159,7 +161,8 @@ public final class ForkGlassSurface {
      * Returns the input bitmap when no processing is needed.
      */
     public static Bitmap processBackdrop(Bitmap bitmap) {
-        if (bitmap == null || !"experimental".equals(ForkGraphicsSurface.effectiveStyle())) return bitmap;
+        String eff = ForkGraphicsSurface.effectiveStyle();
+        if (bitmap == null || (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) && !"experimental".equals(eff))) return bitmap;
         ForkGlassSettings.Config config = ForkGlassSettings.config();
         float saturation = GlassPolicy.saturation(config.saturation, config.frost);
         if (Math.abs(saturation - 1f) < 0.03f) return bitmap;

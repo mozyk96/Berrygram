@@ -1,6 +1,7 @@
-## Active: Android1.3.0 Total Customization
+## Active: Android 1.4.0 Beta 1 — Implemented & Verified
 
-Action Registry -> Gesture Engine -> Reaction Editor -> Menu Editor -> Settings UI -> Beta/owner testing -> approved Android Stable. Details: plans/1.3.0. Desktop development is gated until Android Stable1.3.0 is published; Desktop planning only. Stable1.2.0 remains immutable. No1.4.0 work.
+Ghost Mode (Privacy) -> Deleted Messages preservation (AyuGram style) -> Message Edit History -> Berry Archive (Local SQLite Chat Archive) -> 1-Tap Message Translator -> Glass 2.0 & Unified 3 Visual Modes -> Device Analyzer (Samsung Galaxy A25 correction) -> Performance Center 2.0 -> Advanced Animations 2.0 -> Kotlin transition for fork modules.
+Branch feature/berrygram-1.4.0. Full smoke test suite, Kotlin & Java compilation, and debug APK assembly passed. Next phase is 1.4.0 Beta 2 (bug fixes and stabilization only) following owner testing.
 
 ## Current release: 1.2.0 Stable — published
 

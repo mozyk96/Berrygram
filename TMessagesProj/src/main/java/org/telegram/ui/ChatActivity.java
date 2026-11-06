@@ -1264,6 +1264,7 @@ public class ChatActivity extends BaseFragment implements
     public final static int OPTION_VIEW_STATISTICS = 115;
     public final static int OPTION_WELCOME_REVERT = 116;
     public final static int OPTION_SEND_MONEY = 117;
+    public final static int OPTION_FORK_EDIT_HISTORY = 118;
 
     private final static int[] allowedNotificationsDuringChatListAnimations = new int[]{
             NotificationCenter.messagesRead,
@@ -26790,6 +26791,14 @@ public class ChatActivity extends BaseFragment implements
                         updatedSelected = true;
                         addToSelectedMessages(obj, false, updatedSelectedLast = (a == size - 1));
                     }
+                    if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled() && !sent && !obj.scheduled && chatMode != MODE_SCHEDULED) {
+                        obj.isForkDeleted = true;
+                        org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).recordDeletedMessage(dialog_id, obj.getId(), currentTime);
+                        if (chatAdapter != null) {
+                            chatAdapter.notifyItemChanged(chatAdapter.messagesStartRow + index);
+                        }
+                        continue;
+                    }
                     MessageObject removed = chatAdapter != null && chatAdapter.isFiltered && filteredMessagesDict != null ? chatAdapter.filteredMessages.remove(index) : messages.remove(index);
                     if (chatAdapter != null) {
                         if (chatAdapter.isFiltered) {
@@ -33780,6 +33789,11 @@ public class ChatActivity extends BaseFragment implements
         }
         boolean preserveDim = false;
         switch (option) {
+            case OPTION_FORK_EDIT_HISTORY: {
+                final MessageObject message = selectedObject;
+                org.telegram.ui.Components.ForkEditHistoryBottomSheet.show(this, currentAccount, dialog_id, message.getId(), message.messageText != null ? message.messageText.toString() : "");
+                break;
+            }
             case OPTION_RETRY: {
                 final MessageObject object = selectedObject;
                 final MessageObject.GroupedMessages group = selectedObjectGroup;
@@ -46422,6 +46436,14 @@ public class ChatActivity extends BaseFragment implements
                     items.add(LocaleController.getString(R.string.Edit));
                     options.add(OPTION_EDIT);
                     icons.add(R.drawable.msg_edit);
+                }
+                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.editHistoryEnabled()
+                        && org.telegram.messenger.fork.stealth.ForkStealthSettings.showEditInMenu()
+                        && selectedObject != null
+                        && org.telegram.messenger.fork.storage.ForkEditHistoryStorage.getInstance(currentAccount).hasEdits(dialog_id, selectedObject.getId())) {
+                    items.add(LocaleController.getString(R.string.ForkEditHistoryMenu));
+                    options.add(OPTION_FORK_EDIT_HISTORY);
+                    icons.add(R.drawable.msg_log);
                 }
                 if (ChatObject.isMonoForum(currentChat) && selectedObject.getGroupId() == 0 && selectedObjectGroup == null && message != null && message.messageOwner != null && message.messageOwner.suggested_post == null && message.messageOwner.action == null) {
                     items.add(LocaleController.getString(R.string.EditOfferAdd));

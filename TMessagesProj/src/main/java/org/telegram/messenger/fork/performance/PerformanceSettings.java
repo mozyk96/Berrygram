@@ -10,14 +10,19 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.SharedConfig;
 
 /**
- * BerryGram Performance Engine profile storage. It reuses Telegram's existing
- * rendering/lightweight-mode decisions instead of introducing a second renderer.
+ * BerryGram Performance Engine profile storage. Supports Performance Center 2.0
+ * with automatic hardware scanning and explicit manual quality overrides.
  */
 public final class PerformanceSettings {
     private static final String PREFS = "fork_performance";
     private static final String KEY_PROFILE = "profile";
+    private static final String KEY_CONFIG_MODE = "config_mode";
+    private static final String KEY_MANUAL_LEVEL = "manual_level";
     private static final String KEY_CUSTOM_REDUCE_EFFECTS = "custom_reduce_effects";
+
     private static volatile String cachedProfile;
+    private static volatile String cachedConfigMode;
+    private static volatile String cachedManualLevel;
     private static volatile Boolean cachedCustomReduce;
     private static volatile Boolean cachedLowRam;
     private static volatile long thermalCheckedAt;
@@ -46,6 +51,72 @@ public final class PerformanceSettings {
         String normalized = PerformancePolicy.normalize(profile);
         preferences().edit().putString(KEY_PROFILE, normalized).apply();
         cachedProfile = normalized;
+    }
+
+    public static String configMode() {
+        String value = cachedConfigMode;
+        if (value == null) {
+            try {
+                value = preferences().getString(KEY_CONFIG_MODE, PerformancePolicy.CONFIG_AUTO);
+            } catch (ClassCastException corrupt) {
+                value = PerformancePolicy.CONFIG_AUTO;
+            }
+            cachedConfigMode = value = PerformancePolicy.normalizeConfigMode(value);
+        }
+        return value;
+    }
+
+    public static void setConfigMode(String mode) {
+        String normalized = PerformancePolicy.normalizeConfigMode(mode);
+        preferences().edit().putString(KEY_CONFIG_MODE, normalized).apply();
+        cachedConfigMode = normalized;
+    }
+
+    public static String manualLevel() {
+        String value = cachedManualLevel;
+        if (value == null) {
+            try {
+                value = preferences().getString(KEY_MANUAL_LEVEL, PerformancePolicy.LEVEL_MEDIUM);
+            } catch (ClassCastException corrupt) {
+                value = PerformancePolicy.LEVEL_MEDIUM;
+            }
+            cachedManualLevel = value = PerformancePolicy.normalizeManualLevel(value);
+        }
+        return value;
+    }
+
+    public static void setManualLevel(String level) {
+        String normalized = PerformancePolicy.normalizeManualLevel(level);
+        preferences().edit().putString(KEY_MANUAL_LEVEL, normalized).apply();
+        cachedManualLevel = normalized;
+    }
+
+    public interface HardwareTierProvider {
+        String getTier();
+    }
+    private static volatile HardwareTierProvider hardwareTierProvider;
+
+    public static void setHardwareTierProvider(HardwareTierProvider provider) {
+        hardwareTierProvider = provider;
+    }
+
+    public static String autoTier() {
+        if (hardwareTierProvider != null) {
+            return hardwareTierProvider.getTier();
+        }
+        try {
+            Class<?> clazz = Class.forName("org.telegram.messenger.fork.performance.ForkDeviceAnalyzer");
+            java.lang.reflect.Method m = clazz.getMethod("getAssessment", boolean.class);
+            Object assessment = m.invoke(null, false);
+            java.lang.reflect.Field f = assessment.getClass().getField("tier");
+            return (String) f.get(assessment);
+        } catch (Throwable ignored) {
+            return DeviceAnalyzerPolicy.TIER_MEDIUM;
+        }
+    }
+
+    public static String effectiveTier() {
+        return PerformancePolicy.resolveActiveTier(configMode(), manualLevel(), autoTier());
     }
 
     public static boolean customReduceEffects() {
@@ -100,20 +171,35 @@ public final class PerformanceSettings {
 
     public static boolean reduceEffects() {
         boolean pressure = systemPowerSaver() || thermalPressure();
-        return PerformancePolicy.reduceEffects(profile(), pressure,
-                SharedConfig.deviceIsLow() || lowRamDevice(), customReduceEffects());
+        if (pressure) return true;
+
+        if (PerformancePolicy.CONFIG_MANUAL.equals(configMode())) {
+            return PerformancePolicy.LEVEL_LOW.equals(manualLevel());
+        }
+
+        String currentAutoTier = autoTier();
+        boolean lowDevice = DeviceAnalyzerPolicy.TIER_LOW.equals(currentAutoTier)
+                || DeviceAnalyzerPolicy.TIER_LOW_MEDIUM.equals(currentAutoTier)
+                || SharedConfig.deviceIsLow()
+                || lowRamDevice();
+
+        return PerformancePolicy.reduceEffects(profile(), false, lowDevice, customReduceEffects());
     }
 
     public static void reset() {
-        preferences().edit().remove(KEY_PROFILE).remove(KEY_CUSTOM_REDUCE_EFFECTS).apply();
+        preferences().edit()
+                .remove(KEY_PROFILE)
+                .remove(KEY_CONFIG_MODE)
+                .remove(KEY_MANUAL_LEVEL)
+                .remove(KEY_CUSTOM_REDUCE_EFFECTS)
+                .apply();
         cachedProfile = PerformancePolicy.AUTOMATIC;
+        cachedConfigMode = PerformancePolicy.CONFIG_AUTO;
+        cachedManualLevel = PerformancePolicy.LEVEL_MEDIUM;
         cachedCustomReduce = false;
     }
 
     public static String deviceClassLabel() {
-        int deviceClass = SharedConfig.getDevicePerformanceClass();
-        if (deviceClass == SharedConfig.PERFORMANCE_CLASS_LOW) return "low";
-        if (deviceClass == SharedConfig.PERFORMANCE_CLASS_HIGH) return "high";
-        return "average";
+        return autoTier();
     }
 }

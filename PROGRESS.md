@@ -1,3 +1,18 @@
+# Android 1.4.0 Beta 1 completed — 2026-11-06
+
+- Branch: feature/berrygram-1.4.0; version 1.4.0-beta.1, code 7271.
+- Ghost Mode (Stealth Reading): read receipt suppression in MessagesController.completeReadTask, separate toggles for private chats and groups, strict preservation of secret chats / self-destructing media, dedicated ForkStealthSettingsActivity.
+- Deleted Messages (AyuGram-style): message retained in-place in ChatActivity.processDeletedMessages, bubble alpha reduced to 38% in ChatMessageCell, crisp readable text, trash icon prepended to timestamp, SQLite storage in ForkDeletedMessagesStorage.kt.
+- Message Edit History: local SQLite revisions in ForkEditHistoryStorage.kt, 'Історія змін' context menu item in ChatActivity, revision cards bottom sheet ForkEditHistoryBottomSheet.kt.
+- Berry Archive: local SQLite archive in ForkArchiveManager.kt, full-text search, dialog browser ForkArchiveActivity.kt, message history ForkArchiveMessagesActivity.kt, survives Telegram cloud deletion.
+- Message Translator: 1-tap translation enabled by default in TranslateController, native TranslateAlert2 integration, Ukrainian UI.
+- Glass 2.0 & Unified 3 Visual Modes: Glass 2.0, Blur, No effects in ForkAppearanceSettingsActivity, obsolete intensity sliders, accent color pickers, and legacy device adaptation checkboxes removed.
+- Device Analyzer: hardware detection in ForkDeviceAnalyzer.kt, corrected Samsung Galaxy A25 (SM-A256B) tier assessment to Medium / Low-Medium due to mid-tier Mali-G68 GPU under 120Hz display, interactive 'Сканувати пристрій' button in ForkPerformanceSettingsActivity.
+- Performance Center 2.0: Auto vs Manual profiles (Low, Medium, High) independent of visual modes, manual selections strictly respected.
+- Advanced Animations 2.0: continuous spring-animated shared tab indicator in MainTabsLayout, dynamic elongation, selector blinking eliminated.
+- Kotlin Transition: all new fork features, storage, and settings written in Kotlin with clean Java interoperability.
+- Verification: full smoke suite passed (smoke.ps1), test_berrygram_resources.py passed, test_release_scope.py passed, assembleAfatDebug APK built successfully.
+
 # Android 1.3.0 Beta 5 published — 2026-11-06
 
 - Pre-release: https://github.com/mozyk96/Berrygram/releases/tag/v1.3.0-beta.5

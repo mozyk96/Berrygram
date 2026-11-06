@@ -3,6 +3,10 @@ import android.content.Context;
 import org.telegram.messenger.ApplicationLoader;
 /** One device-local experimental switch; it does not alter Telegram's own settings. */
 public final class ForkPanelSettings {
+    public static final String STYLE_GLASS = "glass";
+    public static final String STYLE_BLUR = "blur";
+    public static final String STYLE_NONE = "none";
+
     private static volatile Boolean cached;
     private static volatile Integer cachedRadius;
     private static volatile String cachedStyle;
@@ -10,6 +14,14 @@ public final class ForkPanelSettings {
     private static volatile String cachedAnimation;
     private static volatile Boolean cachedAdaptive;
     private ForkPanelSettings() { }
+
+    public static String visualMode() {
+        String s = style();
+        if ("glass".equals(s) || "liquid".equals(s) || "experimental".equals(s)) return STYLE_GLASS;
+        if ("none".equals(s)) return STYLE_NONE;
+        return STYLE_BLUR;
+    }
+
     public static boolean enabled() { return true; }
     public static synchronized void setEnabled(boolean value) {
         setStyle("blur");
@@ -21,7 +33,7 @@ public final class ForkPanelSettings {
             if (value == null) {
                 android.content.SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE);
                 value = prefs.getString("style", prefs.getBoolean("enabled", false) ? "blur" : "material");
-                if (!"blur".equals(value) && !"liquid".equals(value) && !"experimental".equals(value)) {
+                if (!"blur".equals(value) && !"liquid".equals(value) && !"experimental".equals(value) && !"glass".equals(value) && !"none".equals(value)) {
                     value = "blur";
                     prefs.edit().putString("style", value).putBoolean("enabled", true).apply();
                 }
@@ -32,7 +44,7 @@ public final class ForkPanelSettings {
     }
     public static synchronized void setStyle(String value) {
         if ("material".equals(value)) value = "blur";
-        if (!"blur".equals(value) && !"liquid".equals(value) && !"experimental".equals(value)) throw new IllegalArgumentException("Invalid graphics style");
+        if (!"blur".equals(value) && !"liquid".equals(value) && !"experimental".equals(value) && !"glass".equals(value) && !"none".equals(value)) throw new IllegalArgumentException("Invalid graphics style");
         boolean active = true;
         ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE).edit().putString("style", value).putBoolean("enabled", active).apply();
         cached = active;

@@ -1,246 +1,191 @@
 package org.telegram.ui;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
-import android.content.res.ColorStateList;
-import android.os.Build;
+
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.messenger.fork.panels.ForkGlassSettings;
+import org.telegram.messenger.fork.panels.ForkAnimationSettings;
+import org.telegram.messenger.fork.panels.ForkDockSettings;
 import org.telegram.messenger.fork.panels.ForkPanelSettings;
-import org.telegram.messenger.fork.panels.GraphicsColorPolicy;
+import org.telegram.messenger.fork.panels.PanelPolicy;
 import org.telegram.ui.ActionBar.ActionBar;
-import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 
-/** Controls the supported popup graphics; Experimental Glass has its own live preview screen. */
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Unified Appearance Settings for Berrygram 1.4.0.
+ * Exactly 3 visual modes: Glass 2.0, Blur, No effects.
+ * Obsolete sliders and obsolete device checkboxes removed.
+ */
 public final class ForkAppearanceSettingsActivity extends BaseFragment {
-    private SeekBar effectControl;
-    private TextSettingsCell intensityRow;
-    @Override public View createView(Context context) {
-        actionBar.setTitle(ForkLocale.get(R.string.ForkAppearanceTitle));
+
+    private TextSettingsCell styleCell;
+    private TextSettingsCell glassPreviewCell;
+    private TextSettingsCell radiusCell;
+    private SeekBar radiusSlider;
+
+    @Override
+    public View createView(Context context) {
+        actionBar.setTitle(LocaleController.getString(R.string.ForkAppearanceTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
-            @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
+            @Override
+            public void onItemClick(int id) {
+                if (id == -1) finishFragment();
+            }
         });
+
         LinearLayout page = ForkSettingsLayout.page(context);
         LinearLayout controls = ForkSettingsLayout.section(context);
-        TextSettingsCell style = new TextSettingsCell(context);
-        style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
-        style.setIcon(R.drawable.msg_palette);
-        ForkSettingsLayout.interactive(style);
-        controls.addView(style);
-        TextSettingsCell glass = new TextSettingsCell(context);
-        glass.setTextAndValue(ForkLocale.get(R.string.ForkGlassTitle),
-                ForkLocale.get(R.string.ForkGlassSubtitle), false);
-        glass.setIcon(R.drawable.msg_palette);
-        ForkSettingsLayout.interactive(glass);
-        glass.setVisibility("experimental".equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
-        glass.setOnClickListener(v -> presentFragment(new ForkExperimentalGlassActivity()));
-        controls.addView(glass);
-        TextSettingsCell radius = new TextSettingsCell(context);
-        radius.setTextAndValue(ForkLocale.get(R.string.ForkAppearanceRadius), ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
-        controls.addView(radius);
-        SeekBar slider = new SeekBar(context);
-        slider.setMax(20);
-        slider.setProgress(ForkPanelSettings.radiusDp() - 12);
-        slider.setContentDescription(ForkLocale.get(R.string.ForkAppearanceRadius));
-        tint(slider, accent(context));
-        int padding = AndroidUtilities.dp(20);
-        slider.setPadding(padding, 0, padding, 0);
-        controls.addView(slider, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, AndroidUtilities.dp(48)));
-        TextSettingsCell intensity = new TextSettingsCell(context);
-        intensityRow = intensity;
-        intensity.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity), ForkLocale.get(R.string.ForkGraphicsIntensityValue, ForkPanelSettings.effectStrength()), false);
-        controls.addView(intensity);
-        SeekBar effect = new SeekBar(context);
-        effectControl = effect;
-        effect.setMax(100);
-        effect.setProgress(ForkPanelSettings.effectStrength());
-        effect.setContentDescription(ForkLocale.get(R.string.ForkGraphicsIntensity));
-        effect.setEnabled(effectsAvailable());
-        effect.setPadding(padding, 0, padding, 0);
-        controls.addView(effect, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, AndroidUtilities.dp(48)));
-        effect.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
-                if (!fromUser) return;
-                if ("experimental".equals(ForkPanelSettings.style())) {
-                    ForkGlassSettings.setBlur(value);
+
+        // Visual Mode Selector (Glass 2.0, Blur, None)
+        styleCell = new TextSettingsCell(context);
+        styleCell.setTextAndValue(LocaleController.getString(R.string.ForkGraphicsStyle), styleLabel(), false);
+        styleCell.setIcon(R.drawable.msg_palette);
+        ForkSettingsLayout.interactive(styleCell);
+        controls.addView(styleCell);
+
+        // Glass 2.0 Live Preview
+        glassPreviewCell = new TextSettingsCell(context);
+        glassPreviewCell.setTextAndValue(LocaleController.getString(R.string.ForkGlassTitle),
+                LocaleController.getString(R.string.ForkGlassSubtitle), false);
+        glassPreviewCell.setIcon(R.drawable.msg_palette);
+        ForkSettingsLayout.interactive(glassPreviewCell);
+        glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
+        glassPreviewCell.setOnClickListener(v -> presentFragment(new ForkExperimentalGlassActivity()));
+        controls.addView(glassPreviewCell);
+
+        styleCell.setOnClickListener(v -> {
+            String[] modes = {PanelPolicy.STYLE_GLASS, PanelPolicy.STYLE_BLUR, PanelPolicy.STYLE_NONE};
+            CharSequence[] labels = {
+                    LocaleController.getString(R.string.ForkGraphicsGlass),
+                    LocaleController.getString(R.string.ForkGraphicsBlur),
+                    LocaleController.getString(R.string.ForkGraphicsNone)
+            };
+            int currentSelection = Arrays.asList(modes).indexOf(ForkPanelSettings.style());
+            if (currentSelection < 0) currentSelection = 0;
+
+            ForkChoicePopup.show(this, v, labels, null, currentSelection, index -> {
+                String chosen = modes[index];
+                ForkPanelSettings.setStyle(chosen);
+                if (PanelPolicy.STYLE_GLASS.equals(chosen)) {
+                    org.telegram.messenger.LiteMode.setAllFlags(
+                            org.telegram.messenger.LiteMode.getValue(true) | org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS);
                 } else {
-                    ForkPanelSettings.setEffectStrength(value);
+                    org.telegram.messenger.LiteMode.toggleFlag(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS, false);
                 }
-                intensity.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity), ForkLocale.get(R.string.ForkGraphicsIntensityValue, ForkPanelSettings.effectStrength()), false);
+                styleCell.setTextAndValue(LocaleController.getString(R.string.ForkGraphicsStyle), styleLabel(), false);
+                glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(chosen) ? View.VISIBLE : View.GONE);
+                ForkSettingsLayout.refreshSection(controls, false);
+                ForkFloatingHeader.refresh(fragmentView);
+            });
+        });
+
+        // Corner Radius Slider
+        radiusCell = new TextSettingsCell(context);
+        radiusCell.setTextAndValue(LocaleController.getString(R.string.ForkAppearanceRadius),
+                LocaleController.formatString(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
+        controls.addView(radiusCell);
+
+        radiusSlider = new SeekBar(context);
+        radiusSlider.setMax(20);
+        radiusSlider.setProgress(ForkPanelSettings.radiusDp() - 12);
+        radiusSlider.setContentDescription(LocaleController.getString(R.string.ForkAppearanceRadius));
+        int accentColor = Theme.getColor(Theme.key_windowBackgroundWhiteBlueText);
+        radiusSlider.setProgressTintList(ColorStateList.valueOf(accentColor));
+        radiusSlider.setThumbTintList(ColorStateList.valueOf(accentColor));
+        int padding = AndroidUtilities.dp(20);
+        radiusSlider.setPadding(padding, 0, padding, 0);
+        controls.addView(radiusSlider, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, AndroidUtilities.dp(48)));
+
+        radiusSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (!fromUser) return;
+                ForkPanelSettings.setRadiusDp(value + 12);
+                radiusCell.setTextAndValue(LocaleController.getString(R.string.ForkAppearanceRadius),
+                        LocaleController.formatString(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
             }
+
             @Override public void onStartTrackingTouch(SeekBar bar) { }
             @Override public void onStopTrackingTouch(SeekBar bar) { }
         });
+
+        // Advanced Animations 2.0
         TextCheckCell animations = new TextCheckCell(context);
-        animations.setTextAndCheck(ForkLocale.get(R.string.ForkAdvancedAnimations), org.telegram.messenger.fork.panels.ForkAnimationSettings.fluidPopupsEnabled(), false);
+        animations.setTextAndCheck(LocaleController.getString(R.string.ForkAdvancedAnimations),
+                ForkAnimationSettings.fluidPopupsEnabled(), false);
         ForkSettingsLayout.interactive(animations);
         animations.setOnClickListener(v -> {
-            boolean enabled = !org.telegram.messenger.fork.panels.ForkAnimationSettings.fluidPopupsEnabled();
-            org.telegram.messenger.fork.panels.ForkAnimationSettings.setFluidPopupsEnabled(enabled);
+            boolean enabled = !ForkAnimationSettings.fluidPopupsEnabled();
+            ForkAnimationSettings.setFluidPopupsEnabled(enabled);
             animations.setChecked(enabled);
         });
         controls.addView(animations);
+
+        // Mini Dock
         TextCheckCell dock = new TextCheckCell(context);
-        dock.setTextAndCheck(ForkLocale.get(R.string.ForkMiniDock), org.telegram.messenger.fork.panels.ForkDockSettings.miniDockEnabled(), false);
+        dock.setTextAndCheck(LocaleController.getString(R.string.ForkMiniDock),
+                ForkDockSettings.miniDockEnabled(), false);
         ForkSettingsLayout.interactive(dock);
         dock.setOnClickListener(v -> {
-            boolean enabled = !org.telegram.messenger.fork.panels.ForkDockSettings.miniDockEnabled();
-            org.telegram.messenger.fork.panels.ForkDockSettings.setMiniDockEnabled(enabled);
+            boolean enabled = !ForkDockSettings.miniDockEnabled();
+            ForkDockSettings.setMiniDockEnabled(enabled);
             dock.setChecked(enabled);
         });
         controls.addView(dock);
-        TextCheckCell adaptive = new TextCheckCell(context);
-        adaptive.setTextAndCheck(ForkLocale.get(R.string.ForkGraphicsAdaptive), ForkPanelSettings.adaptiveEffects(), false);
-        ForkSettingsLayout.interactive(adaptive);
-        adaptive.setOnClickListener(v -> {
-            boolean enabled = !ForkPanelSettings.adaptiveEffects();
-            ForkPanelSettings.setAdaptiveEffects(enabled);
-            adaptive.setChecked(enabled);
-            effect.setEnabled(effectsAvailable());
-        });
-        controls.addView(adaptive);
-        TextSettingsCell color = new TextSettingsCell(context);
-        color.setTextAndValue(ForkLocale.get(R.string.ForkColorTitle), accentLabel(), false);
-        color.setIcon(R.drawable.msg_palette);
-        ForkSettingsLayout.interactive(color);
-        controls.addView(color);
-        applyAccent(slider, effect, accent(context));
-        color.setOnClickListener(v -> chooseAccent(context, slider, effect, color));
-        style.setOnClickListener(v -> {
-            String[] modes = {"blur", "liquid", "experimental"};
-            CharSequence[] labels = {
-                    ForkLocale.get(R.string.ForkGraphicsBlur),
-                    ForkLocale.get(R.string.ForkGraphicsLiquid),
-                    ForkLocale.get(R.string.ForkGraphicsExperimental)
-            };
-            ForkChoicePopup.show(this, v, labels, null, java.util.Arrays.asList(modes).indexOf(ForkPanelSettings.style()), index -> {
-                        if ("experimental".equals(modes[index])) {
-                            ForkPanelSettings.setStyle("experimental");
-                            org.telegram.messenger.LiteMode.setAllFlags(
-                                    org.telegram.messenger.LiteMode.getValue(true) | org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS);
-                        } else {
-                            org.telegram.messenger.LiteMode.toggleFlag(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS, "liquid".equals(modes[index]));
-                        }
-                        style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
-                        glass.setVisibility("experimental".equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
-                        int current = "experimental".equals(ForkPanelSettings.style())
-                                ? ForkGlassSettings.config().blur : ForkPanelSettings.effectStrength();
-                        if ("experimental".equals(ForkPanelSettings.style())) {
-                            ForkPanelSettings.setEffectStrength(current);
-                        }
-                        effect.setProgress(current);
-                        intensity.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity),
-                                ForkLocale.get(R.string.ForkGraphicsIntensityValue, current), false);
-                        effect.setEnabled(effectsAvailable());
-                        ForkSettingsLayout.refreshSection(controls, false);
-                        ForkFloatingHeader.refresh(fragmentView);
-                        applyAccent(slider, effect, accent(context));
-                    });
-        });
-        slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
-                if (!fromUser) return;
-                ForkPanelSettings.setRadiusDp(value + 12);
-                ForkSettingsLayout.refreshSection(controls, false);
-                radius.setTextAndValue(ForkLocale.get(R.string.ForkAppearanceRadius), ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
-            }
-            @Override public void onStartTrackingTouch(SeekBar bar) { }
-            @Override public void onStopTrackingTouch(SeekBar bar) { }
-        });
+
         ForkSettingsLayout.addSection(page, controls);
+
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
-        info.setText(ForkLocale.get(R.string.ForkGraphicsInfo) + "\n\n" + ForkLocale.get(R.string.ForkAppearanceRadiusInfo));
+        info.setText(LocaleController.getString(R.string.ForkGraphicsInfoUnified));
         page.addView(info);
+
         ScrollView scroll = new ScrollView(context);
         scroll.setFillViewport(true);
         scroll.addView(page);
-        fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkAppearanceTitle), this::finishFragment);
+        fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll,
+                LocaleController.getString(R.string.ForkAppearanceTitle), this::finishFragment);
         return fragmentView;
     }
 
-    private static String accentLabel() {
-        String value = ForkPanelSettings.customAccent();
-        return value == null ? ForkLocale.get(R.string.ForkColorSystem) : value;
-    }
-    private static String styleLabel() {
-        String style = ForkPanelSettings.style();
-        if ("liquid".equals(style)) return ForkLocale.get(R.string.ForkGraphicsLiquid);
-        if ("experimental".equals(style)) return ForkLocale.get(R.string.ForkGraphicsExperimental);
-        return ForkLocale.get(R.string.ForkGraphicsBlur);
-    }
-    private static String animationLabel() {
-        String mode = ForkPanelSettings.animationMode();
-        return ForkLocale.get("minimal".equals(mode) ? R.string.ForkAnimationMinimal : "smooth".equals(mode) ? R.string.ForkAnimationSmooth : R.string.ForkAnimationSystem);
-    }
-    static int accent(Context context) {
-        Integer custom = GraphicsColorPolicy.parseHex(ForkPanelSettings.customAccent());
+    public static int accent(Context context) {
+        Integer custom = org.telegram.messenger.fork.panels.GraphicsColorPolicy.parseHex(ForkPanelSettings.customAccent());
         if (custom != null) return custom;
-        if (Build.VERSION.SDK_INT >= 31) {
+        if (android.os.Build.VERSION.SDK_INT >= 31 && context != null) {
             try { return context.getColor(android.R.color.system_accent1_500); } catch (RuntimeException ignored) { }
         }
         return Theme.getColor(Theme.key_windowBackgroundWhiteBlueText);
     }
-    private static void tint(SeekBar slider, int color) {
-        ColorStateList tint = ColorStateList.valueOf(color);
-        slider.setProgressTintList(tint);
-        slider.setThumbTintList(tint);
+
+    private static String styleLabel() {
+        String style = ForkPanelSettings.style();
+        if (PanelPolicy.STYLE_BLUR.equals(style)) {
+            return LocaleController.getString(R.string.ForkGraphicsBlur);
+        } else if (PanelPolicy.STYLE_NONE.equals(style)) {
+            return LocaleController.getString(R.string.ForkGraphicsNone);
+        }
+        return LocaleController.getString(R.string.ForkGraphicsGlass);
     }
-    private static boolean effectsAvailable() {
-        return org.telegram.messenger.fork.panels.PanelPolicy.useGlass(ForkPanelSettings.enabled(),
-                ForkGraphicsSurface.effectsSuppressed(),
-                Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()));
-    }
-    private static void applyAccent(SeekBar slider, SeekBar effect, int color) {
-        int background = Theme.getColor(Theme.key_windowBackgroundWhite);
-        if ("material".equals(ForkPanelSettings.style())) background = ForkGraphicsSurface.materialColor(slider.getContext(), background);
-        int readable = GraphicsColorPolicy.readableAccent(color, background);
-        tint(slider, readable);
-        tint(effect, readable);
-    }
-    private void chooseAccent(Context context, SeekBar slider, SeekBar effect, TextSettingsCell row) {
-        ForkHsvPicker picker = new ForkHsvPicker(context, accent(context), value -> applyAccent(slider, effect, value));
-        AlertDialog dialog = new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkColorTitle))
-                .setView(picker)
-                .setPositiveButton(org.telegram.messenger.LocaleController.getString(R.string.Save), null)
-                .setNegativeButton(org.telegram.messenger.LocaleController.getString(R.string.Cancel), (d, w) -> applyAccent(slider, effect, accent(context)))
-                .setNeutralButton(ForkLocale.get(R.string.ForkColorSystem), (d, w) -> {
-                    ForkPanelSettings.setCustomAccent(null);
-                    applyAccent(slider, effect, accent(context));
-                    row.setTextAndValue(ForkLocale.get(R.string.ForkColorTitle), accentLabel(), false);
-                }).create();
-        if (showDialog(dialog, d -> applyAccent(slider, effect, accent(context))) != null) {
-            View save = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
-            if (save != null) save.setOnClickListener(v -> {
-                if (!picker.valid()) { picker.showError(); return; }
-                ForkPanelSettings.setCustomAccent(GraphicsColorPolicy.formatHex(picker.selectedColor()));
-                row.setTextAndValue(ForkLocale.get(R.string.ForkColorTitle), accentLabel(), false);
-                dialog.dismiss();
-            });
-        } else applyAccent(slider, effect, accent(context));
-    }
-    @Override public void onResume() {
+
+    @Override
+    public void onResume() {
         super.onResume();
-        if (effectControl != null) {
-            int value = "experimental".equals(ForkPanelSettings.style())
-                    ? ForkGlassSettings.config().blur : ForkPanelSettings.effectStrength();
-            effectControl.setProgress(value);
-            effectControl.setEnabled(effectsAvailable());
-            if (intensityRow != null) {
-                intensityRow.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity),
-                        ForkLocale.get(R.string.ForkGraphicsIntensityValue, value), false);
-            }
+        if (glassPreviewCell != null) {
+            glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
         }
         if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
     }
-    @Override public void onFragmentDestroy() { effectControl = null; intensityRow = null; super.onFragmentDestroy(); }
 }

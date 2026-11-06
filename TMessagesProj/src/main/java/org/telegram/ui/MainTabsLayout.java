@@ -262,6 +262,13 @@ public class MainTabsLayout extends AnimatedLinearLayout {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         checkVisualWidth();
+        setSkipDrawSelector(true);
+        if (animatedLongSelectedViewCenterX == 0) {
+            View selected = findSelectedTab();
+            if (selected != null && selected.getWidth() > 0) {
+                animatedLongSelectedViewCenterX = selected.getX() + selected.getWidth() / 2f;
+            }
+        }
     }
 
     @Override
@@ -285,11 +292,44 @@ public class MainTabsLayout extends AnimatedLinearLayout {
 
 
 
+    private float indicatorElongation;
+    final SpringAnimation elongationAnim = new SpringAnimation(this, new FloatPropertyCompat<MainTabsLayout>("elongation") {
+        @Override
+        public float getValue(MainTabsLayout object) {
+            return object.indicatorElongation;
+        }
+
+        @Override
+        public void setValue(MainTabsLayout object, float value) {
+            object.indicatorElongation = value;
+            object.invalidate();
+        }
+    }).setSpring(new SpringForce(0f)
+            .setStiffness(SpringForce.STIFFNESS_MEDIUM)
+            .setDampingRatio(SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY));
+
     public void setTabSelected(View tab, boolean animated) {
         for (int a = 0, N = getChildCount(); a < N; a++) {
             final View child = getChildAt(a);
             if (child instanceof GlassTabView) {
                 ((GlassTabView) child).setSelected(child == tab, animated);
+            }
+        }
+        setSkipDrawSelector(true);
+        if (tab != null && tab.getWidth() > 0) {
+            final float targetX = tab.getX() + tab.getWidth() / 2f;
+            if (animated && animatedLongSelectedViewCenterX > 0) {
+                float dist = Math.abs(targetX - animatedLongSelectedViewCenterX);
+                float stretch = Math.min(AndroidUtilities.dp(16), dist * 0.20f);
+                indicatorElongation = stretch;
+                elongationAnim.cancel();
+                elongationAnim.setStartValue(stretch);
+                elongationAnim.animateToFinalPosition(0f);
+                selectedTabPositionX.animateToFinalPosition(targetX);
+            } else {
+                animatedLongSelectedViewCenterX = targetX;
+                indicatorElongation = 0;
+                invalidate();
             }
         }
     }
@@ -341,9 +381,10 @@ public class MainTabsLayout extends AnimatedLinearLayout {
     protected void dispatchDraw(@NonNull Canvas canvas) {
         if (drawCustomSelector) {
             final float x = animatedLongSelectedViewCenterX + animatedLongSelectedViewOffsetX;
-            final float sWidth = getInterpolatedWidthByX(x, this);
+            final float sWidth = getInterpolatedWidthByX(x, this) + indicatorElongation;
             final float sHeight = getHeight() - getPaddingTop() - getPaddingBottom();
 
+            selectorPaint.setColor(Theme.multAlpha(Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider), 0.12f));
             canvas.drawRoundRect(
                     x - sWidth / 2f, (getHeight() - sHeight) / 2f,
                     x + sWidth / 2f, (getHeight() + sHeight) / 2f,

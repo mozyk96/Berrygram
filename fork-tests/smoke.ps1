@@ -18,12 +18,12 @@ $sources = @(
     'text\CustomTextResolution.java', 'text\CustomTextContext.java', 'text\CustomTextScopePolicy.java',
     'text\CustomTextPackKeys.java', 'text\ForkLocalePolicy.java', 'camera\RoundCameraPolicy.java', 'camera\RoundVideoQualityPolicy.java',
     'camera\CameraProfilePolicy.java',
-    'voice\VoiceQualityPolicy.java', 'voice\VoiceProfilePolicy.java', 'panels\PanelPolicy.java', 'panels\GlassPolicy.java', 'panels\GraphicsColorPolicy.java', 'updater\UpdatePolicy.java', 'updater\UpdateInstallIntent.java'
+    'voice\VoiceQualityPolicy.java', 'voice\VoiceProfilePolicy.java', 'panels\PanelPolicy.java', 'panels\GlassPolicy.java', 'panels\GraphicsColorPolicy.java', 'updater\UpdatePolicy.java', 'updater\UpdateInstallIntent.java', 'stealth\StealthPolicy.java', 'performance\DeviceAnalyzerPolicy.java'
 ) | ForEach-Object { Join-Path $base $_ }
 $tests = @('AuthDiagnosticsTest', 'BackendPolicyTest', 'SessionCredentialsTest', 'CustomTextValidatorTest',
     'CustomTextPackValidatorTest', 'CustomTextFormatTest', 'CustomTextSafetyTest', 'LocalAliasPolicyTest',
     'CustomTextResolutionTest', 'CustomTextContextTest', 'CustomTextScopePolicyTest', 'CustomTextOriginalTest',
-    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest')
+    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest')
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 $sources += (Join-Path $base 'performance\PerformancePolicy.java')
 $tests += 'PerformancePolicyTest'
@@ -113,6 +113,7 @@ $performanceDir = Join-Path $buildDir 'performance'
 New-Item -ItemType Directory -Force $performanceDir | Out-Null
 $performanceStubs = @(Get-ChildItem (Join-Path $PSScriptRoot 'performance-stubs') -Filter '*.java' -Recurse | ForEach-Object { $_.FullName })
 $performanceSources = @(
+    (Join-Path $base 'performance\DeviceAnalyzerPolicy.java'),
     (Join-Path $base 'performance\PerformancePolicy.java'),
     (Join-Path $base 'performance\PerformanceSettings.java'),
     (Join-Path $PSScriptRoot 'PerformanceSettingsTest.java')
