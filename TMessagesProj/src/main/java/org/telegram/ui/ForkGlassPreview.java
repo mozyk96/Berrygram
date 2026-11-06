@@ -135,7 +135,7 @@ final class ForkGlassPreview extends FrameLayout {
         void setConfig(ForkGlassSettings.Config config) {
             this.config = config;
             float opacity = GlassPolicy.opacity(config.transparency);
-            int base = Theme.getColor(Theme.key_windowBackgroundWhite);
+            int base = Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground);
             if (config.customTintEnabled()) {
                 Integer tint = GraphicsColorPolicy.parseHex(config.customTint);
                 if (tint != null) base = ColorUtils.blendARGB(base, tint, 0.55f);

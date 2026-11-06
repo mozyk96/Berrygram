@@ -414,6 +414,7 @@ public final class ForkVoiceSettingsActivity extends BaseFragment {
         if (rows == null) return;
         if (requestCode == RECORD_PERMISSION && pendingTestStart) {
             pendingTestStart = false;
+            if (isPaused()) return;
             if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) {
                 startTestRecording();
             } else {
