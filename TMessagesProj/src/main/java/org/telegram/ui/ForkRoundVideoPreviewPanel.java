@@ -182,8 +182,9 @@ public final class ForkRoundVideoPreviewPanel extends ViewGroup {
     }
 
     private void attachCamera() {
-        if (!resumed || !previewOn || attached == false || camera != null
-                || !CameraView.isCameraAllowed() || getWidth() == 0) {
+        if (!resumed || !previewOn || !scrollVisible || attached == false || camera != null
+                || !CameraView.isCameraAllowed() || getWidth() == 0
+                || getWindowVisibility() != VISIBLE) {
             return;
         }
         availableFront = availableBack = false;
