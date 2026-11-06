@@ -587,6 +587,8 @@ public class Camera2Session {
             CaptureRequest.Builder captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             final int orientation = getJpegOrientation();
             captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, orientation);
+            captureRequestBuilder.set(CaptureRequest.JPEG_QUALITY,
+                    (byte) org.telegram.messenger.fork.camera.CameraProfileSettings.jpegQuality());
             imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {

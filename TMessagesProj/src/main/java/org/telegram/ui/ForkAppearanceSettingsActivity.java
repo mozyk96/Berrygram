@@ -14,13 +14,12 @@ import org.telegram.messenger.fork.panels.GraphicsColorPolicy;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
-import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 
-/** Controls the supported popup graphics and their preview. */
+/** Controls the supported popup graphics; Experimental Glass has its own live preview screen. */
 public final class ForkAppearanceSettingsActivity extends BaseFragment {
     private SeekBar effectControl;
     @Override public View createView(Context context) {

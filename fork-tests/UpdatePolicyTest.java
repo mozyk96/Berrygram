@@ -55,6 +55,10 @@ public class UpdatePolicyTest {
   check(UpdatePolicy.shouldShowRelease("1.2.0", "1.2.0-beta.9", false));
   check(UpdatePolicy.shouldShowRelease("1.2.0", "1.2.0-beta.9", true));
   check(UpdatePolicy.compareVersions("1.2.0", "1.2.0-beta.9") > 0);
+  check(UpdatePolicy.compareVersions("1.3.0", "1.3.0-beta.5") > 0);
+  check(UpdatePolicy.shouldShowRelease("1.3.0", "1.3.0-beta.5", false));
+  check(UpdatePolicy.shouldShowRelease("1.3.0", "1.3.0-beta.5", true));
+  check(UpdatePolicy.validAsset("v1.3.0", "BerryGram-1.3.0-arm64-v8a.apk"));
   check(UpdatePolicy.validIdentity("org.example.forkclient",72569,signer,"org.example.forkclient",72579,signer));
   check(UpdatePolicy.validAsset("v1.2.0","BerryGram-1.2.0-arm64-v8a.apk"));
   System.out.println("UpdatePolicyTest passed (including Beta9 to Stable promotion)");

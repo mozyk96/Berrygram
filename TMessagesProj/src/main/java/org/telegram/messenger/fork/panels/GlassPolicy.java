@@ -61,7 +61,8 @@ public final class GlassPolicy {
      * transparency. The lower bound never drops to zero so text remains legible.
      */
     public static float opacity(int transparency) {
-        return 0.97f - 0.79f * clampPercent(transparency) / 100f;
+        // Keep a readable theme tint even at maximum transparency.
+        return 0.97f - 0.69f * clampPercent(transparency) / 100f;
     }
 
     /**

@@ -79,25 +79,67 @@ public final class ForkGlassSurface {
      * returned untouched.
      */
     public static BlurredBackgroundProvider wrap(final BlurredBackgroundProvider delegate) {
-        if (delegate == null || !"experimental".equals(ForkPanelSettings.style())
-                || !"experimental".equals(ForkGraphicsSurface.effectiveStyle())) return delegate;
-        final ForkGlassSettings.Config config = ForkGlassSettings.config();
-        final float opacity = GlassPolicy.opacity(config.transparency);
-        final int strokeTop = colorWithAlpha(0xFFFFFFFF, GlassPolicy.strokeAlpha(config.edge, config.highlight, true));
-        final int strokeBottom = colorWithAlpha(0xFFFFFFFF, GlassPolicy.strokeAlpha(config.edge, config.highlight, false));
-        final int shadow = colorWithAlpha(0xFF000000, GlassPolicy.shadowAlpha(config.shadow));
-        final float strokeWidth = AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(config.edge));
-        final float shadowRadius = AndroidUtilities.dpf2(GlassPolicy.shadowRadiusDp(config.shadow));
+        if (delegate == null) return null;
+        // This wrapper is evaluated on every color refresh, so switching to or
+        // from Experimental Glass takes effect without recreating the host view.
         return new BlurredBackgroundProvider() {
-            @Override public int getShadowColor() { return shadow; }
-            @Override public int getBackgroundColor() { return Theme.multAlpha(delegate.getBackgroundColor(), opacity); }
-            @Override public int getStrokeColorTop() { return strokeTop; }
-            @Override public int getStrokeColorBottom() { return strokeBottom; }
-            @Override public float getStrokeWidthTop() { return strokeWidth; }
-            @Override public float getStrokeWidthBottom() { return strokeWidth; }
-            @Override public float getShadowRadius() { return shadowRadius; }
-            @Override public float getShadowDx() { return 0; }
-            @Override public float getShadowDy() { return 0; }
+            private boolean experimental() {
+                return "experimental".equals(ForkPanelSettings.style())
+                        && "experimental".equals(ForkGraphicsSurface.effectiveStyle());
+            }
+
+            @Override public int getShadowColor() {
+                if (!experimental()) return delegate.getShadowColor();
+                return colorWithAlpha(0xFF000000,
+                        GlassPolicy.shadowAlpha(ForkGlassSettings.config().shadow));
+            }
+
+            @Override public int getBackgroundColor() {
+                if (!experimental()) return delegate.getBackgroundColor();
+                ForkGlassSettings.Config config = ForkGlassSettings.config();
+                return Theme.multAlpha(delegate.getBackgroundColor(),
+                        GlassPolicy.opacity(config.transparency));
+            }
+
+            @Override public int getStrokeColorTop() {
+                if (!experimental()) return delegate.getStrokeColorTop();
+                ForkGlassSettings.Config config = ForkGlassSettings.config();
+                return colorWithAlpha(0xFFFFFFFF,
+                        GlassPolicy.strokeAlpha(config.edge, config.highlight, true));
+            }
+
+            @Override public int getStrokeColorBottom() {
+                if (!experimental()) return delegate.getStrokeColorBottom();
+                ForkGlassSettings.Config config = ForkGlassSettings.config();
+                return colorWithAlpha(0xFFFFFFFF,
+                        GlassPolicy.strokeAlpha(config.edge, config.highlight, false));
+            }
+
+            @Override public float getStrokeWidthTop() {
+                if (!experimental()) return delegate.getStrokeWidthTop();
+                return AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(
+                        ForkGlassSettings.config().edge));
+            }
+
+            @Override public float getStrokeWidthBottom() {
+                if (!experimental()) return delegate.getStrokeWidthBottom();
+                return AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(
+                        ForkGlassSettings.config().edge));
+            }
+
+            @Override public float getShadowRadius() {
+                if (!experimental()) return delegate.getShadowRadius();
+                return AndroidUtilities.dpf2(GlassPolicy.shadowRadiusDp(
+                        ForkGlassSettings.config().shadow));
+            }
+
+            @Override public float getShadowDx() {
+                return experimental() ? 0 : delegate.getShadowDx();
+            }
+
+            @Override public float getShadowDy() {
+                return experimental() ? 0 : delegate.getShadowDy();
+            }
         };
     }
 

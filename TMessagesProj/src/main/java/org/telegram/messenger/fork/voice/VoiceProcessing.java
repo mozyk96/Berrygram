@@ -12,6 +12,10 @@ import android.media.audiofx.NoiseSuppressor;
  * session. Effects are released with the recorder and never run for playback.
  */
 public final class VoiceProcessing {
+    private static volatile Boolean noiseAvailable;
+    private static volatile Boolean gainAvailable;
+    private static volatile Boolean echoAvailable;
+
     private VoiceProcessing() { }
 
     public static final class Handle {
@@ -32,27 +36,42 @@ public final class VoiceProcessing {
     }
 
     public static boolean noiseSuppressorAvailable() {
-        try {
-            return NoiseSuppressor.isAvailable();
-        } catch (Throwable ignored) {
-            return false;
+        Boolean value = noiseAvailable;
+        if (value == null) {
+            try {
+                value = NoiseSuppressor.isAvailable();
+            } catch (Throwable ignored) {
+                value = false;
+            }
+            noiseAvailable = value;
         }
+        return value;
     }
 
     public static boolean gainAvailable() {
-        try {
-            return AutomaticGainControl.isAvailable();
-        } catch (Throwable ignored) {
-            return false;
+        Boolean value = gainAvailable;
+        if (value == null) {
+            try {
+                value = AutomaticGainControl.isAvailable();
+            } catch (Throwable ignored) {
+                value = false;
+            }
+            gainAvailable = value;
         }
+        return value;
     }
 
     public static boolean echoAvailable() {
-        try {
-            return AcousticEchoCanceler.isAvailable();
-        } catch (Throwable ignored) {
-            return false;
+        Boolean value = echoAvailable;
+        if (value == null) {
+            try {
+                value = AcousticEchoCanceler.isAvailable();
+            } catch (Throwable ignored) {
+                value = false;
+            }
+            echoAvailable = value;
         }
+        return value;
     }
 
     public static int source() {

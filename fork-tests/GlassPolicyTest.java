@@ -3,7 +3,7 @@ import org.telegram.messenger.fork.panels.GlassPolicy;
 public class GlassPolicyTest {
     public static void main(String[] args) {
         check(GlassPolicy.opacity(0) > 0.9f);
-        check(GlassPolicy.opacity(100) < 0.25f);
+        check(GlassPolicy.opacity(100) < 0.30f && GlassPolicy.opacity(100) > 0.25f);
         check(GlassPolicy.opacity(100) < GlassPolicy.opacity(50));
         check(GlassPolicy.opacity(50) < GlassPolicy.opacity(0));
 
