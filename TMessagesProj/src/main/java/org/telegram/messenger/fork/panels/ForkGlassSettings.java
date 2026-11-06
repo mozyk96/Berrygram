@@ -75,24 +75,61 @@ public final class ForkGlassSettings {
         if (!preferences.contains("glass_transparency")) {
             migrateLegacy(preferences);
         }
-        String preset = GlassPolicy.normalizePreset(preferences.getString("glass_preset", GlassPolicy.PRESET_CUSTOM));
-        int transparency = GlassPolicy.clampPercent(preferences.getInt("glass_transparency", GlassPolicy.DEFAULT_TRANSPARENCY));
-        int blur = GlassPolicy.clampPercent(preferences.getInt("glass_blur", GlassPolicy.DEFAULT_BLUR));
-        int frost = GlassPolicy.clampPercent(preferences.getInt("glass_frost", GlassPolicy.DEFAULT_FROST));
-        int saturation = GlassPolicy.clamp(preferences.getInt("glass_saturation", GlassPolicy.DEFAULT_SATURATION), 30, 180);
-        int edge = GlassPolicy.clampPercent(preferences.getInt("glass_edge", GlassPolicy.DEFAULT_EDGE));
-        int highlight = GlassPolicy.clampPercent(preferences.getInt("glass_highlight", GlassPolicy.DEFAULT_HIGHLIGHT));
-        int shadow = GlassPolicy.clampPercent(preferences.getInt("glass_shadow", GlassPolicy.DEFAULT_SHADOW));
-        String tintMode = preferences.getString("glass_tint_mode", "theme");
+        String preset = GlassPolicy.normalizePreset(safeString(preferences,
+                "glass_preset", GlassPolicy.PRESET_CUSTOM));
+        int transparency = GlassPolicy.clampPercent(safeInt(preferences,
+                "glass_transparency", GlassPolicy.DEFAULT_TRANSPARENCY));
+        int blur = GlassPolicy.clampPercent(safeInt(preferences,
+                "glass_blur", GlassPolicy.DEFAULT_BLUR));
+        int frost = GlassPolicy.clampPercent(safeInt(preferences,
+                "glass_frost", GlassPolicy.DEFAULT_FROST));
+        int saturation = GlassPolicy.clamp(safeInt(preferences,
+                "glass_saturation", GlassPolicy.DEFAULT_SATURATION), 30, 180);
+        int edge = GlassPolicy.clampPercent(safeInt(preferences,
+                "glass_edge", GlassPolicy.DEFAULT_EDGE));
+        int highlight = GlassPolicy.clampPercent(safeInt(preferences,
+                "glass_highlight", GlassPolicy.DEFAULT_HIGHLIGHT));
+        int shadow = GlassPolicy.clampPercent(safeInt(preferences,
+                "glass_shadow", GlassPolicy.DEFAULT_SHADOW));
+        String tintMode = safeString(preferences, "glass_tint_mode", "theme");
         if (!"theme".equals(tintMode) && !"custom".equals(tintMode)) tintMode = "theme";
-        String customTint = preferences.getString("glass_tint", null);
+        String customTint = safeString(preferences, "glass_tint", null);
         if (customTint != null) {
             Integer parsed = GraphicsColorPolicy.parseHex(customTint);
             customTint = parsed == null ? null : GraphicsColorPolicy.formatHex(parsed);
         }
-        boolean adaptive = preferences.getBoolean("glass_adaptive", true);
+        boolean adaptive = safeBoolean(preferences, "glass_adaptive", true);
         return new Config(preset, transparency, blur, frost, saturation, edge, highlight,
                 shadow, tintMode, customTint, adaptive);
+    }
+
+    private static int safeInt(SharedPreferences preferences, String key, int fallback) {
+        try {
+            return preferences.getInt(key, fallback);
+        } catch (ClassCastException corrupt) {
+            preferences.edit().remove(key).apply();
+            return fallback;
+        }
+    }
+
+    private static boolean safeBoolean(SharedPreferences preferences, String key,
+                                       boolean fallback) {
+        try {
+            return preferences.getBoolean(key, fallback);
+        } catch (ClassCastException corrupt) {
+            preferences.edit().remove(key).apply();
+            return fallback;
+        }
+    }
+
+    private static String safeString(SharedPreferences preferences, String key,
+                                     String fallback) {
+        try {
+            return preferences.getString(key, fallback);
+        } catch (ClassCastException corrupt) {
+            preferences.edit().remove(key).apply();
+            return fallback;
+        }
     }
 
     private static void migrateLegacy(SharedPreferences preferences) {
