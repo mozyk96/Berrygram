@@ -411,6 +411,7 @@ public final class ForkVoiceSettingsActivity extends BaseFragment {
 
     @Override
     public void onRequestPermissionsResultFragment(int requestCode, String[] permissions, int[] results) {
+        if (rows == null) return;
         if (requestCode == RECORD_PERMISSION && pendingTestStart) {
             pendingTestStart = false;
             if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) {
@@ -423,6 +424,7 @@ public final class ForkVoiceSettingsActivity extends BaseFragment {
 
     @Override
     public void onFragmentDestroy() {
+        pendingTestStart = false;
         stopTestRecording();
         releaseTestPlayer();
         deleteTestFile();

@@ -135,6 +135,9 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                         glass.setVisibility("experimental".equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
                         int current = "experimental".equals(ForkPanelSettings.style())
                                 ? ForkGlassSettings.config().blur : ForkPanelSettings.effectStrength();
+                        if ("experimental".equals(ForkPanelSettings.style())) {
+                            ForkPanelSettings.setEffectStrength(current);
+                        }
                         effect.setProgress(current);
                         intensity.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity),
                                 ForkLocale.get(R.string.ForkGraphicsIntensityValue, current), false);
