@@ -9,6 +9,7 @@ import android.content.res.ColorStateList;
 import android.os.Build;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
+import org.telegram.messenger.fork.panels.ForkGlassSettings;
 import org.telegram.messenger.fork.panels.ForkPanelSettings;
 import org.telegram.messenger.fork.panels.GraphicsColorPolicy;
 import org.telegram.ui.ActionBar.ActionBar;
@@ -22,6 +23,7 @@ import org.telegram.ui.Cells.TextSettingsCell;
 /** Controls the supported popup graphics; Experimental Glass has its own live preview screen. */
 public final class ForkAppearanceSettingsActivity extends BaseFragment {
     private SeekBar effectControl;
+    private TextSettingsCell intensityRow;
     @Override public View createView(Context context) {
         actionBar.setTitle(ForkLocale.get(R.string.ForkAppearanceTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
@@ -55,6 +57,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         slider.setPadding(padding, 0, padding, 0);
         controls.addView(slider, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, AndroidUtilities.dp(48)));
         TextSettingsCell intensity = new TextSettingsCell(context);
+        intensityRow = intensity;
         intensity.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity), ForkLocale.get(R.string.ForkGraphicsIntensityValue, ForkPanelSettings.effectStrength()), false);
         controls.addView(intensity);
         SeekBar effect = new SeekBar(context);
@@ -68,7 +71,11 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         effect.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
                 if (!fromUser) return;
-                ForkPanelSettings.setEffectStrength(value);
+                if ("experimental".equals(ForkPanelSettings.style())) {
+                    ForkGlassSettings.setBlur(value);
+                } else {
+                    ForkPanelSettings.setEffectStrength(value);
+                }
                 intensity.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity), ForkLocale.get(R.string.ForkGraphicsIntensityValue, ForkPanelSettings.effectStrength()), false);
             }
             @Override public void onStartTrackingTouch(SeekBar bar) { }
@@ -126,6 +133,11 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                         }
                         style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
                         glass.setVisibility("experimental".equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
+                        int current = "experimental".equals(ForkPanelSettings.style())
+                                ? ForkGlassSettings.config().blur : ForkPanelSettings.effectStrength();
+                        effect.setProgress(current);
+                        intensity.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity),
+                                ForkLocale.get(R.string.ForkGraphicsIntensityValue, current), false);
                         effect.setEnabled(effectsAvailable());
                         ForkSettingsLayout.refreshSection(controls, false);
                         ForkFloatingHeader.refresh(fragmentView);
@@ -213,6 +225,19 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
             });
         } else applyAccent(slider, effect, accent(context));
     }
-    @Override public void onResume() { super.onResume(); if (effectControl != null) effectControl.setEnabled(effectsAvailable()); if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView); }
-    @Override public void onFragmentDestroy() { effectControl = null; super.onFragmentDestroy(); }
+    @Override public void onResume() {
+        super.onResume();
+        if (effectControl != null) {
+            int value = "experimental".equals(ForkPanelSettings.style())
+                    ? ForkGlassSettings.config().blur : ForkPanelSettings.effectStrength();
+            effectControl.setProgress(value);
+            effectControl.setEnabled(effectsAvailable());
+            if (intensityRow != null) {
+                intensityRow.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsIntensity),
+                        ForkLocale.get(R.string.ForkGraphicsIntensityValue, value), false);
+            }
+        }
+        if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
+    }
+    @Override public void onFragmentDestroy() { effectControl = null; intensityRow = null; super.onFragmentDestroy(); }
 }
