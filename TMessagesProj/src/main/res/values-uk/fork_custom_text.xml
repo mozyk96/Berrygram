@@ -194,6 +194,7 @@
     <string name="ForkUpdateNoSpace">Недостатньо вільного місця для завантаження оновлення.</string>
     <string name="ForkUpdateOlderStable">Останній стабільний реліз має старішу назву версії. Спершу буде перевірено Android versionCode. Замінити Beta зі збереженням даних може лише сумісний пакет із таким самим або вищим кодом. Інакше зачекайте на сумісний стабільний реліз.</string>
     <string name="ForkUpdateIncompatibleVersion">Пакет має менший Android versionCode або такий самий код поза переходом Beta → Stable. Зачекайте на сумісний реліз; застосунок і дані збережено.</string>
+    <string name="ForkUpdateSignatureMismatch">Ключ підпису завантаженого оновлення відрізняється від встановленої версії. Оновлення поверх неможливе.</string>
     <string name="ForkUpdateExportPhrases">Експорт фраз у редакторі</string>
     <string name="ForkCameraChooseDuring">Вибір під час зйомки</string>
     <string name="ForkCameraFrontShort">Передня</string>

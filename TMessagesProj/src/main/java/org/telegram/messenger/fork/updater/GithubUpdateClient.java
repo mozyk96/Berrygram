@@ -33,6 +33,9 @@ public final class GithubUpdateClient {
     public static final class InsufficientStorageException extends java.io.IOException {
         public InsufficientStorageException() { super("Not enough storage space for update"); }
     }
+    public static final class SignatureMismatchException extends SecurityException {
+        public SignatureMismatchException() { super("Update signing certificate mismatch"); }
+    }
     public static final class Release {
         public String version, notes, url, digest;
         public long size;
@@ -106,21 +109,59 @@ public final class GithubUpdateClient {
         String releaseVersion = tag.startsWith("v") ? tag.substring(1) : tag;
         if (!includePrereleases && UpdatePolicy.isPrerelease(releaseVersion)) throw new SecurityException("Not a stable version");
         if (assets==null) throw new java.io.IOException("Release has no assets");
-        Release result=null;
-        for(int i=0;i<assets.length();i++) {
-            JSONObject asset=assets.optJSONObject(i); if(asset==null) continue;
-            String name=asset.optString("name", ""), url=asset.optString("browser_download_url", ""), digest=asset.optString("digest", ""); long size=asset.optLong("size",0);
-            if (!UpdatePolicy.validAsset(tag,name)) continue;
-            if(result!=null || !UpdatePolicy.validAssetUrl(repo,tag,name,url) || !UpdatePolicy.validDigest(digest) || size<=0 || size>MAX_APK || !"uploaded".equals(asset.optString("state"))) throw new SecurityException("Invalid release asset");
-            result=new Release(); result.prerelease=json.optBoolean("prerelease", true); result.version=releaseVersion; result.url=url; result.digest=digest.substring(7).toLowerCase(Locale.ROOT); result.size=size;
-            String notes=json.optString("body", ""); result.notes=notes.length()>12000 ? notes.substring(0,12000) : notes;
+        boolean isArm64Device = true;
+        if (Build.SUPPORTED_ABIS != null && Build.SUPPORTED_ABIS.length > 0) {
+            isArm64Device = false;
+            for (String abi : Build.SUPPORTED_ABIS) {
+                if ("arm64-v8a".equals(abi)) {
+                    isArm64Device = true;
+                    break;
+                }
+            }
         }
-        if(result==null) throw new java.io.IOException("No verified ARM64 APK asset");
+        Release arm64Release = null;
+        Release universalRelease = null;
+        for (int i = 0; i < assets.length(); i++) {
+            JSONObject asset = assets.optJSONObject(i);
+            if (asset == null) continue;
+            String name = asset.optString("name", "");
+            String url = asset.optString("browser_download_url", "");
+            String digest = asset.optString("digest", "");
+            long size = asset.optLong("size", 0);
+            if (!UpdatePolicy.validAsset(tag, name)) continue;
+            if (!UpdatePolicy.validAssetUrl(repo, tag, name, url) || !UpdatePolicy.validDigest(digest) || size <= 0 || size > MAX_APK || !"uploaded".equals(asset.optString("state"))) {
+                continue;
+            }
+            Release cand = new Release();
+            cand.prerelease = json.optBoolean("prerelease", true);
+            cand.version = releaseVersion;
+            cand.url = url;
+            cand.digest = digest.substring(7).toLowerCase(Locale.ROOT);
+            cand.size = size;
+            String notes = json.optString("body", "");
+            cand.notes = notes.length() > 12000 ? notes.substring(0, 12000) : notes;
+
+            if (UpdatePolicy.isArm64Asset(tag, name)) {
+                arm64Release = cand;
+            } else if (UpdatePolicy.isUniversalAsset(tag, name)) {
+                universalRelease = cand;
+            }
+        }
+        Release result = (isArm64Device && arm64Release != null) ? arm64Release : (universalRelease != null ? universalRelease : arm64Release);
+        if (result == null) throw new java.io.IOException("No verified APK asset found for this device");
         return result;
     }
     public static synchronized File downloadAndVerify(Context context, Release release, Progress progress) throws Exception {
-        boolean arm64=false; for(String abi:Build.SUPPORTED_ABIS) if("arm64-v8a".equals(abi)) arm64=true;
-        if(!arm64) throw new SecurityException("Unsupported device architecture");
+        boolean supportedAbi = false;
+        if (Build.SUPPORTED_ABIS != null && Build.SUPPORTED_ABIS.length > 0) {
+            for (String abi : Build.SUPPORTED_ABIS) {
+                if ("arm64-v8a".equals(abi) || "armeabi-v7a".equals(abi)) {
+                    supportedAbi = true;
+                    break;
+                }
+            }
+            if (!supportedAbi) throw new SecurityException("Unsupported device architecture");
+        }
         if (release == null || release.digest == null || !release.digest.matches("[0-9a-f]{64}") || release.size <= 0 || release.size > MAX_APK) throw new SecurityException("Invalid release metadata");
         File dir=new File(context.getCacheDir(),"berrygram-updates");
         if(!dir.isDirectory() && !dir.mkdirs()) throw new java.io.IOException("Cannot create update directory");
@@ -236,17 +277,23 @@ public final class GithubUpdateClient {
         if(candidate==null || !context.getPackageName().equals(candidate.packageName) || !version.equals(candidate.versionName)) throw new SecurityException("Update package or version mismatch");
         if(candidate.applicationInfo == null || (candidate.applicationInfo.flags & (android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE | android.content.pm.ApplicationInfo.FLAG_TEST_ONLY)) != 0) throw new SecurityException("Debug or test-only update rejected");
         if (Build.VERSION.SDK_INT >= 24 && candidate.applicationInfo.minSdkVersion > Build.VERSION.SDK_INT) throw new SecurityException("Update requires a newer Android version");
-        boolean hasArm64=false;
-        try (java.util.zip.ZipFile zip=new java.util.zip.ZipFile(apk)) {
+        boolean hasCompatibleAbi = false;
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(apk)) {
             if (manifestMinSdk(zip) > Build.VERSION.SDK_INT) throw new SecurityException("Update requires a newer Android version");
-            java.util.Enumeration<? extends java.util.zip.ZipEntry> entries=zip.entries();
-            while(entries.hasMoreElements()) { String name=entries.nextElement().getName(); if(name.startsWith("lib/arm64-v8a/") && name.endsWith(".so")) { hasArm64=true; break; } }
+            java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                String name = entries.nextElement().getName();
+                if ((name.startsWith("lib/arm64-v8a/") || name.startsWith("lib/armeabi-v7a/")) && name.endsWith(".so")) {
+                    hasCompatibleAbi = true;
+                    break;
+                }
+            }
         }
-        if(!hasArm64) throw new SecurityException("Update has no ARM64 native libraries");
-        long candidateCode=Build.VERSION.SDK_INT>=28 ? candidate.getLongVersionCode() : candidate.versionCode;
-        long installedCode=Build.VERSION.SDK_INT>=28 ? installed.getLongVersionCode() : installed.versionCode;
-        Set<String> expected=signers(installed), actual=signers(candidate);
-        if (expected.isEmpty() || !expected.equals(actual)) throw new SecurityException("Update signing certificate mismatch");
+        if (!hasCompatibleAbi) throw new SecurityException("Update has no compatible native libraries");
+        long candidateCode = Build.VERSION.SDK_INT >= 28 ? candidate.getLongVersionCode() : candidate.versionCode;
+        long installedCode = Build.VERSION.SDK_INT >= 28 ? installed.getLongVersionCode() : installed.versionCode;
+        Set<String> expected = signers(installed), actual = signers(candidate);
+        if (expected.isEmpty() || !expected.equals(actual)) throw new SignatureMismatchException();
         if (!UpdatePolicy.compatibleCode(installedCode, candidateCode, stableRecovery && !UpdatePolicy.isPrerelease(version) && UpdatePolicy.isPrerelease(installed.versionName))) throw new VersionNotNewerException();
     }
 }

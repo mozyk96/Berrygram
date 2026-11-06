@@ -194,6 +194,7 @@
     <string name="ForkUpdateNoSpace">Not enough storage space to download the update.</string>
     <string name="ForkUpdateOlderStable">The latest Stable release has an older version name. Update will verify its Android version code first. Only a compatible package with the same or a higher code can replace Beta and keep your data. Otherwise, wait for a compatible Stable release.</string>
     <string name="ForkUpdateIncompatibleVersion">This package has an older Android version code, or an equal code outside Beta to Stable recovery. Wait for a compatible release; your app and data are unchanged.</string>
+    <string name="ForkUpdateSignatureMismatch">The downloaded update has a different signing key than the installed version. Updating over the existing app is not supported.</string>
     <string name="ForkUpdateExportPhrases">Export phrases in editor</string>
     <string name="ForkCameraChooseDuring">Choose while recording</string>
     <string name="ForkCameraFrontShort">Front</string>

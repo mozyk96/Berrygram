@@ -101,7 +101,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         textParams.setMarginStart(AndroidUtilities.dp(12)); summary.addView(details, textParams);
         addView(summary); updateDetails();
         TextSettingsCell channel = new TextSettingsCell(c);
-        boolean beta = preferences.getBoolean("beta_channel", true);
+        boolean beta = preferences.getBoolean("beta_channel", false);
         channel.setTextAndValue(ForkLocale.get(R.string.ForkUpdateChannel), ForkLocale.get(beta ? R.string.ForkUpdateChannelBeta : R.string.ForkUpdateChannelStable), false);
         channel.setEnabled(!busy);
         channel.setBackground(Theme.getSelectorDrawable(false));
@@ -120,7 +120,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         if (busy) { progress = new ProgressBar(c, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(verified == null && downloadPercent == 0); progress.setMax(100); progress.setProgress(downloadPercent); addView(progress); return; }
         addAction(R.string.ForkUpdateCheck, this::check, release != null || verified != null);
         if (release != null && verified == null && !incompatible) addAction(olderStable() ? R.string.ForkUpdateStableRecovery : R.string.ForkUpdateDownload, this::download, false);
-        if (verified != null) addAction(R.string.ForkUpdateInstall, this::download, false);
+        if (verified != null) addAction(R.string.ForkUpdateInstall, this::startInstall, false);
     }
     private void addAction(int label, Runnable action, boolean divider) {
         TextSettingsCell cell = new TextSettingsCell(getContext()); cell.setText(ForkLocale.get(label), divider);
@@ -129,7 +129,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         cell.setOnClickListener(v -> action.run()); addView(cell);
     }
     private boolean olderStable() {
-        if (release == null || preferences.getBoolean("beta_channel", true)) return false;
+        if (release == null || preferences.getBoolean("beta_channel", false)) return false;
         Integer comparison = UpdatePolicy.compareVersions(release.version, version);
         return comparison != null && comparison < 0;
     }
@@ -151,7 +151,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         String digest = preferences.getString("release_digest", "");
         long size = preferences.getLong("release_size", 0);
         boolean prerelease = preferences.getBoolean("release_prerelease", true);
-        if ((!preferences.getBoolean("beta_channel", true) && (prerelease || UpdatePolicy.isPrerelease(v))) || !UpdatePolicy.validSavedRelease(REPOSITORY, v, version, url, digest, size, preferences.getBoolean("beta_channel", true))) return null;
+        if ((!preferences.getBoolean("beta_channel", false) && (prerelease || UpdatePolicy.isPrerelease(v))) || !UpdatePolicy.validSavedRelease(REPOSITORY, v, version, url, digest, size, preferences.getBoolean("beta_channel", false))) return null;
         GithubUpdateClient.Release result = new GithubUpdateClient.Release();
         result.version = v; result.url = url; result.digest = digest; result.size = size; result.prerelease = prerelease;
         result.notes = preferences.getString("release_notes", ""); return result;
@@ -170,7 +170,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         if (busy || disposed) return;
         installIntent.cancel(); downloadPercent = 0;
         busy = true; preferences.edit().putBoolean("interrupted", true).apply(); release = null; verified = null; incompatible = false; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
-        final boolean betaChannel = preferences.getBoolean("beta_channel", true);
+        final boolean betaChannel = preferences.getBoolean("beta_channel", false);
         worker.execute(() -> {
             try {
                 GithubUpdateClient.Release found = GithubUpdateClient.latest(REPOSITORY, betaChannel);
@@ -184,7 +184,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
     }
     private void download() {
         GithubUpdateClient.Release candidate = release; if (candidate == null || busy || disposed || installIntent.pending()) return;
-        candidate.stableRecovery = !preferences.getBoolean("beta_channel", true) && !candidate.prerelease && UpdatePolicy.isPrerelease(version);
+        candidate.stableRecovery = !preferences.getBoolean("beta_channel", false) && !candidate.prerelease && UpdatePolicy.isPrerelease(version);
         installIntent.request(); waitingPermission = false; permissionLeft = false; downloadPercent = 0; verified = null;
         Context app = getContext().getApplicationContext(); busy = true; preferences.edit().putBoolean("interrupted", true).apply(); status = ForkLocale.get(R.string.ForkUpdateDownloading, 0); render(false);
         worker.execute(() -> {
@@ -220,33 +220,69 @@ public final class ForkUpdaterPanel extends LinearLayout {
             AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateNoStableRelease); render(false); });
             return;
         }
+        if (e instanceof GithubUpdateClient.SignatureMismatchException || (e instanceof SecurityException && "Update signing certificate mismatch".equals(e.getMessage()))) {
+            AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; incompatible = true; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateSignatureMismatch); render(false); });
+            return;
+        }
         String message = e.getMessage();
         final String detail = message == null || message.isEmpty() || message.length() > 160
                 ? e.getClass().getSimpleName() : message;
         AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateFailure, detail); render(false); });
     }
+    private void startInstall() {
+        if (verified == null || !verified.isFile()) {
+            download();
+            return;
+        }
+        installIntent.request();
+        waitingPermission = false;
+        permissionLeft = false;
+        install();
+    }
+
     private void install() {
-        Context c = parent.getParentActivity(); if (disposed || !installIntent.pending() || parent.isPaused() || !isAttachedToWindow() || !hasWindowFocus() || c == null || verified == null || !verified.isFile()) return;
+        Context c = parent.getParentActivity();
+        if (disposed || !installIntent.pending() || parent.isPaused() || !isAttachedToWindow() || c == null || verified == null || !verified.isFile()) return;
         try {
             if (Build.VERSION.SDK_INT >= 26 && !c.getPackageManager().canRequestPackageInstalls()) {
-                waitingPermission = true; permissionLeft = false; permissionSettingsOpened = false;
+                waitingPermission = true;
+                permissionLeft = false;
+                permissionSettingsOpened = false;
                 if (parent.showDialog(new AlertDialog.Builder(c).setTitle(ForkLocale.get(R.string.ForkUpdateInstall))
                     .setMessage(ForkLocale.get(R.string.ForkUpdatePermissionInfo))
                     .setPositiveButton(c.getString(android.R.string.ok), (dialog, which) -> {
-                        permissionSettingsOpened = true; permissionLeft = false;
-                        try { c.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + c.getPackageName()))); }
-                        catch (Exception e) { fail(e); }
-                    }).setNegativeButton(c.getString(android.R.string.cancel), (dialog, which) -> { installIntent.cancel(); waitingPermission = false; }).create(), dialog -> {
-                        if (!permissionSettingsOpened) { installIntent.cancel(); waitingPermission = false; }
-                    }) == null) { installIntent.cancel(); waitingPermission = false; }
+                        permissionSettingsOpened = true;
+                        permissionLeft = false;
+                        try {
+                            c.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + c.getPackageName())));
+                        } catch (Exception e) {
+                            fail(e);
+                        }
+                    }).setNegativeButton(c.getString(android.R.string.cancel), (dialog, which) -> {
+                        installIntent.cancel();
+                        waitingPermission = false;
+                    }).create(), dialog -> {
+                        if (!permissionSettingsOpened) {
+                            installIntent.cancel();
+                            waitingPermission = false;
+                        }
+                    }) == null) {
+                    installIntent.cancel();
+                    waitingPermission = false;
+                }
                 return;
             }
             Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".provider", verified);
-            // Consume the one-tap intent before leaving the app: cancellation never reopens it.
-            if (!installIntent.consume(isAttachedToWindow(), !parent.isPaused(), hasWindowFocus(), verified.isFile())) return;
+            if (!installIntent.consume(isAttachedToWindow(), !parent.isPaused(), true, verified.isFile())) return;
             removeCallbacks(installWhenResumed);
-            c.startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
-        } catch (Exception e) { fail(e); }
+            Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            c.startActivity(intent);
+        } catch (Exception e) {
+            fail(e);
+        }
     }
     private void scheduleInstallerCheck() {
         removeCallbacks(installWhenResumed);

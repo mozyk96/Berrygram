@@ -16,6 +16,7 @@
 - Performance Center 2.0: Auto vs Manual profiles (Low, Medium, High).
 - Advanced Animations 2.0: continuous spring tab indicator on MainTabsLayout.
 - Kotlin Transition: all new fork modules written in Kotlin.
+- Built-in Updater: fixed install invocation, permission flow, ARM64/Universal support, signing key continuity check, default Stable channel.
 
 ## Verification
 - All smoke tests passed (fork-tests/smoke.ps1).

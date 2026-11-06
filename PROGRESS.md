@@ -11,7 +11,8 @@
 - Performance Center 2.0: Auto vs Manual profiles (Low, Medium, High) independent of visual modes, manual selections strictly respected.
 - Advanced Animations 2.0: continuous spring-animated shared tab indicator in MainTabsLayout, dynamic elongation, selector blinking eliminated.
 - Kotlin Transition: all new fork features, storage, and settings written in Kotlin with clean Java interoperability.
-- Verification: full smoke suite passed (smoke.ps1), test_berrygram_resources.py passed, test_release_scope.py passed, assembleAfatDebug APK built successfully.
+- Built-in Updater: fixed install trigger in ForkUpdaterPanel (calling install() instead of re-downloading), safe intent consumption, ARM64 and Universal asset detection, distinct SignatureMismatchException for certificate conflicts, Stable channel as default.
+- Verification: full smoke suite passed (smoke.ps1), test_berrygram_resources.py passed, test_release_scope.py passed, assembleAfatRelease ARM64 APK built and verified with permanent release key (code 72719, SHA-256 56d73f41aed8562fe2f3c6dd1de053fdf92eda6303b55a57b70f4067ff2239c7).
 
 # Android 1.3.0 Beta 5 published — 2026-11-06
 

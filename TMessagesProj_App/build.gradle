@@ -56,10 +56,12 @@ android {
         }
 
         release {
-            storeFile file(System.getenv("BERRYGRAM_RELEASE_KEYSTORE") ?: "../.fork-local/release.keystore")
-            storePassword System.getenv("BERRYGRAM_RELEASE_STORE_PASSWORD") ?: RELEASE_STORE_PASSWORD
-            keyAlias System.getenv("BERRYGRAM_RELEASE_KEY_ALIAS") ?: RELEASE_KEY_ALIAS
-            keyPassword System.getenv("BERRYGRAM_RELEASE_KEY_PASSWORD") ?: RELEASE_KEY_PASSWORD
+            def keyJson = file("../.fork-local/public-release.json")
+            def keyInfo = keyJson.exists() ? new groovy.json.JsonSlurper().parse(keyJson) : null
+            storeFile file(System.getenv("BERRYGRAM_RELEASE_KEYSTORE") ?: (keyInfo?.store ?: "../.fork-local/release.keystore"))
+            storePassword System.getenv("BERRYGRAM_RELEASE_STORE_PASSWORD") ?: (keyInfo?.password ?: RELEASE_STORE_PASSWORD)
+            keyAlias System.getenv("BERRYGRAM_RELEASE_KEY_ALIAS") ?: (keyInfo?.alias ?: RELEASE_KEY_ALIAS)
+            keyPassword System.getenv("BERRYGRAM_RELEASE_KEY_PASSWORD") ?: (keyInfo?.password ?: RELEASE_KEY_PASSWORD)
         }
     }
 

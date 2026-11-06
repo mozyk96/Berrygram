@@ -57,11 +57,22 @@ public final class UpdatePolicy {
         String repo=value.substring(value.indexOf('/')+1);
         return !repo.equals(".") && !repo.equals("..") && !repo.toLowerCase(Locale.ROOT).endsWith(".git");
     }
-    public static boolean validAsset(String tag, String name) {
-        if (tag == null) return false;
-        String version=tag.startsWith("v") ? tag.substring(1) : tag;
+    public static boolean isArm64Asset(String tag, String name) {
+        if (tag == null || name == null) return false;
+        String version = tag.startsWith("v") ? tag.substring(1) : tag;
         if (version(version) == null) return false;
-        return ("BerryGram-"+version+"-arm64-v8a.apk").equals(name);
+        return ("BerryGram-" + version + "-arm64-v8a.apk").equalsIgnoreCase(name);
+    }
+
+    public static boolean isUniversalAsset(String tag, String name) {
+        if (tag == null || name == null) return false;
+        String version = tag.startsWith("v") ? tag.substring(1) : tag;
+        if (version(version) == null) return false;
+        return ("BerryGram-" + version + "-universal.apk").equalsIgnoreCase(name);
+    }
+
+    public static boolean validAsset(String tag, String name) {
+        return isArm64Asset(tag, name) || isUniversalAsset(tag, name);
     }
     public static boolean validDigest(String digest) { return digest != null && digest.matches("sha256:[0-9a-fA-F]{64}"); }
     public static boolean validSavedRelease(String repo, String version, String installed, String url, String digest, long size) {
@@ -69,16 +80,18 @@ public final class UpdatePolicy {
     }
     public static boolean validSavedRelease(String repo, String version, String installed, String url, String digest, long size, boolean betaChannel) {
         if (!shouldShowRelease(version, installed, betaChannel) || size <= 0 || size > 512L * 1024 * 1024 || !validDigest("sha256:" + digest)) return false;
-        String name = "BerryGram-" + version + "-arm64-v8a.apk";
-        return validAssetUrl(repo, "v" + version, name, url) || validAssetUrl(repo, version, name, url);
+        String arm64 = "BerryGram-" + version + "-arm64-v8a.apk";
+        String universal = "BerryGram-" + version + "-universal.apk";
+        return validAssetUrl(repo, "v" + version, arm64, url) || validAssetUrl(repo, version, arm64, url)
+            || validAssetUrl(repo, "v" + version, universal, url) || validAssetUrl(repo, version, universal, url);
     }
     public static boolean validAssetUrl(String repo, String tag, String name, String url) {
-        if (!validRepository(repo) || !validAsset(tag,name) || url==null) return false;
+        if (!validRepository(repo) || !validAsset(tag, name) || url == null) return false;
         try {
-            URI uri=new URI(url);
-            return "https".equalsIgnoreCase(uri.getScheme()) && "github.com".equalsIgnoreCase(uri.getHost()) && uri.getPort()==-1
-                && uri.getUserInfo()==null && uri.getQuery()==null && uri.getFragment()==null
-                && ("/"+repo+"/releases/download/"+tag+"/"+name).equals(uri.getRawPath());
+            URI uri = new URI(url);
+            return "https".equalsIgnoreCase(uri.getScheme()) && "github.com".equalsIgnoreCase(uri.getHost()) && uri.getPort() == -1
+                && uri.getUserInfo() == null && uri.getQuery() == null && uri.getFragment() == null
+                && ("/" + repo + "/releases/download/" + tag + "/" + name).equalsIgnoreCase(uri.getRawPath());
         } catch (Exception ignored) { return false; }
     }
 }
