@@ -358,4 +358,6 @@
     <string name="ForkArchiveRetention90">90 days</string>
     <string name="ForkArchiveRetentionForever">Forever</string>
     <string name="ForkArchiveRetentionInfo">Archived messages, deleted-message markers and edit history older than the selected period are removed from this device. Everything is stored encrypted with a device-bound key and never leaves the phone.</string>
+    <string name="ForkNotificationFirebaseSetupHint">Remote push needs a Firebase project owned by this fork. Create an Android app with the package name org.example.forkclient, download google-services.json and place it into .fork-local/google-services.json of the project, then rebuild. The file stays on your machine and is never committed. Until then, notifications only arrive while the application process is alive.</string>
+    <string name="ForkPerformanceAffectsInfo">The performance profile controls the Berrygram effects only: glass and blur surfaces, the fluid popup animation and the embedded round-video preview. On the Low profile these effects are disabled and the preview is not started. Telegram itself keeps its own Lite mode setting, which is applied on top.</string>
 </resources>

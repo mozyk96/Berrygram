@@ -157,6 +157,14 @@ public final class ForkRoundVideoPreviewPanel extends ViewGroup {
                 || getWindowVisibility() != VISIBLE || camera != null || context() == null) {
             return;
         }
+        if (ForkGraphicsSurface.effectsSuppressed()) {
+            // Berrygram performance profile: the embedded preview is the most
+            // expensive Berrygram feature, so it stays off on the low profile,
+            // in power saver mode and with Telegram's Lite mode applied.
+            previewOn = false;
+            updatePowerState();
+            return;
+        }
         if (Build.VERSION.SDK_INT >= 23
                 && context().checkSelfPermission(Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {

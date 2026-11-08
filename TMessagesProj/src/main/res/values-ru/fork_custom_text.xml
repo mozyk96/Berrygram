@@ -313,4 +313,6 @@
     <string name="ForkArchiveRetention90">90 дней</string>
     <string name="ForkArchiveRetentionForever">Навсегда</string>
     <string name="ForkArchiveRetentionInfo">Заархивированные сообщения, отметки удалённых сообщений и история правок старше выбранного срока удаляются с этого устройства. Всё хранится в зашифрованном виде ключом, привязанным к устройству, и не покидает телефон.</string>
+    <string name="ForkNotificationFirebaseSetupHint">Для удалённого push нужен собственный Firebase-проект Berrygram. Создайте Android-приложение с package name org.example.forkclient, скачайте google-services.json и положите его в .fork-local/google-services.json проекта, после чего пересоберите приложение. Файл остаётся на вашем компьютере и никогда не попадает в Git. До этого момента уведомления приходят только пока процесс приложения жив.</string>
+    <string name="ForkPerformanceAffectsInfo">Профиль производительности управляет только эффектами Berrygram: поверхностями glass и blur, анимацией всплывающих меню и встроенным круглым видеопревью. В профиле Low эти эффекты отключены, а превью не запускается. Телеграм сохраняет собственную настройку Lite mode, которая применяется поверх.</string>
 </resources>

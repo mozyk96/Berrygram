@@ -22202,6 +22202,78 @@ public class ChatActivity extends BaseFragment implements
                 }
             }
         }
+        restoreForkArchivedDeletedMessages();
+    }
+
+    /**
+     * BerryGram archive: messages that were deleted in Telegram but kept
+     * locally are inserted back into the chat at their original position, so
+     * they survive an application restart.
+     */
+    private void restoreForkArchivedDeletedMessages() {
+        try {
+            if (!org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)) {
+                return;
+            }
+            if (chatMode != MODE_DEFAULT || currentEncryptedChat != null || messages.isEmpty() || chatAdapter == null) {
+                return;
+            }
+            final long dialogId = getDialogId();
+            if (dialogId == 0) {
+                return;
+            }
+            org.telegram.messenger.fork.storage.ForkArchiveManager.loadDeletedMessages(currentAccount, dialogId,
+                    org.telegram.messenger.fork.storage.ForkArchivedRestorePolicy.MAX_RESTORED, archived -> {
+                try {
+                    if (archived == null || archived.isEmpty() || messages.isEmpty()) {
+                        return;
+                    }
+                    final java.util.HashSet<Integer> known = new java.util.HashSet<>();
+                    for (int a = 0; a < messages.size(); a++) {
+                        MessageObject existing = messages.get(a);
+                        if (existing != null && existing.getId() > 0) {
+                            known.add(existing.getId());
+                        }
+                    }
+                    final java.util.ArrayList<Integer> inserted = new java.util.ArrayList<>();
+                    for (org.telegram.messenger.fork.storage.ForkArchiveManager.ArchivedMessage entry : archived) {
+                        if (entry == null) {
+                            continue;
+                        }
+                        if (!org.telegram.messenger.fork.storage.ForkArchivedRestorePolicy.shouldRestore(entry.messageId, entry.deleted, known)) {
+                            continue;
+                        }
+                        MessageObject obj = org.telegram.messenger.fork.storage.ForkArchivedMessageFactory.create(currentAccount, entry);
+                        if (obj == null) {
+                            continue;
+                        }
+                        obj.stableId = lastStableId++;
+                        java.util.ArrayList<Integer> dates = new java.util.ArrayList<>(messages.size());
+                        for (int a = 0; a < messages.size(); a++) {
+                            MessageObject current = messages.get(a);
+                            dates.add(current != null && current.messageOwner != null ? current.messageOwner.date : 0);
+                        }
+                        int index = org.telegram.messenger.fork.storage.ForkArchivedRestorePolicy.insertIndex(dates,
+                                obj.messageOwner != null ? obj.messageOwner.date : 0);
+                        messages.add(index, obj);
+                        inserted.add(index);
+                    }
+                    if (inserted.isEmpty()) {
+                        return;
+                    }
+                    java.util.Collections.sort(inserted, java.util.Collections.reverseOrder());
+                    for (int index : inserted) {
+                        int position = chatAdapter.messagesStartRow + index;
+                        if (position >= 0 && position < chatAdapter.getItemCount()) {
+                            chatAdapter.notifyItemInserted(position);
+                        }
+                    }
+                    chatAdapter.updateRowsSafe();
+                } catch (Throwable ignored) {
+                }
+            });
+        } catch (Throwable ignored) {
+        }
     }
 
     private void didReceivedNotification2(int id, int account, final Object... args) {
@@ -26794,6 +26866,23 @@ public class ChatActivity extends BaseFragment implements
                     if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount) && !sent && !obj.scheduled && chatMode != MODE_SCHEDULED) {
                         obj.isForkDeleted = true;
                         org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).recordDeletedMessage(dialog_id, obj.getId(), currentTime);
+                        // Keep the text locally, so the tombstone survives a restart.
+                        try {
+                            String deletedText = obj.messageOwner != null ? obj.messageOwner.message : null;
+                            if (deletedText != null && !deletedText.isEmpty()) {
+                                org.telegram.messenger.fork.storage.ForkArchiveManager.archiveMessageAsync(
+                                        currentAccount,
+                                        dialog_id,
+                                        obj.getId(),
+                                        obj.messageOwner != null ? obj.messageOwner.date : currentTime,
+                                        org.telegram.messenger.DialogObject.getPeerDialogId(obj.messageOwner != null ? obj.messageOwner.from_id : null),
+                                        null,
+                                        deletedText,
+                                        true
+                                );
+                            }
+                        } catch (Throwable ignored) {
+                        }
                         if (chatAdapter != null) {
                             chatAdapter.notifyItemChanged(chatAdapter.messagesStartRow + index);
                         }

@@ -163,7 +163,6 @@ android {
         buildConfigField 'String', 'FORK_TELEGRAM_API_HASH', '"' + forkApiHash + '"'
         minSdkVersion 23
         targetSdkVersion 36
-
         vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
 
         multiDexEnabled true
@@ -184,6 +183,50 @@ android {
                 targets 'tmessages.49'
             }
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // BerryGram owned Firebase configuration.
+    //
+    // Remote push requires a Firebase project that belongs to this fork and
+    // to the application id of this build. The owner keeps the
+    // google-services.json file outside of Git; it is read at build time only
+    // and never committed, printed or uploaded anywhere.
+    //
+    //   1. Create a Firebase project.
+    //   2. Register an Android app with the package name of this build.
+    //   3. Download google-services.json.
+    //   4. Put it into <repo>/.fork-local/google-services.json
+    //      (or point FORK_GOOGLE_SERVICES_FILE to it) and rebuild.
+    //
+    // Without that file the build still succeeds and the application reports
+    // the missing configuration in the notification diagnostics screen.
+    // ---------------------------------------------------------------------
+    def forkFirebaseFile = System.getenv('FORK_GOOGLE_SERVICES_FILE')
+            ?: rootProject.file('.fork-local/google-services.json')
+    if (forkFirebaseFile != null && forkFirebaseFile.exists()) {
+        def forkServices = new groovy.json.JsonSlurper().parse(forkFirebaseFile)
+        def forkPackage = APP_PACKAGE
+        def forkClient = null
+        forkServices.client?.each { candidate ->
+            if (candidate.client_info?.android_client_info?.package_name == forkPackage) {
+                forkClient = candidate
+            }
+        }
+        if (forkClient == null) {
+            throw new GradleException('google-services.json does not contain an Android client for ' + forkPackage)
+        }
+        def forkAppId = forkClient.client_info.mobilesdk_app_id
+        def forkProjectId = forkServices.project_info?.project_id
+        def forkProjectNumber = forkServices.project_info?.project_number
+        def forkApiKey = forkClient.api_key?.isEmpty() ? null : forkClient.api_key[0].current_key
+        if (!forkAppId || !forkProjectId || !forkProjectNumber || !forkApiKey) {
+            throw new GradleException('google-services.json is incomplete for ' + forkPackage)
+        }
+        resValue 'string', 'google_app_id', forkAppId
+        resValue 'string', 'gcm_defaultSenderId', forkProjectNumber
+        resValue 'string', 'project_id', forkProjectId
+        resValue 'string', 'google_api_key', forkApiKey
     }
 
     buildTypes {

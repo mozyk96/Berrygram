@@ -117,7 +117,7 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
         ForkSettingsLayout.addSection(page, diagnostics);
 
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
-        info.setText(ForkLocale.get(R.string.ForkPerformanceInfoUnified));
+        info.setText(ForkLocale.get(R.string.ForkPerformanceInfoUnified) + "\n\n" + ForkLocale.get(R.string.ForkPerformanceAffectsInfo));
         page.addView(info);
 
         ScrollView scroll = new ScrollView(context);

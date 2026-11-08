@@ -219,6 +219,10 @@ public final class ForkNotificationDiagnosticsActivity extends BaseFragment {
 
         firebaseInfo.setText(ForkLocale.get(firebaseConfigured
                 ? R.string.ForkNotificationPushOkInfo : R.string.ForkNotificationFirebaseInfo));
+        if (!firebaseConfigured) {
+            firebaseInfo.setText(firebaseInfo.getText() + "\n\n"
+                    + ForkLocale.get(R.string.ForkNotificationFirebaseSetupHint));
+        }
         testInfo.setText(ForkLocale.get(R.string.ForkNotificationTestInfo));
     }
 

@@ -46,4 +46,21 @@ public final class StealthPolicy {
     public static boolean isEligible(long dialogId, boolean isEncrypted) {
         return dialogId != 0 && !isEncrypted;
     }
+
+    /**
+     * Secondary read signals (mentions, reactions, read message contents) are
+     * visible to the sender as well, so ghost reading hides them as well.
+     * Secret chats are never affected.
+     */
+    public static boolean shouldSuppressSecondaryReads(
+            boolean ghostModeEnabled,
+            boolean stealthPrivate,
+            boolean stealthGroups,
+            boolean isChannelOrGroup,
+            boolean isEncrypted) {
+        if (!ghostModeEnabled || isEncrypted) {
+            return false;
+        }
+        return isChannelOrGroup ? stealthGroups : stealthPrivate;
+    }
 }

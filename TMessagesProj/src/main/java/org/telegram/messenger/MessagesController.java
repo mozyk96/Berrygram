@@ -14427,6 +14427,11 @@ public class MessagesController extends BaseController implements NotificationCe
         long dialogId = messageObject.getDialogId();
         getMessagesStorage().markMessagesContentAsRead(dialogId, arrayList, 0, 0);
         getNotificationCenter().postNotificationName(NotificationCenter.messagesReadContent, dialogId, arrayList);
+        if (forkSuppressSecondaryReads(dialogId)) {
+            // BerryGram ghost reading: the content stays read locally, the server
+            // is not told that the message was opened.
+            return;
+        }
         if (messageObject.getId() < 0) {
             markMessageAsRead(messageObject.getDialogId(), messageObject.messageOwner.random_id, Integer.MIN_VALUE);
         } else {
@@ -14578,6 +14583,25 @@ public class MessagesController extends BaseController implements NotificationCe
         }
     }
 
+    /**
+     * BerryGram ghost reading: hides additional server visible read signals
+     * (mentions, reactions, read message contents) of the current chat.
+     */
+    private boolean forkSuppressSecondaryReads(long dialogId) {
+        try {
+            boolean encrypted = DialogObject.isEncryptedDialog(dialogId);
+            boolean isGroup = dialogId < 0;
+            if (!isGroup) {
+                TLRPC.InputPeer peer = getInputPeer(dialogId);
+                isGroup = peer instanceof TLRPC.TL_inputPeerChannel;
+            }
+            return org.telegram.messenger.fork.stealth.ForkStealthSettings
+                    .shouldSuppressSecondaryReads(dialogId, isGroup, encrypted, currentAccount);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     private void completeReadTask(ReadTask task) {
         // BerryGram ghost reading: an explicit user "Mark as read" must always be
         // reported, otherwise the user could never clear the unread state.
@@ -14694,6 +14718,11 @@ public class MessagesController extends BaseController implements NotificationCe
             return;
         }
         getMessagesStorage().resetMentionsCount(dialogId, topicId, 0);
+        if (forkSuppressSecondaryReads(dialogId)) {
+            // BerryGram ghost reading: the mention stays read locally, but the
+            // server is not told about it.
+            return;
+        }
         TLRPC.TL_messages_readMentions req = new TLRPC.TL_messages_readMentions();
         req.peer = getInputPeer(dialogId);
         if (topicId != 0) {
@@ -18579,17 +18608,21 @@ public class MessagesController extends BaseController implements NotificationCe
                 if (message instanceof TLRPC.TL_messageEmpty) {
                     continue;
                 }
-                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled(currentAccount) && message.message != null && !android.text.TextUtils.isEmpty(message.message)) {
+                if (message.message != null && !android.text.TextUtils.isEmpty(message.message)) {
                     long did = MessageObject.getDialogId(message);
-                    long senderId = DialogObject.getPeerDialogId(message.from_id);
-                    org.telegram.messenger.fork.storage.ForkArchiveManager.getInstance(currentAccount).archiveMessage(
-                            did,
-                            message.id,
-                            message.date,
-                            senderId,
-                            null,
-                            message.message
-                    );
+                    // Remember the current text so a later edit can be versioned reliably.
+                    org.telegram.messenger.fork.storage.ForkMessageTextCache.put(currentAccount, did, message.id, message.date, message.message);
+                    if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled(currentAccount)) {
+                        long senderId = DialogObject.getPeerDialogId(message.from_id);
+                        org.telegram.messenger.fork.storage.ForkArchiveManager.getInstance(currentAccount).archiveMessage(
+                                did,
+                                message.id,
+                                message.date,
+                                senderId,
+                                null,
+                                message.message
+                        );
+                    }
                 }
                 if (newMessageCallback != null && newMessageCallback.onMessageReceived(message)) {
                     newMessageCallback = null;
@@ -19588,26 +19621,39 @@ public class MessagesController extends BaseController implements NotificationCe
                     final long did = message.dialog_id;
                     final int mid = message.id;
                     final String newText = message.message;
-                    getMessagesStorage().getStorageQueue().postRunnable(() -> {
-                        try {
-                            org.telegram.SQLite.SQLiteCursor cursor = getMessagesStorage().getDatabase().queryFinalized("SELECT data FROM messages_v2 WHERE uid = " + did + " AND mid = " + mid + " LIMIT 1");
-                            if (cursor != null && cursor.next()) {
-                                org.telegram.tgnet.NativeByteBuffer data = cursor.byteBufferValue(0);
-                                if (data != null) {
-                                    TLRPC.Message oldMsg = TLRPC.Message.TLdeserialize(data, data.readInt32(false), false);
-                                    data.reuse();
-                                    if (oldMsg != null && oldMsg.message != null && newText != null && !oldMsg.message.equals(newText)) {
-                                        org.telegram.messenger.fork.storage.ForkEditHistoryStorage.getInstance(currentAccount)
-                                                .recordPriorVersion(did, mid, oldMsg.date, oldMsg.message);
+                    final int newDate = message.date;
+                    org.telegram.messenger.fork.storage.ForkMessageTextCache.Entry cached =
+                            org.telegram.messenger.fork.storage.ForkMessageTextCache.get(currentAccount, did, mid);
+                    if (cached != null) {
+                        // Deterministic path: the previous text is known from the cache.
+                        if (newText != null && !cached.text.equals(newText)) {
+                            org.telegram.messenger.fork.storage.ForkEditHistoryStorage.getInstance(currentAccount)
+                                    .recordPriorVersion(did, mid, cached.date, cached.text);
+                        }
+                    } else {
+                        // Fallback for messages that were not seen on this device: read the stored row.
+                        getMessagesStorage().getStorageQueue().postRunnable(() -> {
+                            try {
+                                org.telegram.SQLite.SQLiteCursor cursor = getMessagesStorage().getDatabase().queryFinalized("SELECT data FROM messages_v2 WHERE uid = " + did + " AND mid = " + mid + " LIMIT 1");
+                                if (cursor != null && cursor.next()) {
+                                    org.telegram.tgnet.NativeByteBuffer data = cursor.byteBufferValue(0);
+                                    if (data != null) {
+                                        TLRPC.Message oldMsg = TLRPC.Message.TLdeserialize(data, data.readInt32(false), false);
+                                        data.reuse();
+                                        if (oldMsg != null && oldMsg.message != null && newText != null && !oldMsg.message.equals(newText)) {
+                                            org.telegram.messenger.fork.storage.ForkEditHistoryStorage.getInstance(currentAccount)
+                                                    .recordPriorVersion(did, mid, oldMsg.date, oldMsg.message);
+                                        }
                                     }
                                 }
+                                if (cursor != null) {
+                                    cursor.dispose();
+                                }
+                            } catch (Throwable ignored) {
                             }
-                            if (cursor != null) {
-                                cursor.dispose();
-                            }
-                        } catch (Throwable ignored) {
-                        }
-                    });
+                        });
+                    }
+                    org.telegram.messenger.fork.storage.ForkMessageTextCache.put(currentAccount, did, mid, newDate, newText);
                 }
                 ImageLoader.saveMessageThumbs(message);
                 AndroidUtilities.runOnUIThread(() -> {
@@ -21265,6 +21311,25 @@ public class MessagesController extends BaseController implements NotificationCe
                         }
                     }
                 }
+                if (deletedMessagesFinal != null) {
+                    // BerryGram archive: remember which locally preserved messages were
+                    // deleted in Telegram, so they can be shown as tombstones later.
+                    for (int a = 0, size = deletedMessagesFinal.size(); a < size; a++) {
+                        long deletedDialogId = deletedMessagesFinal.keyAt(a);
+                        ArrayList<Integer> deletedIds = deletedMessagesFinal.valueAt(a);
+                        if (deletedIds == null || deletedIds.isEmpty()) {
+                            continue;
+                        }
+                        try {
+                            if (deletedDialogId == 0) {
+                                org.telegram.messenger.fork.storage.ForkArchiveManager.markDeletedByIdsAsync(currentAccount, deletedIds);
+                            } else {
+                                org.telegram.messenger.fork.storage.ForkArchiveManager.markDeletedAsync(currentAccount, deletedDialogId, deletedIds);
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                }
                 getNotificationsController().removeDeletedMessagesFromNotifications(deletedMessagesFinal, false);
             }
             if (deletedQuickRepliesMessagesFinal != null) {
@@ -21704,6 +21769,10 @@ public class MessagesController extends BaseController implements NotificationCe
             topicsController.markAllReactionsAsRead(-dialogId, topicId);
         }
         getMessagesStorage().updateUnreadReactionsCount(dialogId, topicId, 0);
+        if (forkSuppressSecondaryReads(dialogId)) {
+            // BerryGram ghost reading: reactions stay read locally only.
+            return;
+        }
         TLRPC.TL_messages_readReactions req = new TLRPC.TL_messages_readReactions();
         req.peer = getInputPeer(dialogId);
 

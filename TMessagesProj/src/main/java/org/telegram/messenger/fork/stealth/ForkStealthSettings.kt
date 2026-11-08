@@ -223,6 +223,21 @@ object ForkStealthSettings {
         )
     }
 
+    /**
+     * Mentions, reactions and read message contents are additional server
+     * visible read signals and are hidden together with the read history.
+     */
+    @JvmStatic
+    fun shouldSuppressSecondaryReads(dialogId: Long, isGroupOrChannel: Boolean, isSecretChat: Boolean, account: Int): Boolean {
+        return StealthPolicy.shouldSuppressSecondaryReads(
+            ghostModeEnabled(account),
+            stealthReadPrivate(account),
+            stealthReadGroups(account),
+            isGroupOrChannel,
+            isSecretChat
+        )
+    }
+
     @JvmStatic
     fun reset(account: Int) {
         prefs(account).edit().clear().apply()

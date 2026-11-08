@@ -107,6 +107,11 @@ class ForkEditHistoryStorage private constructor(private val currentAccount: Int
         if (text.isNullOrEmpty()) return
         val db = database ?: return
         try {
+            // Never store the same version twice, for example when the same edit
+            // update is processed more than once.
+            if (lastVersionText(dialogId, messageId) == text) {
+                return
+            }
             val encrypted = ForkArchiveCrypto.encrypt(currentAccount, text)
             val state = db.executeFast(
                 "INSERT INTO edit_history (dialog_id, message_id, edit_date, text, text_enc) VALUES (?, ?, ?, ?, ?);"
@@ -125,6 +130,32 @@ class ForkEditHistoryStorage private constructor(private val currentAccount: Int
             state.dispose()
         } catch (e: Exception) {
             FileLog.e(e)
+        }
+    }
+
+    /** Returns the text of the most recently stored version of a message. */
+    private fun lastVersionText(dialogId: Long, messageId: Int): String? {
+        val db = database ?: return null
+        var cursor: SQLiteCursor? = null
+        return try {
+            cursor = db.queryFinalized(
+                "SELECT text, text_enc FROM edit_history WHERE dialog_id = $dialogId AND message_id = $messageId ORDER BY edit_date DESC LIMIT 1;"
+            )
+            if (cursor != null && cursor.next()) {
+                val encrypted = cursor.byteArrayValue(1)
+                if (encrypted != null && encrypted.isNotEmpty()) {
+                    ForkArchiveCrypto.decrypt(currentAccount, encrypted) ?: cursor.stringValue(0)
+                } else {
+                    cursor.stringValue(0)
+                }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            FileLog.e(e)
+            null
+        } finally {
+            cursor?.dispose()
         }
     }
 

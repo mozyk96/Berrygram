@@ -26,7 +26,8 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         @JvmField val date: Int,
         @JvmField val senderId: Long,
         @JvmField val senderName: String?,
-        @JvmField val messageText: String
+        @JvmField val messageText: String,
+        @JvmField val deleted: Boolean = false
     )
 
     class ArchivedDialogSummary(
@@ -54,6 +55,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
                     "sender_name TEXT, " +
                     "message_text TEXT NOT NULL DEFAULT '', " +
                     "message_text_enc BLOB, " +
+                    "deleted INTEGER NOT NULL DEFAULT 0, " +
                     "PRIMARY KEY (dialog_id, message_id)" +
                     ");"
             )?.stepThis()?.dispose()
@@ -85,6 +87,23 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             }
             if (!hasColumn) {
                 db.executeFast("ALTER TABLE archived_messages ADD COLUMN message_text_enc BLOB;")
+                    .stepThis().dispose()
+            }
+            var hasDeletedColumn = false
+            cursor = null
+            try {
+                cursor = db.queryFinalized("PRAGMA table_info(archived_messages);")
+                while (cursor != null && cursor.next()) {
+                    if (cursor.stringValue(1) == "deleted") {
+                        hasDeletedColumn = true
+                        break
+                    }
+                }
+            } finally {
+                cursor?.dispose()
+            }
+            if (!hasDeletedColumn) {
+                db.executeFast("ALTER TABLE archived_messages ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0;")
                     .stepThis().dispose()
             }
             if (!ForkArchiveCrypto.isAvailable(currentAccount)) {
@@ -130,20 +149,27 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         return cursor.stringValue(textIndex) ?: ""
     }
 
+    /**
+     * Stores a message locally. The deletion flag of an already stored row is
+     * never cleared by a later capture, so a deleted message stays a deleted
+     * message even when the same message is seen again.
+     */
+    @JvmOverloads
     fun archiveMessage(
         dialogId: Long,
         messageId: Int,
         date: Int,
         senderId: Long,
         senderName: String?,
-        messageText: String?
+        messageText: String?,
+        deleted: Boolean = false
     ) {
         if (messageText.isNullOrEmpty()) return
         val db = database ?: return
         try {
             val encrypted = ForkArchiveCrypto.encrypt(currentAccount, messageText)
             val state = db.executeFast(
-                "INSERT OR REPLACE INTO archived_messages (dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc) VALUES (?, ?, ?, ?, ?, ?, ?);"
+                "INSERT OR IGNORE INTO archived_messages (dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?);"
             )
             state.bindLong(1, dialogId)
             state.bindInteger(2, messageId)
@@ -161,11 +187,122 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
                 state.bindString(6, messageText)
                 state.bindNull(7)
             }
+            state.bindInteger(8, if (deleted) 1 else 0)
             state.step()
             state.dispose()
+            val update = db.executeFast(
+                "UPDATE archived_messages SET date = ?, sender_id = ?, sender_name = ?, message_text = ?, message_text_enc = ?," +
+                    " deleted = CASE WHEN deleted = 1 THEN 1 ELSE ? END WHERE dialog_id = ? AND message_id = ?;"
+            )
+            update.bindInteger(1, date)
+            update.bindLong(2, senderId)
+            if (senderName != null) {
+                update.bindString(3, senderName)
+            } else {
+                update.bindNull(3)
+            }
+            if (encrypted != null) {
+                update.bindString(4, "")
+                update.bindByteBuffer(5, java.nio.ByteBuffer.wrap(encrypted))
+            } else {
+                update.bindString(4, messageText)
+                update.bindNull(5)
+            }
+            update.bindInteger(6, if (deleted) 1 else 0)
+            update.bindLong(7, dialogId)
+            update.bindInteger(8, messageId)
+            update.step()
+            update.dispose()
         } catch (e: Exception) {
             FileLog.e(e)
         }
+    }
+
+    /** Marks already archived messages of one chat as deleted. */
+    fun markDeleted(dialogId: Long, messageIds: List<Int>): Int {
+        if (messageIds.isEmpty()) return 0
+        val db = database ?: return 0
+        return try {
+            val ids = messageIds.filter { it > 0 }.joinToString(",")
+            if (ids.isEmpty()) return 0
+            val state = db.executeFast(
+                "UPDATE archived_messages SET deleted = 1 WHERE dialog_id = $dialogId AND message_id IN ($ids);"
+            )
+            state.step()
+            state.dispose()
+            messageIds.size
+        } catch (e: Exception) {
+            FileLog.e(e)
+            0
+        }
+    }
+
+    /**
+     * Marks messages as deleted for updates that only carry message ids.
+     * Common chat message ids are account wide unique, so the affected chats
+     * are resolved from the archive itself.
+     */
+    fun markDeletedByIds(messageIds: List<Int>): List<Long> {
+        if (messageIds.isEmpty()) return emptyList()
+        val db = database ?: return emptyList()
+        val dialogs = mutableListOf<Long>()
+        return try {
+            val ids = messageIds.filter { it > 0 }.joinToString(",")
+            if (ids.isEmpty()) return emptyList()
+            var cursor: SQLiteCursor? = null
+            try {
+                cursor = db.queryFinalized("SELECT DISTINCT dialog_id FROM archived_messages WHERE message_id IN ($ids);")
+                while (cursor != null && cursor.next()) {
+                    dialogs.add(cursor.longValue(0))
+                }
+            } finally {
+                cursor?.dispose()
+            }
+            if (dialogs.isNotEmpty()) {
+                val state = db.executeFast(
+                    "UPDATE archived_messages SET deleted = 1 WHERE message_id IN ($ids);"
+                )
+                state.step()
+                state.dispose()
+            }
+            dialogs
+        } catch (e: Exception) {
+            FileLog.e(e)
+            emptyList()
+        }
+    }
+
+    /** Returns locally preserved messages that were deleted in Telegram. */
+    fun getDeletedMessages(dialogId: Long, limit: Int): List<ArchivedMessage> {
+        val list = mutableListOf<ArchivedMessage>()
+        val db = database ?: return list
+        var cursor: SQLiteCursor? = null
+        try {
+            cursor = db.queryFinalized(
+                "SELECT dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc, deleted" +
+                    " FROM archived_messages WHERE dialog_id = $dialogId AND deleted = 1 ORDER BY date ASC LIMIT $limit;"
+            )
+            while (cursor != null && cursor.next()) {
+                list.add(readEntry(cursor))
+            }
+        } catch (e: Exception) {
+            FileLog.e(e)
+        } finally {
+            cursor?.dispose()
+        }
+        return list
+    }
+
+    private fun readEntry(cursor: SQLiteCursor): ArchivedMessage {
+        return ArchivedMessage(
+            cursor.longValue(0),
+            cursor.intValue(1),
+            cursor.intValue(2),
+            cursor.longValue(3),
+            cursor.stringValue(4),
+            readText(cursor, 5, 6),
+            cursor.intValue(7) != 0
+        )
     }
 
     fun getArchivedDialogs(): List<ArchivedDialogSummary> {
@@ -216,16 +353,10 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         var cursor: SQLiteCursor? = null
         try {
             cursor = db.queryFinalized(
-                "SELECT dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc FROM archived_messages WHERE dialog_id = $dialogId ORDER BY date ASC;"
+                "SELECT dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc, deleted FROM archived_messages WHERE dialog_id = $dialogId ORDER BY date ASC;"
             )
             while (cursor != null && cursor.next()) {
-                val did = cursor.longValue(0)
-                val mid = cursor.intValue(1)
-                val date = cursor.intValue(2)
-                val senderId = cursor.longValue(3)
-                val senderName = cursor.stringValue(4)
-                val text = readText(cursor, 5, 6)
-                list.add(ArchivedMessage(did, mid, date, senderId, senderName, text))
+                list.add(readEntry(cursor))
             }
         } catch (e: Exception) {
             FileLog.e(e)
@@ -247,17 +378,12 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         var cursor: SQLiteCursor? = null
         try {
             cursor = db.queryFinalized(
-                "SELECT dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc FROM archived_messages ORDER BY date DESC LIMIT 2000;"
+                "SELECT dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc, deleted FROM archived_messages ORDER BY date DESC LIMIT 2000;"
             )
             while (cursor != null && cursor.next()) {
-                val did = cursor.longValue(0)
-                val mid = cursor.intValue(1)
-                val date = cursor.intValue(2)
-                val senderId = cursor.longValue(3)
-                val senderName = cursor.stringValue(4)
-                val text = readText(cursor, 5, 6)
-                if (text.lowercase().contains(needle)) {
-                    list.add(ArchivedMessage(did, mid, date, senderId, senderName, text))
+                val entry = readEntry(cursor)
+                if (entry.messageText.lowercase().contains(needle)) {
+                    list.add(entry)
                     if (list.size >= 50) break
                 }
             }
@@ -320,10 +446,89 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     companion object {
         private val instances = ConcurrentHashMap<Int, ForkArchiveManager>()
 
+        private val executor: java.util.concurrent.ExecutorService =
+            java.util.concurrent.Executors.newSingleThreadExecutor { runnable ->
+                Thread(runnable, "berrygram-archive").apply {
+                    isDaemon = true
+                    priority = Thread.MIN_PRIORITY
+                }
+            }
+
         @JvmStatic
         fun getInstance(currentAccount: Int): ForkArchiveManager {
             return instances.getOrPut(currentAccount) {
                 ForkArchiveManager(currentAccount)
+            }
+        }
+
+        /**
+         * Reads locally preserved deleted messages without blocking the caller.
+         * The callback is invoked on the UI thread.
+         */
+        @JvmStatic
+        fun loadDeletedMessages(
+            account: Int,
+            dialogId: Long,
+            limit: Int,
+            callback: ForkArchiveCallback
+        ) {
+            executor.execute {
+                val result = try {
+                    getInstance(account).getDeletedMessages(dialogId, limit)
+                } catch (error: Throwable) {
+                    emptyList()
+                }
+                org.telegram.messenger.AndroidUtilities.runOnUIThread { callback.onLoaded(result) }
+            }
+        }
+
+        /** Stores a message without blocking the caller. */
+        @JvmStatic
+        fun archiveMessageAsync(
+            account: Int,
+            dialogId: Long,
+            messageId: Int,
+            date: Int,
+            senderId: Long,
+            senderName: String?,
+            messageText: String?,
+            deleted: Boolean
+        ) {
+            executor.execute {
+                try {
+                    getInstance(account).archiveMessage(
+                        dialogId, messageId, date, senderId, senderName, messageText, deleted
+                    )
+                } catch (error: Throwable) {
+                    FileLog.e(error)
+                }
+            }
+        }
+
+        /** Marks messages as deleted without blocking the caller. */
+        @JvmStatic
+        fun markDeletedAsync(account: Int, dialogId: Long, messageIds: List<Int>) {
+            executor.execute {
+                try {
+                    getInstance(account).markDeleted(dialogId, messageIds)
+                } catch (error: Throwable) {
+                    FileLog.e(error)
+                }
+            }
+        }
+
+        /**
+         * Marks messages as deleted for updates that carry only message ids.
+         * The affected chats are resolved from the archive itself.
+         */
+        @JvmStatic
+        fun markDeletedByIdsAsync(account: Int, messageIds: List<Int>) {
+            executor.execute {
+                try {
+                    getInstance(account).markDeletedByIds(messageIds)
+                } catch (error: Throwable) {
+                    FileLog.e(error)
+                }
             }
         }
     }

@@ -36,6 +36,15 @@ public class StealthPolicyTest {
         check(StealthPolicy.shouldSuppressRead(true, true, false, false, false, false), "Automatic private read is still suppressed without force");
         check(StealthPolicy.shouldSuppressRead(true, false, true, true, false, false), "Automatic group read is still suppressed without force");
 
+        // Secondary read signals (mentions, reactions, read contents) follow the
+        // same private/group split, but never apply to secret chats.
+        check(!StealthPolicy.shouldSuppressSecondaryReads(false, true, false, false, false), "Disabled ghost mode keeps secondary reads");
+        check(StealthPolicy.shouldSuppressSecondaryReads(true, true, false, false, false), "Private secondary reads are hidden");
+        check(!StealthPolicy.shouldSuppressSecondaryReads(true, true, false, true, false), "Group secondary reads stay when groups are off");
+        check(StealthPolicy.shouldSuppressSecondaryReads(true, false, true, true, false), "Group secondary reads are hidden when groups are on");
+        check(!StealthPolicy.shouldSuppressSecondaryReads(true, true, true, false, true), "Secret chats never suppress secondary reads");
+        check(!StealthPolicy.shouldSuppressSecondaryReads(true, true, true, true, true), "Secret chats never suppress secondary reads");
+
         System.out.println("StealthPolicyTest passed");
     }
 }
