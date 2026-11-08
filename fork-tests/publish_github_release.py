@@ -1,7 +1,7 @@
 import json
-import os
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 
 REPO = "mozyk96/Berrygram"
@@ -42,24 +42,34 @@ def api(method, path, token, data=None, raw=None, content_type=None):
         body = json.dumps(data).encode("utf-8")
         headers["Content-Type"] = "application/json"
     request = urllib.request.Request(url, data=body, headers=headers, method=method)
-    with urllib.request.urlopen(request) as response:
-        payload = response.read()
+    try:
+        with urllib.request.urlopen(request) as response:
+            payload = response.read()
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode("utf-8", "replace")[:400]
+        raise RuntimeError("api %s %s failed: %s %s" % (method, path, error.code, detail))
     if not payload:
         return {}
     return json.loads(payload.decode("utf-8"))
 
 
 def main():
-    apk_path = sys.argv[1]
-    checksums_path = sys.argv[2]
-    body_path = sys.argv[3]
+    apk_path, checksums_path, body_path = sys.argv[1], sys.argv[2], sys.argv[3]
     token = git_credential()["password"]
+    user = api("GET", "/user", token)
+    print("authenticated_as", user.get("login"), "scopes_ok", bool(user.get("login")))
 
-    existing = api("GET", "/repos/%s/releases/tags/%s" % (REPO, TAG), token)
-    if existing.get("id"):
-        print("release_exists", existing["id"])
-        release_id = existing["id"]
-    else:
+    release_id = None
+    try:
+        existing = api("GET", "/repos/%s/releases/tags/%s" % (REPO, TAG), token)
+        release_id = existing.get("id")
+        print("release_exists", release_id)
+    except RuntimeError as error:
+        if "404" not in str(error):
+            raise
+        print("release_not_published_yet")
+
+    if release_id is None:
         with open(body_path, "r", encoding="utf-8") as handle:
             body = handle.read()
         created = api(
@@ -80,7 +90,9 @@ def main():
 
     assets = api("GET", "/repos/%s/releases/%s/assets" % (REPO, release_id), token)
     existing_names = {asset["name"] for asset in assets}
-
+    upload_url = api("GET", "/repos/%s/releases/%s" % (REPO, release_id), token).get(
+        "upload_url", ""
+    ).split("{")[0]
     for path, upload_name in ((apk_path, APK_NAME), (checksums_path, "SHA256SUMS")):
         if upload_name in existing_names:
             print("asset_present", upload_name)
@@ -89,7 +101,7 @@ def main():
             payload = handle.read()
         uploaded = api(
             "POST",
-            "/repos/%s/releases/%s/assets?name=%s" % (REPO, release_id, upload_name),
+            upload_url + "?name=" + upload_name,
             token,
             raw=payload,
         )

@@ -29,18 +29,19 @@ public class UpdaterAcceptanceCheck {
         if (end < 0) {
             throw new AssertionError("Release " + TAG + " has no assets section");
         }
-        String prerelease = json.contains("\"prerelease\":true") ? "true" : "false";
-        String assetsBlock = json.substring(end, Math.min(json.length(), end + 4000));
-        String digest = "";
+        String prerelease = json.contains("\"prerelease\": true") || json.contains("\"prerelease\":true") ? "true" : "false";
         String assetName = "";
-        int nameIndex = assetsBlock.indexOf("\"name\":\"BerryGram-");
-        if (nameIndex >= 0) {
-            int nameEnd = assetsBlock.indexOf("\"", nameIndex + 8);
-            assetName = assetsBlock.substring(nameIndex + 8, nameEnd);
-        }
-        int digestIndex = assetsBlock.indexOf("\"digest\":\"sha256:");
-        if (digestIndex >= 0) {
-            digest = assetsBlock.substring(digestIndex + 11, digestIndex + 11 + 64);
+        String digest = "";
+        java.util.regex.Matcher nameMatcher = java.util.regex.Pattern
+                .compile("\"name\"\\s*:\\s*\"(BerryGram-1\\.4\\.0-beta\\.2-arm64-v8a\\.apk)\"").matcher(json);
+        if (nameMatcher.find()) {
+            assetName = nameMatcher.group(1);
+            String tail = json.substring(nameMatcher.end(), Math.min(json.length(), nameMatcher.end() + 3000));
+            java.util.regex.Matcher digestMatcher = java.util.regex.Pattern
+                    .compile("\"digest\"\\s*:\\s*\"sha256:([0-9a-fA-F]{64})\"").matcher(tail);
+            if (digestMatcher.find()) {
+                digest = digestMatcher.group(1);
+            }
         }
         boolean isPrerelease = "true".equals(prerelease);
         boolean arm64 = UpdatePolicy.isArm64Asset(TAG, assetName);

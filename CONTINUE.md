@@ -24,6 +24,8 @@
   identical to the published Stable) and published as the GitHub pre-release `v1.4.0-beta.2`:
   `https://github.com/mozyk96/Berrygram/releases/tag/v1.4.0-beta.2`, APK `BerryGram-1.4.0-beta.2-arm64-v8a.apk`,
   SHA-256 `d8e1787a3ab2ead530fcff1453b1b22db8d595fa51fca2260c67fc9933369322`, versionCode `72739`.
+  Branches `feature/berrygram-1.4.0-beta2` and `feature/berrygram-1.4.0` plus tag `v1.4.0-beta.2` point at `c35dfd8`.
+  The in-app updater acceptance rules were verified against the live release.
 
 ## Open items
 - Owner device test: login, incoming messages, notifications, Ghost Mode vs explicit Mark as read,
