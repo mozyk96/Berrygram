@@ -53,7 +53,7 @@ class ForkTranslationSettingsActivity : BaseFragment() {
         targetLanguageCell = TextSettingsCell(context).apply {
             setTextAndValue(
                 ForkLocale.get(R.string.ForkTranslationTargetLanguage),
-                ForkLocale.get(settings.targetLanguageLabel()),
+                settings.targetLanguageName(),
                 false
             )
             ForkSettingsLayout.interactive(this)
@@ -97,7 +97,7 @@ class ForkTranslationSettingsActivity : BaseFragment() {
             settings.save()
             targetLanguageCell?.setTextAndValue(
                 ForkLocale.get(R.string.ForkTranslationTargetLanguage),
-                ForkLocale.get(settings.targetLanguageLabel()),
+                settings.targetLanguageName(),
                 false
             )
         }

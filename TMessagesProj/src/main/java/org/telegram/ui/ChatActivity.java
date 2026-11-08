@@ -3330,6 +3330,16 @@ public class ChatActivity extends BaseFragment implements
             getMessagesController().getSavedMessagesController().checkSavedDialogCount(getTopicId());
         }
 
+        // Berrygram: apply the stored translation preferences to this chat.
+        // Secret chats, Saved Messages and dialogs Telegram considers encrypted
+        // are skipped inside the helper, and nothing is applied when no target
+        // language was chosen and auto translation is off.
+        org.telegram.messenger.fork.text.ForkTranslationSettings.applyOnChatOpen(
+                currentAccount,
+                dialog_id,
+                encId != 0 || DialogObject.isEncryptedDialog(dialog_id)
+        );
+
         return true;
     }
 

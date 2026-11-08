@@ -23,12 +23,13 @@ $sources = @(
 $tests = @('AuthDiagnosticsTest', 'BackendPolicyTest', 'SessionCredentialsTest', 'CustomTextValidatorTest',
     'CustomTextPackValidatorTest', 'CustomTextFormatTest', 'CustomTextSafetyTest', 'LocalAliasPolicyTest',
     'CustomTextResolutionTest', 'CustomTextContextTest', 'CustomTextScopePolicyTest', 'CustomTextOriginalTest',
-    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'MenuSurfacePolicyTest', 'NotificationDiagnosticsPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'ForkTabIndicatorInterpolatorTest', 'ForkUnifiedSettingsMappingTest', 'GhostMasterPolicyTest', 'ForkArchiveImportPolicyTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest', 'ForkArchivedRestorePolicyTest')
+    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'MenuSurfacePolicyTest', 'NotificationDiagnosticsPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'ForkTabIndicatorInterpolatorTest', 'ForkUnifiedSettingsMappingTest', 'GhostMasterPolicyTest', 'ForkArchiveImportPolicyTest', 'ForkTranslationPolicyTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest', 'ForkArchivedRestorePolicyTest')
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 $sources += (Join-Path $base 'performance\PerformancePolicy.java')
 $sources += (Join-Path $root 'TMessagesProj\src\main\java\org\telegram\ui\fork\navigation\ForkTabIndicatorInterpolator.java')
 $sources += (Join-Path $root 'TMessagesProj\src\main\java\org\telegram\ui\fork\settings\ForkUnifiedSettingsMapping.java')
 $sources += (Join-Path $root 'TMessagesProj\src\main\java\org\telegram\messenger\fork\storage\ForkArchiveImportPolicy.java')
+$sources += (Join-Path $root 'TMessagesProj\src\main\java\org\telegram\messenger\fork\text\ForkTranslationPolicy.java')
 $tests += 'PerformancePolicyTest'
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 & $javac -encoding UTF-8 -d $buildDir @sources @testFiles
@@ -136,6 +137,8 @@ node (Join-Path $PSScriptRoot 'test_reaction_integration.js')
 if ($LASTEXITCODE -ne 0) { throw 'Reaction integration test failed' }
 node (Join-Path $PSScriptRoot 'test_archive_import.js')
 if ($LASTEXITCODE -ne 0) { throw 'test_archive_import.js failed' }
+node (Join-Path $PSScriptRoot 'test_translation.js')
+if ($LASTEXITCODE -ne 0) { throw 'test_translation.js failed' }
 node (Join-Path $PSScriptRoot 'test_main_tabs_indicator.js')
 if ($LASTEXITCODE -ne 0) { throw 'Main tabs indicator test failed' }
 node (Join-Path $PSScriptRoot 'test_message_menu_integration.js')

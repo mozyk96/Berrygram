@@ -2,8 +2,12 @@ package org.telegram.messenger.fork.text
 
 import android.content.Context
 import org.telegram.messenger.ApplicationLoader
+import org.telegram.messenger.DialogObject
 import org.telegram.messenger.MessagesController
+import org.telegram.messenger.R
 import org.telegram.messenger.TranslateController
+import org.telegram.messenger.UserConfig
+import org.telegram.ui.ForkLocale
 
 /**
  * Berrygram translation preferences.
@@ -49,25 +53,35 @@ class ForkTranslationSettings(private val account: Int) {
         return result
     }
 
-    /** Resource identifier of the label that describes the current target language. */
-    fun targetLanguageLabel(): Int {
+    /**
+     * Human readable name of the configured target language, so the screen
+     * shows "Ukrainian" instead of the technical language code.
+     */
+    fun targetLanguageName(): String {
         val code = targetLanguage
         if (code.isEmpty()) {
-            return org.telegram.messenger.R.string.ForkTranslationAutomatic
+            return ForkLocale.get(R.string.ForkTranslationAutomatic)
         }
         for (language in supportedLanguages()) {
             if (language.first == code) {
-                return org.telegram.messenger.R.string.ForkTranslationTargetSelected
+                return language.second
             }
         }
-        return org.telegram.messenger.R.string.ForkTranslationAutomatic
+        return code
     }
 
     /** Applies the configured target language to a chat. */
     fun applyToDialog(dialogId: Long): Boolean {
+        if (DialogObject.isEncryptedDialog(dialogId)) {
+            return false
+        }
+        val language = ForkTranslationPolicy.sanitizeLanguage(targetLanguage)
+        if (!ForkTranslationPolicy.shouldSetTarget(language)) {
+            return false
+        }
         return try {
-            val controller = MessagesController.getInstance(account).translateController
-            controller.setDialogTranslateTo(dialogId, targetLanguage)
+            MessagesController.getInstance(account).translateController
+                .setDialogTranslateTo(dialogId, language)
             true
         } catch (error: Throwable) {
             false
@@ -85,5 +99,60 @@ class ForkTranslationSettings(private val account: Int) {
     companion object {
         private const val KEY_AUTO_TRANSLATE = "auto_translate"
         private const val KEY_TARGET_LANGUAGE = "target_language"
+
+        @JvmStatic
+        fun autoTranslateEnabled(account: Int): Boolean {
+            return ForkTranslationSettings(account).autoTranslateEnabled
+        }
+
+        @JvmStatic
+        fun configuredTargetLanguage(account: Int): String {
+            return ForkTranslationSettings(account).targetLanguage
+        }
+
+        /**
+         * Applies the Berrygram translation preferences when a chat is opened.
+         *
+         * <p>The configured target language is stored in Telegram's own
+         * [TranslateController], so the translation request is performed by the
+         * same service the user already uses. Automatic translation is only
+         * switched on when the option is enabled, and it never touches secret
+         * chats, Saved Messages or dialogs Telegram considers encrypted.</p>
+         *
+         * @return true when a preference was actually applied.
+         */
+        @JvmStatic
+        fun applyOnChatOpen(account: Int, dialogId: Long, isSecretChat: Boolean): Boolean {
+            val settings = ForkTranslationSettings(account)
+            val self = try {
+                UserConfig.getInstance(account).clientUserId == dialogId
+            } catch (error: Throwable) {
+                false
+            }
+            val eligible = ForkTranslationPolicy.isEligible(
+                isSecretChat,
+                DialogObject.isEncryptedDialog(dialogId),
+                self
+            )
+            if (!eligible) {
+                return false
+            }
+            val language = ForkTranslationPolicy.sanitizeLanguage(settings.targetLanguage)
+            var applied = false
+            try {
+                val controller = MessagesController.getInstance(account).translateController
+                if (ForkTranslationPolicy.shouldSetTarget(language)) {
+                    controller.setDialogTranslateTo(dialogId, language)
+                    applied = true
+                }
+                if (ForkTranslationPolicy.shouldTranslate(eligible, settings.autoTranslateEnabled)) {
+                    controller.toggleTranslatingDialog(dialogId, true)
+                    applied = true
+                }
+            } catch (error: Throwable) {
+                return false
+            }
+            return applied
+        }
     }
 }
