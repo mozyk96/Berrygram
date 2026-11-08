@@ -1,3 +1,30 @@
+# BerryGram continuation — Android 1.4.0 Stable
+
+## State
+
+- Branch `feature/berrygram-1.4.0-stable`, tag `v1.4.0` points at the published release source.
+- Version `1.4.0`, versionCode `72759` (arm64). Published before it: 1.4.0 Beta 1 `72719`,
+  Beta 2 `72739`, Stable 1.3.0 `72639`.
+- The release artifact is `BerryGram-1.4.0-arm64-v8a.apk`
+  (SHA-256 `515d554ea740607d8b2672918afde6692e9ca7bd4ac6dabec951ec7c25dae8bf`), published as a normal GitHub Release with the Ukrainian changelog.
+- The in-app updater was repaired in this cycle: no downgrade is offered any more, the channel
+  follows the installed build, the checksum is resolved from the release `SHA256SUMS` file when the
+  API has no digest, and the update panel strings are free of mojibake.
+
+## Tests
+
+- Debug and release compilation: success.
+- `fork-tests/smoke.ps1`: success.
+- Updater fixtures (`github-fixture.ps1`, `updater-package-fixture.ps1`): success.
+- Live GitHub validation (`updater-live-github.ps1`): success.
+
+## Remaining
+
+- Remote push needs the owner's Firebase project, the steps are in the release notes.
+- No physical device test was possible on this host, the device checklist for the owner stays valid.
+- 1.4.1 (quick Ghost Mode button, archive import, translation improvements) is not started and
+  requires a separate instruction.
+
 # BerryGram continuation — Android 1.4.0 RC 1
 
 ## State

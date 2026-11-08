@@ -1,3 +1,38 @@
+# Android 1.4.0 Stable — built and published
+
+- Branch `feature/berrygram-1.4.0-stable`, release source commit `v1.4.0` on
+  `feature/berrygram-1.4.0-stable`.
+- Version `1.4.0`, `APP_VERSION_CODE=7275` → arm64 versionCode **72759**
+  (higher than the published Beta 1 `72719`, Beta 2 `72739` and the local RC1 `72749`).
+- APK `BerryGram-1.4.0-arm64-v8a.apk`, 41918713 bytes,
+  SHA-256 `515d554ea740607d8b2672918afde6692e9ca7bd4ac6dabec951ec7c25dae8bf`.
+- Verified: package `org.example.forkclient`, minSdk 23, targetSdk 36, native-code arm64-v8a only,
+  `POST_NOTIFICATIONS` declared, label BerryGram, R8 release build,
+  `CN=BerryGram Release` certificate SHA-256 `b3ea9ca232ae03ebeab5bbc2729a306fb5eacd0520104fc52450a421efc722a5`
+  (identical to the published Stable, so the update installs in place), v1 and v2 signatures,
+  `zipalign -c -P 16` passed, credential present in the release dex, no keystore packaged.
+
+## Updater corrections in 1.4.0
+
+- An older stable release is no longer offered as an update to beta or release candidate builds.
+- The update channel follows the installed build, a pre-release build starts on the beta channel and a
+  channel switch triggers an immediate check.
+- The checksum is resolved from the `SHA256SUMS` file when the GitHub API reports no asset digest.
+- GitHub rate limits produce a dedicated error message, the installed version code is shown and a plain
+  check is no longer reported as an interrupted download.
+- Duplicate release assets are rejected and the mojibake in the update panel strings is repaired.
+
+## Verification
+
+- Debug and release Kotlin/Java compilation: success.
+- Full `fork-tests/smoke.ps1`: success, including the extended `UpdatePolicyTest`.
+- `fork-tests/github-fixture.ps1`: success (the fixture was failing before this cycle and was repaired).
+- `fork-tests/updater-package-fixture.ps1`: success.
+- `fork-tests/updater-live-github.ps1`: success against the real repository, the stable channel finds
+  1.3.0 and the beta channel finds 1.4.0-beta.2 with a verifiable checksum.
+- The published Beta 2 asset was downloaded and verified: its SHA-256 matches the digest reported by
+  GitHub and the package, version, signature and native libraries satisfy every rule of the updater.
+
 # Android 1.4.0 RC 1 — implemented, release candidate built (device test pending)
 
 ## Repository and branch

@@ -9,6 +9,13 @@ TAG = "v1.4.0-beta.2"
 NAME = "Berrygram 1.4.0 Beta 2"
 APK_NAME = "BerryGram-1.4.0-beta.2-arm64-v8a.apk"
 
+if len(sys.argv) > 4:
+    TAG = sys.argv[4]
+if len(sys.argv) > 5:
+    NAME = sys.argv[5]
+if len(sys.argv) > 6:
+    APK_NAME = sys.argv[6]
+
 
 def git_credential():
     out = subprocess.run(
