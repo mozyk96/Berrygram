@@ -1958,7 +1958,7 @@ public class MessageObject {
         monthKey = String.format("%d_%02d", dateYear, dateMonth);
 
         createMessageSendInfo();
-        if (messageOwner != null && org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled()) {
+        if (messageOwner != null && org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)) {
             isForkDeleted = org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).isDeleted(getDialogId(), messageOwner.id);
         }
         generateCaption();

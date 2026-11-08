@@ -355,7 +355,12 @@ public class ApplicationLoader extends Application {
         LauncherIconController.tryFixLauncherIconIfNeeded();
         ProxyRotationController.init();
         try {
-            org.telegram.messenger.fork.storage.ForkStorageMaintenance.runScheduledCleanup();
+            org.telegram.messenger.Utilities.globalQueue.postRunnable(() -> {
+                try {
+                    org.telegram.messenger.fork.storage.ForkStorageMaintenance.runScheduledCleanup();
+                } catch (Throwable ignored) {
+                }
+            });
         } catch (Throwable ignored) {
         }
 

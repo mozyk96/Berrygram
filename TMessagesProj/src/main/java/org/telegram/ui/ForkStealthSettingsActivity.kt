@@ -245,7 +245,7 @@ class ForkStealthSettingsActivity : BaseFragment() {
                     ForkLocale.get(retentionLabel()),
                     false
                 )
-                org.telegram.messenger.Utilities.backgroundQueue.postRunnable {
+                org.telegram.messenger.Utilities.globalQueue.postRunnable {
                     org.telegram.messenger.fork.storage.ForkStorageMaintenance.cleanupAccount(currentAccount, true)
                 }
             }

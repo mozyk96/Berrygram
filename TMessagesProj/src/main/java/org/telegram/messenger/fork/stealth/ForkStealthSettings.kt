@@ -43,7 +43,13 @@ object ForkStealthSettings {
     )
 
     private val caches = HashMap<Int, Cache>()
-    private val legacyMigrated = HashSet<Int>()
+
+    /**
+     * The legacy global preference file belongs to the account that used the app
+     * first. Only that account inherits the legacy values, every other account
+     * keeps its own isolated defaults.
+     */
+    private var legacyMigrationAccount: Int? = null
 
     private fun validAccount(account: Int): Boolean = account in 0 until UserConfig.MAX_ACCOUNT_COUNT
 
@@ -87,7 +93,10 @@ object ForkStealthSettings {
             caches[account]?.let { return it }
             val current = prefs(account)
             val legacy = legacyPrefs()
-            val migrate = !legacyMigrated.contains(account) && legacy.all.isEmpty().not()
+            val migrate = legacyMigrationAccount == null && legacy.all.isEmpty().not()
+            if (migrate) {
+                legacyMigrationAccount = account
+            }
             fun bool(key: String, fallback: Boolean): Boolean {
                 val value = if (current.contains(key)) readBoolean(current, key, fallback) else null
                 if (value != null) return value
@@ -109,9 +118,6 @@ object ForkStealthSettings {
                 )
             )
             caches[account] = resolved
-            if (migrate) {
-                legacyMigrated.add(account)
-            }
             return resolved
         }
     }
