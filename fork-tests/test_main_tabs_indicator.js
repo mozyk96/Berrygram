@@ -63,6 +63,17 @@ const layoutDetach = method(layout, 'protected void onDetachedFromWindow()');
 if (!layoutDetach.includes('selectedTabPositionOffsetX.cancel()')) {
     throw new Error('The long press offset spring survives detach');
 }
+// The frame callback must stop on an idle screen instead of waking the main
+// thread forever.
+if (!activity.includes('forkIndicatorIdleFrames')) {
+    throw new Error('The indicator sync has no idle detection');
+}
+if (!activity.includes('moving || forkIndicatorIdleFrames < 2')) {
+    throw new Error('The indicator sync keeps posting frames while the pager is idle');
+}
+if (!activity.includes('viewPager.isTouch()') || !activity.includes('viewPager.isManualScrolling()')) {
+    throw new Error('The indicator sync ignores an active drag');
+}
 const layoutSync = method(layout, 'private void syncSelectedTabIndicator()');
 if (layoutSync.includes('animatedLongSelectedViewCenterX = targetX')) {
     throw new Error('The indicator can still snap to a target instead of following the pager');

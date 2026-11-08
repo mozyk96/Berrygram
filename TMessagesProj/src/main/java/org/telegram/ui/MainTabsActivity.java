@@ -906,8 +906,22 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             }
             // The pager position is the single source of truth, the indicator
             // follows it exactly, during taps, drags and cancelled drags.
-            tabsView.setIndicatorPosition(viewPager.getPositionAnimated());
-            if (getParentActivity() != null && !hasPaused) {
+            final float position = viewPager.getPositionAnimated();
+            tabsView.setIndicatorPosition(position);
+            final boolean moving = Float.isNaN(forkIndicatorLastPosition)
+                    || Math.abs(position - forkIndicatorLastPosition) >= 0.0005f
+                    || viewPager.isManualScrolling() || viewPager.isTouch();
+            forkIndicatorLastPosition = position;
+            if (moving) {
+                forkIndicatorIdleFrames = 0;
+            } else {
+                forkIndicatorIdleFrames++;
+            }
+            // Keep the loop only while the pager actually moves. An idle screen
+            // must not wake the main thread on every frame: a stable position
+            // stops the sync after a couple of frames, and the next animation
+            // update or tab selection restarts it.
+            if (getParentActivity() != null && !hasPaused && (moving || forkIndicatorIdleFrames < 2)) {
                 scheduleForkIndicatorSync();
             }
         }
@@ -915,6 +929,8 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     private boolean forkIndicatorFrameScheduled;
     private boolean hasPaused;
+    private float forkIndicatorLastPosition = Float.NaN;
+    private int forkIndicatorIdleFrames;
 
     private void scheduleForkIndicatorSync() {
         if (forkIndicatorFrameScheduled || tabsView == null || viewPager == null) {
@@ -925,6 +941,8 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     }
 
     private void startForkIndicatorSync() {
+        forkIndicatorLastPosition = Float.NaN;
+        forkIndicatorIdleFrames = 0;
         scheduleForkIndicatorSync();
     }
 

@@ -35,6 +35,25 @@ check(importer.includes('shouldBackfill'), 'The importer has no historical backf
 check(importer.includes('nextBackfillCursor'), 'The backfill cursor is not advanced');
 check(importer.includes('nextUpdateCursor'), 'The update cursor is not advanced');
 
+// The forward pass must paginate over a gap larger than one page.
+check(importer.includes('forwardCursor'), 'The forward pass compares against a moving cursor');
+check(importer.includes('forwardOffset'), 'The forward pass can not page into older new messages');
+check(importer.includes('reachedKnown'), 'The forward pass does not stop when it reaches imported history');
+check(importer.includes('hadCursor'), 'A fresh import can walk the whole history forwards');
+
+// Cursor progress is durable after every page, and Cancel is honoured quickly.
+check((importer.match(/saveImportState/g) || []).length >= 3, 'The cursors are not saved per page');
+check(importer.includes('minOf(remaining, 500L)'), 'A FLOOD_WAIT sleep ignores cancellation');
+
+// Clearing or deleting archive content must reset the matching cursors.
+check(manager.includes('DELETE FROM archive_import_state;'), 'Clearing the archive keeps stale import cursors');
+check(manager.includes('DELETE FROM archive_import_state WHERE dialog_id'), 'Deleting a chat keeps its import cursors');
+
+// Large deletion updates are chunked instead of building one huge IN list.
+check(manager.includes('MAX_SQL_IDS'), 'The archive has no SQL id chunk size');
+check(manager.includes('sqlIdChunks'), 'Deletion ids are not chunked');
+check(manager.includes('chunked(MAX_SQL_IDS)'), 'Deletion ids are not actually chunked');
+
 // The policy must keep the two cursors apart.
 check(policy.includes('shouldBackfill'), 'The policy has no backfill rule');
 check(policy.includes('isNewer'), 'The policy has no update rule');

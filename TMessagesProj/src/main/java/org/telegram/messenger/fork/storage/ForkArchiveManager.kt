@@ -228,16 +228,17 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
 
     /** Marks already archived messages of one chat as deleted. */
     fun markDeleted(dialogId: Long, messageIds: List<Int>): Int {
-        if (messageIds.isEmpty()) return 0
+        val chunks = sqlIdChunks(messageIds)
+        if (chunks.isEmpty()) return 0
         val db = database ?: return 0
         return try {
-            val ids = messageIds.filter { it > 0 }.joinToString(",")
-            if (ids.isEmpty()) return 0
-            val state = db.executeFast(
-                "UPDATE archived_messages SET deleted = 1 WHERE dialog_id = $dialogId AND message_id IN ($ids);"
-            )
-            state.step()
-            state.dispose()
+            for (chunk in chunks) {
+                val state = db.executeFast(
+                    "UPDATE archived_messages SET deleted = 1 WHERE dialog_id = $dialogId AND message_id IN ($chunk);"
+                )
+                state.step()
+                state.dispose()
+            }
             messageIds.size
         } catch (e: Exception) {
             FileLog.e(e)
@@ -246,34 +247,48 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     }
 
     /**
+     * Splits an id list into SQL safe IN (...) chunks. Telegram deletion
+     * updates can carry thousands of ids, and one giant expression would hit
+     * the SQLite expression limits.
+     */
+    private fun sqlIdChunks(messageIds: List<Int>): List<String> {
+        val valid = messageIds.filter { it > 0 }
+        if (valid.isEmpty()) return emptyList()
+        return valid.chunked(MAX_SQL_IDS) { chunk -> chunk.joinToString(",") }
+    }
+
+    /**
      * Marks messages as deleted for updates that only carry message ids.
      * Common chat message ids are account wide unique, so the affected chats
      * are resolved from the archive itself.
      */
     fun markDeletedByIds(messageIds: List<Int>): List<Long> {
-        if (messageIds.isEmpty()) return emptyList()
+        val chunks = sqlIdChunks(messageIds)
+        if (chunks.isEmpty()) return emptyList()
         val db = database ?: return emptyList()
-        val dialogs = mutableListOf<Long>()
+        val dialogs = LinkedHashSet<Long>()
         return try {
-            val ids = messageIds.filter { it > 0 }.joinToString(",")
-            if (ids.isEmpty()) return emptyList()
-            var cursor: SQLiteCursor? = null
-            try {
-                cursor = db.queryFinalized("SELECT DISTINCT dialog_id FROM archived_messages WHERE message_id IN ($ids);")
-                while (cursor != null && cursor.next()) {
-                    dialogs.add(cursor.longValue(0))
+            for (chunk in chunks) {
+                var cursor: SQLiteCursor? = null
+                try {
+                    cursor = db.queryFinalized("SELECT DISTINCT dialog_id FROM archived_messages WHERE message_id IN ($chunk);")
+                    while (cursor != null && cursor.next()) {
+                        dialogs.add(cursor.longValue(0))
+                    }
+                } finally {
+                    cursor?.dispose()
                 }
-            } finally {
-                cursor?.dispose()
             }
             if (dialogs.isNotEmpty()) {
-                val state = db.executeFast(
-                    "UPDATE archived_messages SET deleted = 1 WHERE message_id IN ($ids);"
-                )
-                state.step()
-                state.dispose()
+                for (chunk in chunks) {
+                    val state = db.executeFast(
+                        "UPDATE archived_messages SET deleted = 1 WHERE message_id IN ($chunk);"
+                    )
+                    state.step()
+                    state.dispose()
+                }
             }
-            dialogs
+            dialogs.toList()
         } catch (e: Exception) {
             FileLog.e(e)
             emptyList()
@@ -421,6 +436,9 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         return try {
             val removed = countMessages("WHERE dialog_id = $dialogId")
             db.executeFast("DELETE FROM archived_messages WHERE dialog_id = $dialogId;").stepThis().dispose()
+            // The import cursors of a removed chat must not survive, otherwise a
+            // later re-import would skip the range that was just deleted.
+            db.executeFast("DELETE FROM archive_import_state WHERE dialog_id = $dialogId;").stepThis().dispose()
             removed
         } catch (e: Exception) {
             FileLog.e(e)
@@ -547,12 +565,18 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         val db = database ?: return
         try {
             db.executeFast("DELETE FROM archived_messages;").stepThis().dispose()
+            // Import cursors describe content that no longer exists. Keeping
+            // them would make a fresh archive look complete and skip history.
+            db.executeFast("DELETE FROM archive_import_state;").stepThis().dispose()
         } catch (e: Exception) {
             FileLog.e(e)
         }
     }
 
     companion object {
+        /** Upper bound of ids in one SQL IN (...) expression. */
+        private const val MAX_SQL_IDS = 500
+
         private val instances = ConcurrentHashMap<Int, ForkArchiveManager>()
 
         private val executor: java.util.concurrent.ExecutorService =

@@ -155,29 +155,65 @@ class ForkArchiveImporter(private val account: Int) {
         var processed = 0
         var pages = 0
 
-        // Forward update: the newest page of the chat contains everything that
-        // was written after the archive was created.
+        // Forward update: start at the newest message and walk into the past
+        // until a page reaches the stored cursor. This also fills the gap when
+        // more than one page of messages arrived between two imports.
         if (mode == Mode.UPDATE || updateId > 0) {
-            val request = TLRPC.TL_messages_getHistory()
-            request.peer = peer
-            request.limit = PAGE_SIZE
-            request.offset_id = 0
-            request.add_offset = 0
-            val messages = requestHistory(request) ?: return imported
-            for (message in messages) {
-                if (cancelled.get()) {
+            val forwardCursor = updateId
+            val hadCursor = forwardCursor > 0
+            var forwardOffset = 0
+            var forwardPages = 0
+            while (!cancelled.get() && forwardPages < MAX_PAGES && processed < MAX_MESSAGES) {
+                val request = TLRPC.TL_messages_getHistory()
+                request.peer = peer
+                request.limit = PAGE_SIZE
+                request.offset_id = forwardOffset
+                request.add_offset = 0
+                val messages = requestHistory(request) ?: break
+                if (messages.isEmpty()) {
                     break
                 }
-                processed++
-                if (org.telegram.messenger.fork.storage.ForkArchiveImportPolicy.isNewer(message.id, updateId)) {
-                    if (storeArchivedMessage(store, dialogId, message)) {
-                        imported++
-                        updateId = org.telegram.messenger.fork.storage.ForkArchiveImportPolicy
-                            .nextUpdateCursor(updateId, message.id)
+                var smallest = Int.MAX_VALUE
+                var reachedKnown = false
+                for (message in messages) {
+                    if (cancelled.get()) {
+                        break
                     }
+                    processed++
+                    if (message.id < smallest) {
+                        smallest = message.id
+                    }
+                    if (org.telegram.messenger.fork.storage.ForkArchiveImportPolicy
+                            .isNewer(message.id, forwardCursor)) {
+                        if (storeArchivedMessage(store, dialogId, message)) {
+                            imported++
+                        }
+                    } else {
+                        reachedKnown = true
+                    }
+                    // The cursor remembers everything that was already seen, so
+                    // a filtered out message (service, media only, self
+                    // destructing) does not make the next run scan it again.
+                    updateId = org.telegram.messenger.fork.storage.ForkArchiveImportPolicy
+                        .nextUpdateCursor(updateId, message.id)
                 }
+                forwardPages++
+                notifyProgress(dialogId, processed, 0, Phase.RUNNING, imported, 0)
+                if (!hadCursor || reachedKnown || messages.size < PAGE_SIZE
+                    || smallest == Int.MAX_VALUE || smallest == forwardOffset) {
+                    break
+                }
+                forwardOffset = smallest
             }
-            pages++
+            pages += forwardPages
+            store.saveImportState(
+                ForkArchiveManager.ImportState(
+                    dialogId,
+                    backfillId,
+                    updateId,
+                    System.currentTimeMillis()
+                )
+            )
         }
 
         // Historical backfill: paginate from the oldest known message into the past.
@@ -207,6 +243,20 @@ class ForkArchiveImporter(private val account: Int) {
             }
             pages++
             notifyProgress(dialogId, processed, 0, Phase.RUNNING, imported, 0)
+            // A fully processed page becomes the durable cursor even when it is
+            // the oldest page, so a resumed import does not request it again.
+            if (smallest != Int.MAX_VALUE) {
+                backfillId = org.telegram.messenger.fork.storage.ForkArchiveImportPolicy
+                    .nextBackfillCursor(backfillId, smallest)
+            }
+            store.saveImportState(
+                ForkArchiveManager.ImportState(
+                    dialogId,
+                    backfillId,
+                    updateId,
+                    System.currentTimeMillis()
+                )
+            )
             if (smallest == Int.MAX_VALUE) {
                 break
             }
@@ -215,10 +265,6 @@ class ForkArchiveImporter(private val account: Int) {
                 break
             }
             offsetId = smallest
-            // The first page has no cursor yet, the smallest id of that page is
-            // the new backfill cursor. Later pages only move the cursor down.
-            backfillId = org.telegram.messenger.fork.storage.ForkArchiveImportPolicy
-                .nextBackfillCursor(backfillId, smallest)
         }
 
         store.saveImportState(
@@ -300,10 +346,24 @@ class ForkArchiveImporter(private val account: Int) {
                 return null
             }
             if (requestError.code == 420 && (requestError.text ?: "").startsWith("FLOOD_WAIT")) {
-                // The server asks to wait, the import continues afterwards.
+                // The server asks to wait, the import continues afterwards. The
+                // wait is sliced so a Cancel press is honoured within 500 ms.
                 val text = requestError.text ?: ""
                 val seconds = text.substringAfter("FLOOD_WAIT_", "5").toIntOrNull() ?: 5
-                Thread.sleep((seconds + 1).coerceAtMost(60) * 1000L)
+                var remaining = (seconds + 1).coerceAtMost(60) * 1000L
+                while (remaining > 0 && !cancelled.get()) {
+                    val slice = minOf(remaining, 500L)
+                    try {
+                        Thread.sleep(slice)
+                    } catch (interrupted: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        return null
+                    }
+                    remaining -= slice
+                }
+                if (cancelled.get()) {
+                    return null
+                }
                 attempt++
                 continue
             }
