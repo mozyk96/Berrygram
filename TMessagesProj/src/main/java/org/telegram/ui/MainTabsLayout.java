@@ -278,8 +278,6 @@ public class MainTabsLayout extends AnimatedLinearLayout {
     protected void onDetachedFromWindow() {
         removeCallbacks(syncSelectedTabIndicatorRunnable);
         selectedTabPositionOffsetX.cancel();
-        selectedTabPositionX.cancel();
-        elongationAnim.cancel();
         animatedLongSelectedViewOffsetX = 0;
         indicatorElongation = 0;
         isInLongPress = false;
@@ -308,20 +306,125 @@ public class MainTabsLayout extends AnimatedLinearLayout {
 
 
     private float indicatorElongation;
-    final SpringAnimation elongationAnim = new SpringAnimation(this, new FloatPropertyCompat<MainTabsLayout>("elongation") {
-        @Override
-        public float getValue(MainTabsLayout object) {
-            return object.indicatorElongation;
-        }
 
-        @Override
-        public void setValue(MainTabsLayout object, float value) {
-            object.indicatorElongation = value;
-            object.invalidate();
+    // Pager driven indicator state. The pager owns the navigation position, the
+    // indicator only renders it, so both can never disagree.
+    private float indicatorCenterX;
+    private float indicatorWidth;
+    private boolean indicatorPositionAnimated;
+    private float[] tabPagerPositions = new float[0];
+    private float[] anchorPositions = new float[0];
+    private float[] anchorCenters = new float[0];
+    private float[] anchorWidths = new float[0];
+    private int anchorCount;
+
+    /**
+     * Connects a tab with the page position it represents, so the indicator can
+     * interpolate between the real tab geometry.
+     */
+    public void setTabPagerPosition(int index, float position) {
+        if (index < 0) {
+            return;
         }
-    }).setSpring(new SpringForce(0f)
-            .setStiffness(SpringForce.STIFFNESS_MEDIUM)
-            .setDampingRatio(SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY));
+        if (tabPagerPositions.length <= index) {
+            float[] grown = new float[Math.max(index + 1, tabPagerPositions.length * 2)];
+            System.arraycopy(tabPagerPositions, 0, grown, 0, tabPagerPositions.length);
+            tabPagerPositions = grown;
+        }
+        tabPagerPositions[index] = position;
+    }
+
+    /**
+     * Moves the indicator to the given navigation position. The position is
+     * the fractional page position of the pager, so the indicator follows the
+     * finger during a drag and the page animation during a tap.
+     */
+    public void setIndicatorPosition(float position) {
+        if (Math.abs(position - indicatorPosition) < 0.0005f && indicatorPositionAnimated) {
+            return;
+        }
+        indicatorPositionAnimated = true;
+        updateIndicatorGeometry(position);
+    }
+
+    /** Returns the navigation position the indicator currently renders. */
+    public float getIndicatorPosition() {
+        return indicatorPosition;
+    }
+
+    private float indicatorPosition;
+
+    private void updateIndicatorGeometry(float position) {
+        indicatorPosition = position;
+        refreshAnchors();
+        if (anchorCount == 0) {
+            invalidate();
+            return;
+        }
+        int index = org.telegram.ui.fork.navigation.ForkTabIndicatorInterpolator
+                .findAnchorIndex(anchorPositions, position);
+        float centerX;
+        float width;
+        float elongation;
+        if (index < 0) {
+            index = 0;
+        }
+        if (anchorCount == 1 || index >= anchorCount - 1) {
+            centerX = anchorCenters[index];
+            width = anchorWidths[index];
+            elongation = 0f;
+        } else {
+            float next = anchorPositions[index + 1];
+            float fraction = next > anchorPositions[index]
+                    ? (position - anchorPositions[index]) / (next - anchorPositions[index])
+                    : 0f;
+            org.telegram.ui.fork.navigation.ForkTabIndicatorInterpolator.Result result =
+                    org.telegram.ui.fork.navigation.ForkTabIndicatorInterpolator.interpolate(
+                            new org.telegram.ui.fork.navigation.ForkTabIndicatorInterpolator.Anchor(anchorCenters[index], anchorWidths[index]),
+                            new org.telegram.ui.fork.navigation.ForkTabIndicatorInterpolator.Anchor(anchorCenters[index + 1], anchorWidths[index + 1]),
+                            fraction,
+                            AndroidUtilities.dp(16),
+                            AndroidUtilities.getAnimatorDurationScale() <= 0f);
+            centerX = result.centerX;
+            width = result.width;
+            elongation = result.elongation;
+        }
+        indicatorCenterX = centerX;
+        indicatorWidth = width;
+        indicatorElongation = elongation;
+        invalidate();
+    }
+
+    /** Recomputes the geometry of the visible tabs, ordered by their page position. */
+    private void refreshAnchors() {
+        final int count = getChildCount();
+        if (anchorPositions.length < count) {
+            anchorPositions = new float[count];
+            anchorCenters = new float[count];
+            anchorWidths = new float[count];
+        }
+        int found = 0;
+        for (int a = 0; a < count; a++) {
+            View child = getChildAt(a);
+            if (child == null || child.getVisibility() != View.VISIBLE || child.getWidth() <= 0) {
+                continue;
+            }
+            float position = a < tabPagerPositions.length ? tabPagerPositions[a] : a;
+            // Keep the anchors ordered by their page position.
+            int insert = found;
+            while (insert > 0 && anchorPositions[insert - 1] > position) {
+                anchorPositions[insert] = anchorPositions[insert - 1];
+                anchorCenters[insert] = anchorCenters[insert - 1];
+                anchorWidths[insert] = anchorWidths[insert - 1];
+                insert--;
+            }
+            anchorPositions[insert] = position;
+            anchorCenters[insert] = child.getX() + child.getWidth() / 2f;
+            anchorWidths[insert] = child.getWidth();
+            found++;
+        }
+        anchorCount = found;
+    }
 
     public void setTabSelected(View tab, boolean animated) {
         for (int a = 0, N = getChildCount(); a < N; a++) {
@@ -337,22 +440,18 @@ public class MainTabsLayout extends AnimatedLinearLayout {
         }
         if (tab != null && tab.getWidth() > 0) {
             final float targetX = tab.getX() + tab.getWidth() / 2f;
-            if (animated && animatedLongSelectedViewCenterX > 0) {
-                final float dist = Math.abs(targetX - animatedLongSelectedViewCenterX);
-                final float stretch = Math.min(AndroidUtilities.dp(16), dist * 0.20f);
-                selectedTabPositionX.cancel();
-                elongationAnim.cancel();
-                indicatorElongation = stretch;
-                elongationAnim.setStartValue(stretch);
-                elongationAnim.animateToFinalPosition(0f);
-                selectedTabPositionX.animateToFinalPosition(targetX);
-            } else {
-                selectedTabPositionX.cancel();
-                elongationAnim.cancel();
+            if (isInLongPress) {
+                // The long press drag owns the indicator until the gesture ends.
                 animatedLongSelectedViewCenterX = targetX;
-                indicatorElongation = 0;
                 invalidate();
+                return;
             }
+            // The pager drives the indicator, the tab selection only prepares the
+            // visual state of the tab itself.
+            if (!indicatorPositionAnimated) {
+                animatedLongSelectedViewCenterX = targetX;
+            }
+            invalidate();
         }
     }
 
@@ -362,22 +461,12 @@ public class MainTabsLayout extends AnimatedLinearLayout {
         if (isInLongPress) {
             return;
         }
-        final View selected = findSelectedTab();
-        if (selected == null || selected.getWidth() <= 0) {
-            return;
-        }
-
-        final float targetX = selected.getX() + selected.getWidth() / 2f;
-        if (selectedTabPositionX.isRunning()) {
-            selectedTabPositionX.animateToFinalPosition(targetX);
-        } else if (Math.abs(animatedLongSelectedViewCenterX - targetX) > 0.5f) {
-            selectedTabPositionOffsetX.cancel();
-            selectedTabPositionX.cancel();
-            elongationAnim.cancel();
-            animatedLongSelectedViewOffsetX = 0;
-            animatedLongSelectedViewCenterX = targetX;
-            indicatorElongation = 0;
-            invalidate();
+        // The pager owns the position. After a layout pass only the geometry has
+        // to be refreshed, the position itself is never reset here, so the
+        // indicator can not jump while a transition is running.
+        refreshAnchors();
+        if (anchorCount > 0) {
+            updateIndicatorGeometry(indicatorPosition);
         }
     }
 
@@ -425,8 +514,16 @@ public class MainTabsLayout extends AnimatedLinearLayout {
     @Override
     protected void dispatchDraw(@NonNull Canvas canvas) {
         if (drawCustomSelector) {
-            final float x = animatedLongSelectedViewCenterX + animatedLongSelectedViewOffsetX;
-            final float sWidth = getInterpolatedWidthByX(x, this) + indicatorElongation;
+            final float x;
+            final float sWidth;
+            if (isInLongPress) {
+                // The long press drag moves the indicator with the finger.
+                x = animatedLongSelectedViewCenterX + animatedLongSelectedViewOffsetX;
+                sWidth = getInterpolatedWidthByX(x, this);
+            } else {
+                x = indicatorCenterX;
+                sWidth = indicatorWidth + indicatorElongation;
+            }
             final float sHeight = getHeight() - getPaddingTop() - getPaddingBottom();
 
             selectorPaint.setColor(Theme.multAlpha(Theme.getColor(Theme.key_glass_tabSelected, resourcesProvider), 0.12f));
@@ -456,19 +553,6 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             object.invalidate();
         }
     });
-    final SpringAnimation selectedTabPositionX = new SpringAnimation(this, new FloatPropertyCompat<MainTabsLayout>("selectedTabPositionX") {
-        @Override
-        public float getValue(MainTabsLayout object) {
-            return object.animatedLongSelectedViewCenterX;
-        }
-
-        @Override
-        public void setValue(MainTabsLayout object, float value) {
-            object.animatedLongSelectedViewCenterX = value;
-            object.invalidate();
-        }
-    });
-
     {
         selectedTabPositionOffsetX.setSpring(new SpringForce(1)
             .setStiffness(SpringForce.STIFFNESS_MEDIUM)
@@ -479,9 +563,6 @@ public class MainTabsLayout extends AnimatedLinearLayout {
         scaleY.setSpring(new SpringForce(1f)
             .setStiffness(250)
             .setDampingRatio(0.25f));
-        selectedTabPositionX.setSpring(new SpringForce(1f)
-            .setStiffness(SpringForce.STIFFNESS_MEDIUM)
-            .setDampingRatio(SpringForce.DAMPING_RATIO_LOW_BOUNCY));
     }
 
     private float animatedLongSelectedViewCenterX;
@@ -522,7 +603,6 @@ public class MainTabsLayout extends AnimatedLinearLayout {
                     found.performClick();
                 }
             }
-            selectedTabPositionX.cancel();
         }
 
         if (!end) {
@@ -537,9 +617,11 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             if (end) {
                 final float vw = found.getWidth();
                 final float cx = found.getX() + vw / 2f;
-                if (lastLongSelectedViewWidth != vw || lastLongSelectedViewCenterX != cx) {
-                    selectedTabPositionX.animateToFinalPosition(cx);
-                }
+                lastLongSelectedViewWidth = vw;
+                lastLongSelectedViewCenterX = cx;
+                // The gesture is over, the pager driven indicator takes over again.
+                isInLongPress = false;
+                updateIndicatorGeometry(indicatorPosition);
             }
         }
     }

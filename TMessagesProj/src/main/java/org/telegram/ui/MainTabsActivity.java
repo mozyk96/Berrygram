@@ -289,6 +289,8 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         checkUnreadCount(true);
 
         showAccountChangeHint();
+        hasPaused = false;
+        startForkIndicatorSync();
     }
 
     private void checkContactsTabBadge() {
@@ -311,6 +313,8 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (accountSwitchHint != null) {
             accountSwitchHint.hide();
         }
+        stopForkIndicatorSync();
+        hasPaused = true;
     }
 
     @Override
@@ -343,6 +347,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             final GlassTabView view = tabs[index];
 
             final int position = indexToPosition(index);
+            // The indicator interpolates between the real tab geometry, so it
+            // needs to know which page every tab belongs to.
+            tabsView.setTabPagerPosition(index, position);
             tabs[index].setOnClickListener(v -> {
                 if (viewPager.isManualScrolling() || viewPager.isTouch()) {
                     return;
@@ -358,6 +365,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
                 selectTab(position, true);
                 viewPager.scrollToPosition(position);
+                startForkIndicatorSync();
             });
 
             tabsView.addView(tabs[index]);
@@ -742,6 +750,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (tabsView != null) {
             selectTab(viewPager.getCurrentPosition(), true);
             setGestureSelectedOverride(0, false);
+            tabsView.setIndicatorPosition(viewPager.getCurrentPosition());
         }
         blur3_invalidateBlur();
 
@@ -767,6 +776,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         final boolean isDragByGesture = !manual;
 
         if (tabsView != null) {
+            // BerryGram: the indicator renders the pager position, so it is kept
+            // in sync with every page animation and drag frame.
+            tabsView.setIndicatorPosition(viewPager.getPositionAnimated());
             final float position = viewPager.getPositionAnimated();
             setGestureSelectedOverride(position, isDragByGesture);
             if (isDragByGesture) {
@@ -876,6 +888,51 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             }
         }
         tabsView.setTabSelected(selectedTab, animated);
+        startForkIndicatorSync();
+    }
+
+    // ---------------------------------------------------------------------
+    // BerryGram: the pager owns the navigation position and the bottom
+    // indicator only renders it. A frame callback keeps both in sync during
+    // taps, drags and cancelled drags without a second animation.
+    // ---------------------------------------------------------------------
+
+    private final android.view.Choreographer.FrameCallback forkIndicatorFrameCallback = new android.view.Choreographer.FrameCallback() {
+        @Override
+        public void doFrame(long frameTimeNanos) {
+            forkIndicatorFrameScheduled = false;
+            if (tabsView == null || viewPager == null) {
+                return;
+            }
+            // The pager position is the single source of truth, the indicator
+            // follows it exactly, during taps, drags and cancelled drags.
+            tabsView.setIndicatorPosition(viewPager.getPositionAnimated());
+            if (getParentActivity() != null && !hasPaused) {
+                scheduleForkIndicatorSync();
+            }
+        }
+    };
+
+    private boolean forkIndicatorFrameScheduled;
+    private boolean hasPaused;
+
+    private void scheduleForkIndicatorSync() {
+        if (forkIndicatorFrameScheduled || tabsView == null || viewPager == null) {
+            return;
+        }
+        forkIndicatorFrameScheduled = true;
+        android.view.Choreographer.getInstance().postFrameCallback(forkIndicatorFrameCallback);
+    }
+
+    private void startForkIndicatorSync() {
+        scheduleForkIndicatorSync();
+    }
+
+    private void stopForkIndicatorSync() {
+        if (forkIndicatorFrameScheduled) {
+            android.view.Choreographer.getInstance().removeFrameCallback(forkIndicatorFrameCallback);
+            forkIndicatorFrameScheduled = false;
+        }
     }
 
     public void setGestureSelectedOverride(float animatedPosition, boolean allow) {

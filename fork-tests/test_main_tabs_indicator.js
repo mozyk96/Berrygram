@@ -41,18 +41,31 @@ if (!statisticSelect.includes('tabsView.setTabSelected(')) {
 if (statisticSelect.includes('tab.setSelected(')) {
     throw new Error('StatisticActivity still updates GlassTabView directly');
 }
-if (!layoutSelect.includes('selectedTabPositionX.cancel()') || !layoutSelect.includes('elongationAnim.cancel()')) {
-    throw new Error('Shared indicator does not cancel stale spring animations');
-}
 if (layout.includes('setSkipDrawSelector(false)')) {
     throw new Error('Shared indicator can fall back to the obsolete per-tab selector');
 }
-const layoutDetach = method(layout, 'protected void onDetachedFromWindow()');
-if (!layoutLayout.includes('syncSelectedTabIndicator()')) {
-    throw new Error('Shared indicator is not resynchronized after layout');
+
+// The pager owns the navigation position, the indicator only renders it.
+if (!layout.includes('public void setIndicatorPosition(float position)')) {
+    throw new Error('The indicator has no pager driven position API');
 }
-if (!layoutDetach.includes('selectedTabPositionX.cancel()') || !layoutDetach.includes('elongationAnim.cancel()')) {
-    throw new Error('Shared indicator springs survive detach');
+if (!activity.includes('viewPager.getPositionAnimated()')) {
+    throw new Error('MainTabsActivity does not read the pager position for the indicator');
+}
+if (!activity.includes('tabsView.setIndicatorPosition(')) {
+    throw new Error('MainTabsActivity does not forward the pager position to the indicator');
+}
+if (layout.includes('selectedTabPositionX') || layout.includes('elongationAnim')) {
+    throw new Error('The indicator still owns an independent spring animation');
+}
+
+const layoutDetach = method(layout, 'protected void onDetachedFromWindow()');
+if (!layoutDetach.includes('selectedTabPositionOffsetX.cancel()')) {
+    throw new Error('The long press offset spring survives detach');
+}
+const layoutSync = method(layout, 'private void syncSelectedTabIndicator()');
+if (layoutSync.includes('animatedLongSelectedViewCenterX = targetX')) {
+    throw new Error('The indicator can still snap to a target instead of following the pager');
 }
 const findSelected = method(layout, 'private View findSelectedTab()');
 if (!findSelected.includes('child.isSelected()')) {
@@ -68,12 +81,15 @@ const fixture = `public class MainTabsIndicatorTest {
     }
     static class MainTabsLayout {
         GlassTabView selected;
+        float indicatorPosition = -1f;
         boolean isViewVisible(GlassTabView tab) { return tab != null && tab.visible; }
         void setTabSelected(View tab, boolean animated) { selected = (GlassTabView) tab; }
+        void setIndicatorPosition(float position) { indicatorPosition = position; }
     }
     GlassTabView[] tabs;
     MainTabsLayout tabsView = new MainTabsLayout();
     static int indexToPosition(int index) { return index > 2 ? index - 1 : index; }
+    void startForkIndicatorSync() {}
     ${activitySelect.replace('public void selectTab', 'public void selectMainTab')}
     ${statisticSelect.replace('public void selectTab', 'public void selectStatisticTab')}
     static void check(boolean value, String message) { if (!value) throw new AssertionError(message); }
@@ -100,7 +116,7 @@ const fixture = `public class MainTabsIndicatorTest {
         test.tabsView.selected = null;
         test.selectStatisticTab(1, true);
         check(test.tabsView.selected == test.tabs[1], "Statistics selection was not delegated");
-        System.out.println("MainTabsIndicatorTest passed (shared indicator delegation and lifecycle policy)");
+        System.out.println("MainTabsIndicatorTest passed (shared indicator delegation and pager driven position)");
     }
 }`;
 
