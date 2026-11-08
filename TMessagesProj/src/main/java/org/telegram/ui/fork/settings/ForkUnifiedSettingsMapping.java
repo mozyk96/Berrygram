@@ -22,6 +22,7 @@ public final class ForkUnifiedSettingsMapping {
     public static final int ID_TRANSLATION = 105;
     public static final int ID_ARCHIVE = 106;
     public static final int ID_PERFORMANCE = 107;
+    public static final int ID_ABOUT = 108;
 
     /** Telegram settings row the Berrygram entry is placed after. */
     public static final int ANCHOR_PRIVACY = 3;

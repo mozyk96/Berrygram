@@ -784,6 +784,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         // belong to, so there is only one settings system.
         try {
             org.telegram.ui.fork.settings.ForkUnifiedSettings.applyTo(items, getParentActivity());
+            items.add(items.size() - 1,
+                    org.telegram.ui.fork.settings.ForkUnifiedSettings.buildAboutEntry(getParentActivity()));
         } catch (Throwable ignore) {
         }
     }
@@ -875,6 +877,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 break;
             case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_PERFORMANCE:
                 presentSettingFragment(new ForkPerformanceSettingsActivity());
+                break;
+            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_ABOUT:
+                presentSettingFragment(new ForkAboutActivity());
                 break;
             case 3:
                 presentSettingFragment(new PrivacySettingsActivity());

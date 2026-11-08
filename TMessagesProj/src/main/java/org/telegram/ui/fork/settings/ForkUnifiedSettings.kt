@@ -56,10 +56,15 @@ object ForkUnifiedSettings {
      * Places every Berrygram entry directly after the Telegram row it belongs
      * to, so privacy, appearance, language, notification, storage and
      * performance controls are found in the expected section.
+     *
+     * <p>The entries are inserted in reverse order, because every insertion
+     * lands directly behind the anchor row. Reversing keeps the visual order of
+     * the mapping for anchors that own more than one entry.</p>
      */
     @JvmStatic
     fun applyTo(items: ArrayList<UItem>, context: Context) {
-        for (entry in ForkUnifiedSettingsMapping.entries()) {
+        val entries = ForkUnifiedSettingsMapping.entries().reversed()
+        for (entry in entries) {
             val title = ForkLocale.get(resourceId(entry.titleResource))
             val subtitle = ForkLocale.get(resourceId(entry.subtitleResource))
             val item = SettingsActivity.SettingCell.Factory.of(
@@ -72,6 +77,19 @@ object ForkUnifiedSettings {
             )
             insertAfter(items, entry.anchorId, listOf(item))
         }
+    }
+
+    /** The About Berrygram row, placed at the bottom of the settings screen. */
+    @JvmStatic
+    fun buildAboutEntry(context: Context): UItem {
+        return SettingsActivity.SettingCell.Factory.of(
+            ForkUnifiedSettingsMapping.ID_ABOUT,
+            COLOR_TOP,
+            COLOR_BOTTOM,
+            R.drawable.settings_ask,
+            ForkLocale.get(resourceId("ForkUnifiedAboutTitle")),
+            ForkLocale.get(resourceId("ForkUnifiedAboutInfo"))
+        )
     }
 
     private fun iconFor(id: Int): Int = when (id) {

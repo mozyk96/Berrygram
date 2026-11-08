@@ -378,11 +378,11 @@
     <string name="ForkUnifiedUpdateInfo">Перевірка, завантаження та встановлення оновлень</string>
     <string name="ForkUnifiedReactionsSubtitle">Швидкі та улюблені реакції</string>
     <string name="ForkUnifiedMenuSubtitle">Порядок і видимість дій у повідомленні</string>
-    <string name="ForkTranslationAutoTranslate">Автоматичний переклад</string>
+    <string name="ForkTranslationAutoTranslate">Автоматично перекладати чати</string>
     <string name="ForkTranslationTargetLanguage">Мова перекладу</string>
     <string name="ForkTranslationAutomatic">Автоматичне визначення</string>
     <string name="ForkTranslationTargetSelected">Обрана мова</string>
-    <string name="ForkTranslationInfo">Список мов береться з сервісу перекладу, який Telegram уже використовує. Автоматичне визначення працює, коли цільову мову не вибрано. Додаткові сервіси не використовуються.</string>
+    <string name="ForkTranslationInfo">Вибрана мова застосовується наступного разу, коли ви відкриваєте чат. Автоматичний переклад вмикається лише за бажанням і ніколи не торкається секретних чатів чи «Обраного». Мови надходять із сервісу перекладу, який Telegram уже використовує, тож нічого не надсилається до додаткового сервісу.</string>
     <string name="ForkSettingsSubtitle">Відкрити єдині налаштування</string>
     <string name="ForkGhostToggle">Ghost Mode</string>
     <string name="ForkGhostEnabled">Ghost Mode увімкнено, прочитання приховані</string>
@@ -402,4 +402,6 @@
     <string name="ForkArchiveNoChats">Доступних чатів не знайдено</string>
     <string name="ForkArchiveImportInfo">Імпортуються лише ті повідомлення, які Telegram ще надає. Видалені повідомлення, секретні чати та автоудаляємий контент не зачіпаються.</string>
     <string name="ForkArchiveImportRunningChat">Імпорт доступної історії, оброблено %1$d повідомлень, поточний чат: %2$s</string>
+    <string name="ForkUnifiedAboutTitle">Про Berrygram</string>
+    <string name="ForkUnifiedAboutInfo">Версія, Центр оновлень, інформація про реліз і подяки</string>
 </resources>

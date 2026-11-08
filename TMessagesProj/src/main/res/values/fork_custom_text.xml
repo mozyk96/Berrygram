@@ -378,11 +378,11 @@
     <string name="ForkUnifiedUpdateInfo">Check for updates, download and install</string>
     <string name="ForkUnifiedReactionsSubtitle">Quick reactions and favourite reactions</string>
     <string name="ForkUnifiedMenuSubtitle">Order and visibility of the message actions</string>
-    <string name="ForkTranslationAutoTranslate">Automatic translation</string>
+    <string name="ForkTranslationAutoTranslate">Translate chats automatically</string>
     <string name="ForkTranslationTargetLanguage">Translation language</string>
     <string name="ForkTranslationAutomatic">Automatic detection</string>
     <string name="ForkTranslationTargetSelected">Selected language</string>
-    <string name="ForkTranslationInfo">The languages come from the translation service that Telegram already uses. Automatic detection is applied when no target language is selected. Nothing is sent to an additional service.</string>
+    <string name="ForkTranslationInfo">The selected language is used the next time you open a chat. Automatic translation is opt in and never touches secret chats or Saved Messages. The languages come from the translation service Telegram already uses, so nothing is sent to an additional service.</string>
     <string name="ForkSettingsSubtitle">Open the unified settings</string>
     <string name="ForkGhostToggle">Ghost Mode</string>
     <string name="ForkGhostEnabled">Ghost Mode is on, read receipts are hidden</string>
@@ -402,4 +402,6 @@
     <string name="ForkArchiveNoChats">No eligible chats were found</string>
     <string name="ForkArchiveImportInfo">Only messages that Telegram still makes available are imported. Deleted messages, secret chats and self destructing content stay untouched.</string>
     <string name="ForkArchiveImportRunningChat">Importing the accessible history, %1$d messages processed, current chat: %2$s</string>
+    <string name="ForkUnifiedAboutTitle">About Berrygram</string>
+    <string name="ForkUnifiedAboutInfo">Version, Update Center, release information and credits</string>
 </resources>

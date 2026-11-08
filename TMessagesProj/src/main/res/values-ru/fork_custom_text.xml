@@ -333,11 +333,11 @@
     <string name="ForkUnifiedUpdateInfo">Проверка, загрузка и установка обновлений</string>
     <string name="ForkUnifiedReactionsSubtitle">Быстрые и любимые реакции</string>
     <string name="ForkUnifiedMenuSubtitle">Порядок и видимость действий в сообщении</string>
-    <string name="ForkTranslationAutoTranslate">Автоматический перевод</string>
+    <string name="ForkTranslationAutoTranslate">Автоматически переводить чаты</string>
     <string name="ForkTranslationTargetLanguage">Язык перевода</string>
     <string name="ForkTranslationAutomatic">Автоматическое определение</string>
     <string name="ForkTranslationTargetSelected">Выбранный язык</string>
-    <string name="ForkTranslationInfo">Список языков берётся из сервиса перевода, который уже использует Telegram. Автоматическое определение работает, когда целевой язык не выбран. Дополнительные сервисы не используются.</string>
+    <string name="ForkTranslationInfo">Выбранный язык применяется при следующем открытии чата. Автоматический перевод включается только по желанию и никогда не затрагивает секретные чаты и «Избранное». Языки берутся из сервиса перевода, который уже использует Telegram, поэтому ничего не отправляется в дополнительный сервис.</string>
     <string name="ForkSettingsSubtitle">Открыть единые настройки</string>
     <string name="ForkGhostToggle">Ghost Mode</string>
     <string name="ForkGhostEnabled">Ghost Mode включён, прочтения скрыты</string>
@@ -357,4 +357,6 @@
     <string name="ForkArchiveNoChats">Доступных чатов не найдено</string>
     <string name="ForkArchiveImportInfo">Импортируются только те сообщения, которые Telegram ещё предоставляет. Удалённые сообщения, секретные чаты и самоуничтожающийся контент не затрагиваются.</string>
     <string name="ForkArchiveImportRunningChat">Импорт доступной истории, обработано %1$d сообщений, текущий чат: %2$s</string>
+    <string name="ForkUnifiedAboutTitle">О Berrygram</string>
+    <string name="ForkUnifiedAboutInfo">Версия, Центр обновлений, информация о релизе и благодарности</string>
 </resources>
