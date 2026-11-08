@@ -1,7 +1,7 @@
 package org.telegram.messenger.fork.updater;
 import java.net.URI;
 import java.util.Locale;
-/** Strict source and asset validation for stable, full APK releases. */
+/** Strict source and asset validation for official, full APK releases. */
 public final class UpdatePolicy {
     private UpdatePolicy() {}
     public static boolean enoughSpace(long available, long total, long existing) {
@@ -12,9 +12,9 @@ public final class UpdatePolicy {
         return installedPackage != null && installedPackage.equals(candidatePackage) && candidateVersion > installedVersion
             && installedSigners != null && !installedSigners.isEmpty() && installedSigners.equals(candidateSigners);
     }
-    /** Equal codes are allowed only for an explicit Beta to Stable recovery. */
-    public static boolean compatibleCode(long installed, long candidate, boolean stableRecovery) {
-        return candidate > installed || (stableRecovery && candidate == installed);
+    /** An update must have a strictly higher Android version code; equal or older codes are never installed. */
+    public static boolean compatibleCode(long installed, long candidate) {
+        return candidate > installed;
     }
     private static final String VERSION = "(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?";
     private static final java.util.regex.Pattern VERSION_PATTERN = java.util.regex.Pattern.compile(VERSION);
@@ -47,28 +47,15 @@ public final class UpdatePolicy {
         }
         return Integer.compare(ls.length, rs.length);
     }
-    public static boolean shouldShowRelease(String candidate, String installed, boolean betaChannel) {
-        Integer comparison = compareVersions(candidate, installed);
-        if (comparison == null) return false;
-        if (comparison > 0) return true;
-        if (comparison == 0) return false;
-        return isStableRecovery(candidate, installed, betaChannel);
-    }
-
     /**
-     * A stable release may replace an installed pre-release of the same minor
-     * line, for example 1.4.0 for an installed 1.4.0-rc.1.
-     *
-     * <p>An older stable release is never offered: 1.3.0 must not be presented
-     * as an update for an installed 1.4.0 beta, that would be a downgrade and
-     * the installer would refuse it.</p>
+     * Only a strictly newer official version is offered. An older release is
+     * never presented as an update, because installing it would be a downgrade
+     * and could replace newer application data.
      */
-    public static boolean isStableRecovery(String candidate, String installed, boolean betaChannel) {
-        if (betaChannel) return false;
-        if (isPrerelease(candidate) || !isPrerelease(installed)) return false;
-        java.util.regex.Matcher left = version(candidate), right = version(installed);
-        if (left == null || right == null) return false;
-        return left.group(1).equals(right.group(1)) && left.group(2).equals(right.group(2));
+    public static boolean shouldShowRelease(String candidate, String installed) {
+        if (isPrerelease(candidate)) return false;
+        Integer comparison = compareVersions(candidate, installed);
+        return comparison != null && comparison > 0;
     }
     public static boolean isPrerelease(String value) { java.util.regex.Matcher m = version(value); return m != null && m.group(4) != null; }
     public static boolean validRepository(String value) {
@@ -95,10 +82,7 @@ public final class UpdatePolicy {
     }
     public static boolean validDigest(String digest) { return digest != null && digest.matches("sha256:[0-9a-fA-F]{64}"); }
     public static boolean validSavedRelease(String repo, String version, String installed, String url, String digest, long size) {
-        return validSavedRelease(repo, version, installed, url, digest, size, true);
-    }
-    public static boolean validSavedRelease(String repo, String version, String installed, String url, String digest, long size, boolean betaChannel) {
-        if (!shouldShowRelease(version, installed, betaChannel) || size <= 0 || size > 512L * 1024 * 1024 || !validDigest("sha256:" + digest)) return false;
+        if (!shouldShowRelease(version, installed) || size <= 0 || size > 512L * 1024 * 1024 || !validDigest("sha256:" + digest)) return false;
         String arm64 = "BerryGram-" + version + "-arm64-v8a.apk";
         String universal = "BerryGram-" + version + "-universal.apk";
         return validAssetUrl(repo, "v" + version, arm64, url) || validAssetUrl(repo, version, arm64, url)

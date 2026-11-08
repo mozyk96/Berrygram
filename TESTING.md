@@ -10,7 +10,7 @@ Use the isolated Android SDK/NDK and Gradle setup and build `:TMessagesProj_App:
 
 Use a controlled test account or owner-operated real device for functional checks. Do not automate access to personal chats, codes, passwords or tokens. Verify Custom Text editor, appearance, persistence, language changes, import/export, aliases, light/dark themes and accessibility on Android. Keep production and test backends isolated. Record failures and untested scenarios; a compilation success is not device QA.
 
-GitHub release metadata parser: with JDK 17, Android SDK platform 36 and a test-only org.json JAR, run `fork-tests/github-fixture.ps1 -JsonJar <path>`. The fixture checks stable metadata and rejects draft, invalid digest, untrusted URL and unpublished assets; it does not test HTTPS, Android APK signature parsing, installation or the real GitHub service.
+GitHub release metadata parser: with JDK 17, Android SDK platform 36 and a test-only org.json JAR, run `fork-tests/github-fixture.ps1 -JsonJar <path>`. The fixture checks that only normal official releases are selected and rejects drafts, prereleases, prerelease version strings, invalid digests, untrusted URLs and unpublished assets. `fork-tests/updater-live-github.ps1` additionally reads the real repository; it does not test HTTPS, Android APK signature parsing or installation.
 
 `.github/workflows/berrygram-smoke.yml` runs the account-free JVM and source checks only. It does not build an APK, verify native submodules, sign artifacts or publish releases. Android build and release CI require separately configured credentials and signing.
 

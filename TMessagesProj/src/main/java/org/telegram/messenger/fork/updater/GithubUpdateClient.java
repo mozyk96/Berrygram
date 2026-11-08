@@ -24,8 +24,8 @@ public final class GithubUpdateClient {
     private static final long MAX_APK = 512L * 1024 * 1024;
     private static final int MAX_METADATA = 1024 * 1024;
     public interface Progress { void update(long received, long total); }
-    public static final class NoStableReleaseException extends java.io.IOException {
-        public NoStableReleaseException() { super("No compatible release found or repository unavailable"); }
+    public static final class NoReleaseException extends java.io.IOException {
+        public NoReleaseException() { super("No official release found or repository unavailable"); }
     }
     public static final class VersionNotNewerException extends java.io.IOException {
         public VersionNotNewerException() { super("The installed Android version code is not older than this release"); }
@@ -42,8 +42,6 @@ public final class GithubUpdateClient {
     public static final class Release {
         public String version, notes, url, digest, sumsUrl;
         public long size;
-        public boolean prerelease;
-        public boolean stableRecovery;
     }
     private GithubUpdateClient() {}
     private static boolean allowedHost(String host) {
@@ -68,22 +66,22 @@ public final class GithubUpdateClient {
                 String remaining=connection.getHeaderField("X-RateLimit-Remaining");
                 connection.disconnect();
                 if (code == 403 && remaining != null && "0".equals(remaining.trim())) throw new RateLimitException();
-                if (code == 404 && "api.github.com".equalsIgnoreCase(url.getHost()) && url.getPath().endsWith("/releases")) throw new NoStableReleaseException();
+                if (code == 404 && "api.github.com".equalsIgnoreCase(url.getHost()) && url.getPath().endsWith("/releases")) throw new NoReleaseException();
                 throw new java.io.IOException("Update server HTTP " + code);
             }
             return connection;
         }
         throw new java.io.IOException("Too many redirects");
     }
-    public static Release latest(String repo) throws Exception { return latest(repo, true); }
-    public static Release latest(String repo, boolean includePrereleases) throws Exception {
+    /** Finds the newest official (non-prerelease) release of the repository. */
+    public static Release latest(String repo) throws Exception {
         if (!UpdatePolicy.validRepository(repo)) throw new IllegalArgumentException("Invalid repository");
         HttpURLConnection connection=open("https://api.github.com/repos/"+repo+"/releases?per_page=30");
         Release result;
         try (InputStream in=connection.getInputStream(); ByteArrayOutputStream out=new ByteArrayOutputStream()) {
             byte[] buffer=new byte[8192]; int count,total=0;
             while ((count=in.read(buffer))!=-1) { total+=count; if(total>MAX_METADATA) throw new java.io.IOException("Release metadata too large"); out.write(buffer,0,count); }
-            result = parseReleaseList(repo,out.toString("UTF-8"), includePrereleases);
+            result = parseReleaseList(repo,out.toString("UTF-8"));
         } finally { connection.disconnect(); }
         if (result.digest == null || result.digest.isEmpty()) {
             result.digest = resolveDigestFromSums(result);
@@ -122,11 +120,12 @@ public final class GithubUpdateClient {
             return null;
         } finally { connection.disconnect(); }
     }
-    public static Release parseRelease(String repo, String metadata) throws Exception {
-        return parseRelease(repo, metadata, false);
-    }
-    public static Release parseReleaseList(String repo, String metadata) throws Exception { return parseReleaseList(repo, metadata, true); }
-    public static Release parseReleaseList(String repo, String metadata, boolean includePrereleases) throws Exception {
+    /**
+     * Selects the newest official release from the GitHub release list.
+     * Drafts, prereleases and prerelease version strings are ignored, so old
+     * Beta and RC artifacts can never become the offered update.
+     */
+    public static Release parseReleaseList(String repo, String metadata) throws Exception {
         if (!UpdatePolicy.validRepository(repo) || metadata == null || metadata.length() > MAX_METADATA) throw new IllegalArgumentException("Invalid release metadata");
         JSONArray releases = new JSONArray(metadata);
         Release best = null;
@@ -134,7 +133,7 @@ public final class GithubUpdateClient {
             JSONObject item = releases.optJSONObject(i);
             if (item == null) continue;
             try {
-                Release candidate = parseRelease(repo, item.toString(), includePrereleases);
+                Release candidate = parseRelease(repo, item.toString());
                 if (best == null) {
                     best = candidate;
                 } else {
@@ -142,19 +141,20 @@ public final class GithubUpdateClient {
                     if (comparison != null && comparison > 0) best = candidate;
                 }
             } catch (SecurityException | java.io.IOException | IllegalArgumentException ignored) {
-                // Ignore drafts and releases without a valid, trusted ARM64 asset.
+                // Ignore drafts, prereleases and releases without a valid, trusted official asset.
             }
         }
-        if (best == null) throw new NoStableReleaseException();
+        if (best == null) throw new NoReleaseException();
         return best;
     }
-    private static Release parseRelease(String repo, String metadata, boolean includePrereleases) throws Exception {
+    /** Parses one official release object. Drafts and prereleases are rejected. */
+    public static Release parseRelease(String repo, String metadata) throws Exception {
         if (!UpdatePolicy.validRepository(repo) || metadata == null || metadata.length() > MAX_METADATA) throw new IllegalArgumentException("Invalid release metadata");
         JSONObject json=new JSONObject(metadata);
-        if (json.optBoolean("draft",true) || (!includePrereleases && json.optBoolean("prerelease",true)) || !json.has("prerelease")) throw new SecurityException("Not an eligible release");
+        if (json.optBoolean("draft",true) || json.optBoolean("prerelease",true) || !json.has("prerelease")) throw new SecurityException("Not an official release");
         String tag=json.optString("tag_name",""); JSONArray assets=json.optJSONArray("assets");
         String releaseVersion = tag.startsWith("v") ? tag.substring(1) : tag;
-        if (!includePrereleases && UpdatePolicy.isPrerelease(releaseVersion)) throw new SecurityException("Not a stable version");
+        if (UpdatePolicy.isPrerelease(releaseVersion)) throw new SecurityException("Not an official version");
         if (assets==null) throw new java.io.IOException("Release has no assets");
         boolean isArm64Device = true;
         if (Build.SUPPORTED_ABIS != null && Build.SUPPORTED_ABIS.length > 0) {
@@ -196,7 +196,6 @@ public final class GithubUpdateClient {
                 continue;
             }
             Release cand = new Release();
-            cand.prerelease = json.optBoolean("prerelease", true);
             cand.version = releaseVersion;
             cand.url = url;
             cand.digest = UpdatePolicy.validDigest(digest) ? digest.substring(7).toLowerCase(Locale.ROOT) : "";
@@ -237,7 +236,7 @@ public final class GithubUpdateClient {
         try {
             long offset=partial.isFile() ? partial.length() : 0;
             if (offset == release.size && matchesDigest(partial, release.digest)) {
-                verifyPackage(context, partial, release.version, release.stableRecovery);
+                verifyPackage(context, partial, release.version);
                 complete=true;
                 return partial;
             }
@@ -269,7 +268,7 @@ public final class GithubUpdateClient {
             networkPhase=false;
             StringBuilder actual=new StringBuilder(); for(byte b:hash.digest()) actual.append(String.format(Locale.ROOT,"%02x",b & 255));
             if(!MessageDigest.isEqual(actual.toString().getBytes("US-ASCII"),release.digest.getBytes("US-ASCII"))) throw new SecurityException("Update digest mismatch");
-            verifyPackage(context,partial,release.version,release.stableRecovery);
+            verifyPackage(context,partial,release.version);
             complete=true;
             return partial;
         } catch (java.io.IOException | InterruptedException e) {
@@ -335,9 +334,6 @@ public final class GithubUpdateClient {
         return result;
     }
     private static void verifyPackage(Context context, File apk, String version) throws Exception {
-        verifyPackage(context, apk, version, false);
-    }
-    private static void verifyPackage(Context context, File apk, String version, boolean stableRecovery) throws Exception {
         PackageManager pm=context.getPackageManager(); int flags=Build.VERSION.SDK_INT>=28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
         PackageInfo candidate=pm.getPackageArchiveInfo(apk.getAbsolutePath(),flags), installed=pm.getPackageInfo(context.getPackageName(),flags);
         if(candidate==null || !context.getPackageName().equals(candidate.packageName) || !version.equals(candidate.versionName)) throw new SecurityException("Update package or version mismatch");
@@ -360,6 +356,6 @@ public final class GithubUpdateClient {
         long installedCode = Build.VERSION.SDK_INT >= 28 ? installed.getLongVersionCode() : installed.versionCode;
         Set<String> expected = signers(installed), actual = signers(candidate);
         if (expected.isEmpty() || !expected.equals(actual)) throw new SignatureMismatchException();
-        if (!UpdatePolicy.compatibleCode(installedCode, candidateCode, stableRecovery && !UpdatePolicy.isPrerelease(version) && UpdatePolicy.isPrerelease(installed.versionName))) throw new VersionNotNewerException();
+        if (!UpdatePolicy.compatibleCode(installedCode, candidateCode)) throw new VersionNotNewerException();
     }
 }

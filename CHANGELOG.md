@@ -1,4 +1,4 @@
-## 1.4.1-rc.1 — unified navigation, settings, archive import and translation
+## 1.4.1 — unified navigation, settings, archive import, translation and one official update stream
 
 - Synchronised bottom navigation: the indicator renders the pager position directly (taps, drags and cancelled drags), the independent spring animations are removed, long press stays stable and reduced motion disables the stretch. The frame sync stops when the pager is idle.
 - Unified settings: the separate top-level Berrygram entry is gone; Berrygram rows live directly after the matching Telegram sections (privacy, appearance, language, notifications, data, power) and About Berrygram sits above the version row. The old hub redirects into the unified screen.
@@ -6,9 +6,8 @@
 - Berry Archive history import: create/update with a chat picker (single, multiple, all), live progress with the current chat and Cancel, resumable paginated `messages.getHistory`, two durable cursors, forward gaps filled, service/secret/TTL content excluded, clearing an archive resets its cursors.
 - Translation: the selected target language and the opt-in automatic mode are applied when a chat opens through Telegram's own translation service; the screen shows the real language name, empty selection keeps automatic detection, secret chats and Saved Messages are skipped.
 - Performance/stability: idle indicator does not wake the main thread per frame, import cursors are saved after every page, FLOOD_WAIT is cancellable, large deletion updates are chunked in SQL.
-- Verified: debug and release compilation, full smoke suite, signed arm64 RC (versionCode `72769`, SHA-256 `46d6e46372ea04a76de3001c2e082c07b36e20f81578b1dc1b35a0234477926f`). Device UI, gesture and smoothness checks are not performed yet.
-
-Release candidate for owner acceptance, not Stable.
+- One official update stream: the Stable/Beta channel selector is removed. The updater reads normal GitHub Releases, ignores drafts and every prerelease (including historical Beta/RC tags), selects the newest official release by parsed version metadata and never offers an older version. The obsolete channel preference is removed safely; checksum, package, signer, progress and installer checks are unchanged.
+- Verified: full smoke suite, updater fixtures, live GitHub API checks, Kotlin/Java compilation and a signed arm64 release with R8 (versionCode `72779`, SHA-256 `ac30bda056ef435924252eac4affcf3d9eeb25961de9d585ed208ba5cb93900a`). Remote FCM push is not configured and no physical-device testing was performed.
 
 ## 1.3.0-beta.5 — Glass 2.0, adaptive camera and voice engine
 

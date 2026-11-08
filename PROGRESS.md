@@ -1,13 +1,14 @@
-# Android 1.4.1 RC 1 — implemented, release candidate built (device test pending)
+# Android 1.4.1 — built and published as an official release
 
 ## Repository and branch
 
 - Repository `C:\Users\Keoo2\Documents\BerryGram-1.3`, branch `feature/berrygram-1.4.1`,
   based on the published 1.4.0 (`530884f`), commits `77a2300` (bottom indicator), `79d4f4c`
   (unified settings), `f26bf5a` (quick Ghost Mode), `2432686` (archive history import),
-  `74d81c4` (translation on chat open), `2be8bb0` (About row), `4a439d4` (performance/stability).
-- Version `1.4.1-rc.1`, `APP_VERSION_CODE=7276` → arm64 versionCode **72769**
-  (higher than the published Stable 1.4.0 `72759`, so the RC installs over it without data loss).
+  `74d81c4` (translation on chat open), `2be8bb0` (About row), `4a439d4` (performance/stability)
+  and the final unified-updater/release commit.
+- Version `1.4.1`, `APP_VERSION_CODE=7277` → arm64 versionCode **72779**
+  (higher than the published Stable 1.4.0 `72759` and the internal RC `72769`).
 
 ## What changed in this cycle
 
@@ -33,31 +34,43 @@
 - **Stability fixes.** Large deletion updates use chunked SQL, and import cursors are persisted
   after every page.
 
+## Update-channel migration
+
+- The Stable/Beta selector, the `beta_channel` preference and the channel branches of
+  `GithubUpdateClient`, `UpdatePolicy` and `ForkUpdaterPanel` are removed.
+- The updater now reads only normal GitHub Releases, ignores drafts and every prerelease
+  (including historical Beta/RC tags and prerelease version strings), selects the newest official
+  release by parsed version metadata, and never offers a downgrade.
+- Existing channel preferences are deleted once on start; unrelated updater settings are preserved.
+  Old 1.4.0 Beta/RC installs still discover 1.4.1 through the normal versionCode comparison.
+
 ## Verification
 
-- `:TMessagesProj:compileDebugKotlin` + `compileDebugJavaWithJavac` — success.
+- Release Kotlin/Java compilation (`:TMessagesProj:compileReleaseKotlin`,
+  `compileReleaseJavaWithJavac`) — success.
 - `:TMessagesProj_App:assembleAfatRelease -PforkAbi=arm64-v8a` (R8, release resources, locally
   injected credentials) — success.
 - Full `fork-tests/smoke.ps1` — success, including `ForkTabIndicatorInterpolatorTest`,
   `ForkUnifiedSettingsMappingTest`, `GhostMasterPolicyTest`, `ForkArchiveImportPolicyTest`,
-  `ForkTranslationPolicyTest`, `test_main_tabs_indicator.js`, `test_archive_import.js` and
-  `test_translation.js`.
+  `ForkTranslationPolicyTest`, `UpdatePolicyTest`, `test_main_tabs_indicator.js`,
+  `test_archive_import.js`, `test_translation.js`, resource validation and the release-scope
+  unified-updater checks.
+- `fork-tests/updater-package-fixture.ps1` and `fork-tests/updater-live-github.ps1` — success.
+  The live check finds the newest official release; after publication it discovers 1.4.1.
 - No Android device or emulator is available on this host: UI, gesture, frame-time, import and
   translation behaviour are **not device tested**.
 
-## Release candidate artifact
+## Release artifact
 
-- APK `C:\Users\Keoo2\Documents\BerryGram-1.4.1-rc.1-arm64-v8a.apk`, 41936290 bytes,
-  SHA-256 `46d6e46372ea04a76de3001c2e082c07b36e20f81578b1dc1b35a0234477926f`.
-- Package `org.example.forkclient`, versionName `1.4.1-rc.1`, versionCode `72769`, minSdk 23,
+- APK `C:\Users\Keoo2\Documents\BerryGram-1.4.1-arm64-v8a.apk`, 41933616 bytes,
+  SHA-256 `ac30bda056ef435924252eac4affcf3d9eeb25961de9d585ed208ba5cb93900a`.
+- Package `org.example.forkclient`, versionName `1.4.1`, versionCode `72779`, minSdk 23,
   targetSdk 36, native-code arm64-v8a only, label BerryGram.
 - Signed with the existing release key: `CN=BerryGram Release`, certificate SHA-256
   `b3ea9ca232ae03ebeab5bbc2729a306fb5eacd0520104fc52450a421efc722a5`, v1 and v2 signatures
-  verified, `zipalign -c -P 16` passed, Telegram credential present in the dex, no keystore
-  packaged.
-- The candidate is NOT published. The owner tests it with `docs/1.4.1-rc.1-device-checklist.md`;
-  Stable 1.4.1 is reserved for versionCode `72779` (`APP_VERSION_CODE=7277`) and is built and
-  published only after owner approval.
+  verified, `zipalign` passed, Telegram credential present in the dex, no keystore packaged.
+- Published as a normal GitHub Release (not a prerelease) at
+  https://github.com/mozyk96/Berrygram/releases/tag/v1.4.1 with the ARM64 APK and `SHA256SUMS`.
 
 ## Known limitations
 
@@ -65,7 +78,7 @@
 - The archive stores text messages of the accessible history; media-only messages are still not
   archived, and each import run is bounded (about 2000 messages / 50 pages per chat) with resume.
 - Visual smoothness of the new indicator and the real translation/import UI are not verified
-  without a device.
+  without a device; `docs/1.4.1-device-checklist.md` remains for the owner.
 
 # Android 1.4.0 Stable — built and published
 

@@ -33,11 +33,6 @@ public final class UpdaterPackageFixtureTest {
   try { m.invoke(null,c,apk,"1.0.1"); throw new AssertionError("Expected rejection"); }
   catch (InvocationTargetException e) { if (!type.isInstance(e.getCause())) throw new AssertionError("Unexpected rejection",e.getCause()); }
  }
- static void recovery(Ctx c, File apk, boolean requested, boolean expected) throws Exception {
-  Method m=GithubUpdateClient.class.getDeclaredMethod("verifyPackage",Context.class,File.class,String.class,boolean.class); m.setAccessible(true);
-  boolean passed=true;try{m.invoke(null,c,apk,"1.0.1",requested);}catch(InvocationTargetException e){passed=false;}
-  if(passed!=expected)throw new AssertionError("Unexpected Stable recovery result");
- }
  static File apk(boolean arm) throws IOException { return apk(arm,23,16); }
  static File apk(boolean arm,int minSdk,int valueType) throws IOException {
   File f=File.createTempFile("berrygram-fixture-", ".apk"); f.deleteOnExit();
@@ -71,11 +66,9 @@ public final class UpdaterPackageFixtureTest {
   android.os.Build.VERSION.SDK_INT=22;verify(c,good,false);
   android.os.Build.VERSION.SDK_INT=23;verify(c,good,true);
   verify(c,apk(true,24,16),false); verify(c,apk(true,23,3),false);
-  c.pm.installed=info(NAME,"1.0.2-beta.1",100,0,1);c.pm.candidate=info(NAME,"1.0.1",100,0,1);
-  recovery(c,good,true,true); recovery(c,good,false,false);
-  c.pm.candidate=info(NAME,"1.0.1",99,0,1);recovery(c,good,true,false);
-  c.pm.candidate=info(NAME,"1.0.1",100,0,2);recovery(c,good,true,false);
-  c.pm.installed=info(NAME,"1.0.0",100,0,1);c.pm.candidate=info(NAME,"1.0.1",100,0,1);recovery(c,good,true,false);
+  // A historical beta install receives the official build only when its version code is higher.
+  c.pm.installed=info(NAME,"1.0.1-beta.1",100,0,1);c.pm.candidate=info(NAME,"1.0.1",101,0,1);verify(c,good,true);
+  c.pm.candidate=info(NAME,"1.0.1",100,0,1);verify(c,good,false);
   android.os.Build.VERSION.SDK_INT=27;
   c.pm.candidate=info(NAME,"1.0.1",101,0,1);verify(c,good,true);
   c.pm.candidate=info(NAME,"1.0.1",101,0,2);verify(c,good,false);

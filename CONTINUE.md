@@ -1,29 +1,40 @@
-# BerryGram continuation — Android 1.4.1 RC 1
+# BerryGram continuation — Android 1.4.1 official release
 
 ## State
 
-- Branch `feature/berrygram-1.4.1` (from `530884f`), HEAD `4a439d4` plus the RC metadata commit.
-- Version `1.4.1-rc.1`, versionCode `72769` (arm64). Published Stable 1.4.0 is `72759`.
-- Release candidate APK `C:\Users\Keoo2\Documents\BerryGram-1.4.1-rc.1-arm64-v8a.apk`,
-  41936290 bytes, SHA-256 `46d6e46372ea04a76de3001c2e082c07b36e20f81578b1dc1b35a0234477926f`.
-  It is built and verified but NOT published; the owner tests it with
-  `docs/1.4.1-rc.1-device-checklist.md`.
-- Stable 1.4.1 is reserved for `APP_VERSION_CODE=7277` → arm64 `72779` and must not be reused.
+- Branch `feature/berrygram-1.4.1` (from `530884f`), tag `v1.4.1` on the release source commit.
+- Version `1.4.1`, versionCode `72779` (arm64). Previous official 1.4.0 is `72759`; the internal
+  RC was `72769`.
+- Release APK `C:\Users\Keoo2\Documents\BerryGram-1.4.1-arm64-v8a.apk`, 41933616 bytes,
+  SHA-256 `ac30bda056ef435924252eac4affcf3d9eeb25961de9d585ed208ba5cb93900a`.
+- Published as a normal GitHub Release (not a prerelease):
+  https://github.com/mozyk96/Berrygram/releases/tag/v1.4.1 with the ARM64 APK and `SHA256SUMS`.
+
+## Update channels
+
+- Stable/Beta channels are discontinued. The selector, `beta_channel` preference and all channel
+  branches are removed; obsolete preferences are cleaned once without touching other settings.
+- The updater uses one official feed: normal GitHub Releases only, drafts and every prerelease are
+  ignored, selection uses parsed version metadata and never offers a downgrade.
+- Historical 1.4.0 Beta/RC installs still discover 1.4.1 through the normal versionCode comparison.
 
 ## Tests
 
-- Debug and release Kotlin/Java compilation: success.
-- `fork-tests/smoke.ps1`: success, including the indicator, unified settings, Ghost master,
-  archive import and translation policy tests.
+- Release Kotlin/Java compilation: success.
+- `fork-tests/smoke.ps1`: success, including the unified `UpdatePolicyTest`, resource validation
+  and the release-scope checks that forbid channel controls.
+- `updater-package-fixture.ps1` and `updater-live-github.ps1`: success; the live check discovers
+  the published 1.4.1 official release.
 - Release artifact checks: package, version, minSdk/targetSdk, ABI, signing continuity,
   v1/v2 schemes, zipalign, credential in dex, no keystore packaged.
 
 ## Remaining
 
-- Device checklist for the owner (navigation smoothness, settings layout, Ghost toggle, archive
-  import/resume/cancel, translation on chat open, performance).
+- Device checklist for the owner (`docs/1.4.1-device-checklist.md`): navigation smoothness,
+  settings layout, Ghost toggle, archive import/resume/cancel, translation on chat open,
+  performance and the unified update panel.
 - Remote push still needs the owner's Firebase project; diagnostics reports `push_not_configured`.
-- Publish Stable 1.4.1 only after owner approval, then verify the live updater discovers it.
+- 1.4.2 has not been started.
 
 # BerryGram continuation — Android 1.4.0 Stable
 

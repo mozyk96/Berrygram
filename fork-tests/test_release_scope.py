@@ -25,4 +25,13 @@ assert 'if (swipeBackLayout == null)' in popup
 performance = (root / 'ui/ForkPerformanceSettingsActivity.java').read_text(encoding='utf-8')
 assert 'removeAllViews' not in performance
 assert 'LiteModeSettingsActivity' in performance and 'CacheControlActivity' in performance
+updater = (root / 'ui/ForkUpdaterPanel.java').read_text(encoding='utf-8')
+for obsolete in ('ForkUpdateChannel', 'ForkUpdateStableRecovery', 'ForkUpdateOlderStable', 'stableRecovery'):
+    assert obsolete not in updater, f'obsolete update channel control remains: {obsolete}'
+assert 'getBoolean("beta_channel"' not in updater and 'putBoolean("beta_channel"' not in updater
+assert 'preferences.contains("beta_channel")' in updater, 'the obsolete channel preference must be migrated'
+assert 'GithubUpdateClient.latest(REPOSITORY)' in updater
+policy = (root / 'messenger/fork/updater/UpdatePolicy.java').read_text(encoding='utf-8')
+for obsolete in ('betaChannel', 'isStableRecovery', 'stableRecovery'):
+    assert obsolete not in policy, f'obsolete update channel rule remains: {obsolete}'
 print('BerryGram release scope checks passed')

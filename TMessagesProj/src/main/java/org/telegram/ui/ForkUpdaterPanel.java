@@ -83,10 +83,18 @@ public final class ForkUpdaterPanel extends LinearLayout {
             android.content.pm.PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
             versionCode = Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
         } catch (Exception ignored) { }
-        // A pre-release build stays on the beta channel by default, so a beta
-        // update is found instead of an older stable release.
-        if (!preferences.contains("beta_channel")) {
-            preferences.edit().putBoolean("beta_channel", UpdatePolicy.isPrerelease(version)).apply();
+        // Update channels are obsolete. Drop their stored preference once and
+        // discard a saved prerelease, without touching unrelated updater state.
+        String savedVersion = preferences.getString("release_version", "");
+        if (preferences.contains("beta_channel") || preferences.contains("release_prerelease")
+                || UpdatePolicy.isPrerelease(savedVersion)) {
+            SharedPreferences.Editor edit = preferences.edit()
+                    .remove("beta_channel").remove("release_prerelease");
+            if (UpdatePolicy.isPrerelease(savedVersion)) {
+                edit.remove("release_version").remove("release_url").remove("release_digest")
+                        .remove("release_size").remove("release_notes");
+            }
+            edit.apply();
         }
         release = restoreRelease();
         render(false);
@@ -97,7 +105,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
         removeAllViews(); Context c = getContext();
         TextSettingsCell header = new TextSettingsCell(c);
         header.setBackground(Theme.getSelectorDrawable(false));
-        String headerValue = (release != null ? release.version + (olderStable() ? " ↶" : " ↑") : version) + (expanded ? "  ▴" : "  ▾");
+        String headerValue = (release != null ? release.version + " ↑" : version) + (expanded ? "  ▴" : "  ▾");
         header.setTextAndValue(ForkLocale.get(R.string.ForkUpdatePanel), headerValue, expanded);
         header.setIcon(R.drawable.msg_download);
         header.setOnClickListener(v -> { expanded = !expanded; preferences.edit().putBoolean("expanded", expanded).apply(); render(true); }); addView(header);
@@ -110,20 +118,6 @@ public final class ForkUpdaterPanel extends LinearLayout {
         LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1);
         textParams.setMarginStart(AndroidUtilities.dp(12)); summary.addView(details, textParams);
         addView(summary); updateDetails();
-        TextSettingsCell channel = new TextSettingsCell(c);
-        boolean beta = preferences.getBoolean("beta_channel", false);
-        channel.setTextAndValue(ForkLocale.get(R.string.ForkUpdateChannel), ForkLocale.get(beta ? R.string.ForkUpdateChannelBeta : R.string.ForkUpdateChannelStable), false);
-        channel.setEnabled(!busy);
-        channel.setBackground(Theme.getSelectorDrawable(false));
-        channel.setOnClickListener(v -> ForkChoicePopup.show(parent, v,
-            new CharSequence[]{ForkLocale.get(R.string.ForkUpdateChannelStable), ForkLocale.get(R.string.ForkUpdateChannelBeta)}, null, beta ? 1 : 0, index -> {
-                installIntent.cancel(); removeCallbacks(installWhenResumed);
-                preferences.edit().putBoolean("beta_channel", index == 1).apply();
-                release = null; verified = null; incompatible = false; saveRelease(null); status = ""; render(false);
-                // The channel changed, so the release list of the new channel is checked right away.
-                check();
-            }));
-        addView(channel);
         if (release != null && release.notes != null && !release.notes.isEmpty()) {
             addAction(R.string.ForkUpdateChangelog, () -> parent.showDialog(new AlertDialog.Builder(getContext())
                 .setTitle(release.version).setMessage(release.notes)
@@ -131,19 +125,14 @@ public final class ForkUpdaterPanel extends LinearLayout {
         }
         if (busy) { progress = new ProgressBar(c, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(verified == null && downloadPercent == 0); progress.setMax(100); progress.setProgress(downloadPercent); addView(progress); return; }
         addAction(R.string.ForkUpdateCheck, this::check, release != null || verified != null);
-        if (release != null && verified == null && !incompatible) addAction(olderStable() ? R.string.ForkUpdateStableRecovery : R.string.ForkUpdateDownload, this::download, false);
+        if (release != null && verified == null && !incompatible) addAction(R.string.ForkUpdateDownload, this::download, false);
         if (verified != null) addAction(R.string.ForkUpdateInstall, this::startInstall, false);
     }
     private void addAction(int label, Runnable action, boolean divider) {
         TextSettingsCell cell = new TextSettingsCell(getContext()); cell.setText(ForkLocale.get(label), divider);
-        cell.setIcon(label == R.string.ForkUpdateCheck || label == R.string.ForkUpdateStableRecovery ? R.drawable.msg_retry : label == R.string.ForkUpdateDownload ? R.drawable.msg_download : label == R.string.ForkUpdateChangelog ? R.drawable.msg_info : R.drawable.msg_check_s);
+        cell.setIcon(label == R.string.ForkUpdateCheck ? R.drawable.msg_retry : label == R.string.ForkUpdateDownload ? R.drawable.msg_download : label == R.string.ForkUpdateChangelog ? R.drawable.msg_info : R.drawable.msg_check_s);
         cell.setBackground(Theme.getSelectorDrawable(false));
         cell.setOnClickListener(v -> action.run()); addView(cell);
-    }
-    private boolean olderStable() {
-        if (release == null || preferences.getBoolean("beta_channel", false)) return false;
-        Integer comparison = UpdatePolicy.compareVersions(release.version, version);
-        return comparison != null && comparison < 0;
     }
     private void updateDetails() {
         if (details == null || !expanded || disposed) return;
@@ -156,7 +145,6 @@ public final class ForkUpdaterPanel extends LinearLayout {
         if (!status.isEmpty()) text.append("\n").append(status);
         if (release != null) {
             text.append("\n").append(ForkLocale.get(R.string.ForkUpdateAvailable, release.version, release.size / 1048576f));
-            if (olderStable()) text.append("\n").append(ForkLocale.get(R.string.ForkUpdateOlderStable));
         }
         details.setText(text);
     }
@@ -165,10 +153,9 @@ public final class ForkUpdaterPanel extends LinearLayout {
         String url = preferences.getString("release_url", "");
         String digest = preferences.getString("release_digest", "");
         long size = preferences.getLong("release_size", 0);
-        boolean prerelease = preferences.getBoolean("release_prerelease", true);
-        if ((!preferences.getBoolean("beta_channel", false) && (prerelease || UpdatePolicy.isPrerelease(v))) || !UpdatePolicy.validSavedRelease(REPOSITORY, v, version, url, digest, size, preferences.getBoolean("beta_channel", false))) return null;
+        if (!UpdatePolicy.validSavedRelease(REPOSITORY, v, version, url, digest, size)) return null;
         GithubUpdateClient.Release result = new GithubUpdateClient.Release();
-        result.version = v; result.url = url; result.digest = digest; result.size = size; result.prerelease = prerelease;
+        result.version = v; result.url = url; result.digest = digest; result.size = size;
         result.notes = preferences.getString("release_notes", ""); return result;
     }
     private void saveRelease(GithubUpdateClient.Release candidate) {
@@ -177,7 +164,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
             edit.remove("release_version").remove("release_url").remove("release_digest").remove("release_size").remove("release_notes").remove("release_prerelease");
         } else {
             edit.putString("release_version", candidate.version).putString("release_url", candidate.url)
-                .putString("release_digest", candidate.digest).putLong("release_size", candidate.size).putString("release_notes", candidate.notes).putBoolean("release_prerelease", candidate.prerelease);
+                .putString("release_digest", candidate.digest).putLong("release_size", candidate.size).putString("release_notes", candidate.notes);
         }
         edit.apply();
     }
@@ -185,13 +172,12 @@ public final class ForkUpdaterPanel extends LinearLayout {
         if (busy || disposed) return;
         installIntent.cancel(); downloadPercent = 0;
         busy = true; release = null; verified = null; incompatible = false; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
-        final boolean betaChannel = preferences.getBoolean("beta_channel", false);
         worker.execute(() -> {
             try {
-                GithubUpdateClient.Release found = GithubUpdateClient.latest(REPOSITORY, betaChannel);
+                GithubUpdateClient.Release found = GithubUpdateClient.latest(REPOSITORY);
                 Integer comparison = UpdatePolicy.compareVersions(found.version, version);
                 if (comparison == null) throw new SecurityException("Invalid release version");
-                boolean show = UpdatePolicy.shouldShowRelease(found.version, version, betaChannel);
+                boolean show = UpdatePolicy.shouldShowRelease(found.version, version);
                 AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); release = show ? found : null;
                     status = show ? "" : ForkLocale.get(R.string.ForkUpdateLatest); saveRelease(release); preferences.edit().putLong("last_checked", System.currentTimeMillis()).apply(); render(false); });
             } catch (Exception e) { fail(e); }
@@ -199,7 +185,6 @@ public final class ForkUpdaterPanel extends LinearLayout {
     }
     private void download() {
         GithubUpdateClient.Release candidate = release; if (candidate == null || busy || disposed || installIntent.pending()) return;
-        candidate.stableRecovery = !preferences.getBoolean("beta_channel", false) && !candidate.prerelease && UpdatePolicy.isPrerelease(version);
         installIntent.request(); waitingPermission = false; permissionLeft = false; downloadPercent = 0; verified = null;
         Context app = getContext().getApplicationContext(); busy = true; preferences.edit().putBoolean("interrupted", true).apply(); status = ForkLocale.get(R.string.ForkUpdateDownloading, 0); render(false);
         worker.execute(() -> {
@@ -231,8 +216,8 @@ public final class ForkUpdaterPanel extends LinearLayout {
             AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateNoSpace); render(false); });
             return;
         }
-        if (e instanceof GithubUpdateClient.NoStableReleaseException) {
-            AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateNoStableRelease); render(false); });
+        if (e instanceof GithubUpdateClient.NoReleaseException) {
+            AndroidUtilities.runOnUIThread(() -> { if (disposed) return; busy = false; preferences.edit().putBoolean("interrupted", false).apply(); status = ForkLocale.get(R.string.ForkUpdateNoRelease); render(false); });
             return;
         }
         if (e instanceof GithubUpdateClient.SignatureMismatchException || (e instanceof SecurityException && "Update signing certificate mismatch".equals(e.getMessage()))) {

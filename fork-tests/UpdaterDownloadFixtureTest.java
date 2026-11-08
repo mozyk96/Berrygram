@@ -39,7 +39,7 @@ public final class UpdaterDownloadFixtureTest {
   missingRelease=true;
   try { GithubUpdateClient.latest("example/project"); throw new AssertionError("Missing release accepted"); }
   catch (IOException expected) {
-   if (!"No compatible release found or repository unavailable".equals(expected.getMessage())) throw new AssertionError("Missing release should be explained", expected);
+   if (!"No official release found or repository unavailable".equals(expected.getMessage())) throw new AssertionError("Missing release should be explained", expected);
   } finally { missingRelease=false; }
   UpdaterPackageFixtureTest.Ctx c=new UpdaterPackageFixtureTest.Ctx();
   c.pm.installed=UpdaterPackageFixtureTest.info(UpdaterPackageFixtureTest.NAME,"1.0.0",100,0,1);
