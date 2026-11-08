@@ -499,7 +499,31 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private float contactsAlpha = 1f;
     private ValueAnimator contactsAlphaAnimator;
     private ViewPage[] viewPages;
+    /**
+     * Berrygram: quick Ghost Mode control. The master switch only hides or shows
+     * the feature, the detailed private and group preferences are preserved.
+     */
+    private void toggleForkGhostMode() {
+        boolean enabled = !org.telegram.messenger.fork.stealth.ForkStealthSettings
+                .ghostMasterEnabled(currentAccount);
+        org.telegram.messenger.fork.stealth.ForkStealthSettings
+                .setGhostMasterEnabled(currentAccount, enabled);
+        updateForkGhostButton();
+        Toast.makeText(getContext(), ForkLocale.get(enabled ? R.string.ForkGhostEnabled : R.string.ForkGhostDisabled), Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateForkGhostButton() {
+        if (ghostItem == null) {
+            return;
+        }
+        boolean enabled = org.telegram.messenger.fork.stealth.ForkStealthSettings
+                .ghostMasterEnabled(currentAccount);
+        ghostItem.setAlpha(enabled ? 1f : 0.55f);
+        ghostItem.setContentDescription(ForkLocale.get(enabled ? R.string.ForkGhostEnabled : R.string.ForkGhostDisabled));
+    }
+
     private ActionBarMenuItem passcodeItem;
+    private ActionBarMenuItem ghostItem;
     private ActionBarMenuItem downloadsItem;
     private DownloadProgressIcon downloadProgressIcon;
     private boolean downloadsItemVisible;
@@ -3271,6 +3295,16 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
             passcodeItem = menu.addItem(1, R.drawable.outline_header_lock_24);
             passcodeItem.setContentDescription(getString(R.string.AccDescrPasscodeLock));
+
+            // Berrygram: quick Ghost Mode control in the chats toolbar.
+            ghostItem = menu.addItem(6, R.drawable.msg_secret);
+            ghostItem.setContentDescription(ForkLocale.get(R.string.ForkGhostToggle));
+            ghostItem.setOnClickListener(v -> toggleForkGhostMode());
+            ghostItem.setOnLongClickListener(v -> {
+                presentFragment(new ForkStealthSettingsActivity());
+                return true;
+            });
+            updateForkGhostButton();
 
             downloadsItem = menu.addItem(3, new ColorDrawable(Color.TRANSPARENT));
             downloadsItem.addView(downloadProgressIcon = new DownloadProgressIcon(currentAccount, context));
@@ -7063,6 +7097,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void onResume() {
         super.onResume();
+        updateForkGhostButton();
         if (dialogStoriesCell != null) {
             dialogStoriesCell.onResume();
         }

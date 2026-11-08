@@ -384,4 +384,7 @@
     <string name="ForkTranslationTargetSelected">Selected language</string>
     <string name="ForkTranslationInfo">The languages come from the translation service that Telegram already uses. Automatic detection is applied when no target language is selected. Nothing is sent to an additional service.</string>
     <string name="ForkSettingsSubtitle">Open the unified settings</string>
+    <string name="ForkGhostToggle">Ghost Mode</string>
+    <string name="ForkGhostEnabled">Ghost Mode is on, read receipts are hidden</string>
+    <string name="ForkGhostDisabled">Ghost Mode is off</string>
 </resources>

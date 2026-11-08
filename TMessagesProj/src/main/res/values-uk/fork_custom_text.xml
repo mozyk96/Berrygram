@@ -384,4 +384,7 @@
     <string name="ForkTranslationTargetSelected">Обрана мова</string>
     <string name="ForkTranslationInfo">Список мов береться з сервісу перекладу, який Telegram уже використовує. Автоматичне визначення працює, коли цільову мову не вибрано. Додаткові сервіси не використовуються.</string>
     <string name="ForkSettingsSubtitle">Відкрити єдині налаштування</string>
+    <string name="ForkGhostToggle">Ghost Mode</string>
+    <string name="ForkGhostEnabled">Ghost Mode увімкнено, прочитання приховані</string>
+    <string name="ForkGhostDisabled">Ghost Mode вимкнено</string>
 </resources>

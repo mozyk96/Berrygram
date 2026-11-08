@@ -17,6 +17,7 @@ object ForkStealthSettings {
     private const val LEGACY_PREFS_NAME = "fork_stealth"
 
     private const val KEY_GHOST_MODE = "ghost_mode_enabled"
+    private const val KEY_GHOST_MASTER = "ghost_master_enabled"
     private const val KEY_STEALTH_PRIVATE = "stealth_read_private"
     private const val KEY_STEALTH_GROUPS = "stealth_read_groups"
     private const val KEY_DELETED_MESSAGES = "deleted_messages_enabled"
@@ -33,6 +34,7 @@ object ForkStealthSettings {
 
     private class Cache(
         val ghostMode: Boolean,
+        val ghostMaster: Boolean,
         val stealthPrivate: Boolean,
         val stealthGroups: Boolean,
         val deletedMessages: Boolean,
@@ -87,7 +89,7 @@ object ForkStealthSettings {
     /** Returns the account cache, migrating legacy values on first use. */
     private fun cache(account: Int): Cache {
         if (!validAccount(account)) {
-            return Cache(false, true, false, true, true, true, false, RETENTION_FOREVER)
+            return Cache(false, true, true, false, true, true, true, false, RETENTION_FOREVER)
         }
         synchronized(lock) {
             caches[account]?.let { return it }
@@ -105,6 +107,10 @@ object ForkStealthSettings {
             }
             val resolved = Cache(
                 ghostMode = bool(KEY_GHOST_MODE, false),
+                // The master switch defaults to enabled, so an existing installation
+                // keeps its current ghost behaviour and the private and group
+                // preferences stay untouched.
+                ghostMaster = bool(KEY_GHOST_MASTER, true),
                 stealthPrivate = bool(KEY_STEALTH_PRIVATE, true),
                 stealthGroups = bool(KEY_STEALTH_GROUPS, false),
                 deletedMessages = bool(KEY_DELETED_MESSAGES, true),
@@ -130,6 +136,24 @@ object ForkStealthSettings {
 
     @JvmStatic
     fun ghostModeEnabled(account: Int): Boolean = cache(account).ghostMode
+
+    /**
+     * Master switch of the quick Ghost Mode control. It only enables or hides
+     * the whole feature, the detailed private and group preferences are kept so
+     * they are active again when the master switch is turned back on.
+     */
+    @JvmStatic
+    fun ghostMasterEnabled(account: Int): Boolean = cache(account).ghostMaster
+
+    @JvmStatic
+    fun setGhostMasterEnabled(account: Int, enabled: Boolean) {
+        prefs(account).edit().putBoolean(KEY_GHOST_MASTER, enabled).apply()
+        invalidate(account)
+    }
+
+    /** True when Ghost Mode currently hides read receipts. */
+    @JvmStatic
+    fun ghostActive(account: Int): Boolean = ghostMasterEnabled(account) && ghostModeEnabled(account)
 
     @JvmStatic
     fun setGhostModeEnabled(account: Int, enabled: Boolean) {
@@ -213,6 +237,11 @@ object ForkStealthSettings {
     /** An explicit user "Mark as read" request is never suppressed. */
     @JvmStatic
     fun shouldSuppressRead(dialogId: Long, isGroupOrChannel: Boolean, isSecretChat: Boolean, account: Int, forced: Boolean): Boolean {
+        if (!ghostMasterEnabled(account)) {
+            // The quick control switched Ghost Mode off, the detailed
+            // preferences are kept and become active again later.
+            return false
+        }
         return StealthPolicy.shouldSuppressRead(
             ghostModeEnabled(account),
             stealthReadPrivate(account),
@@ -229,6 +258,9 @@ object ForkStealthSettings {
      */
     @JvmStatic
     fun shouldSuppressSecondaryReads(dialogId: Long, isGroupOrChannel: Boolean, isSecretChat: Boolean, account: Int): Boolean {
+        if (!ghostMasterEnabled(account)) {
+            return false
+        }
         return StealthPolicy.shouldSuppressSecondaryReads(
             ghostModeEnabled(account),
             stealthReadPrivate(account),
