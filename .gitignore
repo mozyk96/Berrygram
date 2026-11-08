@@ -26,3 +26,5 @@ TMessagesProj_App/src/debug/google-services.json
 /TMessagesProj_AppHuawei/google-services.json
 /TMessagesProj_AppHuawei/agconnect-services.json
 /TMessagesProj_AppStandalone/google-services.json
+
+.kotlin/
