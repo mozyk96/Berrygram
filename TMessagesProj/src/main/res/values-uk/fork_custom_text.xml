@@ -387,4 +387,19 @@
     <string name="ForkGhostToggle">Ghost Mode</string>
     <string name="ForkGhostEnabled">Ghost Mode увімкнено, прочитання приховані</string>
     <string name="ForkGhostDisabled">Ghost Mode вимкнено</string>
+    <string name="ForkArchiveCreate">Створити архів</string>
+    <string name="ForkArchiveUpdate">Оновити архів</string>
+    <string name="ForkArchiveImportTitle">Архів Berrygram</string>
+    <string name="ForkArchiveImportTitleShort">Імпорт архіву</string>
+    <string name="ForkArchiveImportStarting">Підготовка імпорту…</string>
+    <string name="ForkArchiveImportRunning">Імпорт доступної історії, оброблено %1$d повідомлень</string>
+    <string name="ForkArchiveImportFinished">Імпорт завершено, в архів додано %1$d повідомлень</string>
+    <string name="ForkArchiveImportCancelled">Імпорт скасовано</string>
+    <string name="ForkArchiveImportFailed">Імпорт не вдався, дані не змінені</string>
+    <string name="ForkArchiveImportCancel">Скасувати</string>
+    <string name="ForkArchiveImportTitleLabel">Імпорт історії</string>
+    <string name="ForkArchiveSelectAll">Вибрати всі чати</string>
+    <string name="ForkArchiveNoChats">Доступних чатів не знайдено</string>
+    <string name="ForkArchiveImportInfo">Імпортуються лише ті повідомлення, які Telegram ще надає. Видалені повідомлення, секретні чати та автоудаляємий контент не зачіпаються.</string>
+    <string name="ForkArchiveImportRunningChat">Імпорт доступної історії, оброблено %1$d повідомлень, поточний чат: %2$s</string>
 </resources>

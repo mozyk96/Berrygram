@@ -24,6 +24,7 @@ import org.telegram.ui.ActionBar.ActionBarMenuItem
 import org.telegram.ui.ActionBar.AlertDialog
 import org.telegram.ui.ActionBar.BaseFragment
 import org.telegram.ui.ActionBar.Theme
+import org.telegram.ui.Cells.TextSettingsCell
 import org.telegram.ui.Components.EmptyTextProgressView
 import org.telegram.ui.Components.LayoutHelper
 import org.telegram.ui.Components.RecyclerListView
@@ -44,6 +45,7 @@ class ForkArchiveActivity : BaseFragment() {
 
     private companion object {
         const val SEARCH_DEBOUNCE_MS = 250L
+        const val HEADER_COUNT = 2
     }
     private var currentQuery = ""
 
@@ -160,6 +162,107 @@ class ForkArchiveActivity : BaseFragment() {
         }
     }
 
+    /**
+     * Opens the chat picker and starts the archive import for the chosen chats.
+     * The import runs in the background, the progress is shown and it can be
+     * cancelled.
+     */
+    private fun openImportPicker(mode: org.telegram.messenger.fork.storage.ForkArchiveImporter.Mode) {
+        if (org.telegram.messenger.fork.storage.ForkArchiveImporter.getInstance(currentAccount).isRunning()) {
+            showImportProgress()
+            return
+        }
+        val picker = ForkArchiveChatPickerActivity()
+        picker.setDelegate(object : ForkArchiveChatPickerActivity.Delegate {
+            override fun onChatsPicked(dialogIds: List<Long>) {
+                startImport(dialogIds, mode)
+            }
+        })
+        presentFragment(picker)
+    }
+
+    private fun startImport(dialogIds: List<Long>, mode: org.telegram.messenger.fork.storage.ForkArchiveImporter.Mode) {
+        if (dialogIds.isEmpty()) {
+            return
+        }
+        val importer = org.telegram.messenger.fork.storage.ForkArchiveImporter.getInstance(currentAccount)
+        importer.setListener(object : org.telegram.messenger.fork.storage.ForkArchiveImporter.Listener {
+            override fun onProgress(progress: org.telegram.messenger.fork.storage.ForkArchiveImporter.Progress) {
+                if (fragmentView == null) return
+                importStatus = progress
+                adapter?.notifyDataSetChanged()
+                val finished = progress.phase == org.telegram.messenger.fork.storage.ForkArchiveImporter.Phase.FINISHED ||
+                    progress.phase == org.telegram.messenger.fork.storage.ForkArchiveImporter.Phase.CANCELLED ||
+                    progress.phase == org.telegram.messenger.fork.storage.ForkArchiveImporter.Phase.FAILED
+                if (finished) {
+                    importer.setListener(null)
+                    importDialog?.dismiss()
+                    importDialog = null
+                    showImportResult()
+                    loadDialogs()
+                } else {
+                    showImportProgress()
+                }
+            }
+        })
+        importer.start(dialogIds, mode, importer.currentListener())
+        showImportProgress()
+    }
+
+    private fun showImportProgress() {
+        val activity = parentActivity ?: return
+        val importer = org.telegram.messenger.fork.storage.ForkArchiveImporter.getInstance(currentAccount)
+        val message = importMessageText()
+        val existing = importDialog
+        if (existing != null && existing.isShowing) {
+            existing.setMessage(message)
+            return
+        }
+        val builder = AlertDialog.Builder(activity)
+        builder.setTitle(ForkLocale.get(R.string.ForkArchiveImportTitle))
+        builder.setMessage(message)
+        if (importer.isRunning()) {
+            builder.setPositiveButton(ForkLocale.get(R.string.ForkArchiveImportCancel)) { _, _ -> importer.cancel() }
+        } else {
+            builder.setPositiveButton(LocaleController.getString(R.string.OK), null)
+        }
+        builder.setOnDismissListener { importDialog = null }
+        val dialog = builder.create()
+        showDialog(dialog)
+        importDialog = dialog
+    }
+
+    private fun importMessageText(): CharSequence {
+        val status = importStatus
+        if (status == null) {
+            return ForkLocale.get(R.string.ForkArchiveImportStarting)
+        }
+        return when (status.phase) {
+            org.telegram.messenger.fork.storage.ForkArchiveImporter.Phase.FINISHED ->
+                ForkLocale.get(R.string.ForkArchiveImportFinished, status.imported)
+            org.telegram.messenger.fork.storage.ForkArchiveImporter.Phase.CANCELLED ->
+                ForkLocale.get(R.string.ForkArchiveImportCancelled)
+            org.telegram.messenger.fork.storage.ForkArchiveImporter.Phase.FAILED ->
+                ForkLocale.get(R.string.ForkArchiveImportFailed)
+            else -> {
+                val chatName = if (status.dialogId != 0L) resolveDialogName(status.dialogId) else ""
+                ForkLocale.get(R.string.ForkArchiveImportRunningChat, status.processed, chatName)
+            }
+        }
+    }
+
+    private fun showImportResult() {
+        val activity = parentActivity ?: return
+        val builder = AlertDialog.Builder(activity)
+        builder.setTitle(ForkLocale.get(R.string.ForkArchiveImportTitle))
+        builder.setMessage(importMessageText())
+        builder.setPositiveButton(LocaleController.getString(R.string.OK), null)
+        showDialog(builder.create())
+    }
+
+    private var importStatus: org.telegram.messenger.fork.storage.ForkArchiveImporter.Progress? = null
+    private var importDialog: AlertDialog? = null
+
     private fun showClearConfirmation() {
         val activity = parentActivity ?: return
         val builder = AlertDialog.Builder(activity)
@@ -176,9 +279,22 @@ class ForkArchiveActivity : BaseFragment() {
     private inner class ListAdapter(private val context: Context) : RecyclerListView.SelectionAdapter() {
         override fun isEnabled(holder: RecyclerView.ViewHolder): Boolean = true
 
-        override fun getItemCount(): Int = if (isSearchMode) searchResults.size else dialogs.size
+        override fun getItemCount(): Int {
+            val rows = if (isSearchMode) searchResults.size else dialogs.size
+            return rows + HEADER_COUNT
+        }
+
+        override fun getItemViewType(position: Int): Int {
+            return if (position < HEADER_COUNT) position else 2
+        }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            if (viewType == 0) {
+                val view = TextSettingsCell(context).apply {
+                    layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
+                }
+                return RecyclerListView.Holder(view)
+            }
             val view = DialogCell(context).apply {
                 layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
             }
@@ -186,13 +302,27 @@ class ForkArchiveActivity : BaseFragment() {
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            if (position < HEADER_COUNT) {
+                val cell = holder.itemView as TextSettingsCell
+                if (position == 0) {
+                    cell.setText(ForkLocale.get(R.string.ForkArchiveCreate), false)
+                    cell.setIcon(R.drawable.msg_archive)
+                    cell.setOnClickListener { openImportPicker(org.telegram.messenger.fork.storage.ForkArchiveImporter.Mode.CREATE) }
+                } else {
+                    cell.setText(ForkLocale.get(R.string.ForkArchiveUpdate), false)
+                    cell.setIcon(R.drawable.msg_download)
+                    cell.setOnClickListener { openImportPicker(org.telegram.messenger.fork.storage.ForkArchiveImporter.Mode.UPDATE) }
+                }
+                return
+            }
             val cell = holder.itemView as DialogCell
+            val index = position - HEADER_COUNT
             if (isSearchMode) {
-                val msg = searchResults[position]
+                val msg = searchResults[index]
                 val title = resolveDialogName(msg.dialogId)
                 cell.setData(title, msg.messageText, LocaleController.formatDateTime(msg.date.toLong(), false))
             } else {
-                val d = dialogs[position]
+                val d = dialogs[index]
                 val title = resolveDialogName(d.dialogId)
                 val countStr = LocaleController.formatPluralString("Messages", d.messageCount)
                 cell.setData(title, "$countStr • ${d.lastSnippet ?: ""}", LocaleController.formatDateTime(d.lastDate.toLong(), false))

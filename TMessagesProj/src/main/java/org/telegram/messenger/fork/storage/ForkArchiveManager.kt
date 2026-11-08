@@ -62,6 +62,14 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             database?.executeFast(
                 "CREATE INDEX IF NOT EXISTS idx_archived_dialog ON archived_messages(dialog_id, date DESC);"
             )?.stepThis()?.dispose()
+            database?.executeFast(
+                "CREATE TABLE IF NOT EXISTS archive_import_state (" +
+                    "dialog_id INTEGER PRIMARY KEY, " +
+                    "backfill_id INTEGER NOT NULL DEFAULT 0, " +
+                    "update_id INTEGER NOT NULL DEFAULT 0, " +
+                    "updated_at INTEGER NOT NULL DEFAULT 0" +
+                    ");"
+            )?.stepThis()?.dispose()
             migrateLegacyRows()
         } catch (e: SQLiteException) {
             FileLog.e(e)
@@ -425,6 +433,107 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         var cursor: SQLiteCursor? = null
         return try {
             cursor = db.queryFinalized("SELECT COUNT(*) FROM archived_messages $condition;")
+            if (cursor != null && cursor.next()) cursor.intValue(0) else 0
+        } catch (e: Exception) {
+            FileLog.e(e)
+            0
+        } finally {
+            cursor?.dispose()
+        }
+    }
+
+    /** True when a message is already stored for the chat. */
+    fun exists(dialogId: Long, messageId: Int): Boolean {
+        val db = database ?: return false
+        var cursor: SQLiteCursor? = null
+        return try {
+            cursor = db.queryFinalized(
+                "SELECT 1 FROM archived_messages WHERE dialog_id = $dialogId AND message_id = $messageId LIMIT 1;"
+            )
+            cursor != null && cursor.next()
+        } catch (e: Exception) {
+            FileLog.e(e)
+            false
+        } finally {
+            cursor?.dispose()
+        }
+    }
+
+    /**
+     * Persistent import cursors of one chat.
+     *
+     * @param backfillId oldest message id that was imported, 0 when nothing was imported
+     * @param updateId   newest message id that was imported, 0 when nothing was imported
+     */
+    class ImportState(
+        @JvmField val dialogId: Long,
+        @JvmField val backfillId: Int,
+        @JvmField val updateId: Int,
+        @JvmField val updatedAt: Long
+    )
+
+    fun importState(dialogId: Long): ImportState? {
+        val db = database ?: return null
+        var cursor: SQLiteCursor? = null
+        return try {
+            cursor = db.queryFinalized(
+                "SELECT backfill_id, update_id, updated_at FROM archive_import_state WHERE dialog_id = $dialogId;"
+            )
+            if (cursor != null && cursor.next()) {
+                ImportState(dialogId, cursor.intValue(0), cursor.intValue(1), cursor.longValue(2))
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            FileLog.e(e)
+            null
+        } finally {
+            cursor?.dispose()
+        }
+    }
+
+    fun saveImportState(state: ImportState) {
+        val db = database ?: return
+        try {
+            val statement = db.executeFast(
+                "INSERT OR REPLACE INTO archive_import_state (dialog_id, backfill_id, update_id, updated_at) VALUES (?, ?, ?, ?);"
+            )
+            statement.bindLong(1, state.dialogId)
+            statement.bindInteger(2, state.backfillId)
+            statement.bindInteger(3, state.updateId)
+            statement.bindLong(4, state.updatedAt)
+            statement.step()
+            statement.dispose()
+        } catch (e: Exception) {
+            FileLog.e(e)
+        }
+    }
+
+    /** The newest archived message id of a chat, 0 when the chat is empty. */
+    fun newestArchivedMessageId(dialogId: Long): Int {
+        val db = database ?: return 0
+        var cursor: SQLiteCursor? = null
+        return try {
+            cursor = db.queryFinalized(
+                "SELECT MAX(message_id) FROM archived_messages WHERE dialog_id = $dialogId;"
+            )
+            if (cursor != null && cursor.next()) cursor.intValue(0) else 0
+        } catch (e: Exception) {
+            FileLog.e(e)
+            0
+        } finally {
+            cursor?.dispose()
+        }
+    }
+
+    /** The oldest archived message id of a chat, 0 when the chat is empty. */
+    fun oldestArchivedMessageId(dialogId: Long): Int {
+        val db = database ?: return 0
+        var cursor: SQLiteCursor? = null
+        return try {
+            cursor = db.queryFinalized(
+                "SELECT MIN(message_id) FROM archived_messages WHERE dialog_id = $dialogId;"
+            )
             if (cursor != null && cursor.next()) cursor.intValue(0) else 0
         } catch (e: Exception) {
             FileLog.e(e)
