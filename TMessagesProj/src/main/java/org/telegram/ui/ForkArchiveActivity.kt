@@ -40,6 +40,11 @@ class ForkArchiveActivity : BaseFragment() {
     private val dialogs = mutableListOf<ForkArchiveManager.ArchivedDialogSummary>()
     private val searchResults = mutableListOf<ForkArchiveManager.ArchivedMessage>()
     private var isSearchMode = false
+    private var searchRunnable: Runnable? = null
+
+    private companion object {
+        const val SEARCH_DEBOUNCE_MS = 250L
+    }
     private var currentQuery = ""
 
     override fun createView(context: Context): View {
@@ -66,11 +71,26 @@ class ForkArchiveActivity : BaseFragment() {
             override fun onTextChanged(editText: EditText) {
                 currentQuery = editText.text.toString().trim()
                 searchResults.clear()
-                if (currentQuery.isNotEmpty()) {
-                    searchResults.addAll(ForkArchiveManager.getInstance(currentAccount).search(currentQuery))
+                // The archive search decrypts stored content, so it runs off the
+                // UI thread and is debounced to avoid a query per keystroke.
+                searchRunnable?.let { org.telegram.messenger.AndroidUtilities.cancelRunOnUIThread(it) }
+                if (currentQuery.isEmpty()) {
+                    adapter?.notifyDataSetChanged()
+                    updateEmptyView()
+                    return
                 }
-                adapter?.notifyDataSetChanged()
-                updateEmptyView()
+                val query = currentQuery
+                val runnable = Runnable {
+                    ForkArchiveManager.searchAsync(currentAccount, query) { result ->
+                        if (fragmentView == null || query != currentQuery) return@searchAsync
+                        searchResults.clear()
+                        searchResults.addAll(result)
+                        adapter?.notifyDataSetChanged()
+                        updateEmptyView()
+                    }
+                }
+                searchRunnable = runnable
+                org.telegram.messenger.AndroidUtilities.runOnUIThread(runnable, SEARCH_DEBOUNCE_MS)
             }
         })
 
@@ -121,10 +141,13 @@ class ForkArchiveActivity : BaseFragment() {
     }
 
     private fun loadDialogs() {
-        dialogs.clear()
-        dialogs.addAll(ForkArchiveManager.getInstance(currentAccount).getArchivedDialogs())
-        adapter?.notifyDataSetChanged()
-        updateEmptyView()
+        ForkArchiveManager.loadDialogsAsync(currentAccount) { result ->
+            if (fragmentView == null) return@loadDialogsAsync
+            dialogs.clear()
+            dialogs.addAll(result)
+            adapter?.notifyDataSetChanged()
+            updateEmptyView()
+        }
     }
 
     private fun updateEmptyView() {

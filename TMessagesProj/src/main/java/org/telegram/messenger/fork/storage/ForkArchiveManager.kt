@@ -484,8 +484,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
 
         /** Stores a message without blocking the caller. */
         @JvmStatic
-        fun archiveMessageAsync(
-            account: Int,
+        fun archiveMessageAsync(            account: Int,
             dialogId: Long,
             messageId: Int,
             date: Int,
@@ -507,8 +506,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
 
         /** Marks messages as deleted without blocking the caller. */
         @JvmStatic
-        fun markDeletedAsync(account: Int, dialogId: Long, messageIds: List<Int>) {
-            executor.execute {
+        fun markDeletedAsync(account: Int, dialogId: Long, messageIds: List<Int>) {            executor.execute {
                 try {
                     getInstance(account).markDeleted(dialogId, messageIds)
                 } catch (error: Throwable) {
@@ -529,6 +527,46 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
                 } catch (error: Throwable) {
                     FileLog.e(error)
                 }
+            }
+        }
+
+        /**
+         * Searches the archive without blocking the caller. Decrypting the
+         * stored content is done on the archive thread, the result is delivered
+         * on the UI thread.
+         */
+        fun searchAsync(account: Int, query: String?, callback: (List<ArchivedMessage>) -> Unit) {
+            executor.execute {
+                val result = try {
+                    getInstance(account).search(query)
+                } catch (error: Throwable) {
+                    emptyList()
+                }
+                org.telegram.messenger.AndroidUtilities.runOnUIThread { callback(result) }
+            }
+        }
+
+        /** Reads the archived chats without blocking the caller. */
+        fun loadDialogsAsync(account: Int, callback: (List<ArchivedDialogSummary>) -> Unit) {
+            executor.execute {
+                val result = try {
+                    getInstance(account).getArchivedDialogs()
+                } catch (error: Throwable) {
+                    emptyList()
+                }
+                org.telegram.messenger.AndroidUtilities.runOnUIThread { callback(result) }
+            }
+        }
+
+        /** Reads the archived messages of one chat without blocking the caller. */
+        fun loadMessagesAsync(account: Int, dialogId: Long, callback: (List<ArchivedMessage>) -> Unit) {
+            executor.execute {
+                val result = try {
+                    getInstance(account).getArchivedMessages(dialogId)
+                } catch (error: Throwable) {
+                    emptyList()
+                }
+                org.telegram.messenger.AndroidUtilities.runOnUIThread { callback(result) }
             }
         }
     }

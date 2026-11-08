@@ -69,9 +69,13 @@ class ForkArchiveMessagesActivity(private val dialogId: Long) : BaseFragment() {
     }
 
     private fun loadMessages() {
-        messages.clear()
-        messages.addAll(ForkArchiveManager.getInstance(currentAccount).getArchivedMessages(dialogId))
-        adapter?.notifyDataSetChanged()
+        ForkArchiveManager.loadMessagesAsync(currentAccount, dialogId) { result ->
+            if (fragmentView == null) return@loadMessagesAsync
+            messages.clear()
+            messages.addAll(result)
+            adapter?.notifyDataSetChanged()
+            emptyView?.visibility = if (messages.isEmpty()) View.VISIBLE else View.GONE
+        }
     }
 
     private fun resolveDialogName(did: Long): String {
