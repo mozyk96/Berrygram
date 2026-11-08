@@ -21,7 +21,9 @@
 - Debug and release Kotlin/Java compilation: success.
 - Full `fork-tests/smoke.ps1`: success.
 - Release ARM64 APK built, signed with the existing release key (certificate SHA-256 `b3ea9ca2…c722a5`,
-  identical to the published Stable) and published as the GitHub pre-release `v1.4.0-beta.2`.
+  identical to the published Stable) and published as the GitHub pre-release `v1.4.0-beta.2`:
+  `https://github.com/mozyk96/Berrygram/releases/tag/v1.4.0-beta.2`, APK `BerryGram-1.4.0-beta.2-arm64-v8a.apk`,
+  SHA-256 `d8e1787a3ab2ead530fcff1453b1b22db8d595fa51fca2260c67fc9933369322`, versionCode `72739`.
 
 ## Open items
 - Owner device test: login, incoming messages, notifications, Ghost Mode vs explicit Mark as read,
