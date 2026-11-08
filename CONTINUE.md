@@ -1,3 +1,43 @@
+# BerryGram continuation — Android 1.4.0 RC 1
+
+## State
+
+- Branch `feature/berrygram-1.4.0-stable` (from `feature/berrygram-1.4.0-beta2` @ `5ed25a4`),
+  checkpoint tag `checkpoint/pre-1.4.0-stable`.
+- Version `1.4.0-rc.1`, versionCode `72749` (arm64). Published Beta 2 is `72739`.
+- Release candidate APK is built and verified; it is NOT published. The owner tests it on the
+  phone with `docs/1.4.0-rc.1-device-checklist.md`.
+
+## Milestones completed in this cycle
+
+1. Deleted messages are captured with their text and restored into the chat after a restart.
+2. Edit history records versions deterministically through a per-account text cache.
+3. Ghost reading also hides mentions, reactions and read message contents.
+4. Owner provided Firebase configuration can be injected at build time; diagnostics explains the
+   missing configuration.
+5. Archive reads and search run off the UI thread.
+6. The performance profile also stops the embedded round video preview.
+7. Invalid resource escapes in the fork strings are fixed and covered by a regression test.
+
+## Tests
+
+- Debug Kotlin/Java compilation: success.
+- `fork-tests/smoke.ps1`: success (incl. `ForkArchivedRestorePolicyTest`, extended
+  `StealthPolicyTest`, `UpdatePolicyTest` release candidate ordering).
+- `fork-tests/test_berrygram_resources.py`, `test_release_scope.py`,
+  `test_fork_string_escapes.py`: success.
+- Release build with R8 and injected credentials: success, APK verified.
+
+## Next
+
+1. Owner installs the release candidate and works through the device checklist.
+2. Owner creates the Firebase project and puts `google-services.json` into `.fork-local/`, then a
+   new build enables remote push; this is the only remaining blocker for the notification goal.
+3. After the device feedback, decide whether 1.4.0 Stable can be published; the Stable release
+   needs its own version code (`7275` → `72759`) and a normal (not pre-release) GitHub release.
+4. 1.4.1 starts only after 1.4.0 is finished: quick Ghost Mode button, full archive import and
+   update, improved translation, targeted performance work.
+
 # BerryGram continuation — Android 1.4.0 Beta 2
 
 ## State
