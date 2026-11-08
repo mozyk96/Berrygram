@@ -11,6 +11,13 @@
   follows the installed build, the checksum is resolved from the release `SHA256SUMS` file when the
   API has no digest, and the update panel strings are free of mojibake.
 
+- Published release: https://github.com/mozyk96/Berrygram/releases/tag/v1.4.0
+  (normal release, not a pre-release), asset
+  `BerryGram-1.4.0-arm64-v8a.apk`, SHA-256
+  `515d554ea740607d8b2672918afde6692e9ca7bd4ac6dabec951ec7c25dae8bf`, tag `v1.4.0`.
+- The live updater test was executed after the publication and finds 1.4.0 on the stable and on
+  the beta channel, so the in-app update centre discovers the published release.
+
 ## Tests
 
 - Debug and release compilation: success.

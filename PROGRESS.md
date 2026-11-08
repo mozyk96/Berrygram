@@ -12,6 +12,15 @@
   (identical to the published Stable, so the update installs in place), v1 and v2 signatures,
   `zipalign -c -P 16` passed, credential present in the release dex, no keystore packaged.
 
+- Release published as a normal GitHub Release (not a pre-release):
+  https://github.com/mozyk96/Berrygram/releases/tag/v1.4.0
+  Direct APK: https://github.com/mozyk96/Berrygram/releases/download/v1.4.0/BerryGram-1.4.0-arm64-v8a.apk
+  (41918713 bytes, SHA-256 `515d554ea740607d8b2672918afde6692e9ca7bd4ac6dabec951ec7c25dae8bf`),
+  plus the `SHA256SUMS` asset. Tag `v1.4.0` points at the release source commit.
+- After the publication the live updater test finds the new release on both channels:
+  stable channel 1.4.0, beta channel 1.4.0, both with a verifiable checksum. The published
+  asset was downloaded again (HTTP 200, 206 ranged) and its SHA-256 matches the release digest.
+
 ## Updater corrections in 1.4.0
 
 - An older stable release is no longer offered as an update to beta or release candidate builds.
