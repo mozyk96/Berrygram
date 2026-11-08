@@ -24,6 +24,23 @@ public final class StealthPolicy {
     }
 
     /**
+     * Read receipts requested explicitly by the user are never suppressed,
+     * otherwise the unread state of a chat could never be cleared.
+     */
+    public static boolean shouldSuppressRead(
+            boolean ghostModeEnabled,
+            boolean stealthPrivate,
+            boolean stealthGroups,
+            boolean isChannelOrGroup,
+            boolean isEncrypted,
+            boolean forced) {
+        if (forced) {
+            return false;
+        }
+        return shouldSuppressRead(ghostModeEnabled, stealthPrivate, stealthGroups, isChannelOrGroup, isEncrypted);
+    }
+
+    /**
      * Validates whether a dialog ID is eligible for ghost mode operations.
      */
     public static boolean isEligible(long dialogId, boolean isEncrypted) {

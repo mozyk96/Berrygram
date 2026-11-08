@@ -3600,10 +3600,12 @@ public class StatisticActivity extends BaseFragment implements NotificationCente
     }
 
     public void selectTab(int position, boolean animated) {
-        for (int a = 0; a < tabs.length; a++) {
-            GlassTabView tab = tabs[a];
-            tab.setSelected(a == position, animated);
+        if (tabsView == null || tabs == null) {
+            return;
         }
+
+        final GlassTabView selectedTab = position >= 0 && position < tabs.length ? tabs[position] : null;
+        tabsView.setTabSelected(selectedTab, animated);
     }
 
     public void setGestureSelectedOverride(float animatedPosition, boolean allow) {

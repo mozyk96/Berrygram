@@ -26791,7 +26791,7 @@ public class ChatActivity extends BaseFragment implements
                         updatedSelected = true;
                         addToSelectedMessages(obj, false, updatedSelectedLast = (a == size - 1));
                     }
-                    if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled() && !sent && !obj.scheduled && chatMode != MODE_SCHEDULED) {
+                    if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount) && !sent && !obj.scheduled && chatMode != MODE_SCHEDULED) {
                         obj.isForkDeleted = true;
                         org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).recordDeletedMessage(dialog_id, obj.getId(), currentTime);
                         if (chatAdapter != null) {
@@ -31501,9 +31501,9 @@ public class ChatActivity extends BaseFragment implements
             final boolean isReactionsAvailableFinal = !suggestEdit && isReactionsAvailable;
 
             int flags = 0;
-            if (isReactionsViewAvailable || showMessageSeen || showSponsorInfo
-                    || org.telegram.messenger.fork.actions.ActionMenuSettings.hasHidden(currentAccount)) {
-                // The custom More page lives inside the popup swipe-back container.
+            if (isReactionsViewAvailable || showMessageSeen || showSponsorInfo) {
+                // The reactions and sponsor pages live inside the popup swipe-back container.
+                // Hidden BerryGram menu actions no longer create a "More" page.
                 flags |= ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK;
             }
 
@@ -31515,12 +31515,23 @@ public class ChatActivity extends BaseFragment implements
             popupLayout.setBackgroundColor(getThemedColor(Theme.key_actionBarDefaultSubmenuBackground));
             MessageSeenView messageSeenView = null;
 
-            updateScrimSourceBitmap();
-
-            popupLayout.setBackground(scrimBlur3Factory.create(popupLayout, true)
-                .setColorProvider(BlurredBackgroundProviderImpl.messageMenuBackground(resourceProvider))
-                .setRadius(dp(org.telegram.messenger.fork.panels.ForkPanelSettings.enabled() ? 18 : 12))
-                .setPadding(dp(8)));
+            final String forkMenuStyle = org.telegram.ui.ForkGraphicsSurface.effectiveStyle();
+            final int forkMenuSurface = org.telegram.messenger.fork.panels.MenuSurfacePolicy.surface(forkMenuStyle);
+            final int forkMenuRadius = dp(org.telegram.messenger.fork.panels.PanelPolicy.surfaceRadiusDp(
+                    forkMenuStyle, org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp()));
+            if (forkMenuSurface == org.telegram.messenger.fork.panels.MenuSurfacePolicy.OPAQUE) {
+                // No Effects: an opaque, theme-aware surface with no backdrop capture at all.
+                popupLayout.setBackground(Theme.createRoundRectDrawable(forkMenuRadius,
+                        getThemedColor(Theme.key_actionBarDefaultSubmenuBackground)));
+            } else {
+                updateScrimSourceBitmap();
+                popupLayout.setBackground(scrimBlur3Factory.create(popupLayout, true)
+                    .setColorProvider(forkMenuSurface == org.telegram.messenger.fork.panels.MenuSurfacePolicy.GLASS
+                            ? ForkGlassSurface.provider(resourceProvider)
+                            : BlurredBackgroundProviderImpl.messageMenuBackground(resourceProvider))
+                    .setRadius(forkMenuRadius)
+                    .setPadding(dp(8)));
+            }
 
             boolean addGap = false;
 
@@ -32264,31 +32275,8 @@ public class ChatActivity extends BaseFragment implements
                     }
                 }
                 final org.telegram.messenger.fork.actions.ActionMenuPolicy.Plan forkMenuPlan = org.telegram.messenger.fork.actions.ActionMenuSettings.plan(currentAccount, options);
-                final java.util.ArrayList<Integer> forkMoreIndices = new java.util.ArrayList<>(forkMenuPlan.moreIndices);
-                if (selectedObject != null && showWelcomeMessageRevertOption(selectedObject)) {
-                    forkMoreIndices.removeIf(index -> options.get(index) == OPTION_DELETE);
-                }
-                scrimPopupWindowItems = new ActionBarMenuSubItem[items.size() + (forkMoreIndices.isEmpty() ? 0 : 1)];
-                final LinearLayout forkMorePage = forkMoreIndices.isEmpty() ? null : new LinearLayout(getParentActivity());
-                final java.util.HashSet<Integer> forkHiddenIndices = new java.util.HashSet<>(forkMoreIndices);
                 final java.util.ArrayList<Integer> forkMenuIndices = new java.util.ArrayList<>(forkMenuPlan.mainIndices);
-                forkMenuIndices.addAll(forkMoreIndices);
-                if (forkMorePage != null) {
-                    forkMorePage.setOrientation(LinearLayout.VERTICAL);
-                    ActionBarMenuSubItem back = new ActionBarMenuSubItem(getParentActivity(), true, false, themeDelegate);
-                    back.setTextAndIcon(LocaleController.getString(R.string.Back), R.drawable.ic_ab_back);
-                    forkMorePage.addView(back);
-                    back.setOnClickListener(v1 -> popupLayout.getSwipeBack().closeForeground());
-                    android.widget.ScrollView moreScroll = new android.widget.ScrollView(getParentActivity());
-                    moreScroll.setFillViewport(false);
-                    moreScroll.addView(forkMorePage);
-                    final int morePageIndex = popupLayout.addViewToSwipeBack(moreScroll);
-                    ActionBarMenuSubItem more = new ActionBarMenuSubItem(getParentActivity(), true, false, themeDelegate);
-                    more.setTextAndIcon(ForkLocale.get(R.string.ForkMenuEditorMore), R.drawable.msg_settings);
-                    popupLayout.addView(more);
-                    scrimPopupWindowItems[0] = more;
-                    more.setOnClickListener(v1 -> popupLayout.getSwipeBack().openForeground(morePageIndex));
-                }
+                scrimPopupWindowItems = new ActionBarMenuSubItem[forkMenuIndices.size()];
                 for (int position = 0, N = forkMenuIndices.size(); position < N; position++) {
                     final int a = forkMenuIndices.get(position);
                     final Integer option = options.get(a);
@@ -32326,12 +32314,11 @@ public class ChatActivity extends BaseFragment implements
                             cell.setSubtextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText6));
                         }
                     }
-                    scrimPopupWindowItems[position + (forkMoreIndices.isEmpty() ? 0 : 1)] = cell;
+                    scrimPopupWindowItems[position] = cell;
                     if (option == OPTION_REMOVE_ADS) {
                         popupLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
                     }
-                    if (forkHiddenIndices.contains(a)) forkMorePage.addView(cell);
-                    else popupLayout.addView(cell);
+                    popupLayout.addView(cell);
                     final int i = a;
                     cell.setOnClickListener(v1 -> {
                         if (selectedObject == null || i >= options.size()) {
@@ -32589,8 +32576,12 @@ public class ChatActivity extends BaseFragment implements
             } else {
                 final boolean tags = getUserConfig().getClientUserId() == getDialogId();
                 reactionsLayout = new ReactionsContainerLayout(tags ? ReactionsContainerLayout.TYPE_TAGS : ReactionsContainerLayout.TYPE_DEFAULT, ChatActivity.this, contentView.getContext(), currentAccount, getResourceProvider());
-                reactionsLayout.setBackgroundFactory(scrimBlur3Factory,
-                        ForkGlassSurface.wrap(BlurredBackgroundProviderImpl.messageMenuReactionsBackground(resourceProvider)));
+                if (forkMenuSurface != org.telegram.messenger.fork.panels.MenuSurfacePolicy.OPAQUE) {
+                    reactionsLayout.setBackgroundFactory(scrimBlur3Factory,
+                            forkMenuSurface == org.telegram.messenger.fork.panels.MenuSurfacePolicy.GLASS
+                                    ? ForkGlassSurface.wrap(BlurredBackgroundProviderImpl.messageMenuReactionsBackground(resourceProvider))
+                                    : BlurredBackgroundProviderImpl.messageMenuReactionsBackground(resourceProvider));
+                }
                 if (tags) {
                     reactionsLayout.setHint(getUserConfig().isPremium() ? LocaleController.getString(R.string.SavedTagReactionsHint2) : AndroidUtilities.replaceSingleTag(LocaleController.getString(R.string.SavedTagReactionsPremiumHint), Theme.key_windowBackgroundWhiteBlueText2, 0, () -> {
                         closeMenu(false);
@@ -46437,11 +46428,11 @@ public class ChatActivity extends BaseFragment implements
                     options.add(OPTION_EDIT);
                     icons.add(R.drawable.msg_edit);
                 }
-                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.editHistoryEnabled()
-                        && org.telegram.messenger.fork.stealth.ForkStealthSettings.showEditInMenu()
+                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.editHistoryEnabled(currentAccount)
+                        && org.telegram.messenger.fork.stealth.ForkStealthSettings.showEditInMenu(currentAccount)
                         && selectedObject != null
                         && org.telegram.messenger.fork.storage.ForkEditHistoryStorage.getInstance(currentAccount).hasEdits(dialog_id, selectedObject.getId())) {
-                    items.add(LocaleController.getString(R.string.ForkEditHistoryMenu));
+                    items.add(ForkLocale.get(R.string.ForkEditHistoryMenu));
                     options.add(OPTION_FORK_EDIT_HISTORY);
                     icons.add(R.drawable.msg_log);
                 }

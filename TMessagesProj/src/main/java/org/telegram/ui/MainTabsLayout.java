@@ -263,12 +263,27 @@ public class MainTabsLayout extends AnimatedLinearLayout {
         super.onLayout(changed, l, t, r, b);
         checkVisualWidth();
         setSkipDrawSelector(true);
-        if (animatedLongSelectedViewCenterX == 0) {
-            View selected = findSelectedTab();
-            if (selected != null && selected.getWidth() > 0) {
-                animatedLongSelectedViewCenterX = selected.getX() + selected.getWidth() / 2f;
-            }
-        }
+        syncSelectedTabIndicator();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        setSkipDrawSelector(true);
+        removeCallbacks(syncSelectedTabIndicatorRunnable);
+        post(syncSelectedTabIndicatorRunnable);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        removeCallbacks(syncSelectedTabIndicatorRunnable);
+        selectedTabPositionOffsetX.cancel();
+        selectedTabPositionX.cancel();
+        elongationAnim.cancel();
+        animatedLongSelectedViewOffsetX = 0;
+        indicatorElongation = 0;
+        isInLongPress = false;
+        super.onDetachedFromWindow();
     }
 
     @Override
@@ -316,21 +331,53 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             }
         }
         setSkipDrawSelector(true);
+        if (!isInLongPress) {
+            selectedTabPositionOffsetX.cancel();
+            animatedLongSelectedViewOffsetX = 0;
+        }
         if (tab != null && tab.getWidth() > 0) {
             final float targetX = tab.getX() + tab.getWidth() / 2f;
             if (animated && animatedLongSelectedViewCenterX > 0) {
-                float dist = Math.abs(targetX - animatedLongSelectedViewCenterX);
-                float stretch = Math.min(AndroidUtilities.dp(16), dist * 0.20f);
-                indicatorElongation = stretch;
+                final float dist = Math.abs(targetX - animatedLongSelectedViewCenterX);
+                final float stretch = Math.min(AndroidUtilities.dp(16), dist * 0.20f);
+                selectedTabPositionX.cancel();
                 elongationAnim.cancel();
+                indicatorElongation = stretch;
                 elongationAnim.setStartValue(stretch);
                 elongationAnim.animateToFinalPosition(0f);
                 selectedTabPositionX.animateToFinalPosition(targetX);
             } else {
+                selectedTabPositionX.cancel();
+                elongationAnim.cancel();
                 animatedLongSelectedViewCenterX = targetX;
                 indicatorElongation = 0;
                 invalidate();
             }
+        }
+    }
+
+    private final Runnable syncSelectedTabIndicatorRunnable = this::syncSelectedTabIndicator;
+
+    private void syncSelectedTabIndicator() {
+        if (isInLongPress) {
+            return;
+        }
+        final View selected = findSelectedTab();
+        if (selected == null || selected.getWidth() <= 0) {
+            return;
+        }
+
+        final float targetX = selected.getX() + selected.getWidth() / 2f;
+        if (selectedTabPositionX.isRunning()) {
+            selectedTabPositionX.animateToFinalPosition(targetX);
+        } else if (Math.abs(animatedLongSelectedViewCenterX - targetX) > 0.5f) {
+            selectedTabPositionOffsetX.cancel();
+            selectedTabPositionX.cancel();
+            elongationAnim.cancel();
+            animatedLongSelectedViewOffsetX = 0;
+            animatedLongSelectedViewCenterX = targetX;
+            indicatorElongation = 0;
+            invalidate();
         }
     }
 
@@ -342,15 +389,13 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             }
 
             if (child instanceof GlassTabView) {
-                if (((GlassTabView) child).isTabSelected()) {
+                if (child.isSelected()) {
                     return child;
                 }
             }
         }
         return null;
     }
-
-    private final Runnable restoreDrawSelector = () -> setSkipDrawSelector(false);
 
     private boolean drawCustomSelector;
     private void setSkipDrawSelector(boolean skipDrawSelector) {
@@ -536,7 +581,6 @@ public class MainTabsLayout extends AnimatedLinearLayout {
         public boolean onLongPressRequestedAt(View view, float x, float y) {
             checkPivot(view, x, y);
             isInLongPress = true;
-            AndroidUtilities.cancelRunOnUIThread(restoreDrawSelector);
             setSkipDrawSelector(true);
             checkLongMove(x, y, true, false);
             invalidate();
@@ -561,7 +605,7 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             checkPivot(view, x, y);
             checkLongMove(x, y, false, true);
             isInLongPress = false;
-            AndroidUtilities.runOnUIThread(restoreDrawSelector, 450);
+            setSkipDrawSelector(true);
             if (lastLongSelectedView != null) {
                 lastLongSelectedView.performClick();
             }
@@ -575,7 +619,7 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             checkPivot(view, x, y);
             checkLongMove(x, y, false, true);
             isInLongPress = false;
-            AndroidUtilities.runOnUIThread(restoreDrawSelector, 450);
+            setSkipDrawSelector(true);
             lastLongSelectedView = null;
             invalidate();
             longTouchEnd();

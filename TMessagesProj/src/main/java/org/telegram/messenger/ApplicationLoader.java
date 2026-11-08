@@ -249,7 +249,7 @@ public class ApplicationLoader extends Application {
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
             UserConfig.getInstance(a).loadConfig();
             MessagesController.getInstance(a);
-            if (a == 0) {
+            if (a == 0 && PushListenerController.isFirebaseConfigured(applicationContext)) {
                 SharedConfig.pushStringStatus = "__FIREBASE_GENERATING_SINCE_" + ConnectionsManager.getInstance(a).getCurrentTime() + "__";
             } else {
                 ConnectionsManager.getInstance(a);
@@ -354,6 +354,10 @@ public class ApplicationLoader extends Application {
 
         LauncherIconController.tryFixLauncherIconIfNeeded();
         ProxyRotationController.init();
+        try {
+            org.telegram.messenger.fork.storage.ForkStorageMaintenance.runScheduledCleanup();
+        } catch (Throwable ignored) {
+        }
 
         //if (BuildConfig.DEBUG_PRIVATE_VERSION) {
         //    Choreographer60FpsContent.getInstance().addFrameCallback(debugEverySecondChecks, 1);
@@ -398,14 +402,20 @@ public class ApplicationLoader extends Application {
 
     private void initPushServices() {
         AndroidUtilities.runOnUIThread(() -> {
-            if (getPushProvider().hasServices()) {
-                getPushProvider().onRequestPushToken();
-            } else {
+            if (!getPushProvider().hasServices()) {
                 if (BuildVars.LOGS_ENABLED) {
                     FileLog.d("No valid " + getPushProvider().getLogTitle() + " APK found.");
                 }
                 SharedConfig.pushStringStatus = "__NO_GOOGLE_PLAY_SERVICES__";
                 PushListenerController.sendRegistrationToServer(getPushProvider().getPushType(), null);
+            } else if (!PushListenerController.isFirebaseConfigured(applicationContext)) {
+                if (BuildVars.LOGS_ENABLED) {
+                    FileLog.d("No fork-owned Firebase configuration; remote push is disabled.");
+                }
+                SharedConfig.pushStringStatus = "__FIREBASE_NOT_CONFIGURED__";
+                PushListenerController.sendRegistrationToServer(getPushProvider().getPushType(), null);
+            } else {
+                getPushProvider().onRequestPushToken();
             }
         }, 1000);
     }

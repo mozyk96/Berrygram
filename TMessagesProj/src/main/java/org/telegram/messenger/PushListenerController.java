@@ -46,6 +46,22 @@ public class PushListenerController {
     public static final int NOTIFICATION_ID = 1;
     private static CountDownLatch countDownLatch = new CountDownLatch(1);
 
+    /**
+     * A push token cannot be issued without a Firebase app id that belongs to this
+     * exact package. Android-only builds intentionally ship without one.
+     */
+    public static boolean isFirebaseConfigured(android.content.Context context) {
+        if (context == null) {
+            return false;
+        }
+        try {
+            int id = context.getResources().getIdentifier("google_app_id", "string", context.getPackageName());
+            return id != 0 && !TextUtils.isEmpty(context.getString(id));
+        } catch (Throwable error) {
+            return false;
+        }
+    }
+
     public static void sendRegistrationToServer(@PushType int pushType, String token) {
         Utilities.stageQueue.postRunnable(() -> {
             ConnectionsManager.setRegId(token, pushType, SharedConfig.pushStringStatus);
@@ -1801,6 +1817,14 @@ public class PushListenerController {
 
         @Override
         public void onRequestPushToken() {
+            if (!isFirebaseConfigured(ApplicationLoader.applicationContext)) {
+                if (BuildVars.LOGS_ENABLED) {
+                    FileLog.d("FCM is not configured for this package; skipping token request.");
+                }
+                SharedConfig.pushStringStatus = "__FIREBASE_NOT_CONFIGURED__";
+                PushListenerController.sendRegistrationToServer(getPushType(), null);
+                return;
+            }
             String currentPushString = SharedConfig.pushString;
             if (!TextUtils.isEmpty(currentPushString)) {
                 if (BuildVars.DEBUG_PRIVATE_VERSION && BuildVars.LOGS_ENABLED) {
@@ -1832,6 +1856,7 @@ public class PushListenerController {
                                 }
                             });
                 } catch (Throwable e) {
+                    SharedConfig.pushStringStatus = "__FIREBASE_FAILED__";
                     FileLog.e(e);
                 }
             });

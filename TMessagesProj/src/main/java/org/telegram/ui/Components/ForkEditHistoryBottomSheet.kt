@@ -11,6 +11,7 @@ import org.telegram.messenger.LocaleController
 import org.telegram.messenger.R
 import org.telegram.messenger.fork.storage.ForkEditHistoryStorage
 import org.telegram.ui.ActionBar.BaseFragment
+import org.telegram.ui.ForkLocale
 import org.telegram.ui.ActionBar.BottomSheet
 import org.telegram.ui.ActionBar.Theme
 
@@ -41,7 +42,7 @@ class ForkEditHistoryBottomSheet(
         }
 
         val titleView = TextView(context).apply {
-            text = LocaleController.getString(R.string.ForkEditHistoryTitle)
+            text = ForkLocale.get(R.string.ForkEditHistoryTitle)
             setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20f)
             typeface = AndroidUtilities.bold()
             setTextColor(getThemedColor(Theme.key_dialogTextBlack))
@@ -57,7 +58,7 @@ class ForkEditHistoryBottomSheet(
         addRevisionCard(
             context,
             revisionsList,
-            LocaleController.getString(R.string.ForkEditHistoryCurrent),
+            ForkLocale.get(R.string.ForkEditHistoryCurrent),
             currentText ?: "",
             true
         )

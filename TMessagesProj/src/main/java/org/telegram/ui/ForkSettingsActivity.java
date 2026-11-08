@@ -44,9 +44,14 @@ public final class ForkSettingsActivity extends BaseFragment {
         ForkSettingsLayout.addCard(content, performance);
         TextDetailSettingsCell stealth = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(stealth);
-        stealth.setTextAndValueAndIcon(LocaleController.getString(R.string.ForkStealthTitle), LocaleController.getString(R.string.ForkStealthSubtitle), R.drawable.msg_secret, false);
+        stealth.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkStealthTitle), ForkLocale.get(R.string.ForkStealthSubtitle), R.drawable.msg_secret, false);
         stealth.setOnClickListener(v -> presentFragment(new ForkStealthSettingsActivity()));
         ForkSettingsLayout.addCard(content, stealth);
+        TextDetailSettingsCell notifications = new TextDetailSettingsCell(context);
+        ForkSettingsLayout.interactive(notifications);
+        notifications.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkNotificationTitle), ForkLocale.get(R.string.ForkNotificationSubtitle), R.drawable.msg_notifications, false);
+        notifications.setOnClickListener(v -> presentFragment(new ForkNotificationDiagnosticsActivity()));
+        ForkSettingsLayout.addCard(content, notifications);
         TextDetailSettingsCell video = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(video);
         video.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkVideoTitle), ForkLocale.get(R.string.ForkVideoSubtitle), R.drawable.msg_video, false);
@@ -71,7 +76,7 @@ public final class ForkSettingsActivity extends BaseFragment {
         ForkSettingsLayout.interactive(messageMenu);
         messageMenu.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkMenuEditorTitle), ForkLocale.get(R.string.ForkMenuEditorPreview), R.drawable.msg_settings, false);
         messageMenu.setOnClickListener(v -> presentFragment(new ForkMessageMenuSettingsActivity())); ForkSettingsLayout.addCard(content, messageMenu);
-        accentCells = new TextDetailSettingsCell[]{appearance, performance, stealth, video, voice, text, gestures, reactions, messageMenu};
+        accentCells = new TextDetailSettingsCell[]{appearance, performance, stealth, notifications, video, voice, text, gestures, reactions, messageMenu};
         updateAccent(context);
         LinearLayout updates = ForkSettingsLayout.section(context);
         updater = new ForkUpdaterPanel(context, this); updates.addView(updater);

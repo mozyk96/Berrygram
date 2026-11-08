@@ -40,7 +40,7 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
-        actionBar.setTitle(LocaleController.getString(R.string.ForkPerformanceTitle));
+        actionBar.setTitle(ForkLocale.get(R.string.ForkPerformanceTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
@@ -54,8 +54,8 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
 
         // Scan Hardware Button
         scanButtonRow = new TextSettingsCell(context);
-        scanButtonRow.setTextAndValue(LocaleController.getString(R.string.ForkDeviceScan),
-                LocaleController.getString(R.string.ForkDeviceScanAction), false);
+        scanButtonRow.setTextAndValue(ForkLocale.get(R.string.ForkDeviceScan),
+                ForkLocale.get(R.string.ForkDeviceScanAction), false);
         scanButtonRow.setIcon(R.drawable.msg_settings);
         ForkSettingsLayout.interactive(scanButtonRow);
         scanButtonRow.setOnClickListener(v -> scanDeviceAndShowResult(context));
@@ -63,34 +63,34 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
 
         // Performance Mode (Automatic vs Manual)
         configModeRow = new TextSettingsCell(context);
-        configModeRow.setTextAndValue(LocaleController.getString(R.string.ForkPerformanceConfigMode), "", false);
+        configModeRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceConfigMode), "", false);
         ForkSettingsLayout.interactive(configModeRow);
         configModeRow.setOnClickListener(this::chooseConfigMode);
         rows.addView(configModeRow);
 
         // Manual Level Selector (Low, Medium, High)
         manualLevelRow = new TextSettingsCell(context);
-        manualLevelRow.setTextAndValue(LocaleController.getString(R.string.ForkPerformanceManualLevel), "", false);
+        manualLevelRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceManualLevel), "", false);
         ForkSettingsLayout.interactive(manualLevelRow);
         manualLevelRow.setOnClickListener(this::chooseManualLevel);
         rows.addView(manualLevelRow);
 
         liteModeRow = new TextSettingsCell(context);
-        liteModeRow.setTextAndValue(LocaleController.getString(R.string.ForkPerformanceLiteMode),
-                LocaleController.getString(R.string.ForkPerformanceLiteModeValue), true);
+        liteModeRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceLiteMode),
+                ForkLocale.get(R.string.ForkPerformanceLiteModeValue), true);
         ForkSettingsLayout.interactive(liteModeRow);
         liteModeRow.setOnClickListener(v -> presentFragment(new LiteModeSettingsActivity()));
         rows.addView(liteModeRow);
 
         cacheRow = new TextSettingsCell(context);
-        cacheRow.setTextAndValue(LocaleController.getString(R.string.ForkPerformanceStorage),
-                LocaleController.getString(R.string.ForkPerformanceStorageValue), true);
+        cacheRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceStorage),
+                ForkLocale.get(R.string.ForkPerformanceStorageValue), true);
         ForkSettingsLayout.interactive(cacheRow);
         cacheRow.setOnClickListener(v -> presentFragment(new CacheControlActivity()));
         rows.addView(cacheRow);
 
         TextSettingsCell reset = new TextSettingsCell(context);
-        reset.setText(LocaleController.getString(R.string.ForkPerformanceReset), false);
+        reset.setText(ForkLocale.get(R.string.ForkPerformanceReset), false);
         ForkSettingsLayout.interactive(reset);
         reset.setOnClickListener(v -> {
             PerformanceSettings.reset();
@@ -101,7 +101,7 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
 
         LinearLayout diagnostics = ForkSettingsLayout.section(context);
         TextSettingsCell title = new TextSettingsCell(context);
-        title.setText(LocaleController.getString(R.string.ForkPerformanceDiagnostics), true);
+        title.setText(ForkLocale.get(R.string.ForkPerformanceDiagnostics), true);
         diagnostics.addView(title);
         for (int i = 0; i < DIAG_COUNT; i++) {
             TextSettingsCell cell = new TextSettingsCell(context);
@@ -110,14 +110,14 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
             diagnostics.addView(cell);
         }
         copyDiagnosticsRow = new TextSettingsCell(context);
-        copyDiagnosticsRow.setText(LocaleController.getString(R.string.ForkPerformanceCopyDiagnostics), true);
+        copyDiagnosticsRow.setText(ForkLocale.get(R.string.ForkPerformanceCopyDiagnostics), true);
         ForkSettingsLayout.interactive(copyDiagnosticsRow);
         copyDiagnosticsRow.setOnClickListener(v -> copyDiagnostics());
         diagnostics.addView(copyDiagnosticsRow);
         ForkSettingsLayout.addSection(page, diagnostics);
 
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
-        info.setText(LocaleController.getString(R.string.ForkPerformanceInfoUnified));
+        info.setText(ForkLocale.get(R.string.ForkPerformanceInfoUnified));
         page.addView(info);
 
         ScrollView scroll = new ScrollView(context);
@@ -130,8 +130,8 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
 
     private void chooseConfigMode(View anchor) {
         CharSequence[] labels = {
-                LocaleController.getString(R.string.ForkPerformanceAutoMode),
-                LocaleController.getString(R.string.ForkPerformanceManualMode)
+                ForkLocale.get(R.string.ForkPerformanceAutoMode),
+                ForkLocale.get(R.string.ForkPerformanceManualMode)
         };
         String[] values = {PerformancePolicy.CONFIG_AUTO, PerformancePolicy.CONFIG_MANUAL};
         int selected = PerformancePolicy.CONFIG_MANUAL.equals(PerformanceSettings.configMode()) ? 1 : 0;
@@ -143,9 +143,9 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
 
     private void chooseManualLevel(View anchor) {
         CharSequence[] labels = {
-                LocaleController.getString(R.string.ForkPerformanceLevelLow),
-                LocaleController.getString(R.string.ForkPerformanceLevelMedium),
-                LocaleController.getString(R.string.ForkPerformanceLevelHigh)
+                ForkLocale.get(R.string.ForkPerformanceLevelLow),
+                ForkLocale.get(R.string.ForkPerformanceLevelMedium),
+                ForkLocale.get(R.string.ForkPerformanceLevelHigh)
         };
         String[] values = {PerformancePolicy.LEVEL_LOW, PerformancePolicy.LEVEL_MEDIUM, PerformancePolicy.LEVEL_HIGH};
         int selected = Arrays.asList(values).indexOf(PerformanceSettings.manualLevel());
@@ -161,25 +161,25 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
         DeviceAnalyzerPolicy.Assessment assessment = ForkDeviceAnalyzer.getAssessment(true);
 
         StringBuilder sb = new StringBuilder();
-        sb.append(LocaleController.getString(R.string.ForkDeviceSpecsCpu)).append(": ")
+        sb.append(ForkLocale.get(R.string.ForkDeviceSpecsCpu)).append(": ")
                 .append(specs.cpuCores).append(" cores @ ").append(specs.maxCpuFreqMhz).append(" MHz\n");
-        sb.append(LocaleController.getString(R.string.ForkDeviceSpecsGpu)).append(": ")
+        sb.append(ForkLocale.get(R.string.ForkDeviceSpecsGpu)).append(": ")
                 .append(TextUtils.isEmpty(specs.gpuRenderer) ? "Unknown" : specs.gpuRenderer).append("\n");
-        sb.append(LocaleController.getString(R.string.ForkDeviceSpecsRam)).append(": ")
+        sb.append(ForkLocale.get(R.string.ForkDeviceSpecsRam)).append(": ")
                 .append(String.format(Locale.US, "%.1f GB", specs.totalRamBytes / (1024.0 * 1024.0 * 1024.0))).append("\n");
-        sb.append(LocaleController.getString(R.string.ForkDeviceSpecsDisplay)).append(": ")
+        sb.append(ForkLocale.get(R.string.ForkDeviceSpecsDisplay)).append(": ")
                 .append(specs.screenWidth).append("x").append(specs.screenHeight)
                 .append(" @ ").append((int) specs.refreshRate).append(" Hz\n");
-        sb.append(LocaleController.getString(R.string.ForkDeviceSpecsAndroid)).append(": ")
+        sb.append(ForkLocale.get(R.string.ForkDeviceSpecsAndroid)).append(": ")
                 .append("API ").append(specs.apiLevel).append("\n\n");
-        sb.append(LocaleController.getString(R.string.ForkDeviceAssessedTier)).append(": ")
+        sb.append(ForkLocale.get(R.string.ForkDeviceAssessedTier)).append(": ")
                 .append(tierLabel(assessment.tier).toUpperCase(Locale.ROOT)).append(" (")
                 .append(assessment.score).append("/100)\n\n");
-        sb.append(LocaleController.getString(R.string.ForkDeviceAssessmentReason)).append(":\n")
+        sb.append(ForkLocale.get(R.string.ForkDeviceAssessmentReason)).append(":\n")
                 .append(assessment.reason);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(LocaleController.getString(R.string.ForkDeviceScanResults));
+        builder.setTitle(ForkLocale.get(R.string.ForkDeviceScanResults));
         builder.setMessage(sb.toString());
         builder.setPositiveButton(LocaleController.getString(R.string.OK), null);
         showDialog(builder.create());
@@ -189,25 +189,25 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
     private void refresh() {
         if (configModeRow == null) return;
         boolean isManual = PerformancePolicy.CONFIG_MANUAL.equals(PerformanceSettings.configMode());
-        configModeRow.setTextAndValue(LocaleController.getString(R.string.ForkPerformanceConfigMode),
+        configModeRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceConfigMode),
                 LocaleController.getString(isManual ? R.string.ForkPerformanceManualMode : R.string.ForkPerformanceAutoMode), false);
 
         manualLevelRow.setVisibility(isManual ? View.VISIBLE : View.GONE);
-        manualLevelRow.setTextAndValue(LocaleController.getString(R.string.ForkPerformanceManualLevel),
+        manualLevelRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceManualLevel),
                 tierLabel(PerformanceSettings.manualLevel()), false);
 
         DeviceAnalyzerPolicy.Assessment assessment = ForkDeviceAnalyzer.getAssessment(false);
-        diagnosticRows[0].setTextAndValue(LocaleController.getString(R.string.ForkPerformanceDeviceClass),
+        diagnosticRows[0].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceDeviceClass),
                 tierLabel(assessment.tier) + " (" + assessment.score + " pts)", false);
-        diagnosticRows[1].setTextAndValue(LocaleController.getString(R.string.ForkPerformanceEffectiveTier),
+        diagnosticRows[1].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceEffectiveTier),
                 tierLabel(PerformanceSettings.effectiveTier()), false);
-        diagnosticRows[2].setTextAndValue(LocaleController.getString(R.string.ForkPerformancePowerSaver),
+        diagnosticRows[2].setTextAndValue(ForkLocale.get(R.string.ForkPerformancePowerSaver),
                 LocaleController.getString(PerformanceSettings.systemPowerSaver() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
-        diagnosticRows[3].setTextAndValue(LocaleController.getString(R.string.ForkPerformanceGraphics),
+        diagnosticRows[3].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceGraphics),
                 styleLabel(), false);
-        diagnosticRows[4].setTextAndValue(LocaleController.getString(R.string.ForkPerformanceAnimations),
+        diagnosticRows[4].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceAnimations),
                 LocaleController.getString(ForkSurfaceAnimation.enabled() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
-        diagnosticRows[5].setTextAndValue(LocaleController.getString(R.string.ForkPerformanceReduceEffectsActive),
+        diagnosticRows[5].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceReduceEffectsActive),
                 LocaleController.getString(PerformanceSettings.reduceEffects() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
     }
 
@@ -226,30 +226,30 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
         AndroidUtilities.addToClipboard(text.toString());
         if (getParentActivity() != null) {
             org.telegram.ui.Components.BulletinFactory.of(this)
-                    .createSimpleBulletin(R.raw.copy, LocaleController.getString(R.string.ForkPerformanceDiagnosticsCopied))
+                    .createSimpleBulletin(R.raw.copy, ForkLocale.get(R.string.ForkPerformanceDiagnosticsCopied))
                     .show();
         }
     }
 
     private static String tierLabel(String tier) {
         if (PerformancePolicy.LEVEL_LOW.equals(tier) || DeviceAnalyzerPolicy.TIER_LOW.equals(tier)) {
-            return LocaleController.getString(R.string.ForkPerformanceLevelLow);
+            return ForkLocale.get(R.string.ForkPerformanceLevelLow);
         } else if (DeviceAnalyzerPolicy.TIER_LOW_MEDIUM.equals(tier)) {
-            return LocaleController.getString(R.string.ForkPerformanceLevelLowMedium);
+            return ForkLocale.get(R.string.ForkPerformanceLevelLowMedium);
         } else if (PerformancePolicy.LEVEL_HIGH.equals(tier) || DeviceAnalyzerPolicy.TIER_HIGH.equals(tier)) {
-            return LocaleController.getString(R.string.ForkPerformanceLevelHigh);
+            return ForkLocale.get(R.string.ForkPerformanceLevelHigh);
         }
-        return LocaleController.getString(R.string.ForkPerformanceLevelMedium);
+        return ForkLocale.get(R.string.ForkPerformanceLevelMedium);
     }
 
     private static String styleLabel() {
         String style = ForkGraphicsSurface.effectiveStyle();
         if (PanelPolicy.STYLE_GLASS.equals(style) || "experimental".equals(style)) {
-            return LocaleController.getString(R.string.ForkGraphicsGlass);
+            return ForkLocale.get(R.string.ForkGraphicsGlass);
         } else if (PanelPolicy.STYLE_BLUR.equals(style)) {
-            return LocaleController.getString(R.string.ForkGraphicsBlur);
+            return ForkLocale.get(R.string.ForkGraphicsBlur);
         }
-        return LocaleController.getString(R.string.ForkGraphicsNone);
+        return ForkLocale.get(R.string.ForkGraphicsNone);
     }
 
     @Override

@@ -29,6 +29,13 @@ public class StealthPolicyTest {
         check(!StealthPolicy.isEligible(0L, false), "Dialog 0 is not eligible");
         check(!StealthPolicy.isEligible(12345L, true), "Encrypted dialog is not eligible");
 
+        // Explicit user "Mark as read" is never suppressed (1.4.0 Beta 2 fix)
+        check(!StealthPolicy.shouldSuppressRead(true, true, true, false, false, true), "Forced private read must not be suppressed");
+        check(!StealthPolicy.shouldSuppressRead(true, true, true, true, false, true), "Forced group read must not be suppressed");
+        check(!StealthPolicy.shouldSuppressRead(true, true, false, false, false, true), "Forced read must not be suppressed with groups off");
+        check(StealthPolicy.shouldSuppressRead(true, true, false, false, false, false), "Automatic private read is still suppressed without force");
+        check(StealthPolicy.shouldSuppressRead(true, false, true, true, false, false), "Automatic group read is still suppressed without force");
+
         System.out.println("StealthPolicyTest passed");
     }
 }

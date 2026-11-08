@@ -9614,7 +9614,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
         getMessagesController().markMentionsAsRead(did, 0);
-        getMessagesController().markDialogAsRead(did, dialog.top_message, dialog.top_message, dialog.last_message_date, false, 0, 0, true, 0);
+        getMessagesController().markDialogAsReadForced(did, dialog.top_message, dialog.top_message, dialog.last_message_date, false, 0, 0, true, 0);
 
         if (selectedDialogIndex >= 0) {
             frozenDialogsList.remove(selectedDialogIndex);
@@ -9640,7 +9640,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 getMessagesController().markAllTopicsAsRead(did);
             }
             getMessagesController().markMentionsAsRead(did, 0);
-            getMessagesController().markDialogAsRead(did, dialog.top_message, dialog.top_message, dialog.last_message_date, false, 0, 0, true, 0);
+            getMessagesController().markDialogAsReadForced(did, dialog.top_message, dialog.top_message, dialog.last_message_date, false, 0, 0, true, 0);
         }
         if (selectedDialogIndex >= 0) {
             frozenDialogsList.remove(selectedDialogIndex);

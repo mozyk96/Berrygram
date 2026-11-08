@@ -863,10 +863,19 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     public GlassTabView[] tabs;
 
     public void selectTab(int position, boolean animated) {
-        for (int a = 0; a < tabs.length; a++) {
-            GlassTabView tab = tabs[a];
-            tab.setSelected(indexToPosition(a) == position, animated);
+        if (tabsView == null || tabs == null) {
+            return;
         }
+
+        GlassTabView selectedTab = null;
+        for (int a = 0; a < tabs.length; a++) {
+            final GlassTabView tab = tabs[a];
+            if (indexToPosition(a) == position && tabsView.isViewVisible(tab)) {
+                selectedTab = tab;
+                break;
+            }
+        }
+        tabsView.setTabSelected(selectedTab, animated);
     }
 
     public void setGestureSelectedOverride(float animatedPosition, boolean allow) {

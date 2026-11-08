@@ -80,6 +80,27 @@ class ForkDeletedMessagesStorage private constructor(private val currentAccount:
         return result
     }
 
+    /** Removes stored markers older than the given timestamp. */
+    fun cleanupOlderThan(cutoffDate: Int): Int {
+        val db = database ?: return 0
+        return try {
+            var removed = 0
+            var cursor: SQLiteCursor? = null
+            try {
+                cursor = db.queryFinalized("SELECT COUNT(*) FROM deleted_messages WHERE date < $cutoffDate;")
+                if (cursor != null && cursor.next()) removed = cursor.intValue(0)
+            } finally {
+                cursor?.dispose()
+            }
+            db.executeFast("DELETE FROM deleted_messages WHERE date < $cutoffDate;").stepThis().dispose()
+            deletedCache.clear()
+            removed
+        } catch (e: Exception) {
+            FileLog.e(e)
+            0
+        }
+    }
+
     fun clear() {
         deletedCache.clear()
         val db = database ?: return

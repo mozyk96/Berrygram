@@ -44,7 +44,7 @@ class ForkArchiveActivity : BaseFragment() {
 
     override fun createView(context: Context): View {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back)
-        actionBar.setTitle(LocaleController.getString(R.string.ForkArchiveTitle))
+        actionBar.setTitle(ForkLocale.get(R.string.ForkArchiveTitle))
         actionBar.setAllowOverlayTitle(true)
 
         val menu: ActionBarMenu = actionBar.createMenu()
@@ -75,7 +75,7 @@ class ForkArchiveActivity : BaseFragment() {
         })
 
         val otherItem = menu.addItem(1, R.drawable.ic_ab_other)
-        otherItem.addSubItem(10, R.drawable.msg_delete, LocaleController.getString(R.string.ForkArchiveClear))
+        otherItem.addSubItem(10, R.drawable.msg_delete, ForkLocale.get(R.string.ForkArchiveClear))
 
         actionBar.setActionBarMenuOnItemClick(object : ActionBar.ActionBarMenuOnItemClick() {
             override fun onItemClick(id: Int) {
@@ -100,7 +100,7 @@ class ForkArchiveActivity : BaseFragment() {
         frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT.toFloat()))
 
         emptyView = EmptyTextProgressView(context).apply {
-            setText(LocaleController.getString(R.string.ForkArchiveEmpty))
+            setText(ForkLocale.get(R.string.ForkArchiveEmpty))
             showTextView()
         }
         frameLayout.addView(emptyView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT.toFloat()))
@@ -132,7 +132,7 @@ class ForkArchiveActivity : BaseFragment() {
             if (isSearchMode && currentQuery.isNotEmpty()) {
                 view.setText(LocaleController.getString(R.string.NoResult))
             } else {
-                view.setText(LocaleController.getString(R.string.ForkArchiveEmpty))
+                view.setText(ForkLocale.get(R.string.ForkArchiveEmpty))
             }
         }
     }
@@ -140,8 +140,8 @@ class ForkArchiveActivity : BaseFragment() {
     private fun showClearConfirmation() {
         val activity = parentActivity ?: return
         val builder = AlertDialog.Builder(activity)
-        builder.setTitle(LocaleController.getString(R.string.ForkArchiveClear))
-        builder.setMessage(LocaleController.getString(R.string.ForkArchiveClearConfirm))
+        builder.setTitle(ForkLocale.get(R.string.ForkArchiveClear))
+        builder.setMessage(ForkLocale.get(R.string.ForkArchiveClearConfirm))
         builder.setPositiveButton(LocaleController.getString(R.string.ClearButton)) { _, _ ->
             ForkArchiveManager.getInstance(currentAccount).clearArchive()
             loadDialogs()

@@ -93,10 +93,6 @@ public final class ForkMessageMenuSettingsActivity extends BaseFragment {
         StringBuilder text = new StringBuilder(ForkLocale.get(R.string.ForkMenuEditorPreviewInfo));
         text.append("\n\n").append(ForkLocale.get(R.string.ForkMenuEditorMain));
         appendPreview(text, options, plan.mainIndices);
-        if (!plan.moreIndices.isEmpty()) {
-            text.append("\n\n").append(ForkLocale.get(R.string.ForkMenuEditorMore));
-            appendPreview(text, options, plan.moreIndices);
-        }
         showDialog(new AlertDialog.Builder(context).setTitle(ForkLocale.get(R.string.ForkMenuEditorPreview))
                 .setMessage(text).setPositiveButton(ForkLocale.get(R.string.OK), null).create());
     }

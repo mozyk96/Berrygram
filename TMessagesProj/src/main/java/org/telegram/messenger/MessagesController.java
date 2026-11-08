@@ -1255,6 +1255,8 @@ public class MessagesController extends BaseController implements NotificationCe
         public int maxId;
         public int maxDate;
         public long sendRequestTime;
+        /** True when the user explicitly asked to mark the chat as read. */
+        public boolean force;
     }
 
     public static class PrintingUser {
@@ -14577,10 +14579,12 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     private void completeReadTask(ReadTask task) {
-        if (!DialogObject.isEncryptedDialog(task.dialogId)) {
+        // BerryGram ghost reading: an explicit user "Mark as read" must always be
+        // reported, otherwise the user could never clear the unread state.
+        if (!task.force && !DialogObject.isEncryptedDialog(task.dialogId)) {
             TLRPC.InputPeer inputPeer = getInputPeer(task.dialogId);
             boolean isChannelOrGroup = task.monoForumPeerId != 0 || inputPeer instanceof TLRPC.TL_inputPeerChannel || task.dialogId < 0;
-            if (org.telegram.messenger.fork.stealth.ForkStealthSettings.shouldSuppressRead(task.dialogId, isChannelOrGroup, false)) {
+            if (org.telegram.messenger.fork.stealth.ForkStealthSettings.shouldSuppressRead(task.dialogId, isChannelOrGroup, false, currentAccount, task.force)) {
                 return;
             }
         }
@@ -14700,6 +14704,18 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void markDialogAsRead(long dialogId, int maxPositiveId, int maxNegativeId, int maxDate, boolean popup, long threadId, int countDiff, boolean readNow, int scheduledCount) {
+        markDialogAsReadInternal(dialogId, maxPositiveId, maxNegativeId, maxDate, popup, threadId, countDiff, readNow, scheduledCount, false);
+    }
+
+    /**
+     * Explicit user "Mark as read" request. BerryGram ghost reading never
+     * suppresses this path, otherwise the unread state could not be cleared.
+     */
+    public void markDialogAsReadForced(long dialogId, int maxPositiveId, int maxNegativeId, int maxDate, boolean popup, long threadId, int countDiff, boolean readNow, int scheduledCount) {
+        markDialogAsReadInternal(dialogId, maxPositiveId, maxNegativeId, maxDate, popup, threadId, countDiff, readNow, scheduledCount, true);
+    }
+
+    private void markDialogAsReadInternal(long dialogId, int maxPositiveId, int maxNegativeId, int maxDate, boolean popup, long threadId, int countDiff, boolean readNow, int scheduledCount, boolean force) {
         boolean createReadTask;
 
         if (threadId != 0) {
@@ -14848,6 +14864,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 currentReadTask.maxDate = maxDate;
                 currentReadTask.maxId = maxPositiveId;
+                currentReadTask.force = force;
                 if (readNow) {
                     completeReadTask(currentReadTask);
                 }
@@ -18562,7 +18579,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 if (message instanceof TLRPC.TL_messageEmpty) {
                     continue;
                 }
-                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled() && message.message != null && !android.text.TextUtils.isEmpty(message.message)) {
+                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled(currentAccount) && message.message != null && !android.text.TextUtils.isEmpty(message.message)) {
                     long did = MessageObject.getDialogId(message);
                     long senderId = DialogObject.getPeerDialogId(message.from_id);
                     org.telegram.messenger.fork.storage.ForkArchiveManager.getInstance(currentAccount).archiveMessage(
@@ -19567,7 +19584,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     message.attachPath = "";
                 }
 
-                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.editHistoryEnabled()) {
+                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.editHistoryEnabled(currentAccount)) {
                     final long did = message.dialog_id;
                     final int mid = message.id;
                     final String newText = message.message;

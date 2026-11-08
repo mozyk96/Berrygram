@@ -38,7 +38,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
-        actionBar.setTitle(LocaleController.getString(R.string.ForkAppearanceTitle));
+        actionBar.setTitle(ForkLocale.get(R.string.ForkAppearanceTitle));
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
@@ -52,15 +52,15 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
 
         // Visual Mode Selector (Glass 2.0, Blur, None)
         styleCell = new TextSettingsCell(context);
-        styleCell.setTextAndValue(LocaleController.getString(R.string.ForkGraphicsStyle), styleLabel(), false);
+        styleCell.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
         styleCell.setIcon(R.drawable.msg_palette);
         ForkSettingsLayout.interactive(styleCell);
         controls.addView(styleCell);
 
         // Glass 2.0 Live Preview
         glassPreviewCell = new TextSettingsCell(context);
-        glassPreviewCell.setTextAndValue(LocaleController.getString(R.string.ForkGlassTitle),
-                LocaleController.getString(R.string.ForkGlassSubtitle), false);
+        glassPreviewCell.setTextAndValue(ForkLocale.get(R.string.ForkGlassTitle),
+                ForkLocale.get(R.string.ForkGlassSubtitle), false);
         glassPreviewCell.setIcon(R.drawable.msg_palette);
         ForkSettingsLayout.interactive(glassPreviewCell);
         glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
@@ -70,9 +70,9 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         styleCell.setOnClickListener(v -> {
             String[] modes = {PanelPolicy.STYLE_GLASS, PanelPolicy.STYLE_BLUR, PanelPolicy.STYLE_NONE};
             CharSequence[] labels = {
-                    LocaleController.getString(R.string.ForkGraphicsGlass),
-                    LocaleController.getString(R.string.ForkGraphicsBlur),
-                    LocaleController.getString(R.string.ForkGraphicsNone)
+                    ForkLocale.get(R.string.ForkGraphicsGlass),
+                    ForkLocale.get(R.string.ForkGraphicsBlur),
+                    ForkLocale.get(R.string.ForkGraphicsNone)
             };
             int currentSelection = Arrays.asList(modes).indexOf(ForkPanelSettings.style());
             if (currentSelection < 0) currentSelection = 0;
@@ -86,7 +86,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
                 } else {
                     org.telegram.messenger.LiteMode.toggleFlag(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS, false);
                 }
-                styleCell.setTextAndValue(LocaleController.getString(R.string.ForkGraphicsStyle), styleLabel(), false);
+                styleCell.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
                 glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(chosen) ? View.VISIBLE : View.GONE);
                 ForkSettingsLayout.refreshSection(controls, false);
                 ForkFloatingHeader.refresh(fragmentView);
@@ -95,14 +95,14 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
 
         // Corner Radius Slider
         radiusCell = new TextSettingsCell(context);
-        radiusCell.setTextAndValue(LocaleController.getString(R.string.ForkAppearanceRadius),
-                LocaleController.formatString(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
+        radiusCell.setTextAndValue(ForkLocale.get(R.string.ForkAppearanceRadius),
+                ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
         controls.addView(radiusCell);
 
         radiusSlider = new SeekBar(context);
         radiusSlider.setMax(20);
         radiusSlider.setProgress(ForkPanelSettings.radiusDp() - 12);
-        radiusSlider.setContentDescription(LocaleController.getString(R.string.ForkAppearanceRadius));
+        radiusSlider.setContentDescription(ForkLocale.get(R.string.ForkAppearanceRadius));
         int accentColor = Theme.getColor(Theme.key_windowBackgroundWhiteBlueText);
         radiusSlider.setProgressTintList(ColorStateList.valueOf(accentColor));
         radiusSlider.setThumbTintList(ColorStateList.valueOf(accentColor));
@@ -115,8 +115,8 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
             public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
                 if (!fromUser) return;
                 ForkPanelSettings.setRadiusDp(value + 12);
-                radiusCell.setTextAndValue(LocaleController.getString(R.string.ForkAppearanceRadius),
-                        LocaleController.formatString(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
+                radiusCell.setTextAndValue(ForkLocale.get(R.string.ForkAppearanceRadius),
+                        ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), false);
             }
 
             @Override public void onStartTrackingTouch(SeekBar bar) { }
@@ -125,7 +125,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
 
         // Advanced Animations 2.0
         TextCheckCell animations = new TextCheckCell(context);
-        animations.setTextAndCheck(LocaleController.getString(R.string.ForkAdvancedAnimations),
+        animations.setTextAndCheck(ForkLocale.get(R.string.ForkAdvancedAnimations),
                 ForkAnimationSettings.fluidPopupsEnabled(), false);
         ForkSettingsLayout.interactive(animations);
         animations.setOnClickListener(v -> {
@@ -137,7 +137,7 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
 
         // Mini Dock
         TextCheckCell dock = new TextCheckCell(context);
-        dock.setTextAndCheck(LocaleController.getString(R.string.ForkMiniDock),
+        dock.setTextAndCheck(ForkLocale.get(R.string.ForkMiniDock),
                 ForkDockSettings.miniDockEnabled(), false);
         ForkSettingsLayout.interactive(dock);
         dock.setOnClickListener(v -> {
@@ -150,14 +150,14 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
         ForkSettingsLayout.addSection(page, controls);
 
         TextInfoPrivacyCell info = new TextInfoPrivacyCell(context);
-        info.setText(LocaleController.getString(R.string.ForkGraphicsInfoUnified));
+        info.setText(ForkLocale.get(R.string.ForkGraphicsInfoUnified));
         page.addView(info);
 
         ScrollView scroll = new ScrollView(context);
         scroll.setFillViewport(true);
         scroll.addView(page);
         fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll,
-                LocaleController.getString(R.string.ForkAppearanceTitle), this::finishFragment);
+                ForkLocale.get(R.string.ForkAppearanceTitle), this::finishFragment);
         return fragmentView;
     }
 
@@ -173,11 +173,11 @@ public final class ForkAppearanceSettingsActivity extends BaseFragment {
     private static String styleLabel() {
         String style = ForkPanelSettings.style();
         if (PanelPolicy.STYLE_BLUR.equals(style)) {
-            return LocaleController.getString(R.string.ForkGraphicsBlur);
+            return ForkLocale.get(R.string.ForkGraphicsBlur);
         } else if (PanelPolicy.STYLE_NONE.equals(style)) {
-            return LocaleController.getString(R.string.ForkGraphicsNone);
+            return ForkLocale.get(R.string.ForkGraphicsNone);
         }
-        return LocaleController.getString(R.string.ForkGraphicsGlass);
+        return ForkLocale.get(R.string.ForkGraphicsGlass);
     }
 
     @Override
