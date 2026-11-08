@@ -41,6 +41,19 @@
   `fork-tests/test_fork_string_escapes.py` — success.
 - Release arm64 build with R8 and locally injected credentials — see the artifact line below.
 
+## Release candidate artifact
+
+- APK `C:\Users\Keoo2\Documents\BerryGram-1.4.0-rc.1-arm64-v8a.apk`, 41918027 bytes,
+  SHA-256 `9a0eaf3de94456947aabcabe334fde20b3736791d34460d3d0a4ac97768043e8`.
+- Package `org.example.forkclient`, versionName `1.4.0-rc.1`, versionCode `72749`, minSdk 23,
+  targetSdk 36, native-code arm64-v8a only, `POST_NOTIFICATIONS` declared, label BerryGram.
+- Signed with the existing release key: `CN=BerryGram Release`, certificate SHA-256
+  `b3ea9ca232ae03ebeab5bbc2729a306fb5eacd0520104fc52450a421efc722a5` (identical to the published
+  Stable, so the candidate installs over Stable 1.3.0 and over Beta 1/Beta 2 without data loss).
+  v1 and v2 signatures verified, `zipalign -c -P 16` passed, credential present in the release dex,
+  no keystore packaged.
+- The candidate is NOT published. The owner tests it with `docs/1.4.0-rc.1-device-checklist.md`.
+
 ## Known limitations
 
 - Remote push still needs the owner's Firebase project; without it Telegram delivers notifications

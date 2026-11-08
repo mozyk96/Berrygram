@@ -285,7 +285,7 @@
     <string name="ForkDeviceScanResults">Результати діагностики</string>
     <string name="ForkDeviceSpecsCpu">Процесор (CPU)</string>
     <string name="ForkDeviceSpecsGpu">Відеоприскорювач (GPU)</string>
-    <string name="ForkDeviceSpecsRam">Оперативна пам'ять (RAM)</string>
+    <string name="ForkDeviceSpecsRam">Оперативна пам\'ять (RAM)</string>
     <string name="ForkDeviceSpecsDisplay">Екран</string>
     <string name="ForkDeviceSpecsAndroid">Версія Android</string>
     <string name="ForkDeviceAssessedTier">Оцінений рівень заліза</string>
@@ -334,14 +334,14 @@
     <string name="ForkNotificationSummaryAppDisabled">Увімкніть сповіщення застосунку в налаштуваннях Android.</string>
     <string name="ForkNotificationSummaryChannelBlocked">Один із каналів сповіщень заблоковано. Відкрийте налаштування Android.</string>
     <string name="ForkNotificationSummaryPlayServices">Google Play Services недоступний, тому віддалений push не може запуститися.</string>
-    <string name="ForkNotificationSummaryFirebase">Push не налаштовано для цього пакета. Доступний резервний варіант — фонове з'єднання.</string>
+    <string name="ForkNotificationSummaryFirebase">Push не налаштовано для цього пакета. Доступний резервний варіант — фонове з\'єднання.</string>
     <string name="ForkNotificationSummaryToken">Push-токен ще не зареєстровано в Telegram.</string>
     <string name="ForkNotificationSummaryBackground">Android обмежує фонову активність. Дозвольте BerryGram працювати у фоні.</string>
     <string name="ForkNotificationSummaryBattery">Оптимізація батареї може затримувати сповіщення. За потреби виключіть BerryGram з оптимізації.</string>
     <string name="ForkNotificationSummaryReady">Локальних перешкод не виявлено.</string>
     <string name="ForkNotificationRequestPermission">Дозволити сповіщення</string>
     <string name="ForkNotificationOpenSettings">Відкрити налаштування сповіщень Android</string>
-    <string name="ForkNotificationEnableBackground">Увімкнути фонове з'єднання</string>
+    <string name="ForkNotificationEnableBackground">Увімкнути фонове з\'єднання</string>
     <string name="ForkNotificationTestAction">Показати локальне тестове сповіщення</string>
     <string name="ForkNotificationTestChannel">Діагностика BerryGram</string>
     <string name="ForkNotificationTestChannelInfo">Лише локальні тестові сповіщення.</string>
@@ -350,7 +350,7 @@
     <string name="ForkNotificationTestDone">Надіслано</string>
     <string name="ForkNotificationTestBlocked">Заблоковано Android</string>
     <string name="ForkNotificationTestInfo">Локальний тест доводить, що BerryGram може показати сповіщення Android. Він не перевіряє доставку віддаленого push.</string>
-    <string name="ForkNotificationFirebaseInfo">У цій збірці немає власної конфігурації Firebase для форку, тому віддалений push не може зареєструватися. Показуються лише сповіщення, отримані під час активного з'єднання. Додайте google-services.json для цього пакета й перебудуйте застосунок; не копіюйте облікові дані з іншого застосунку.</string>
+    <string name="ForkNotificationFirebaseInfo">У цій збірці немає власної конфігурації Firebase для форку, тому віддалений push не може зареєструватися. Показуються лише сповіщення, отримані під час активного з\'єднання. Додайте google-services.json для цього пакета й перебудуйте застосунок; не копіюйте облікові дані з іншого застосунку.</string>
     <string name="ForkNotificationPushOkInfo">Конфігурація push присутня. Значення токенів тут навмисно не показуються.</string>
     <string name="ForkArchiveRetention">Термін зберігання</string>
     <string name="ForkArchiveRetention7">7 днів</string>
@@ -358,6 +358,6 @@
     <string name="ForkArchiveRetention90">90 днів</string>
     <string name="ForkArchiveRetentionForever">Завжди</string>
     <string name="ForkArchiveRetentionInfo">Заархівовані повідомлення, позначки видалених повідомлень та історія редагувань старші за вибраний строк видаляються з цього пристрою. Усе зберігається в зашифрованому вигляді ключем, прив’язаним до пристрою, і не залишає телефона.</string>
-    <string name="ForkNotificationFirebaseSetupHint">Для віддаленого push потрібен власний Firebase-проєкт Berrygram. Створіть Android-додаток з package name org.example.forkclient, завантажте google-services.json і покладіть його у .fork-local/google-services.json у проєкті, після чого перебудуйте застосунок. Файл залишається на вашому комп'ютері і ніколи не потрапляє в Git. До того часу сповіщення надходитимуть лише поки процес застосунку живий.</string>
+    <string name="ForkNotificationFirebaseSetupHint">Для віддаленого push потрібен власний Firebase-проєкт Berrygram. Створіть Android-додаток з package name org.example.forkclient, завантажте google-services.json і покладіть його у .fork-local/google-services.json у проєкті, після чого перебудуйте застосунок. Файл залишається на вашому комп\'ютері і ніколи не потрапляє в Git. До того часу сповіщення надходитимуть лише поки процес застосунку живий.</string>
     <string name="ForkPerformanceAffectsInfo">Профіль продуктивності керує лише ефектами Berrygram: поверхнями glass і blur, анімацією спливаючих меню та вбудованим круглим відеопереглядом. У профілі Low ці ефекти вимкнені, а перегляд не запускається. Телеграм зберігає власне налаштування Lite mode, яке застосовується поверх.</string>
 </resources>

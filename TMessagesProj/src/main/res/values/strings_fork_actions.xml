@@ -36,5 +36,5 @@
     <string name="ForkPerformanceStorageValue">Telegram settings</string>
     <string name="ForkPerformanceCopyDiagnostics">Copy diagnostics</string>
     <string name="ForkPerformanceDiagnosticsCopied">Diagnostics copied</string>
-    <string name="ForkPerformanceInfo">On low-end or battery-saving devices BerryGram keeps Telegram's native rendering and falls back to opaque surfaces. Profiles only change optional graphics and reveal animations; they do not affect message delivery, security, media, or Telegram Lite Mode settings. Diagnostics contain no account or message data.</string>
+    <string name="ForkPerformanceInfo">On low-end or battery-saving devices BerryGram keeps Telegram\'s native rendering and falls back to opaque surfaces. Profiles only change optional graphics and reveal animations; they do not affect message delivery, security, media, or Telegram Lite Mode settings. Diagnostics contain no account or message data.</string>
 </resources>

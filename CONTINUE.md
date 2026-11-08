@@ -27,6 +27,8 @@
 - `fork-tests/test_berrygram_resources.py`, `test_release_scope.py`,
   `test_fork_string_escapes.py`: success.
 - Release build with R8 and injected credentials: success, APK verified.
+- Release candidate: `C:\Users\Keoo2\Documents\BerryGram-1.4.0-rc.1-arm64-v8a.apk`,
+  SHA-256 `9a0eaf3de94456947aabcabe334fde20b3736791d34460d3d0a4ac97768043e8`, versionCode `72749`, signed with the published release certificate.
 
 ## Next
 
