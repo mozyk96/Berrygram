@@ -2,7 +2,8 @@
 
 ## State
 
-- Branch `feature/berrygram-1.4.1` (from `530884f`), tag `v1.4.1` on the release source commit.
+- Branch `feature/berrygram-1.4.1` (from `530884f`); tag `v1.4.1` on release commit `e34245c`
+  (published to `origin`).
 - Version `1.4.1`, versionCode `72779` (arm64). Previous official 1.4.0 is `72759`; the internal
   RC was `72769`.
 - Release APK `C:\Users\Keoo2\Documents\BerryGram-1.4.1-arm64-v8a.apk`, 41933616 bytes,

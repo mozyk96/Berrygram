@@ -9,6 +9,7 @@
   and the final unified-updater/release commit.
 - Version `1.4.1`, `APP_VERSION_CODE=7277` → arm64 versionCode **72779**
   (higher than the published Stable 1.4.0 `72759` and the internal RC `72769`).
+- Release commit `e34245c`, tag `v1.4.1`, published on GitHub Releases (not a prerelease).
 
 ## What changed in this cycle
 
