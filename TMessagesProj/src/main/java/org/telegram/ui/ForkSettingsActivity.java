@@ -19,7 +19,14 @@ import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextDetailSettingsCell;
 
-/** BerryGram settings use Telegram's theme-aware, compact list components. */
+/**
+ * Legacy Berrygram settings hub.
+ *
+ * <p>The standalone entry was removed from the Telegram settings in 1.4.1, the
+ * Berrygram controls now live inside the matching Telegram sections. The screen
+ * is kept so that older links and the search index still work, it opens the
+ * unified settings instead of a second settings system.</p>
+ */
 public final class ForkSettingsActivity extends BaseFragment {
     private ForkUpdaterPanel updater;
     private TextDetailSettingsCell[] accentCells;
@@ -32,6 +39,11 @@ public final class ForkSettingsActivity extends BaseFragment {
         });
         LinearLayout content = ForkSettingsLayout.page(context);
         settingsPage = content;
+        TextDetailSettingsCell unified = new TextDetailSettingsCell(context);
+        ForkSettingsLayout.interactive(unified);
+        unified.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkSettingsTitle), ForkLocale.get(R.string.ForkSettingsSubtitle), R.drawable.msg_settings, false);
+        unified.setOnClickListener(v -> presentFragment(new SettingsActivity()));
+        ForkSettingsLayout.addCard(content, unified);
         TextDetailSettingsCell appearance = new TextDetailSettingsCell(context);
         ForkSettingsLayout.interactive(appearance);
         appearance.setTextAndValueAndIcon(ForkLocale.get(R.string.ForkAppearanceTitle), ForkLocale.get(R.string.ForkAppearanceSubtitle), R.drawable.msg_palette, false);

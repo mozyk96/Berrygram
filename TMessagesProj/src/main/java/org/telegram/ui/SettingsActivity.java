@@ -644,9 +644,6 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
         items.add(UItem.asCustomShadow(topView, 200 - 12));
 
-        items.add(SettingCell.Factory.of(27, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_chat, ForkLocale.get(R.string.ForkSettingsTitle), null));
-        items.add(UItem.asShadow(null));
-
         accountNumbers.clear();
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
             if (UserConfig.getInstance(a).isClientActivated() && currentAccount != a) {
@@ -782,6 +779,13 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         }
 
         items.add(UItem.asCustomShadow(versionView));
+
+        // Berrygram: the Berrygram entries live inside the Telegram sections they
+        // belong to, so there is only one settings system.
+        try {
+            org.telegram.ui.fork.settings.ForkUnifiedSettings.applyTo(items, getParentActivity());
+        } catch (Throwable ignore) {
+        }
     }
 
     private void presentSettingFragment(BaseFragment fragment) {
@@ -847,7 +851,30 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 presentSettingFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC));
                 break;
             case 27:
+                // The standalone Berrygram settings entry was removed, the old
+                // link still opens the unified settings.
                 presentSettingFragment(new ForkSettingsActivity());
+                break;
+            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_PRIVACY:
+                presentSettingFragment(new ForkStealthSettingsActivity());
+                break;
+            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_EFFECTS:
+                presentSettingFragment(new ForkAppearanceSettingsActivity());
+                break;
+            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_MEDIA:
+                presentSettingFragment(new ForkMediaSettingsActivity());
+                break;
+            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_DIAGNOSTICS:
+                presentSettingFragment(new ForkNotificationDiagnosticsActivity());
+                break;
+            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_TRANSLATION:
+                presentSettingFragment(new ForkTranslationSettingsActivity());
+                break;
+            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_ARCHIVE:
+                presentSettingFragment(new ForkArchiveActivity());
+                break;
+            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.ID_PERFORMANCE:
+                presentSettingFragment(new ForkPerformanceSettingsActivity());
                 break;
             case 3:
                 presentSettingFragment(new PrivacySettingsActivity());

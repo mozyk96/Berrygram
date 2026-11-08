@@ -23,10 +23,11 @@ $sources = @(
 $tests = @('AuthDiagnosticsTest', 'BackendPolicyTest', 'SessionCredentialsTest', 'CustomTextValidatorTest',
     'CustomTextPackValidatorTest', 'CustomTextFormatTest', 'CustomTextSafetyTest', 'LocalAliasPolicyTest',
     'CustomTextResolutionTest', 'CustomTextContextTest', 'CustomTextScopePolicyTest', 'CustomTextOriginalTest',
-    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'MenuSurfacePolicyTest', 'NotificationDiagnosticsPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'ForkTabIndicatorInterpolatorTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest', 'ForkArchivedRestorePolicyTest')
+    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'MenuSurfacePolicyTest', 'NotificationDiagnosticsPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'ForkTabIndicatorInterpolatorTest', 'ForkUnifiedSettingsMappingTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest', 'ForkArchivedRestorePolicyTest')
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 $sources += (Join-Path $base 'performance\PerformancePolicy.java')
 $sources += (Join-Path $root 'TMessagesProj\src\main\java\org\telegram\ui\fork\navigation\ForkTabIndicatorInterpolator.java')
+$sources += (Join-Path $root 'TMessagesProj\src\main\java\org\telegram\ui\fork\settings\ForkUnifiedSettingsMapping.java')
 $tests += 'PerformancePolicyTest'
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 & $javac -encoding UTF-8 -d $buildDir @sources @testFiles
