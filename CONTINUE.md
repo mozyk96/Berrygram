@@ -1,3 +1,30 @@
+# BerryGram continuation — Android 1.4.1 RC 1
+
+## State
+
+- Branch `feature/berrygram-1.4.1` (from `530884f`), HEAD `4a439d4` plus the RC metadata commit.
+- Version `1.4.1-rc.1`, versionCode `72769` (arm64). Published Stable 1.4.0 is `72759`.
+- Release candidate APK `C:\Users\Keoo2\Documents\BerryGram-1.4.1-rc.1-arm64-v8a.apk`,
+  41936290 bytes, SHA-256 `46d6e46372ea04a76de3001c2e082c07b36e20f81578b1dc1b35a0234477926f`.
+  It is built and verified but NOT published; the owner tests it with
+  `docs/1.4.1-rc.1-device-checklist.md`.
+- Stable 1.4.1 is reserved for `APP_VERSION_CODE=7277` → arm64 `72779` and must not be reused.
+
+## Tests
+
+- Debug and release Kotlin/Java compilation: success.
+- `fork-tests/smoke.ps1`: success, including the indicator, unified settings, Ghost master,
+  archive import and translation policy tests.
+- Release artifact checks: package, version, minSdk/targetSdk, ABI, signing continuity,
+  v1/v2 schemes, zipalign, credential in dex, no keystore packaged.
+
+## Remaining
+
+- Device checklist for the owner (navigation smoothness, settings layout, Ghost toggle, archive
+  import/resume/cancel, translation on chat open, performance).
+- Remote push still needs the owner's Firebase project; diagnostics reports `push_not_configured`.
+- Publish Stable 1.4.1 only after owner approval, then verify the live updater discovers it.
+
 # BerryGram continuation — Android 1.4.0 Stable
 
 ## State

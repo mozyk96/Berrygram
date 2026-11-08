@@ -1,3 +1,72 @@
+# Android 1.4.1 RC 1 — implemented, release candidate built (device test pending)
+
+## Repository and branch
+
+- Repository `C:\Users\Keoo2\Documents\BerryGram-1.3`, branch `feature/berrygram-1.4.1`,
+  based on the published 1.4.0 (`530884f`), commits `77a2300` (bottom indicator), `79d4f4c`
+  (unified settings), `f26bf5a` (quick Ghost Mode), `2432686` (archive history import),
+  `74d81c4` (translation on chat open), `2be8bb0` (About row), `4a439d4` (performance/stability).
+- Version `1.4.1-rc.1`, `APP_VERSION_CODE=7276` → arm64 versionCode **72769**
+  (higher than the published Stable 1.4.0 `72759`, so the RC installs over it without data loss).
+
+## What changed in this cycle
+
+- **Synchronised bottom navigation.** The indicator is a pure function of the pager position
+  (`ViewPagerFixed.getPositionAnimated()`), the independent spring animations are gone, the
+  interpolator is covered by `ForkTabIndicatorInterpolatorTest`, and the frame sync stops on an
+  idle screen instead of waking the main thread every frame.
+- **Unified settings.** The top-level Berrygram row is removed; the Berrygram entries are inserted
+  after the matching Telegram sections (privacy, appearance, language, notifications, data,
+  power), the old hub redirects into the unified screen, and About Berrygram sits above the
+  version row.
+- **Quick Ghost Mode.** A chats toolbar button toggles the per-account master switch
+  (`ghost_master_enabled`, default on), a long press opens the stealth settings, and explicit
+  "Mark as read" plus secret chats/TTL stay untouched (`GhostMasterPolicyTest`).
+- **Archive history import.** `ForkArchiveImporter` paginates `messages.getHistory`, keeps two
+  durable cursors, fills forward gaps, resumes after cancel, honours FLOOD_WAIT cancellably,
+  excludes service/secret/TTL content and wires create/update/progress/cancel into
+  `ForkArchiveActivity`. Clearing an archive or deleting a chat also clears its cursors.
+- **Translation.** The per-account target language and the opt-in automatic mode are applied when
+  a chat opens through Telegram's own `TranslateController`; secret chats and Saved Messages are
+  skipped, an empty language keeps automatic detection, and the screen shows the real language
+  name.
+- **Stability fixes.** Large deletion updates use chunked SQL, and import cursors are persisted
+  after every page.
+
+## Verification
+
+- `:TMessagesProj:compileDebugKotlin` + `compileDebugJavaWithJavac` — success.
+- `:TMessagesProj_App:assembleAfatRelease -PforkAbi=arm64-v8a` (R8, release resources, locally
+  injected credentials) — success.
+- Full `fork-tests/smoke.ps1` — success, including `ForkTabIndicatorInterpolatorTest`,
+  `ForkUnifiedSettingsMappingTest`, `GhostMasterPolicyTest`, `ForkArchiveImportPolicyTest`,
+  `ForkTranslationPolicyTest`, `test_main_tabs_indicator.js`, `test_archive_import.js` and
+  `test_translation.js`.
+- No Android device or emulator is available on this host: UI, gesture, frame-time, import and
+  translation behaviour are **not device tested**.
+
+## Release candidate artifact
+
+- APK `C:\Users\Keoo2\Documents\BerryGram-1.4.1-rc.1-arm64-v8a.apk`, 41936290 bytes,
+  SHA-256 `46d6e46372ea04a76de3001c2e082c07b36e20f81578b1dc1b35a0234477926f`.
+- Package `org.example.forkclient`, versionName `1.4.1-rc.1`, versionCode `72769`, minSdk 23,
+  targetSdk 36, native-code arm64-v8a only, label BerryGram.
+- Signed with the existing release key: `CN=BerryGram Release`, certificate SHA-256
+  `b3ea9ca232ae03ebeab5bbc2729a306fb5eacd0520104fc52450a421efc722a5`, v1 and v2 signatures
+  verified, `zipalign -c -P 16` passed, Telegram credential present in the dex, no keystore
+  packaged.
+- The candidate is NOT published. The owner tests it with `docs/1.4.1-rc.1-device-checklist.md`;
+  Stable 1.4.1 is reserved for versionCode `72779` (`APP_VERSION_CODE=7277`) and is built and
+  published only after owner approval.
+
+## Known limitations
+
+- Remote push still needs the owner's Firebase project; diagnostics reports `push_not_configured`.
+- The archive stores text messages of the accessible history; media-only messages are still not
+  archived, and each import run is bounded (about 2000 messages / 50 pages per chat) with resume.
+- Visual smoothness of the new indicator and the real translation/import UI are not verified
+  without a device.
+
 # Android 1.4.0 Stable — built and published
 
 - Branch `feature/berrygram-1.4.0-stable`, release source commit `v1.4.0` on

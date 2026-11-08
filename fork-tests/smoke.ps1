@@ -74,9 +74,9 @@ $python = if ($env:FORK_PYTHON) { $env:FORK_PYTHON } else { (Get-Command python 
 & $python (Join-Path $PSScriptRoot 'test_beta8_updater_lifecycle.py')
 if ($LASTEXITCODE -ne 0) { throw 'Updater runnable lifecycle test failed' }
 & $python (Join-Path $PSScriptRoot 'test_berrygram_resources.py')
+if ($LASTEXITCODE -ne 0) { throw 'BerryGram resources test failed' }
 & $python (Join-Path $PSScriptRoot 'test_fork_string_escapes.py')
 if ($LASTEXITCODE -ne 0) { throw 'Fork string escape test failed' }
-if ($LASTEXITCODE -ne 0) { throw 'BerryGram resources test failed' }
 & $python (Join-Path $PSScriptRoot 'test_auth_privacy.py')
 if ($LASTEXITCODE -ne 0) { throw 'Auth privacy test failed' }
 & $python (Join-Path $PSScriptRoot 'test_release_scope.py')
