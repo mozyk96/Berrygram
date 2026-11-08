@@ -47,7 +47,9 @@ public class UpdatePolicyTest {
   String digest="a".repeat(64);
   check(UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, digest, 100));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.2.3", url, digest, 100));
-  check(UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.3.0-beta.1", url, digest, 100, false));
+  check(UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.2.3-beta.1", url, digest, 100, false));
+  check(UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.2.3-beta.1", url, digest, 100, true), "the stable release of the same line supersedes its beta build");
+  check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.3.0-beta.1", url, digest, 100, false), "an older stable release is never a valid saved release");
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.3.0-beta.1", url, digest, 100, true));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", url, digest, 0));
   check(!UpdatePolicy.validSavedRelease("owner/project", "1.2.3", "1.0.0", "https://evil.test/file", digest, 100));
@@ -66,10 +68,25 @@ public class UpdatePolicyTest {
   check(UpdatePolicy.compareVersions("1.4.0-beta.2", "1.4.0-beta.1") > 0);
   check(UpdatePolicy.compareVersions("1.4.0", "1.4.0-beta.2") > 0);
   check(UpdatePolicy.shouldShowRelease("1.4.0-beta.2", "1.4.0-beta.1", true));
+  // A stable release of an older line is never offered, that would be a downgrade.
+  check(!UpdatePolicy.shouldShowRelease("1.3.0", "1.4.0-beta.2", false), "older stable release must not be offered to a beta build");
+  check(!UpdatePolicy.shouldShowRelease("1.3.0", "1.4.0-rc.1", false), "older stable release must not be offered to a release candidate");
+  check(!UpdatePolicy.shouldShowRelease("1.3.0", "1.4.0-beta.2", true), "older stable release must not be offered on the beta channel");
+  // The stable release of the same line replaces an installed pre-release.
+  check(UpdatePolicy.shouldShowRelease("1.4.0", "1.4.0-rc.1", false), "stable release of the same line is offered");
+  check(UpdatePolicy.shouldShowRelease("1.4.0", "1.4.0-beta.2", false), "stable release of the same line is offered to a beta build");
+  check(UpdatePolicy.isStableRecovery("1.4.0", "1.4.0-beta.2", false), "same line recovery detected");
+  check(!UpdatePolicy.isStableRecovery("1.3.0", "1.4.0-beta.2", false), "different line is not a recovery");
+  check(!UpdatePolicy.isStableRecovery("1.4.0", "1.4.0-beta.2", true), "the beta channel does not use the stable recovery");
+  check(!UpdatePolicy.isStableRecovery("1.4.0", "1.4.0", false), "a stable build does not need a recovery");
+  // A release without a checksum is only accepted when the release ships a checksum file.
+  check(UpdatePolicy.validReleaseUrl("owner/project", "v1.4.0", "SHA256SUMS", "https://github.com/owner/project/releases/download/v1.4.0/SHA256SUMS"), "checksum file url accepted");
+  check(!UpdatePolicy.validReleaseUrl("owner/project", "v1.4.0", "SHA256SUMS", "https://evil.test/SHA256SUMS"), "foreign checksum url rejected");
   check(UpdatePolicy.validAsset("v1.4.0-beta.2", "BerryGram-1.4.0-beta.2-arm64-v8a.apk"));
   check(UpdatePolicy.validIdentity("org.example.forkclient.beta", 7271, signer, "org.example.forkclient.beta", 7272, signer));
   check(UpdatePolicy.validAsset("v1.2.0","BerryGram-1.2.0-arm64-v8a.apk"));
   System.out.println("UpdatePolicyTest passed (including Beta9 to Stable promotion)");
  }
  static void check(boolean v){if(!v) throw new AssertionError();}
+ static void check(boolean v,String message){if(!v) throw new AssertionError(message);}
 }

@@ -63,6 +63,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
     };
     private String status = "";
     private String version = "";
+    private long versionCode;
     private GithubUpdateClient.Release release;
     private File verified;
     private TextView details;
@@ -78,6 +79,15 @@ public final class ForkUpdaterPanel extends LinearLayout {
         }
         try { version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName; } catch (Exception ignored) { }
         if (version == null) version = "";
+        try {
+            android.content.pm.PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            versionCode = Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
+        } catch (Exception ignored) { }
+        // A pre-release build stays on the beta channel by default, so a beta
+        // update is found instead of an older stable release.
+        if (!preferences.contains("beta_channel")) {
+            preferences.edit().putBoolean("beta_channel", UpdatePolicy.isPrerelease(version)).apply();
+        }
         release = restoreRelease();
         render(false);
     }
@@ -110,6 +120,8 @@ public final class ForkUpdaterPanel extends LinearLayout {
                 installIntent.cancel(); removeCallbacks(installWhenResumed);
                 preferences.edit().putBoolean("beta_channel", index == 1).apply();
                 release = null; verified = null; incompatible = false; saveRelease(null); status = ""; render(false);
+                // The channel changed, so the release list of the new channel is checked right away.
+                check();
             }));
         addView(channel);
         if (release != null && release.notes != null && !release.notes.isEmpty()) {
@@ -136,6 +148,9 @@ public final class ForkUpdaterPanel extends LinearLayout {
     private void updateDetails() {
         if (details == null || !expanded || disposed) return;
         StringBuilder text = new StringBuilder(ForkLocale.get(R.string.ForkUpdateCurrent, version));
+        if (versionCode > 0) {
+            text.append(" (").append(versionCode).append(')');
+        }
         long lastChecked = preferences.getLong("last_checked", 0);
         if (lastChecked > 0) text.append("\n").append(ForkLocale.get(R.string.ForkUpdateLastChecked, DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(new Date(lastChecked))));
         if (!status.isEmpty()) text.append("\n").append(status);
@@ -169,7 +184,7 @@ public final class ForkUpdaterPanel extends LinearLayout {
     private void check() {
         if (busy || disposed) return;
         installIntent.cancel(); downloadPercent = 0;
-        busy = true; preferences.edit().putBoolean("interrupted", true).apply(); release = null; verified = null; incompatible = false; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
+        busy = true; release = null; verified = null; incompatible = false; saveRelease(null); status = ForkLocale.get(R.string.ForkUpdateChecking); render(false);
         final boolean betaChannel = preferences.getBoolean("beta_channel", false);
         worker.execute(() -> {
             try {

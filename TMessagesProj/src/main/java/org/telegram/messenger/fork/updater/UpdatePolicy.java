@@ -49,7 +49,26 @@ public final class UpdatePolicy {
     }
     public static boolean shouldShowRelease(String candidate, String installed, boolean betaChannel) {
         Integer comparison = compareVersions(candidate, installed);
-        return comparison != null && (comparison > 0 || (!betaChannel && isPrerelease(installed) && comparison < 0));
+        if (comparison == null) return false;
+        if (comparison > 0) return true;
+        if (comparison == 0) return false;
+        return isStableRecovery(candidate, installed, betaChannel);
+    }
+
+    /**
+     * A stable release may replace an installed pre-release of the same minor
+     * line, for example 1.4.0 for an installed 1.4.0-rc.1.
+     *
+     * <p>An older stable release is never offered: 1.3.0 must not be presented
+     * as an update for an installed 1.4.0 beta, that would be a downgrade and
+     * the installer would refuse it.</p>
+     */
+    public static boolean isStableRecovery(String candidate, String installed, boolean betaChannel) {
+        if (betaChannel) return false;
+        if (isPrerelease(candidate) || !isPrerelease(installed)) return false;
+        java.util.regex.Matcher left = version(candidate), right = version(installed);
+        if (left == null || right == null) return false;
+        return left.group(1).equals(right.group(1)) && left.group(2).equals(right.group(2));
     }
     public static boolean isPrerelease(String value) { java.util.regex.Matcher m = version(value); return m != null && m.group(4) != null; }
     public static boolean validRepository(String value) {
@@ -87,6 +106,13 @@ public final class UpdatePolicy {
     }
     public static boolean validAssetUrl(String repo, String tag, String name, String url) {
         if (!validRepository(repo) || !validAsset(tag, name) || url == null) return false;
+        return validReleaseUrl(repo, tag, name, url);
+    }
+
+    /** Validates a release asset URL of the same repository and tag. */
+    public static boolean validReleaseUrl(String repo, String tag, String name, String url) {
+        if (!validRepository(repo) || tag == null || name == null || url == null) return false;
+        if (name.contains("/") || name.contains("\\")) return false;
         try {
             URI uri = new URI(url);
             return "https".equalsIgnoreCase(uri.getScheme()) && "github.com".equalsIgnoreCase(uri.getHost()) && uri.getPort() == -1

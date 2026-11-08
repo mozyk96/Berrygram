@@ -36,9 +36,18 @@ public class GithubReleaseFixtureTest {
   reject(valid.replace("sha256:"+digest, "sha256:"+digest.substring(1)));
   String asset=valid.substring(valid.indexOf("{\"name\""), valid.length()-2);
   reject(valid.substring(0,valid.length()-2)+","+asset+"]}");
+  // A release without an API digest is only accepted when it ships a checksum file.
+  String sumsAsset="{\"name\":\"SHA256SUMS\",\"state\":\"uploaded\",\"size\":104,\"digest\":\"sha256:"+digest+"\",\"browser_download_url\":\"https://github.com/example/project/releases/download/v1.2.3/SHA256SUMS\"}";
+  String apkAsset="{\"name\":\"BerryGram-1.2.3-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":1234,\"digest\":\"\",\"browser_download_url\":\"https://github.com/example/project/releases/download/v1.2.3/BerryGram-1.2.3-arm64-v8a.apk\"}";
+  String withSums="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.2.3\",\"body\":\"Changes\",\"assets\":["+sumsAsset+","+apkAsset+"]}";
+  GithubUpdateClient.Release fallback=GithubUpdateClient.parseRelease("example/project",withSums);
+  check(fallback.digest.isEmpty() && fallback.sumsUrl!=null,"a release with a checksum file is accepted without an API digest");
+  String withoutSums="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.2.3\",\"body\":\"Changes\",\"assets\":["+apkAsset+"]}";
+  reject(withoutSums);
   check(GithubUpdateClient.parseRelease("example/project", valid.replace("Changes", "x".repeat(13000))).notes.length()==12000);
   System.out.println("GithubReleaseFixtureTest passed");
  }
  static void reject(String json) throws Exception {boolean rejected=false;try {GithubUpdateClient.parseRelease("example/project",json);} catch(Exception expected){rejected=true;}check(rejected);}
  static void check(boolean v){if(!v) throw new AssertionError();}
+ static void check(boolean v,String message){if(!v) throw new AssertionError(message);}
 }

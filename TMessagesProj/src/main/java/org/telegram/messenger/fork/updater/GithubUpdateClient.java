@@ -36,8 +36,11 @@ public final class GithubUpdateClient {
     public static final class SignatureMismatchException extends SecurityException {
         public SignatureMismatchException() { super("Update signing certificate mismatch"); }
     }
+    public static final class RateLimitException extends java.io.IOException {
+        public RateLimitException() { super("GitHub rate limit reached, try again later"); }
+    }
     public static final class Release {
-        public String version, notes, url, digest;
+        public String version, notes, url, digest, sumsUrl;
         public long size;
         public boolean prerelease;
         public boolean stableRecovery;
@@ -62,7 +65,9 @@ public final class GithubUpdateClient {
                 url=new URL(url,next); continue;
             }
             if (code!=200 && !(offset > 0 && code == 206)) {
+                String remaining=connection.getHeaderField("X-RateLimit-Remaining");
                 connection.disconnect();
+                if (code == 403 && remaining != null && "0".equals(remaining.trim())) throw new RateLimitException();
                 if (code == 404 && "api.github.com".equalsIgnoreCase(url.getHost()) && url.getPath().endsWith("/releases")) throw new NoStableReleaseException();
                 throw new java.io.IOException("Update server HTTP " + code);
             }
@@ -74,10 +79,47 @@ public final class GithubUpdateClient {
     public static Release latest(String repo, boolean includePrereleases) throws Exception {
         if (!UpdatePolicy.validRepository(repo)) throw new IllegalArgumentException("Invalid repository");
         HttpURLConnection connection=open("https://api.github.com/repos/"+repo+"/releases?per_page=30");
+        Release result;
         try (InputStream in=connection.getInputStream(); ByteArrayOutputStream out=new ByteArrayOutputStream()) {
             byte[] buffer=new byte[8192]; int count,total=0;
             while ((count=in.read(buffer))!=-1) { total+=count; if(total>MAX_METADATA) throw new java.io.IOException("Release metadata too large"); out.write(buffer,0,count); }
-            return parseReleaseList(repo,out.toString("UTF-8"), includePrereleases);
+            result = parseReleaseList(repo,out.toString("UTF-8"), includePrereleases);
+        } finally { connection.disconnect(); }
+        if (result.digest == null || result.digest.isEmpty()) {
+            result.digest = resolveDigestFromSums(result);
+        }
+        if (result.digest == null || result.digest.isEmpty()) {
+            throw new java.io.IOException("Release does not provide a verifiable checksum");
+        }
+        return result;
+    }
+
+    /**
+     * Resolves the SHA-256 of the release asset from the SHA256SUMS file of the
+     * same release. Used when the GitHub API does not report an asset digest.
+     */
+    static String resolveDigestFromSums(Release release) throws Exception {
+        if (release == null || release.sumsUrl == null || release.url == null) return null;
+        HttpURLConnection connection=open(release.sumsUrl);
+        try (InputStream in=connection.getInputStream(); ByteArrayOutputStream out=new ByteArrayOutputStream()) {
+            byte[] buffer=new byte[8192]; int count,total=0;
+            while ((count=in.read(buffer))!=-1) {
+                total+=count;
+                if (total>64*1024) throw new java.io.IOException("Checksum file too large");
+                out.write(buffer,0,count);
+            }
+            String name=release.url.substring(release.url.lastIndexOf('/')+1);
+            for (String line : out.toString("UTF-8").split("\\r?\\n")) {
+                String trimmed=line.trim();
+                if (trimmed.isEmpty()) continue;
+                int split=trimmed.indexOf(' ');
+                if (split<=0) continue;
+                String hash=trimmed.substring(0,split).trim().toLowerCase(Locale.ROOT);
+                String file=trimmed.substring(split).trim();
+                if (file.startsWith("*")) file=file.substring(1);
+                if (file.equals(name) && hash.matches("[0-9a-f]{64}")) return hash;
+            }
+            return null;
         } finally { connection.disconnect(); }
     }
     public static Release parseRelease(String repo, String metadata) throws Exception {
@@ -93,7 +135,12 @@ public final class GithubUpdateClient {
             if (item == null) continue;
             try {
                 Release candidate = parseRelease(repo, item.toString(), includePrereleases);
-                if (best == null || UpdatePolicy.compareVersions(candidate.version, best.version) > 0) best = candidate;
+                if (best == null) {
+                    best = candidate;
+                } else {
+                    Integer comparison = UpdatePolicy.compareVersions(candidate.version, best.version);
+                    if (comparison != null && comparison > 0) best = candidate;
+                }
             } catch (SecurityException | java.io.IOException | IllegalArgumentException ignored) {
                 // Ignore drafts and releases without a valid, trusted ARM64 asset.
             }
@@ -121,6 +168,18 @@ public final class GithubUpdateClient {
         }
         Release arm64Release = null;
         Release universalRelease = null;
+        String sumsUrl = null;
+        for (int i = 0; i < assets.length(); i++) {
+            JSONObject asset = assets.optJSONObject(i);
+            if (asset == null) continue;
+            String name = asset.optString("name", "");
+            String url = asset.optString("browser_download_url", "");
+            if (("SHA256SUMS".equals(name) || "SHA256SUMS.txt".equals(name))
+                    && UpdatePolicy.validReleaseUrl(repo, tag, name, url)
+                    && "uploaded".equals(asset.optString("state"))) {
+                sumsUrl = url;
+            }
+        }
         for (int i = 0; i < assets.length(); i++) {
             JSONObject asset = assets.optJSONObject(i);
             if (asset == null) continue;
@@ -129,21 +188,28 @@ public final class GithubUpdateClient {
             String digest = asset.optString("digest", "");
             long size = asset.optLong("size", 0);
             if (!UpdatePolicy.validAsset(tag, name)) continue;
-            if (!UpdatePolicy.validAssetUrl(repo, tag, name, url) || !UpdatePolicy.validDigest(digest) || size <= 0 || size > MAX_APK || !"uploaded".equals(asset.optString("state"))) {
+            if (!UpdatePolicy.validAssetUrl(repo, tag, name, url) || size <= 0 || size > MAX_APK || !"uploaded".equals(asset.optString("state"))) {
+                continue;
+            }
+            if (!UpdatePolicy.validDigest(digest) && sumsUrl == null) {
+                // Without a digest the file cannot be verified, the release is skipped.
                 continue;
             }
             Release cand = new Release();
             cand.prerelease = json.optBoolean("prerelease", true);
             cand.version = releaseVersion;
             cand.url = url;
-            cand.digest = digest.substring(7).toLowerCase(Locale.ROOT);
+            cand.digest = UpdatePolicy.validDigest(digest) ? digest.substring(7).toLowerCase(Locale.ROOT) : "";
+            cand.sumsUrl = sumsUrl;
             cand.size = size;
             String notes = json.optString("body", "");
             cand.notes = notes.length() > 12000 ? notes.substring(0, 12000) : notes;
 
             if (UpdatePolicy.isArm64Asset(tag, name)) {
+                if (arm64Release != null) throw new SecurityException("Duplicate release asset");
                 arm64Release = cand;
             } else if (UpdatePolicy.isUniversalAsset(tag, name)) {
+                if (universalRelease != null) throw new SecurityException("Duplicate release asset");
                 universalRelease = cand;
             }
         }
