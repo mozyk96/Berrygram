@@ -354,4 +354,15 @@
     <string name="ForkArchiveImportRunningChat">Импорт доступной истории, обработано %1$d сообщений, текущий чат: %2$s</string>
     <string name="ForkUnifiedAboutTitle">О Berrygram</string>
     <string name="ForkUnifiedAboutInfo">Версия, Центр обновлений, информация о релизе и благодарности</string>
+    <string name="ForkSectionAppearance">Внешний вид</string>
+    <string name="ForkSectionEffects">Эффекты</string>
+    <string name="ForkSectionMessages">Сообщения</string>
+    <string name="ForkSectionMedia">Медиа и ввод</string>
+    <string name="ForkSectionGhostMode">Ghost Mode</string>
+    <string name="ForkSectionPrivacy">Конфиденциальность</string>
+    <string name="ForkSectionArchive">Архив</string>
+    <string name="ForkSectionDiagnostics">Диагностика</string>
+    <string name="ForkSectionTranslation">Перевод</string>
+    <string name="ForkSectionPerformance">Производительность</string>
+    <string name="ForkSectionUpdates">Обновления</string>
 </resources>

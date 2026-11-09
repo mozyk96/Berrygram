@@ -27,7 +27,7 @@ import org.telegram.ui.Components.RecyclerListView
  * Displays archived messages for a single dialog in Berry Archive.
  * Written in Kotlin.
  */
-class ForkArchiveMessagesActivity(private val dialogId: Long) : BaseFragment() {
+class ForkArchiveMessagesActivity(private val dialogId: Long) : ForkSettingsFragment() {
 
     private val messages = mutableListOf<ForkArchiveManager.ArchivedMessage>()
     private var listView: RecyclerListView? = null

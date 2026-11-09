@@ -156,6 +156,9 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
     private int resetNotificationsRow;
     private int resetNotificationsSectionRow;
     private int rowCount = 0;
+    // BerryGram: the embedded notification diagnostics block.
+    private int forkNotificationsSectionRow;
+    private org.telegram.ui.fork.settings.ForkSettingsSection forkNotificationsSection;
 
     private boolean updateVibrate;
     private boolean updateRingtone;
@@ -221,6 +224,10 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
         resetSectionRow = rowCount++;
         resetNotificationsRow = rowCount++;
         resetNotificationsSectionRow = rowCount++;
+
+        // BerryGram: the notification diagnostics belong to the notification
+        // settings, there is no separate diagnostics menu.
+        forkNotificationsSectionRow = rowCount++;
 
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.notificationsSettingsUpdated);
 
@@ -972,12 +979,19 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
                 default:
                     view = new TextInfoPrivacyCell(mContext, resourceProvider);
                     break;
+                case 7:
+                    view = createForkNotificationsSection();
+                    break;
             }
             return new RecyclerListView.Holder(view);
         }
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            if (holder.getItemViewType() == 7) {
+                // The Berrygram block owns its own rows.
+                return;
+            }
             switch (holder.getItemViewType()) {
                 case 0: {
                     HeaderCell headerCell = (HeaderCell) holder.itemView;
@@ -1195,6 +1209,9 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
 
         @Override
         public int getItemViewType(int position) {
+            if (position == forkNotificationsSectionRow) {
+                return 7;
+            }
             if (position == eventsSectionRow || position == otherSectionRow || position == resetSectionRow ||
                     position == callsSectionRow || position == badgeNumberSection || position == inappSectionRow ||
                     position == notificationsSectionRow || position == accountsSectionRow) {
@@ -1266,9 +1283,20 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
     public boolean isSupportEdgeToEdge() {
         return true;
     }
+
+    /** Builds the Berrygram notification diagnostics block. */
+    private View createForkNotificationsSection() {
+        if (forkNotificationsSection == null) {
+            forkNotificationsSection = ForkSettingsBlocks.notifications(this);
+        }
+        return forkNotificationsSection;
+    }
+
     @Override
     public void onInsets(int left, int top, int right, int bottom) {
-        listView.setPadding(0, 0, 0, bottom);
+        // The floating bottom navigation of the main tabs is drawn above the
+        // content, the last row has to stay visible below it.
+        listView.setPadding(0, 0, 0, bottom + org.telegram.ui.fork.settings.ForkInsets.mainTabsBottomOffset());
         listView.setClipToPadding(false);
     }
 }

@@ -27,7 +27,7 @@ import org.telegram.ui.Cells.TextDetailSettingsCell;
  * is kept so that older links and the search index still work, it opens the
  * unified settings instead of a second settings system.</p>
  */
-public final class ForkSettingsActivity extends BaseFragment {
+public final class ForkSettingsActivity extends ForkSettingsFragment {
     private ForkUpdaterPanel updater;
     private TextDetailSettingsCell[] accentCells;
     private LinearLayout settingsPage;

@@ -13,7 +13,7 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 
 /** Basic attribution, installed-version information and the Update Center. */
-public final class ForkAboutActivity extends BaseFragment {
+public final class ForkAboutActivity extends ForkSettingsFragment {
     private ForkUpdaterPanel updater;
 
     @Override public View createView(Context context) {

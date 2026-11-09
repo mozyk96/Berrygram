@@ -362,12 +362,14 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             return;
         }
         int index = org.telegram.ui.fork.navigation.ForkTabIndicatorInterpolator
-                .findAnchorIndex(anchorPositions, position);
+                .findAnchorIndex(anchorPositions, anchorCount, position);
         float centerX;
         float width;
         float elongation;
         if (index < 0) {
             index = 0;
+        } else if (index >= anchorCount) {
+            index = anchorCount - 1;
         }
         if (anchorCount == 1 || index >= anchorCount - 1) {
             centerX = anchorCenters[index];

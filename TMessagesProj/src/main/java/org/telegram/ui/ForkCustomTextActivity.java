@@ -41,7 +41,7 @@ import org.telegram.messenger.fork.text.CustomTextPackValidator;
 import org.telegram.messenger.fork.text.LocalAliasPolicy;
 import static org.telegram.messenger.LocaleController.getString;
 
-public class ForkCustomTextActivity extends BaseFragment {
+public class ForkCustomTextActivity extends ForkSettingsFragment {
     private LinearLayout rows;
     private LinearLayout controls;
     private EditText search;

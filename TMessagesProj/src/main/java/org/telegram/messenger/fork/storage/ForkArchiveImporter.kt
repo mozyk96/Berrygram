@@ -327,6 +327,8 @@ class ForkArchiveImporter(private val account: Int) {
             val error = arrayOfNulls<TLRPC.TL_error>(1)
             val latch = Object()
             org.telegram.tgnet.ConnectionsManager.getInstance(account).sendRequest(request) { response, requestError ->
+                // A channel answers with messages.channelMessages, a chat with
+                // messages.messages. Both derive from messages.Messages.
                 result[0] = response as? TLRPC.messages_Messages
                 error[0] = requestError
                 synchronized(latch) { latch.notifyAll() }

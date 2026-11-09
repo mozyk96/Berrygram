@@ -399,4 +399,15 @@
     <string name="ForkArchiveImportRunningChat">Importing the accessible history, %1$d messages processed, current chat: %2$s</string>
     <string name="ForkUnifiedAboutTitle">About Berrygram</string>
     <string name="ForkUnifiedAboutInfo">Version, Update Center, release information and credits</string>
+    <string name="ForkSectionAppearance">Appearance</string>
+    <string name="ForkSectionEffects">Effects</string>
+    <string name="ForkSectionMessages">Messages</string>
+    <string name="ForkSectionMedia">Media and input</string>
+    <string name="ForkSectionGhostMode">Ghost Mode</string>
+    <string name="ForkSectionPrivacy">Privacy</string>
+    <string name="ForkSectionArchive">Archive</string>
+    <string name="ForkSectionDiagnostics">Diagnostics</string>
+    <string name="ForkSectionTranslation">Translation</string>
+    <string name="ForkSectionPerformance">Performance</string>
+    <string name="ForkSectionUpdates">Updates</string>
 </resources>

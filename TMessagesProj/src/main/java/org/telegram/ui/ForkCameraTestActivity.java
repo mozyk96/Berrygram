@@ -24,7 +24,7 @@ import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.LayoutHelper;
 
 /** Camera-only preview. It does not record, store or send media. */
-public final class ForkCameraTestActivity extends BaseFragment {
+public final class ForkCameraTestActivity extends ForkSettingsFragment {
     private static final int CAMERA_PERMISSION = 7102;
     private FrameLayout preview;
     private TextView status;

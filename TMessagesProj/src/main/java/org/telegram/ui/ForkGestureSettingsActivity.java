@@ -12,7 +12,7 @@ import org.telegram.ui.ActionBar.*;
 import org.telegram.ui.Cells.*;
 
 /** Uses native confirmed taps, body-only overrides and per-account bindings. */
-public final class ForkGestureSettingsActivity extends BaseFragment {
+public final class ForkGestureSettingsActivity extends ForkSettingsFragment {
  private LinearLayout content;
  @Override public View createView(Context context) {
   actionBar.setTitle(ForkLocale.get(R.string.ForkGestureTitle));

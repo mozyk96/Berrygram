@@ -3,6 +3,7 @@ package org.telegram.messenger.fork.storage
 import org.telegram.SQLite.SQLiteCursor
 import org.telegram.SQLite.SQLiteDatabase
 import org.telegram.SQLite.SQLiteException
+import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.FileLog
 import java.io.File
@@ -16,8 +17,14 @@ import java.util.concurrent.ConcurrentHashMap
  * Keystore key. Databases created by earlier 1.4.0 builds are migrated on first
  * open: legacy plaintext rows are encrypted and the plaintext column is
  * cleared, so existing archives keep working without data loss.
+ *
+ * The archive is read and written from several threads: the message updates of
+ * Telegram, the archive executor and the import executor. Every access to the
+ * database is therefore serialized, the native SQLite handle is not safe for
+ * concurrent use.
  */
 class ForkArchiveManager private constructor(private val currentAccount: Int) {
+
     private var database: SQLiteDatabase? = null
 
     class ArchivedMessage(
@@ -163,6 +170,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
      * message even when the same message is seen again.
      */
     @JvmOverloads
+    @Synchronized
     fun archiveMessage(
         dialogId: Long,
         messageId: Int,
@@ -227,6 +235,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     }
 
     /** Marks already archived messages of one chat as deleted. */
+    @Synchronized
     fun markDeleted(dialogId: Long, messageIds: List<Int>): Int {
         val chunks = sqlIdChunks(messageIds)
         if (chunks.isEmpty()) return 0
@@ -262,6 +271,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
      * Common chat message ids are account wide unique, so the affected chats
      * are resolved from the archive itself.
      */
+    @Synchronized
     fun markDeletedByIds(messageIds: List<Int>): List<Long> {
         val chunks = sqlIdChunks(messageIds)
         if (chunks.isEmpty()) return emptyList()
@@ -296,6 +306,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     }
 
     /** Returns locally preserved messages that were deleted in Telegram. */
+    @Synchronized
     fun getDeletedMessages(dialogId: Long, limit: Int): List<ArchivedMessage> {
         val list = mutableListOf<ArchivedMessage>()
         val db = database ?: return list
@@ -328,6 +339,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         )
     }
 
+    @Synchronized
     fun getArchivedDialogs(): List<ArchivedDialogSummary> {
         val list = mutableListOf<ArchivedDialogSummary>()
         val db = database ?: return list
@@ -370,6 +382,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         }
     }
 
+    @Synchronized
     fun getArchivedMessages(dialogId: Long): List<ArchivedMessage> {
         val list = mutableListOf<ArchivedMessage>()
         val db = database ?: return list
@@ -393,6 +406,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
      * Local search. Encrypted content cannot be matched by SQL LIKE, so the
      * bounded result set is decrypted and filtered in memory.
      */
+    @Synchronized
     fun search(query: String?): List<ArchivedMessage> {
         val list = mutableListOf<ArchivedMessage>()
         if (query.isNullOrBlank()) return list
@@ -419,6 +433,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     }
 
     /** Removes archived rows older than the given timestamp. */
+    @Synchronized
     fun cleanupOlderThan(cutoffDate: Int): Int {
         val db = database ?: return 0
         return try {
@@ -431,6 +446,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         }
     }
 
+    @Synchronized
     fun deleteDialog(dialogId: Long): Int {
         val db = database ?: return 0
         return try {
@@ -461,6 +477,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     }
 
     /** True when a message is already stored for the chat. */
+    @Synchronized
     fun exists(dialogId: Long, messageId: Int): Boolean {
         val db = database ?: return false
         var cursor: SQLiteCursor? = null
@@ -490,6 +507,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         @JvmField val updatedAt: Long
     )
 
+    @Synchronized
     fun importState(dialogId: Long): ImportState? {
         val db = database ?: return null
         var cursor: SQLiteCursor? = null
@@ -510,6 +528,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         }
     }
 
+    @Synchronized
     fun saveImportState(state: ImportState) {
         val db = database ?: return
         try {
@@ -528,6 +547,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     }
 
     /** The newest archived message id of a chat, 0 when the chat is empty. */
+    @Synchronized
     fun newestArchivedMessageId(dialogId: Long): Int {
         val db = database ?: return 0
         var cursor: SQLiteCursor? = null
@@ -545,6 +565,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     }
 
     /** The oldest archived message id of a chat, 0 when the chat is empty. */
+    @Synchronized
     fun oldestArchivedMessageId(dialogId: Long): Int {
         val db = database ?: return 0
         var cursor: SQLiteCursor? = null
@@ -561,6 +582,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         }
     }
 
+    @Synchronized
     fun clearArchive() {
         val db = database ?: return
         try {
@@ -589,8 +611,50 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
 
         @JvmStatic
         fun getInstance(currentAccount: Int): ForkArchiveManager {
-            return instances.getOrPut(currentAccount) {
-                ForkArchiveManager(currentAccount)
+            // computeIfAbsent is atomic, two threads can never open the same
+            // database file twice.
+            return instances.computeIfAbsent(currentAccount) { ForkArchiveManager(currentAccount) }
+        }
+
+        /**
+         * Stores a message without blocking the caller. The write runs on the
+         * archive executor, so the update of an incoming message never touches
+         * the database on the UI thread.
+         */
+        @JvmStatic
+        fun archiveMessageAsync(
+            account: Int,
+            dialogId: Long,
+            messageId: Int,
+            date: Int,
+            senderId: Long,
+            senderName: String?,
+            messageText: String?
+        ) {
+            if (messageText.isNullOrEmpty()) return
+            executor.execute {
+                try {
+                    getInstance(account).archiveMessage(
+                        dialogId, messageId, date, senderId, senderName, messageText, false
+                    )
+                } catch (error: Throwable) {
+                    FileLog.e(error)
+                }
+            }
+        }
+
+        /** Removes every archived row without blocking the caller. */
+        @JvmStatic
+        fun clearArchiveAsync(account: Int, callback: (() -> Unit)? = null) {
+            executor.execute {
+                try {
+                    getInstance(account).clearArchive()
+                } catch (error: Throwable) {
+                    FileLog.e(error)
+                }
+                if (callback != null) {
+                    AndroidUtilities.runOnUIThread { callback() }
+                }
             }
         }
 

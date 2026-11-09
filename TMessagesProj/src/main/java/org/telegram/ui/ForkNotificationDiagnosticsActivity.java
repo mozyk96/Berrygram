@@ -39,7 +39,7 @@ import org.telegram.ui.Components.PermissionRequest;
  * Read-only notification diagnostics plus safe shortcuts to Android settings.
  * Tokens, credentials and account data are never displayed.
  */
-public final class ForkNotificationDiagnosticsActivity extends BaseFragment {
+public final class ForkNotificationDiagnosticsActivity extends ForkSettingsFragment {
     private static final String TEST_CHANNEL = "berrygram_notification_diagnostics";
     private static final int TEST_NOTIFICATION_ID = 0x4247;
 

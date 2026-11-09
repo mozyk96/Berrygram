@@ -22,7 +22,7 @@ import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 
 /** Experimental Glass 2.0 controls with a real in-place preview. */
-public final class ForkExperimentalGlassActivity extends BaseFragment {
+public final class ForkExperimentalGlassActivity extends ForkSettingsFragment {
     private LinearLayout rows;
     private ForkGlassPreview preview;
     private TextSettingsCell presetRow, tintRow;

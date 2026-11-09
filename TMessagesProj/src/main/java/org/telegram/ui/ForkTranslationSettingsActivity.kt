@@ -16,7 +16,7 @@ import org.telegram.ui.Cells.TextSettingsCell
  * Translation preferences for Berrygram. The settings use Telegram's own
  * translation infrastructure, the screen only exposes the configuration.
  */
-class ForkTranslationSettingsActivity : BaseFragment() {
+class ForkTranslationSettingsActivity : ForkSettingsFragment() {
 
     private var autoTranslateCell: TextCheckCell? = null
     private var targetLanguageCell: TextSettingsCell? = null

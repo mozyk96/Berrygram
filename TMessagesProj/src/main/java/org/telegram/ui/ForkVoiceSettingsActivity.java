@@ -30,7 +30,7 @@ import org.telegram.ui.Cells.TextSettingsCell;
 import java.io.File;
 
 /** Functional voice profile, platform effects and a local test recorder. */
-public final class ForkVoiceSettingsActivity extends BaseFragment {
+public final class ForkVoiceSettingsActivity extends ForkSettingsFragment {
     private static final int RECORD_PERMISSION = 7206;
     private LinearLayout rows;
     private boolean pendingTestStart;

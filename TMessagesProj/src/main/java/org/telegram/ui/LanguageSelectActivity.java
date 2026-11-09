@@ -68,6 +68,8 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
 
     private ListAdapter listAdapter;
     private RecyclerListView listView;
+    // BerryGram: the embedded translation block.
+    private org.telegram.ui.fork.settings.ForkSettingsSection forkLanguageSection;
     private ListAdapter searchListViewAdapter;
     private EmptyTextProgressView emptyView;
 
@@ -211,6 +213,10 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
 
         listView.setOnItemClickListener((view, position) -> {
             try {
+                if (view instanceof org.telegram.ui.fork.settings.ForkSettingsSection) {
+                    // The Berrygram block handles its own rows.
+                    return;
+                }
                 if (view instanceof TextCheckCell) {
                     final boolean prevFullValue = getContextValue() || getChatValue();
                     if (position == manualTranslationPosition) {
@@ -569,6 +575,7 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
     public static final int VIEW_TYPE_SETTINGS = 4;
     public static final int VIEW_TYPE_SETTINGS_2 = 5;
     public static final int VIEW_TYPE_INFO = 6;
+    public static final int VIEW_TYPE_FORK_SECTION = 7;
 
     private int settingsFromPosition = -1;
     private int settingsToPosition = -1;
@@ -628,6 +635,9 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
                 if (!unofficialLanguages.isEmpty()) {
                     count += unofficialLanguages.size() + 1;
                 }
+                // BerryGram: the translation options belong to the language
+                // settings, there is no separate translation menu.
+                count++;
                 return count;
             }
         }
@@ -657,6 +667,9 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
                     TextInfoPrivacyCell infoCell = new TextInfoPrivacyCell(mContext);
                     view = infoCell;
                     break;
+                case VIEW_TYPE_FORK_SECTION:
+                    view = createForkLanguageSection();
+                    break;
                 case VIEW_TYPE_SHADOW:
                 default: {
                     view = new ShadowSectionCell(mContext);
@@ -675,6 +688,10 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            if (holder.getItemViewType() == VIEW_TYPE_FORK_SECTION) {
+                // The Berrygram block owns its own rows.
+                return;
+            }
             switch (holder.getItemViewType()) {
                 case VIEW_TYPE_LANGUAGE: {
                     if (!search) {
@@ -812,6 +829,9 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
             if (search) {
                 return VIEW_TYPE_LANGUAGE;
             } else {
+                if (position == getItemCount() - 1) {
+                    return VIEW_TYPE_FORK_SECTION;
+                }
                 if (getMessagesController().isTranslationsManualEnabled() || getMessagesController().isTranslationsAutoEnabled()) {
                     settingsFromPosition = position - i;
                     if (i-- == 0) return VIEW_TYPE_HEADER;
@@ -899,9 +919,20 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
     public boolean isSupportEdgeToEdge() {
         return true;
     }
+
+    /** Builds the Berrygram translation block. */
+    private View createForkLanguageSection() {
+        if (forkLanguageSection == null) {
+            forkLanguageSection = ForkSettingsBlocks.language(this, currentAccount);
+        }
+        return forkLanguageSection;
+    }
+
     @Override
     public void onInsets(int left, int top, int right, int bottom) {
-        listView.setPadding(0, 0, 0, bottom);
+        // The floating bottom navigation of the main tabs is drawn above the
+        // content, the last row has to stay visible below it.
+        listView.setPadding(0, 0, 0, bottom + org.telegram.ui.fork.settings.ForkInsets.mainTabsBottomOffset());
         listView.setClipToPadding(false);
     }
 }

@@ -173,6 +173,17 @@ public class LiteModeSettingsActivity extends BaseFragment {
 
     private Utilities.Callback<Boolean> onPowerAppliedChange = applied -> updateValues();
 
+    // BerryGram: the embedded performance block.
+    private org.telegram.ui.fork.settings.ForkSettingsSection forkPerformanceSection;
+
+    /** Builds the Berrygram performance block. */
+    private View createForkPerformanceSection() {
+        if (forkPerformanceSection == null) {
+            forkPerformanceSection = ForkSettingsBlocks.performance(this);
+        }
+        return forkPerformanceSection;
+    }
+
     private boolean[] expanded = new boolean[3];
     private int getExpandedIndex(int flags) {
         if (flags == LiteMode.FLAGS_ANIMATED_STICKERS) {
@@ -281,6 +292,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
         items.add(Item.asSwitch(LocaleController.getString(R.string.LiteSmoothTransitions), SWITCH_TYPE_SMOOTH_TRANSITIONS));
         items.add(Item.asInfo(LocaleController.getString("LiteSmoothTransitionsInfo")));
 
+        // BerryGram: the device analyzer and the performance profile belong to
+        // the power saving settings, there is no separate performance menu.
+        items.add(Item.asForkSection());
+
         adapter.setItems(oldItems, items);
     }
 
@@ -336,6 +351,7 @@ public class LiteModeSettingsActivity extends BaseFragment {
     private static final int VIEW_TYPE_SWITCH = 3;
     private static final int VIEW_TYPE_CHECKBOX = 4;
     private static final int VIEW_TYPE_SWITCH2 = 5;
+    private static final int VIEW_TYPE_FORK_SECTION = 6;
 
     public static final int SWITCH_TYPE_SMOOTH_TRANSITIONS = 1;
 
@@ -372,6 +388,8 @@ public class LiteModeSettingsActivity extends BaseFragment {
                 view = new SwitchCell(context);
             } else if (viewType == VIEW_TYPE_SWITCH2) {
                 view = new TextCell(context, 23, false, true, null);
+            } else if (viewType == VIEW_TYPE_FORK_SECTION) {
+                view = createForkPerformanceSection();
             }
             return new RecyclerListView.Holder(view);
         }
@@ -384,6 +402,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
 
             final LiteModeSettingsActivity.Item item = items.get(position);
             final int viewType = holder.getItemViewType();
+            if (viewType == VIEW_TYPE_FORK_SECTION) {
+                // The Berrygram block owns its own rows.
+                return;
+            }
             if (viewType == VIEW_TYPE_HEADER) {
                 HeaderCell headerCell = (HeaderCell) holder.itemView;
                 headerCell.setText(item.text);
@@ -1014,6 +1036,9 @@ public class LiteModeSettingsActivity extends BaseFragment {
         public static Item asSwitch(CharSequence text, int type) {
             return new Item(VIEW_TYPE_SWITCH2, text, 0, 0, type);
         }
+        public static Item asForkSection() {
+            return new Item(VIEW_TYPE_FORK_SECTION, null, 0, 0, 0);
+        }
 
         public int getFlagsCount() {
             return Integer.bitCount(flags);
@@ -1069,7 +1094,9 @@ public class LiteModeSettingsActivity extends BaseFragment {
     }
     @Override
     public void onInsets(int left, int top, int right, int bottom) {
-        listView.setPadding(0, 0, 0, bottom);
+        // The floating bottom navigation of the main tabs is drawn above the
+        // content, the last row has to stay visible below it.
+        listView.setPadding(0, 0, 0, bottom + org.telegram.ui.fork.settings.ForkInsets.mainTabsBottomOffset());
         listView.setClipToPadding(false);
     }
 }

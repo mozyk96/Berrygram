@@ -24,7 +24,7 @@ import org.telegram.ui.Components.LayoutHelper
  * Lets the owner choose the chats whose history is imported into the Berry
  * archive. A single chat, several chats or every eligible chat can be chosen.
  */
-class ForkArchiveChatPickerActivity : BaseFragment() {
+class ForkArchiveChatPickerActivity : ForkSettingsFragment() {
 
     private val chats = mutableListOf<Long>()
     private val selected = LinkedHashSet<Long>()

@@ -5,102 +5,30 @@ import org.telegram.messenger.R
 import org.telegram.ui.Components.UItem
 import org.telegram.ui.ForkLocale
 import org.telegram.ui.SettingsActivity
-import java.util.ArrayList
 
 /**
- * Builds the Berrygram entries of the unified Telegram settings screen.
+ * Builds the Berrygram rows of the unified Telegram settings screen.
  *
- * The entries are placed directly after the Telegram row they belong to, so
- * privacy, appearance, language, notification, storage and performance
- * controls are reachable from the section the user expects them in.
+ * Berrygram uses one settings system. Every feature is part of the Telegram
+ * screen that owns it, so the root screen only keeps the Update Center, which
+ * has no other home. The mapping of the features to their screens lives in
+ * [ForkUnifiedSettingsMapping] and is verified by a regression test.
  */
 object ForkUnifiedSettings {
     private const val COLOR_TOP = 0xFF3AA0E8.toInt()
     private const val COLOR_BOTTOM = 0xFF2B7CB8.toInt()
 
-    /** Inserts the entries after the given Telegram settings row. */
+    /** The Update Center row of the help section. */
     @JvmStatic
-    fun insertAfter(items: ArrayList<UItem>, anchorId: Int, entries: List<UItem>) {
-        if (entries.isEmpty()) return
-        var index = -1
-        for (a in items.indices) {
-            if (items[a].id == anchorId) {
-                index = a
-                break
-            }
-        }
-        if (index < 0) return
-        items.addAll(index + 1, entries)
-    }
-
-    /** Creates the Berrygram rows of the unified settings screen. */
-    @JvmStatic
-    fun buildEntries(context: Context): List<UItem> {
-        val result = ArrayList<UItem>()
-        for (entry in ForkUnifiedSettingsMapping.entries()) {
-            val title = ForkLocale.get(resourceId(entry.titleResource))
-            val subtitle = ForkLocale.get(resourceId(entry.subtitleResource))
-            result.add(SettingsActivity.SettingCell.Factory.of(
-                entry.id,
-                COLOR_TOP,
-                COLOR_BOTTOM,
-                iconFor(entry.id),
-                title,
-                subtitle
-            ))
-        }
-        return result
-    }
-
-    /**
-     * Places every Berrygram entry directly after the Telegram row it belongs
-     * to, so privacy, appearance, language, notification, storage and
-     * performance controls are found in the expected section.
-     *
-     * <p>The entries are inserted in reverse order, because every insertion
-     * lands directly behind the anchor row. Reversing keeps the visual order of
-     * the mapping for anchors that own more than one entry.</p>
-     */
-    @JvmStatic
-    fun applyTo(items: ArrayList<UItem>, context: Context) {
-        val entries = ForkUnifiedSettingsMapping.entries().reversed()
-        for (entry in entries) {
-            val title = ForkLocale.get(resourceId(entry.titleResource))
-            val subtitle = ForkLocale.get(resourceId(entry.subtitleResource))
-            val item = SettingsActivity.SettingCell.Factory.of(
-                entry.id,
-                COLOR_TOP,
-                COLOR_BOTTOM,
-                iconFor(entry.id),
-                title,
-                subtitle
-            )
-            insertAfter(items, entry.anchorId, listOf(item))
-        }
-    }
-
-    /** The About Berrygram row, placed at the bottom of the settings screen. */
-    @JvmStatic
-    fun buildAboutEntry(context: Context): UItem {
+    fun buildUpdateEntry(context: Context): UItem {
         return SettingsActivity.SettingCell.Factory.of(
-            ForkUnifiedSettingsMapping.ID_ABOUT,
+            ForkUnifiedSettingsMapping.ID_UPDATES,
             COLOR_TOP,
             COLOR_BOTTOM,
-            R.drawable.settings_ask,
-            ForkLocale.get(resourceId("ForkUnifiedAboutTitle")),
-            ForkLocale.get(resourceId("ForkUnifiedAboutInfo"))
+            R.drawable.msg_download,
+            ForkLocale.get(R.string.ForkUnifiedUpdateTitle),
+            ForkLocale.get(R.string.ForkUnifiedUpdateInfo)
         )
-    }
-
-    private fun iconFor(id: Int): Int = when (id) {
-        ForkUnifiedSettingsMapping.ID_PRIVACY -> R.drawable.settings_privacy
-        ForkUnifiedSettingsMapping.ID_EFFECTS -> R.drawable.msg_palette
-        ForkUnifiedSettingsMapping.ID_MEDIA -> R.drawable.settings_data
-        ForkUnifiedSettingsMapping.ID_DIAGNOSTICS -> R.drawable.settings_sounds
-        ForkUnifiedSettingsMapping.ID_TRANSLATION -> R.drawable.msg_translate
-        ForkUnifiedSettingsMapping.ID_ARCHIVE -> R.drawable.msg_archive
-        ForkUnifiedSettingsMapping.ID_PERFORMANCE -> R.drawable.msg_speed
-        else -> R.drawable.msg_settings
     }
 
     private fun resourceId(name: String): Int {

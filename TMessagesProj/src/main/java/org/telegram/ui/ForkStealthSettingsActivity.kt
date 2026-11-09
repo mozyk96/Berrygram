@@ -18,7 +18,7 @@ import org.telegram.ui.Cells.TextSettingsCell
  * Controls Ghost Mode, invisible reading, deleted messages preservation,
  * edit history revisions, and local chat archive. Written in Kotlin.
  */
-class ForkStealthSettingsActivity : BaseFragment() {
+class ForkStealthSettingsActivity : ForkSettingsFragment() {
 
     private var ghostModeCell: TextCheckCell? = null
     private var stealthPrivateCell: TextCheckCell? = null

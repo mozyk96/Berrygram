@@ -14,7 +14,7 @@ import org.telegram.ui.Cells.TextSettingsCell
  * gestures, reactions, message menu and custom text. The screen exists so the
  * unified settings never have to grow a long list of single purpose rows.
  */
-class ForkMediaSettingsActivity : BaseFragment() {
+class ForkMediaSettingsActivity : ForkSettingsFragment() {
 
     override fun createView(context: Context): View {
         actionBar.setTitle(ForkLocale.get(R.string.ForkUnifiedMediaTitle))

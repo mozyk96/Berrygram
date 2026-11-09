@@ -77,11 +77,22 @@ public final class ForkTabIndicatorInterpolator {
      * @return the index of the anchor at or before the position, or -1
      */
     public static int findAnchorIndex(float[] positions, float position) {
-        if (positions == null || positions.length == 0) {
+        return findAnchorIndex(positions, positions == null ? 0 : positions.length, position);
+    }
+
+    /**
+     * Finds the anchor at or before the given navigation position inside the
+     * first {@code count} entries of the array. The array may be physically
+     * larger than the number of visible anchors, so unbounded iteration read
+     * stale geometry and made the indicator jump after a tab was hidden.
+     */
+    public static int findAnchorIndex(float[] positions, int count, float position) {
+        if (positions == null || count <= 0) {
             return -1;
         }
+        int limit = Math.min(count, positions.length);
         int index = -1;
-        for (int a = 0; a < positions.length; a++) {
+        for (int a = 0; a < limit; a++) {
             if (positions[a] <= position + 0.0001f) {
                 index = a;
             } else {

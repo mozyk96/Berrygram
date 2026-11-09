@@ -23,11 +23,11 @@ function method(source, signature) {
 const activity = read('org/telegram/ui/MainTabsActivity.java');
 const statistic = read('org/telegram/ui/StatisticActivity.java');
 const layout = read('org/telegram/ui/MainTabsLayout.java');
+const pager = read('org/telegram/ui/Components/ViewPagerFixed.java');
 
 const activitySelect = method(activity, 'public void selectTab(int position, boolean animated)');
 const statisticSelect = method(statistic, 'public void selectTab(int position, boolean animated)');
 const layoutSelect = method(layout, 'public void setTabSelected(View tab, boolean animated)');
-const layoutLayout = method(layout, 'protected void onLayout(boolean changed, int l, int t, int r, int b)');
 
 if (!activitySelect.includes('tabsView.setTabSelected(')) {
     throw new Error('MainTabsActivity bypasses the shared bottom-tab indicator');
@@ -59,21 +59,52 @@ if (layout.includes('selectedTabPositionX') || layout.includes('elongationAnim')
     throw new Error('The indicator still owns an independent spring animation');
 }
 
-const layoutDetach = method(layout, 'protected void onDetachedFromWindow()');
-if (!layoutDetach.includes('selectedTabPositionOffsetX.cancel()')) {
-    throw new Error('The long press offset spring survives detach');
+// An idle screen must not wake the main thread. The pager reports every frame
+// of a drag or an animation, a second frame loop only fought with it.
+if (activity.includes('postFrameCallback')) {
+    throw new Error('MainTabsActivity still runs a separate indicator frame loop');
 }
-// The frame callback must stop on an idle screen instead of waking the main
-// thread forever.
-if (!activity.includes('forkIndicatorIdleFrames')) {
-    throw new Error('The indicator sync has no idle detection');
+if (activity.includes('forkIndicatorIdleFrames') || activity.includes('forkIndicatorFrameScheduled')) {
+    throw new Error('MainTabsActivity still keeps the idle frame state of the removed frame loop');
 }
-if (!activity.includes('moving || forkIndicatorIdleFrames < 2')) {
-    throw new Error('The indicator sync keeps posting frames while the pager is idle');
+
+// The tab selection may only change when the page really changes, otherwise
+// every drag frame restarted the selection animation.
+const animationUpdate = method(activity, 'protected void onViewPagerTabAnimationUpdate(boolean manual)');
+if (!animationUpdate.includes('Math.round(position)')) {
+    throw new Error('The pager update does not detect the page change');
 }
-if (!activity.includes('viewPager.isTouch()') || !activity.includes('viewPager.isManualScrolling()')) {
-    throw new Error('The indicator sync ignores an active drag');
+if (!animationUpdate.includes('forkLastSelectedPosition')) {
+    throw new Error('The pager update does not remember the selected page');
 }
+if (animationUpdate.includes('selectTab(Math.round(position), true)')) {
+    throw new Error('The pager update still re-selects the tab on every frame');
+}
+
+// The pager normalises the translation with its own width, the display width
+// was wrong in split screen and on tablets.
+const available = method(pager, 'protected float getAvailableTranslationX()');
+if (!available.includes('getMeasuredWidth()')) {
+    throw new Error('The pager still normalises the position with the display width');
+}
+if (available.includes('AndroidUtilities.displaySize.x')) {
+    throw new Error('The pager normalises the position with the display width');
+}
+const position = method(pager, 'public float getPositionAnimated()');
+if (!position.includes('currentPosition')) {
+    throw new Error('The pager position has no fallback for an unmeasured pager');
+}
+
+// The anchor search has to stay inside the visible anchors, a stale entry
+// moved the indicator after a tab was hidden.
+const anchors = method(layout, 'private void refreshAnchors()');
+if (!anchors.includes('anchorCount')) {
+    throw new Error('The anchor list does not track the number of visible anchors');
+}
+if (!layout.includes('findAnchorIndex(anchorPositions, anchorCount, position)')) {
+    throw new Error('The anchor search is not limited to the visible anchors');
+}
+
 const layoutSync = method(layout, 'private void syncSelectedTabIndicator()');
 if (layoutSync.includes('animatedLongSelectedViewCenterX = targetX')) {
     throw new Error('The indicator can still snap to a target instead of following the pager');
@@ -97,10 +128,15 @@ const fixture = `public class MainTabsIndicatorTest {
         void setTabSelected(View tab, boolean animated) { selected = (GlassTabView) tab; }
         void setIndicatorPosition(float position) { indicatorPosition = position; }
     }
+    static class ViewPagerStub {
+        float position = 0f;
+        float getPositionAnimated() { return position; }
+    }
     GlassTabView[] tabs;
     MainTabsLayout tabsView = new MainTabsLayout();
+    ViewPagerStub viewPager = new ViewPagerStub();
+    int forkLastSelectedPosition = -1;
     static int indexToPosition(int index) { return index > 2 ? index - 1 : index; }
-    void startForkIndicatorSync() {}
     ${activitySelect.replace('public void selectTab', 'public void selectMainTab')}
     ${statisticSelect.replace('public void selectTab', 'public void selectStatisticTab')}
     static void check(boolean value, String message) { if (!value) throw new AssertionError(message); }
@@ -123,6 +159,12 @@ const fixture = `public class MainTabsIndicatorTest {
         check(test.tabsView.selected == test.tabs[3], "Calls selection was not delegated");
         test.selectMainTab(3, false);
         check(test.tabsView.selected == test.tabs[4], "Profile selection was not delegated");
+
+        // The indicator always follows the position of the pager.
+        test.viewPager.position = 1.5f;
+        test.selectMainTab(2, false);
+        check(Math.abs(test.tabsView.indicatorPosition - 1.5f) < 0.0001f,
+            "The indicator does not render the pager position");
 
         test.tabsView.selected = null;
         test.selectStatisticTab(1, true);

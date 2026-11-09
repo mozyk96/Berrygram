@@ -33,7 +33,7 @@ import org.telegram.ui.Components.RecyclerListView
  * Berry Archive UI — provides browsing, full-text search, and management
  * of locally preserved chats and messages. Written in Kotlin.
  */
-class ForkArchiveActivity : BaseFragment() {
+class ForkArchiveActivity : ForkSettingsFragment() {
 
     private var listView: RecyclerListView? = null
     private var adapter: ListAdapter? = null
@@ -263,14 +263,39 @@ class ForkArchiveActivity : BaseFragment() {
     private var importStatus: org.telegram.messenger.fork.storage.ForkArchiveImporter.Progress? = null
     private var importDialog: AlertDialog? = null
 
+    /** The list itself reserves the space of the bottom navigation. */
+    override fun applyBottomInset(systemBottom: Int) {
+        val list = listView ?: return
+        org.telegram.ui.fork.settings.ForkInsets.applyBottomPadding(
+            list,
+            org.telegram.ui.fork.settings.ForkInsets.bottomPadding(systemBottom)
+        )
+    }
+
+    override fun onFragmentDestroy() {        // The importer is a singleton per account, a stale listener would keep
+        // this screen alive and would report into a destroyed view.
+        try {
+            org.telegram.messenger.fork.storage.ForkArchiveImporter.getInstance(currentAccount)
+                .setListener(null)
+        } catch (error: Throwable) {
+        }
+        importDialog?.dismiss()
+        importDialog = null
+        importStatus = null
+        searchRunnable?.let { org.telegram.messenger.AndroidUtilities.cancelRunOnUIThread(it) }
+        searchRunnable = null
+        super.onFragmentDestroy()
+    }
+
     private fun showClearConfirmation() {
         val activity = parentActivity ?: return
         val builder = AlertDialog.Builder(activity)
         builder.setTitle(ForkLocale.get(R.string.ForkArchiveClear))
         builder.setMessage(ForkLocale.get(R.string.ForkArchiveClearConfirm))
         builder.setPositiveButton(LocaleController.getString(R.string.ClearButton)) { _, _ ->
-            ForkArchiveManager.getInstance(currentAccount).clearArchive()
-            loadDialogs()
+            // The archive is cleared on the archive executor, the database must
+            // never be touched on the UI thread.
+            ForkArchiveManager.clearArchiveAsync(currentAccount) { loadDialogs() }
         }
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null)
         showDialog(builder.create())

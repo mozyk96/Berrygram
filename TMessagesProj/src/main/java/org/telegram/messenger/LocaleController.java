@@ -4485,7 +4485,24 @@ public class LocaleController {
             return value;
         }
 
-        return localizationInternal.getByResName(fallback);
+        value = localizationInternal.getByResName(fallback);
+        if (value != null) {
+            return value;
+        }
+
+        // Telegram's language packs only contain upstream resource names. Fork
+        // resources (R.string.Fork*) are never part of them, which used to
+        // surface as "LOC_ERR:null" whenever a fork screen asked for one. Fall
+        // back to the packaged Android resource, which already honours the
+        // selected application locale, instead of failing the lookup.
+        if (stringRes != 0) {
+            try {
+                return context.getString(stringRes);
+            } catch (Throwable ignore) {
+                // fall through, the caller reports the missing resource
+            }
+        }
+        return fallback;
     }
 
 

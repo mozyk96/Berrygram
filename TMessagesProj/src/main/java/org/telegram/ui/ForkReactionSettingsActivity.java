@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Ordered standard quick reactions; all sending restrictions remain native. */
-public final class ForkReactionSettingsActivity extends BaseFragment {
+public final class ForkReactionSettingsActivity extends ForkSettingsFragment {
     private LinearLayout rows;
     @Override public View createView(Context context) {
         actionBar.setTitle(ForkLocale.get(R.string.ForkReactionTitle));

@@ -237,6 +237,9 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
     private int appIconShadowRow;
 
     private int rowCount;
+// BerryGram: the embedded chat settings block.
+private int forkChatSettingsRow;
+private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSection;
 
     private boolean updatingLocation;
 
@@ -532,6 +535,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
         int prevRaiseToSpeakRow = raiseToSpeakRow;
 
         rowCount = 0;
+        forkChatSettingsRow = -1;
         contactsReimportRow = -1;
         contactsSortRow = -1;
         scheduleLocationRow = -1;
@@ -705,6 +709,11 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
             sendByEnterRow = rowCount++;
             distanceRow = rowCount++;
             otherSectionRow = rowCount++;
+
+            // BerryGram: effects, reactions, message menu, gestures and custom
+            // text are part of the chat settings, there is no second effects
+            // menu next to the Telegram sections.
+            forkChatSettingsRow = rowCount++;
         } else {
             nightDisabledRow = rowCount++;  // TYPE_THEME_TYPE
             nightScheduledRow = rowCount++; // TYPE_THEME_TYPE
@@ -1103,6 +1112,10 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
         frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         actionBar.setAdaptiveBackground(listView);
         listView.setOnItemClickListener((view, position, x, y) -> {
+            if (position == forkChatSettingsRow) {
+                // The Berrygram block handles its own rows.
+                return;
+            }
             if (position == enableAnimationsRow) {
                 SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                 boolean animations = preferences.getBoolean("view_animations", true);
@@ -1518,7 +1531,9 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
 
     @Override
     public void onInsets(int left, int top, int right, int bottom) {
-        listView.setPadding(0, 0, 0, bottom);
+        // The floating bottom navigation of the main tabs is drawn above the
+        // content, the last row has to stay visible below it.
+        listView.setPadding(0, 0, 0, bottom + org.telegram.ui.fork.settings.ForkInsets.mainTabsBottomOffset());
         listView.setClipToPadding(false);
     }
 
@@ -1543,9 +1558,24 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
     @Override
     public void onResume() {
         super.onResume();
+        if (forkChatSettingsSection != null) {
+            forkChatSettingsSection.refresh();
+        }
         if (listAdapter != null) {
             updateRows(true);
         }
+    }
+
+    /**
+     * Builds the Berrygram chat settings block. Effects, reactions, the
+     * message menu, gestures and the custom text are part of the chat
+     * settings of Telegram, there is no second effects menu.
+     */
+    private View createForkChatSettingsSection() {
+        if (forkChatSettingsSection == null) {
+            forkChatSettingsSection = ForkSettingsBlocks.chatSettings(this);
+        }
+        return forkChatSettingsSection;
     }
 
     @Override
@@ -2064,6 +2094,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
         private final static int TYPE_SAVE_TO_GALLERY = 19;
         private final static int TYPE_APP_ICON = 20;
         private final static int TYPE_CHOOSE_COLOR = 21;
+        private final static int TYPE_FORK_SECTION = 22;
 
         private Context mContext;
         private boolean first = true;
@@ -2463,12 +2494,19 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
                 case TYPE_CHOOSE_COLOR:
                     view = new PeerColorActivity.ChangeNameColorCell(currentAccount, 0, mContext, getResourceProvider());
                     break;
+                case TYPE_FORK_SECTION:
+                    view = createForkChatSettingsSection();
+                    break;
             }
             return new RecyclerListView.Holder(view);
         }
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            if (holder.getItemViewType() == TYPE_FORK_SECTION) {
+                // The Berrygram block owns its own rows.
+                return;
+            }
             switch (holder.getItemViewType()) {
                 case TYPE_TEXT_SETTING: {
                     TextSettingsCell cell = (TextSettingsCell) holder.itemView;
@@ -2729,6 +2767,9 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
 
         @Override
         public int getItemViewType(int position) {
+            if (position == forkChatSettingsRow) {
+                return TYPE_FORK_SECTION;
+            }
             if (position == scheduleFromRow || position == distanceRow ||
                     position == scheduleToRow || position == scheduleUpdateLocationRow ||
                     position == contactsReimportRow || position == contactsSortRow ||

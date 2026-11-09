@@ -29,7 +29,7 @@ import java.util.List;
  * Exactly 3 visual modes: Glass 2.0, Blur, No effects.
  * Obsolete sliders and obsolete device checkboxes removed.
  */
-public final class ForkAppearanceSettingsActivity extends BaseFragment {
+public final class ForkAppearanceSettingsActivity extends ForkSettingsFragment {
 
     private TextSettingsCell styleCell;
     private TextSettingsCell glassPreviewCell;

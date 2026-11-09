@@ -114,6 +114,9 @@ public class DataSettingsActivity extends BaseFragment {
     private int saveToGalleryDividerRow;
 
     private int rowCount;
+    // BerryGram: the embedded archive block.
+    private int forkDataSectionRow;
+    private org.telegram.ui.fork.settings.ForkSettingsSection forkDataSection;
 
     private boolean updateVoipUseLessData;
 
@@ -199,6 +202,10 @@ public class DataSettingsActivity extends BaseFragment {
         proxySection2Row = rowCount++;
         clearDraftsRow = rowCount++;
         clearDraftsSectionRow = rowCount++;
+
+        // BerryGram: the archive browser and the archive import belong to the
+        // data settings, there is no separate archive section.
+        forkDataSectionRow = rowCount++;
 
         if (listAdapter != null && fullNotify) {
             listAdapter.notifyDataSetChanged();
@@ -646,6 +653,10 @@ public class DataSettingsActivity extends BaseFragment {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            if (holder.getItemViewType() == 7) {
+                // The Berrygram block owns its own rows.
+                return;
+            }
             switch (holder.getItemViewType()) {
                 case 0: {
                     break;
@@ -919,6 +930,9 @@ public class DataSettingsActivity extends BaseFragment {
                 default:
                     view = new TextCell(mContext);
                     break;
+                case 7:
+                    view = createForkDataSection();
+                    break;
             }
             view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
             return new RecyclerListView.Holder(view);
@@ -926,6 +940,9 @@ public class DataSettingsActivity extends BaseFragment {
 
         @Override
         public int getItemViewType(int position) {
+            if (position == forkDataSectionRow) {
+                return 7;
+            }
             if (position == mediaDownloadSection2Row || position == usageSection2Row || position == callsSection2Row || position == proxySection2Row || position == autoplaySectionRow || position == clearDraftsSectionRow || position == saveToGalleryDividerRow) {
                 return 0;
             } else if (position == mediaDownloadSectionRow || position == streamSectionRow || position == callsSectionRow || position == usageSectionRow || position == proxySectionRow || position == autoplayHeaderRow || position == saveToGallerySectionRow) {
@@ -985,9 +1002,20 @@ public class DataSettingsActivity extends BaseFragment {
     public boolean isSupportEdgeToEdge() {
         return true;
     }
+
+    /** Builds the Berrygram archive block. */
+    private View createForkDataSection() {
+        if (forkDataSection == null) {
+            forkDataSection = ForkSettingsBlocks.data(this, currentAccount);
+        }
+        return forkDataSection;
+    }
+
     @Override
     public void onInsets(int left, int top, int right, int bottom) {
-        listView.setPadding(0, 0, 0, bottom);
+        // The floating bottom navigation of the main tabs is drawn above the
+        // content, the last row has to stay visible below it.
+        listView.setPadding(0, 0, 0, bottom + org.telegram.ui.fork.settings.ForkInsets.mainTabsBottomOffset());
         listView.setClipToPadding(false);
     }
 }

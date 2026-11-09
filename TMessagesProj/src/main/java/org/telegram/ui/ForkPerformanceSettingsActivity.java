@@ -27,7 +27,7 @@ import java.util.Locale;
 /**
  * Performance Center 2.0 with integrated Device Analyzer and hardware diagnostics.
  */
-public final class ForkPerformanceSettingsActivity extends BaseFragment {
+public final class ForkPerformanceSettingsActivity extends ForkSettingsFragment {
     private static final int DIAG_COUNT = 6;
 
     private TextSettingsCell configModeRow;
@@ -190,7 +190,7 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
         if (configModeRow == null) return;
         boolean isManual = PerformancePolicy.CONFIG_MANUAL.equals(PerformanceSettings.configMode());
         configModeRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceConfigMode),
-                LocaleController.getString(isManual ? R.string.ForkPerformanceManualMode : R.string.ForkPerformanceAutoMode), false);
+                ForkLocale.get(isManual ? R.string.ForkPerformanceManualMode : R.string.ForkPerformanceAutoMode), false);
 
         manualLevelRow.setVisibility(isManual ? View.VISIBLE : View.GONE);
         manualLevelRow.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceManualLevel),
@@ -202,13 +202,13 @@ public final class ForkPerformanceSettingsActivity extends BaseFragment {
         diagnosticRows[1].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceEffectiveTier),
                 tierLabel(PerformanceSettings.effectiveTier()), false);
         diagnosticRows[2].setTextAndValue(ForkLocale.get(R.string.ForkPerformancePowerSaver),
-                LocaleController.getString(PerformanceSettings.systemPowerSaver() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
+                ForkLocale.get(PerformanceSettings.systemPowerSaver() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
         diagnosticRows[3].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceGraphics),
                 styleLabel(), false);
         diagnosticRows[4].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceAnimations),
-                LocaleController.getString(ForkSurfaceAnimation.enabled() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
+                ForkLocale.get(ForkSurfaceAnimation.enabled() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
         diagnosticRows[5].setTextAndValue(ForkLocale.get(R.string.ForkPerformanceReduceEffectsActive),
-                LocaleController.getString(PerformanceSettings.reduceEffects() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
+                ForkLocale.get(PerformanceSettings.reduceEffects() ? R.string.ForkPerformanceOn : R.string.ForkPerformanceOff), false);
     }
 
     private void copyDiagnostics() {

@@ -162,6 +162,10 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
     private int secretDetailRow;
     private int rowCount;
 
+    // BerryGram: the embedded privacy block.
+    private int forkPrivacySectionRow;
+    private org.telegram.ui.fork.settings.ForkSettingsSection forkPrivacySection;
+
     private final ArrayList<BotBiometry.Bot> biometryBots = new ArrayList<>();
 
     private boolean deleteAccountUpdate;
@@ -314,6 +318,10 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
         listView.setAdapter(listAdapter);
         listView.setOnItemClickListener((view, position) -> {
             if (!view.isEnabled()) {
+                return;
+            }
+            if (position == forkPrivacySectionRow) {
+                // The Berrygram block handles its own rows.
                 return;
             }
             if (position == autoDeleteMesages) {
@@ -795,6 +803,9 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
         secretMapRow = rowCount++;
         secretWebpageRow = rowCount++;
         secretDetailRow = rowCount++;
+        // BerryGram: the Ghost Mode, history and archive controls live inside
+        // the privacy screen of Telegram, there is no second privacy menu.
+        forkPrivacySectionRow = rowCount++;
         if (listAdapter != null && notify) {
             listAdapter.notifyDataSetChanged();
         }
@@ -1004,6 +1015,9 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
     @Override
     public void onResume() {
         super.onResume();
+        if (forkPrivacySection != null) {
+            forkPrivacySection.refresh();
+        }
         if (listAdapter != null) {
             listAdapter.notifyDataSetChanged();
         }
@@ -1064,6 +1078,9 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                 case 5:
                     view = new TextCell(mContext);
                     break;
+                case 6:
+                    view = createForkPrivacySection();
+                    break;
                 case 3:
                 default:
                     view = new TextCheckCell(mContext);
@@ -1074,6 +1091,10 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            if (holder.getItemViewType() == 6) {
+                // The Berrygram block owns its own rows.
+                return;
+            }
             switch (holder.getItemViewType()) {
                 case 0:
                     boolean showLoading = false;
@@ -1389,6 +1410,9 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
 
         @Override
         public int getItemViewType(int position) {
+            if (position == forkPrivacySectionRow) {
+                return 6;
+            }
             if (position == passportRow || position == lastSeenRow || position == phoneNumberRow ||
                     position == deleteAccountRow || position == webSessionsRow || position == groupsRow || position == paymentsClearRow ||
                     position == secretMapRow || position == contactsDeleteRow || position == botsBiometryRow) {
@@ -1406,6 +1430,18 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
             }
             return 0;
         }
+    }
+
+    /**
+     * Builds the Berrygram privacy block. Ghost Mode, the preservation of
+     * deleted messages, the edit history and the archive privacy are part of
+     * the privacy screen of Telegram, there is no second privacy menu.
+     */
+    private View createForkPrivacySection() {
+        if (forkPrivacySection == null) {
+            forkPrivacySection = ForkSettingsBlocks.privacy(this, currentAccount);
+        }
+        return forkPrivacySection;
     }
 
     private SpannableString premiumStar;
@@ -1461,7 +1497,9 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
     }
     @Override
     public void onInsets(int left, int top, int right, int bottom) {
-        listView.setPadding(0, 0, 0, bottom);
+        // The floating bottom navigation of the main tabs is drawn above the
+        // content, the last row has to stay visible below it.
+        listView.setPadding(0, 0, 0, bottom + org.telegram.ui.fork.settings.ForkInsets.mainTabsBottomOffset());
         listView.setClipToPadding(false);
     }
 }

@@ -12,7 +12,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 /** Compact entry points to the real round-video controls. */
-public final class ForkVideoSettingsActivity extends BaseFragment {
+public final class ForkVideoSettingsActivity extends ForkSettingsFragment {
     private static final int CAMERA_PERMISSION = 7205;
     private TextSettingsCell camera, quality, profile, capabilities;
     private ForkRoundVideoPreviewPanel previewPanel;

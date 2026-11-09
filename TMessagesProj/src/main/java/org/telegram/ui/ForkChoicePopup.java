@@ -6,12 +6,12 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.Components.ItemOptions;
 
 /** Compact anchored choice menu using Telegram's popup positioning and dismissal. */
-final class ForkChoicePopup {
+public final class ForkChoicePopup {
     interface OnChoice { void selected(int index); }
     private ForkChoicePopup() { }
 
-    static void show(BaseFragment parent, View anchor, CharSequence[] labels, int[] icons,
-                     int selected, OnChoice callback) {
+    public static void show(BaseFragment parent, View anchor, CharSequence[] labels, int[] icons,
+                            int selected, OnChoice callback) {
         if (anchor == null || !anchor.isAttachedToWindow() || parent.getParentActivity() == null) return;
         ItemOptions options = ItemOptions.makeOptions(parent, anchor)
                 .setGravity(Gravity.RIGHT).setDimAlpha(0).setDrawScrim(false);

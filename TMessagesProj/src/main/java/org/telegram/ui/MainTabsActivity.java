@@ -86,11 +86,24 @@ import org.telegram.ui.Wallet.WalletActivity;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.lang.ref.WeakReference;
 
 import me.vkryl.android.animator.BoolAnimator;
 import me.vkryl.android.animator.FactorAnimator;
 
 public class MainTabsActivity extends ViewPagerActivity implements NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
+
+    private static WeakReference<MainTabsActivity> instance;
+
+    /** The visible main tabs activity, used to reserve the space of the bottom navigation. */
+    public static MainTabsActivity getInstance() {
+        return instance == null ? null : instance.get();
+    }
+
+    /** True while the floating bottom navigation is on the screen. */
+    public boolean isMainTabsBarVisible() {
+        return tabsViewWrapper != null && tabsViewWrapper.getVisibility() == View.VISIBLE && getParentActivity() != null;
+    }
 
     public static final int TABS_COUNT = 4;
     private static final int POSITION_CHATS = 0;
@@ -289,8 +302,6 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         checkUnreadCount(true);
 
         showAccountChangeHint();
-        hasPaused = false;
-        startForkIndicatorSync();
     }
 
     private void checkContactsTabBadge() {
@@ -313,8 +324,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (accountSwitchHint != null) {
             accountSwitchHint.hide();
         }
-        stopForkIndicatorSync();
-        hasPaused = true;
+
     }
 
     @Override
@@ -365,7 +375,6 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
                 selectTab(position, true);
                 viewPager.scrollToPosition(position);
-                startForkIndicatorSync();
             });
 
             tabsView.addView(tabs[index]);
@@ -748,9 +757,12 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     @Override
     protected void onViewPagerScrollEnd() {
         if (tabsView != null) {
-            selectTab(viewPager.getCurrentPosition(), true);
+            // The pager already owns the final position, only the tab visual
+            // state has to be settled. Re-animating here made the indicator
+            // perform a second, conflicting transition after every swipe.
+            selectTab(viewPager.getCurrentPosition(), false);
             setGestureSelectedOverride(0, false);
-            tabsView.setIndicatorPosition(viewPager.getCurrentPosition());
+            tabsView.setIndicatorPosition(viewPager.getPositionAnimated());
         }
         blur3_invalidateBlur();
 
@@ -776,13 +788,17 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         final boolean isDragByGesture = !manual;
 
         if (tabsView != null) {
-            // BerryGram: the indicator renders the pager position, so it is kept
-            // in sync with every page animation and drag frame.
-            tabsView.setIndicatorPosition(viewPager.getPositionAnimated());
+            // BerryGram: the pager position is the single source of truth. The
+            // indicator is moved once per pager frame, no additional frame loop
+            // and no per-frame tab re-selection (that used to restart the tab
+            // selection animation on every drag frame and made it flicker).
             final float position = viewPager.getPositionAnimated();
+            tabsView.setIndicatorPosition(position);
             setGestureSelectedOverride(position, isDragByGesture);
-            if (isDragByGesture) {
-                selectTab(Math.round(position), true);
+            final int rounded = Math.round(position);
+            if (rounded != forkLastSelectedPosition) {
+                forkLastSelectedPosition = rounded;
+                selectTab(rounded, false);
             }
         }
 
@@ -888,70 +904,13 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             }
         }
         tabsView.setTabSelected(selectedTab, animated);
-        startForkIndicatorSync();
-    }
-
-    // ---------------------------------------------------------------------
-    // BerryGram: the pager owns the navigation position and the bottom
-    // indicator only renders it. A frame callback keeps both in sync during
-    // taps, drags and cancelled drags without a second animation.
-    // ---------------------------------------------------------------------
-
-    private final android.view.Choreographer.FrameCallback forkIndicatorFrameCallback = new android.view.Choreographer.FrameCallback() {
-        @Override
-        public void doFrame(long frameTimeNanos) {
-            forkIndicatorFrameScheduled = false;
-            if (tabsView == null || viewPager == null) {
-                return;
-            }
-            // The pager position is the single source of truth, the indicator
-            // follows it exactly, during taps, drags and cancelled drags.
-            final float position = viewPager.getPositionAnimated();
-            tabsView.setIndicatorPosition(position);
-            final boolean moving = Float.isNaN(forkIndicatorLastPosition)
-                    || Math.abs(position - forkIndicatorLastPosition) >= 0.0005f
-                    || viewPager.isManualScrolling() || viewPager.isTouch();
-            forkIndicatorLastPosition = position;
-            if (moving) {
-                forkIndicatorIdleFrames = 0;
-            } else {
-                forkIndicatorIdleFrames++;
-            }
-            // Keep the loop only while the pager actually moves. An idle screen
-            // must not wake the main thread on every frame: a stable position
-            // stops the sync after a couple of frames, and the next animation
-            // update or tab selection restarts it.
-            if (getParentActivity() != null && !hasPaused && (moving || forkIndicatorIdleFrames < 2)) {
-                scheduleForkIndicatorSync();
-            }
-        }
-    };
-
-    private boolean forkIndicatorFrameScheduled;
-    private boolean hasPaused;
-    private float forkIndicatorLastPosition = Float.NaN;
-    private int forkIndicatorIdleFrames;
-
-    private void scheduleForkIndicatorSync() {
-        if (forkIndicatorFrameScheduled || tabsView == null || viewPager == null) {
-            return;
-        }
-        forkIndicatorFrameScheduled = true;
-        android.view.Choreographer.getInstance().postFrameCallback(forkIndicatorFrameCallback);
-    }
-
-    private void startForkIndicatorSync() {
-        forkIndicatorLastPosition = Float.NaN;
-        forkIndicatorIdleFrames = 0;
-        scheduleForkIndicatorSync();
-    }
-
-    private void stopForkIndicatorSync() {
-        if (forkIndicatorFrameScheduled) {
-            android.view.Choreographer.getInstance().removeFrameCallback(forkIndicatorFrameCallback);
-            forkIndicatorFrameScheduled = false;
+        forkLastSelectedPosition = position;
+        if (viewPager != null) {
+            tabsView.setIndicatorPosition(viewPager.getPositionAnimated());
         }
     }
+
+    private int forkLastSelectedPosition = -1;
 
     public void setGestureSelectedOverride(float animatedPosition, boolean allow) {
         for (int index = 0; index < tabs.length; index++) {
@@ -1112,6 +1071,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     @Override
     public boolean onFragmentCreate() {
+        instance = new WeakReference<>(this);
         ForkDockSettings.preferences().registerOnSharedPreferenceChangeListener(dockPreferenceListener);
         observersGroup = NotificationCenter.getInstance(currentAccount)
             .createObserversGroup(this)
@@ -1132,6 +1092,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     @Override
     public void onFragmentDestroy() {
+        if (instance != null && instance.get() == this) {
+            instance = null;
+        }
         ForkDockSettings.preferences().unregisterOnSharedPreferenceChangeListener(dockPreferenceListener);
         Bulletin.removeDelegate(this);
         Bulletin.removeDelegate(contentView);

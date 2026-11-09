@@ -124,14 +124,26 @@ public class ViewPagerFixed extends FrameLayout {
     }
 
     public float getPositionAnimated() {
-        float position = 0;
+        final float available = getAvailableTranslationX();
+        if (available <= 0f) {
+            // Before the first layout pass there is no meaningful animation
+            // distance, report the settled page instead of a NaN/garbage value.
+            return currentPosition;
+        }
+        float position = 0f;
+        float weight = 0f;
         if (viewPages[0] != null && viewPages[0].getVisibility() == View.VISIBLE) {
-            final float t = Utilities.clamp(1f - Math.abs(viewPages[0].getTranslationX() / getAvailableTranslationX()), 1, 0);
+            final float t = Utilities.clamp(1f - Math.abs(viewPages[0].getTranslationX() / available), 1, 0);
             position += currentPosition * t;
+            weight += t;
         }
         if (viewPages[1] != null && viewPages[1].getVisibility() == View.VISIBLE) {
-            final float t = Utilities.clamp(1f - Math.abs(viewPages[1].getTranslationX() / getAvailableTranslationX()), 1, 0);
+            final float t = Utilities.clamp(1f - Math.abs(viewPages[1].getTranslationX() / available), 1, 0);
             position += nextPosition * t;
+            weight += t;
+        }
+        if (weight <= 0.0001f) {
+            return currentPosition;
         }
         return position;
     }
@@ -153,7 +165,11 @@ public class ViewPagerFixed extends FrameLayout {
     }
 
     protected float getAvailableTranslationX() {
-        return (float) AndroidUtilities.displaySize.x;
+        // The pages are translated by their own measured width, so the
+        // normalisation must use the same value. Using the display width broke
+        // the indicator in split-screen, on tablets and whenever the pager was
+        // narrower than the screen.
+        return (float) Math.max(getMeasuredWidth(), 0);
     }
 
     protected boolean canScroll(MotionEvent e) {

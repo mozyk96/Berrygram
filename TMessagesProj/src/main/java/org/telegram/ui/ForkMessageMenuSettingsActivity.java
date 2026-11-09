@@ -27,7 +27,7 @@ import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 
 /** Edits presentation only. Native Telegram still decides which actions a message allows. */
-public final class ForkMessageMenuSettingsActivity extends BaseFragment {
+public final class ForkMessageMenuSettingsActivity extends ForkSettingsFragment {
     private List<String> order;
     private MenuAdapter adapter;
     private ItemTouchHelper touchHelper;

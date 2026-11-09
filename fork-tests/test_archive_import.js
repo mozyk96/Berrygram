@@ -83,4 +83,23 @@ check(picker.includes('LinkedHashSet<Long>'), 'The picker can not select several
 check(picker.includes('isEncryptedDialog'), 'The picker offers secret chats');
 check(picker.includes('onChatsPicked'), 'The picker does not return the selection');
 
-console.log('test_archive_import passed (pagination, two cursors, dedup, eligibility, resume, UI wiring)');
+// The database is used from the message updates, from the archive executor and
+// from the import executor. Every access has to be serialized and the UI
+// thread must never touch the SQLite handle.
+const controller = read('org/telegram/messenger/MessagesController.java');
+check(manager.includes('@Synchronized'), 'The archive database is not serialized');
+check((manager.match(/@Synchronized/g) || []).length >= 15, 'Not every archive access is serialized');
+check(manager.includes('computeIfAbsent'), 'The archive can open the same database twice');
+check(controller.includes('ForkArchiveManager.archiveMessageAsync'),
+    'An incoming message still writes to the archive on the UI thread');
+check(!controller.includes('ForkArchiveManager.getInstance(currentAccount).archiveMessage'),
+    'An incoming message still writes to the archive on the UI thread');
+check(manager.includes('fun archiveMessageAsync'), 'The archive has no asynchronous write');
+check(manager.includes('fun clearArchiveAsync'), 'The archive has no asynchronous clear');
+check(activity.includes('clearArchiveAsync'), 'The archive screen clears the database on the UI thread');
+
+// A destroyed screen must not stay registered as the listener of the importer.
+check(activity.includes('setListener(null)'), 'The archive screen leaks its importer listener');
+check(activity.includes('onFragmentDestroy'), 'The archive screen has no destroy handler');
+
+console.log('test_archive_import passed (pagination, two cursors, dedup, eligibility, resume, thread safety, UI wiring)');

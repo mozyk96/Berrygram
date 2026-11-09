@@ -18614,7 +18614,10 @@ public class MessagesController extends BaseController implements NotificationCe
                     org.telegram.messenger.fork.storage.ForkMessageTextCache.put(currentAccount, did, message.id, message.date, message.message);
                     if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled(currentAccount)) {
                         long senderId = DialogObject.getPeerDialogId(message.from_id);
-                        org.telegram.messenger.fork.storage.ForkArchiveManager.getInstance(currentAccount).archiveMessage(
+                        // The archive write runs on the archive executor, the
+                        // UI thread must not touch the SQLite database.
+                        org.telegram.messenger.fork.storage.ForkArchiveManager.archiveMessageAsync(
+                                currentAccount,
                                 did,
                                 message.id,
                                 message.date,
