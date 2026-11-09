@@ -15,6 +15,11 @@ if len(sys.argv) > 5:
     NAME = sys.argv[5]
 if len(sys.argv) > 6:
     APK_NAME = sys.argv[6]
+# The official stream publishes normal releases, a prerelease is only used for
+# an explicit owner request.
+PRERELEASE = True
+if len(sys.argv) > 7:
+    PRERELEASE = sys.argv[7].strip().lower() not in ("false", "0", "no")
 
 
 def git_credential():
@@ -87,9 +92,9 @@ def main():
                 "tag_name": TAG,
                 "name": NAME,
                 "body": body,
-                "prerelease": True,
+                "prerelease": PRERELEASE,
                 "draft": False,
-                "target_commitish": "feature/berrygram-1.4.0-beta2",
+                "target_commitish": "feature/berrygram-1.4.1",
             },
         )
         release_id = created["id"]
