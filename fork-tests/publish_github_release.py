@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -53,13 +54,23 @@ def api(method, path, token, data=None, raw=None, content_type=None):
     elif data is not None:
         body = json.dumps(data).encode("utf-8")
         headers["Content-Type"] = "application/json"
-    request = urllib.request.Request(url, data=body, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(request) as response:
-            payload = response.read()
-    except urllib.error.HTTPError as error:
-        detail = error.read().decode("utf-8", "replace")[:400]
-        raise RuntimeError("api %s %s failed: %s %s" % (method, path, error.code, detail))
+    last_error = None
+    for attempt in range(4):
+        request = urllib.request.Request(url, data=body, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(request, timeout=600) as response:
+                payload = response.read()
+            break
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode("utf-8", "replace")[:400]
+            raise RuntimeError("api %s %s failed: %s %s" % (method, path, error.code, detail))
+        except (urllib.error.URLError, OSError) as error:
+            # A transient network or name resolution failure must not abort the
+            # publication of a verified artifact.
+            last_error = error
+            time.sleep(5 * (attempt + 1))
+    else:
+        raise RuntimeError("api %s %s failed: %s" % (method, path, last_error))
     if not payload:
         return {}
     return json.loads(payload.decode("utf-8"))
