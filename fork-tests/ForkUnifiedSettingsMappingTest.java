@@ -62,9 +62,9 @@ public class ForkUnifiedSettingsMappingTest {
                 "The standalone Berrygram settings entry was not removed");
 
         // Every host screen carries its Berrygram block.
-        String blocks = new File(root, "TMessagesProj/src/main/java/org/telegram/ui/ForkSettingsBlocks.kt");
-        check(blocks.isFile(), "The shared Berrygram settings blocks are missing");
-        String blocksSource = read(blocks);
+        File blocksFile = new File(root, "TMessagesProj/src/main/java/org/telegram/ui/ForkSettingsBlocks.kt");
+        check(blocksFile.isFile(), "The shared Berrygram settings blocks are missing");
+        String blocksSource = read(blocksFile);
         for (ForkUnifiedSettingsMapping.Host host : hosts) {
             check(blocksSource.contains("fun " + hostKeyToMethod(host.key) + "("),
                     "The shared blocks have no builder for " + host.key);

@@ -410,4 +410,6 @@
     <string name="ForkSectionTranslation">Translation</string>
     <string name="ForkSectionPerformance">Performance</string>
     <string name="ForkSectionUpdates">Updates</string>
+    <string name="ForkArchiveStorage">Storage usage</string>
+    <string name="ForkArchiveStorageValue">%1$s</string>
 </resources>

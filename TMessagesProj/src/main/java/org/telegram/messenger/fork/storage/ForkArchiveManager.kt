@@ -643,10 +643,23 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             }
         }
 
+        /**
+         * Size of the local archive of an account in bytes. The file is only
+         * measured, the database is not opened for it.
+         */
+        @JvmStatic
+        fun archiveSizeBytes(account: Int): Long {
+            return try {
+                val file = File(ApplicationLoader.applicationContext.filesDir, "fork_archive_$account.db")
+                if (file.exists()) file.length() else 0L
+            } catch (error: Throwable) {
+                0L
+            }
+        }
+
         /** Removes every archived row without blocking the caller. */
         @JvmStatic
-        fun clearArchiveAsync(account: Int, callback: (() -> Unit)? = null) {
-            executor.execute {
+        fun clearArchiveAsync(account: Int, callback: (() -> Unit)? = null) {            executor.execute {
                 try {
                     getInstance(account).clearArchive()
                 } catch (error: Throwable) {

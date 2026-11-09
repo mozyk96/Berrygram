@@ -17,7 +17,7 @@ import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.Theme;
 
 /** Shared navigation header for BerryGram pages without contextual actions. */
-final class ForkFloatingHeader {
+public final class ForkFloatingHeader {
     private ForkFloatingHeader() { }
 
     private static int surface(Context context) {
@@ -25,7 +25,7 @@ final class ForkFloatingHeader {
         return "material".equals(ForkGraphicsSurface.effectiveStyle()) ? ForkGraphicsSurface.materialColor(context, color) : color;
     }
 
-    static void refresh(View view) {
+    public static void refresh(View view) {
         if (!(view instanceof LinearLayout)) return;
         LinearLayout root = (LinearLayout) view;
         if (root.getChildCount() == 0 || !(root.getChildAt(0) instanceof LinearLayout)) return;
@@ -45,11 +45,11 @@ final class ForkFloatingHeader {
         }
     }
 
-    static View wrap(Context context, ActionBar actionBar, View content, CharSequence title, Runnable onBack) {
+    public static View wrap(Context context, ActionBar actionBar, View content, CharSequence title, Runnable onBack) {
         return wrap(context, actionBar, content, title, onBack, null);
     }
 
-    static View wrap(Context context, ActionBar actionBar, View content, CharSequence title, Runnable onBack, View action) {
+    public static View wrap(Context context, ActionBar actionBar, View content, CharSequence title, Runnable onBack, View action) {
         actionBar.setAddToContainer(false);
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);

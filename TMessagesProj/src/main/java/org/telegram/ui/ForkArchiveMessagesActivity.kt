@@ -35,14 +35,6 @@ class ForkArchiveMessagesActivity(private val dialogId: Long) : ForkSettingsFrag
     private var emptyView: EmptyTextProgressView? = null
 
     override fun createView(context: Context): View {
-        actionBar.setBackButtonImage(R.drawable.ic_ab_back)
-        actionBar.setTitle(resolveDialogName(dialogId))
-        actionBar.setActionBarMenuOnItemClick(object : ActionBar.ActionBarMenuOnItemClick() {
-            override fun onItemClick(id: Int) {
-                if (id == -1) finishFragment()
-            }
-        })
-
         val frameLayout = FrameLayout(context).apply {
             setBackgroundColor(Theme.getColor(Theme.key_chat_outBubble))
         }
@@ -65,7 +57,13 @@ class ForkArchiveMessagesActivity(private val dialogId: Long) : ForkSettingsFrag
         listView?.emptyView = emptyView
 
         loadMessages()
-        return frameLayout
+        fragmentView = ForkFloatingHeader.wrap(
+            context,
+            actionBar,
+            frameLayout,
+            resolveDialogName(dialogId)
+        ) { finishFragment() }
+        return fragmentView
     }
 
     private fun loadMessages() {

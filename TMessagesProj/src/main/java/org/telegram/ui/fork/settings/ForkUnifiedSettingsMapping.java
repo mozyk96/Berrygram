@@ -64,7 +64,7 @@ public final class ForkUnifiedSettingsMapping {
     public static final Host HOST_NOTIFICATIONS = new Host("notifications", "SettingsNotifications", "notification diagnostics");
     public static final Host HOST_DATA = new Host("data", "SettingsData", "archive browser, archive import, storage usage");
     public static final Host HOST_LANGUAGE = new Host("language", "SettingsLanguage", "translation");
-    public static final Host HOST_POWER_SAVING = new Host("power_saving", "SettingsPowerSaving", "device analyzer, performance profile");
+    public static final Host HOST_POWER_SAVING = new Host("performance", "SettingsPowerSaving", "device analyzer, performance profile");
 
     private static final List<Host> HOSTS;
     private static final List<Entry> ENTRIES;

@@ -365,4 +365,6 @@
     <string name="ForkSectionTranslation">Перевод</string>
     <string name="ForkSectionPerformance">Производительность</string>
     <string name="ForkSectionUpdates">Обновления</string>
+    <string name="ForkArchiveStorage">Использование памяти</string>
+    <string name="ForkArchiveStorageValue">%1$s</string>
 </resources>

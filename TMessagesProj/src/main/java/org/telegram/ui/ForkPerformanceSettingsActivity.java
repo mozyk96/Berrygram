@@ -50,6 +50,7 @@ public final class ForkPerformanceSettingsActivity extends ForkSettingsFragment 
         });
 
         LinearLayout page = ForkSettingsLayout.page(context);
+        page.addView(ForkSettingsLayout.header(context, ForkLocale.get(R.string.ForkSectionPerformance)));
         LinearLayout rows = ForkSettingsLayout.section(context);
 
         // Scan Hardware Button
@@ -100,6 +101,7 @@ public final class ForkPerformanceSettingsActivity extends ForkSettingsFragment 
         ForkSettingsLayout.addSection(page, rows);
 
         LinearLayout diagnostics = ForkSettingsLayout.section(context);
+        page.addView(ForkSettingsLayout.header(context, ForkLocale.get(R.string.ForkPerformanceDiagnostics)));
         TextSettingsCell title = new TextSettingsCell(context);
         title.setText(ForkLocale.get(R.string.ForkPerformanceDiagnostics), true);
         diagnostics.addView(title);
@@ -123,7 +125,8 @@ public final class ForkPerformanceSettingsActivity extends ForkSettingsFragment 
         ScrollView scroll = new ScrollView(context);
         scroll.setFillViewport(true);
         scroll.addView(page);
-        fragmentView = scroll;
+        fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll,
+                ForkLocale.get(R.string.ForkPerformanceTitle), this::finishFragment);
         refresh();
         return fragmentView;
     }

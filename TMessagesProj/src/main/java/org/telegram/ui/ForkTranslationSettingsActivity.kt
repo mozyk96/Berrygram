@@ -31,6 +31,7 @@ class ForkTranslationSettingsActivity : ForkSettingsFragment() {
         })
 
         val page = ForkSettingsLayout.page(context)
+        page.addView(ForkSettingsLayout.header(context, ForkLocale.get(R.string.ForkSectionTranslation)))
         val settings = ForkTranslationSettings(currentAccount)
 
         autoTranslateCell = TextCheckCell(context).apply {

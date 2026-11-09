@@ -153,11 +153,22 @@ object ForkSettingsBlocks {
         section.addRow(R.string.ForkArchiveOpenTitle, ForkLocale.get(R.string.ForkArchiveOpenSubtitle), R.drawable.msg_archive) {
             fragment.presentFragment(ForkArchiveActivity())
         }
-        section.addRow(R.string.ForkArchiveCreate, ForkLocale.get(R.string.ForkUnifiedArchiveInfo), R.drawable.msg_add) {
-            fragment.presentFragment(ForkArchiveActivity())
-        }
+        section.addRow(R.string.ForkArchiveStorage, archiveSizeLabel(account))
         section.addInfo(R.string.ForkArchiveInfo)
         return section
+    }
+
+    /** The size of the local archive of the account. */
+    private fun archiveSizeLabel(account: Int): String {
+        val bytes = org.telegram.messenger.fork.storage.ForkArchiveManager.archiveSizeBytes(account)
+        if (bytes <= 0L) {
+            return ForkLocale.get(R.string.ForkArchiveEmpty)
+        }
+        val megabytes = bytes / (1024.0 * 1024.0)
+        return ForkLocale.get(
+            R.string.ForkArchiveStorageValue,
+            String.format(java.util.Locale.US, "%.1f MB", megabytes)
+        )
     }
 
     /** Translation options inside the language settings. */

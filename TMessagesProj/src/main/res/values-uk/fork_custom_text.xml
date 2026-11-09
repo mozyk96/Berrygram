@@ -410,4 +410,6 @@
     <string name="ForkSectionTranslation">Переклад</string>
     <string name="ForkSectionPerformance">Продуктивність</string>
     <string name="ForkSectionUpdates">Оновлення</string>
+    <string name="ForkArchiveStorage">Використання пам’ят’</string>
+    <string name="ForkArchiveStorageValue">%1$s</string>
 </resources>

@@ -43,16 +43,6 @@ class ForkArchiveChatPickerActivity : ForkSettingsFragment() {
     }
 
     override fun createView(context: Context): View {
-        actionBar.setTitle(ForkLocale.get(R.string.ForkArchiveImportTitle))
-        actionBar.setBackButtonImage(R.drawable.ic_ab_back)
-        actionBar.setActionBarMenuOnItemClick(object : ActionBar.ActionBarMenuOnItemClick() {
-            override fun onItemClick(id: Int) {
-                if (id == -1) {
-                    finishFragment()
-                }
-            }
-        })
-
         val frame = FrameLayout(context)
         frame.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray))
 
@@ -78,8 +68,13 @@ class ForkArchiveChatPickerActivity : ForkSettingsFragment() {
         emptyView?.visibility = View.GONE
 
         loadChats()
-        fragmentView = frame
-        return frame
+        fragmentView = ForkFloatingHeader.wrap(
+            context,
+            actionBar,
+            frame,
+            ForkLocale.get(R.string.ForkArchiveImportTitle)
+        ) { finishFragment() }
+        return fragmentView
     }
 
     private fun loadChats() {

@@ -81,6 +81,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Fork string escape test failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Auth privacy test failed' }
 & $python (Join-Path $PSScriptRoot 'test_release_scope.py')
 if ($LASTEXITCODE -ne 0) { throw 'Release scope test failed' }
+& $python (Join-Path $PSScriptRoot 'test_fork_localization.py')
+if ($LASTEXITCODE -ne 0) { throw 'Fork localization regression test failed' }
+& $python (Join-Path $PSScriptRoot 'test_settings_insets.py')
+if ($LASTEXITCODE -ne 0) { throw 'Settings inset regression test failed' }
 $surfaceDir = Join-Path $buildDir 'surface-animation'
 New-Item -ItemType Directory -Force $surfaceDir | Out-Null
 $surfaceStubs = Get-ChildItem (Join-Path $PSScriptRoot 'surface-animation-stubs') -Filter '*.java' -Recurse | ForEach-Object { $_.FullName }
