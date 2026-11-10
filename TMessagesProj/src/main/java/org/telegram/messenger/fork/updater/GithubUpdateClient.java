@@ -5,6 +5,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.os.Build;
+import android.net.Network;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
@@ -47,12 +48,11 @@ public final class GithubUpdateClient {
     private static boolean allowedHost(String host) {
         return "api.github.com".equals(host) || "github.com".equals(host) || "release-assets.githubusercontent.com".equals(host) || "objects.githubusercontent.com".equals(host) || "github-releases.githubusercontent.com".equals(host);
     }
-    private static HttpURLConnection open(String value) throws Exception { return open(value, 0); }
-    private static HttpURLConnection open(String value, long offset) throws Exception {
+    private static HttpURLConnection open(String value, long offset, Network network) throws Exception {
         URL url=new URL(value);
         for (int redirect=0; redirect<=5; redirect++) {
             if (!"https".equalsIgnoreCase(url.getProtocol()) || url.getUserInfo()!=null || (url.getPort()!=-1 && url.getPort()!=443) || !allowedHost(url.getHost().toLowerCase(Locale.ROOT))) throw new SecurityException("Untrusted update URL");
-            HttpURLConnection connection=(HttpURLConnection)url.openConnection();
+            HttpURLConnection connection=(HttpURLConnection)(network == null ? url.openConnection() : network.openConnection(url));
             connection.setInstanceFollowRedirects(false); connection.setConnectTimeout(15000); connection.setReadTimeout(30000);
             connection.setRequestProperty("Accept","application/vnd.github+json"); connection.setRequestProperty("User-Agent","BerryGram-Updater");
             if (offset > 0) connection.setRequestProperty("Range", "bytes=" + offset + "-");
@@ -74,9 +74,10 @@ public final class GithubUpdateClient {
         throw new java.io.IOException("Too many redirects");
     }
     /** Finds the newest official (non-prerelease) release of the repository. */
-    public static Release latest(String repo) throws Exception {
+    public static Release latest(String repo) throws Exception { return latest(repo, null); }
+    public static Release latest(String repo, Network network) throws Exception {
         if (!UpdatePolicy.validRepository(repo)) throw new IllegalArgumentException("Invalid repository");
-        HttpURLConnection connection=open("https://api.github.com/repos/"+repo+"/releases?per_page=30");
+        HttpURLConnection connection=open("https://api.github.com/repos/"+repo+"/releases?per_page=30", 0, network);
         Release result;
         try (InputStream in=connection.getInputStream(); ByteArrayOutputStream out=new ByteArrayOutputStream()) {
             byte[] buffer=new byte[8192]; int count,total=0;
@@ -84,7 +85,7 @@ public final class GithubUpdateClient {
             result = parseReleaseList(repo,out.toString("UTF-8"));
         } finally { connection.disconnect(); }
         if (result.digest == null || result.digest.isEmpty()) {
-            result.digest = resolveDigestFromSums(result);
+            result.digest = resolveDigestFromSums(result, network);
         }
         if (result.digest == null || result.digest.isEmpty()) {
             throw new java.io.IOException("Release does not provide a verifiable checksum");
@@ -96,9 +97,10 @@ public final class GithubUpdateClient {
      * Resolves the SHA-256 of the release asset from the SHA256SUMS file of the
      * same release. Used when the GitHub API does not report an asset digest.
      */
-    static String resolveDigestFromSums(Release release) throws Exception {
+    static String resolveDigestFromSums(Release release) throws Exception { return resolveDigestFromSums(release, null); }
+    private static String resolveDigestFromSums(Release release, Network network) throws Exception {
         if (release == null || release.sumsUrl == null || release.url == null) return null;
-        HttpURLConnection connection=open(release.sumsUrl);
+        HttpURLConnection connection=open(release.sumsUrl, 0, network);
         try (InputStream in=connection.getInputStream(); ByteArrayOutputStream out=new ByteArrayOutputStream()) {
             byte[] buffer=new byte[8192]; int count,total=0;
             while ((count=in.read(buffer))!=-1) {
@@ -215,7 +217,10 @@ public final class GithubUpdateClient {
         if (result == null) throw new java.io.IOException("No verified APK asset found for this device");
         return result;
     }
-    public static synchronized File downloadAndVerify(Context context, Release release, Progress progress) throws Exception {
+    public static File downloadAndVerify(Context context, Release release, Progress progress) throws Exception {
+        return downloadAndVerify(context, release, progress, null);
+    }
+    public static synchronized File downloadAndVerify(Context context, Release release, Progress progress, Network network) throws Exception {
         boolean supportedAbi = false;
         if (Build.SUPPORTED_ABIS != null && Build.SUPPORTED_ABIS.length > 0) {
             for (String abi : Build.SUPPORTED_ABIS) {
@@ -243,7 +248,7 @@ public final class GithubUpdateClient {
             long available = dir.getUsableSpace();
             if (offset == 0 && partial.isFile()) available = Math.min(Long.MAX_VALUE - partial.length(), available) + partial.length();
             if (!UpdatePolicy.enoughSpace(available, release.size, offset)) throw new InsufficientStorageException();
-            connection=open(release.url,offset);
+            connection=open(release.url, offset, network);
             boolean append=offset>0 && connection.getResponseCode()==206;
             // A server may ignore Range. Recheck space for the full replacement.
             if (!append && !UpdatePolicy.enoughSpace(dir.getUsableSpace() + partial.length(), release.size, 0)) throw new InsufficientStorageException();

@@ -7,6 +7,10 @@ import org.telegram.messenger.fork.updater.GithubUpdateClient;
 
 /** Runs updater network/file logic using an in-process URL handler and mock PackageManager. */
 public final class UpdaterDownloadFixtureTest {
+ static final class BoundNetwork extends android.net.Network {
+  int connections;
+  @Override public URLConnection openConnection(URL url) throws IOException { connections++; return url.openConnection(); }
+ }
  static byte[] body; static String metadata; static boolean redirect, missingRelease, breakStream, shortStream, sawRange, ignoreRange, badRange; static int assetRequests;
  static final String ASSET="https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-arm64-v8a.apk";
  static final class Handler extends URLStreamHandler {
@@ -35,7 +39,9 @@ public final class UpdaterDownloadFixtureTest {
   byte[] valid=Files.readAllBytes(UpdaterPackageFixtureTest.apk(true).toPath());body=valid;
   metadata="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.0.1\",\"body\":\"Test\",\"assets\":[{\"name\":\"BerryGram-1.0.1-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":"+valid.length+",\"digest\":\"sha256:"+sha(valid)+"\",\"browser_download_url\":\""+ASSET+"\"}]}";
   metadata="["+metadata+"]";
-  GithubUpdateClient.Release release=GithubUpdateClient.latest("example/project");
+  BoundNetwork network=new BoundNetwork();
+  GithubUpdateClient.Release release=GithubUpdateClient.latest("example/project", network);
+  if (network.connections == 0) throw new AssertionError("Metadata bypassed selected network");
   missingRelease=true;
   try { GithubUpdateClient.latest("example/project"); throw new AssertionError("Missing release accepted"); }
   catch (IOException expected) {
@@ -48,7 +54,9 @@ public final class UpdaterDownloadFixtureTest {
   try { GithubUpdateClient.downloadAndVerify(c,release,null); throw new AssertionError("Short response accepted"); }
   catch (IOException expected) { } finally { shortStream=false; }
   sawRange=false;
-  File shortResumed=GithubUpdateClient.downloadAndVerify(c,release,null);
+  int beforeNetworkDownload=network.connections;
+  File shortResumed=GithubUpdateClient.downloadAndVerify(c,release,null,network);
+  if (network.connections == beforeNetworkDownload) throw new AssertionError("Download bypassed selected network");
   if(!sawRange || !java.util.Arrays.equals(valid,Files.readAllBytes(shortResumed.toPath())))throw new AssertionError("Short response did not resume");
   if(!shortResumed.delete())throw new AssertionError("Could not clean fixture file");
   breakStream=true;
