@@ -876,7 +876,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 presentSettingFragment(new ForkPerformanceSettingsActivity());
                 break;
             case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.LEGACY_ID_ABOUT:
-                presentSettingFragment(new ForkAboutActivity());
+                presentSettingFragment(new ForkUpdateActivity());
                 break;
             case 3:
                 presentSettingFragment(new PrivacySettingsActivity());

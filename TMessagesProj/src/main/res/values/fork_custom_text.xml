@@ -369,7 +369,7 @@
     <string name="ForkUnifiedArchiveInfo">Archived chats, create archive, update archive and storage usage</string>
     <string name="ForkUnifiedPerformanceTitle">Performance and device analyzer</string>
     <string name="ForkUnifiedPerformanceInfo">Automatic and manual performance profiles</string>
-    <string name="ForkUnifiedUpdateTitle">Update Center</string>
+    <string name="ForkUnifiedUpdateTitle">Updates</string>
     <string name="ForkUnifiedUpdateInfo">Check for updates, download and install</string>
     <string name="ForkUnifiedReactionsSubtitle">Quick reactions and favourite reactions</string>
     <string name="ForkUnifiedMenuSubtitle">Order and visibility of the message actions</string>

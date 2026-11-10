@@ -44,13 +44,6 @@ public final class ForkAboutActivity extends ForkSettingsFragment {
         details.setPadding(0, AndroidUtilities.dp(12), 0, 0);
         content.addView(details);
 
-        org.telegram.ui.Cells.TextSettingsCell updates = new org.telegram.ui.Cells.TextSettingsCell(context);
-        updates.setText(ForkLocale.get(R.string.ForkUpdatePanel), false);
-        updates.setIcon(R.drawable.msg_download);
-        updates.setBackground(Theme.getSelectorDrawable(false));
-        updates.setOnClickListener(v -> presentFragment(new ForkUpdateActivity()));
-        content.addView(updates);
-
         scroll.addView(content);
         fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkAboutTitle), this::finishFragment);
         return fragmentView;

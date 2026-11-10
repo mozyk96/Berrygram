@@ -4,7 +4,10 @@ panel = (root / 'ForkUpdaterPanel.java').read_text(encoding='utf-8')
 activity = (root / 'ForkUpdateActivity.java').read_text(encoding='utf-8')
 about = (root / 'ForkAboutActivity.java').read_text(encoding='utf-8')
 theme = (root / 'ThemeActivity.java').read_text(encoding='utf-8')
-assert 'new ForkUpdateActivity()' in about
+settings = (root / 'SettingsActivity.java').read_text(encoding='utf-8')
+assert 'presentSettingFragment(new ForkUpdateActivity())' in settings
+assert 'new ForkAboutActivity()' in panel
+assert 'new ForkUpdateActivity()' not in about
 assert 'new ForkUpdaterPanel(context, this)' in activity
 start = panel.index('    private void download()')
 end = panel.index('    private void fail(', start)

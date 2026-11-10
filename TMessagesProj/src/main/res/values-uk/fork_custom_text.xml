@@ -369,7 +369,7 @@
     <string name="ForkUnifiedArchiveInfo">Архівовані чати, створення й оновлення архіву та використання сховища</string>
     <string name="ForkUnifiedPerformanceTitle">Продуктивність і аналізатор пристрою</string>
     <string name="ForkUnifiedPerformanceInfo">Автоматичний і ручний профілі продуктивності</string>
-    <string name="ForkUnifiedUpdateTitle">Центр оновлень</string>
+    <string name="ForkUnifiedUpdateTitle">Оновлення</string>
     <string name="ForkUnifiedUpdateInfo">Перевірка, завантаження та встановлення оновлень</string>
     <string name="ForkUnifiedReactionsSubtitle">Швидкі та улюблені реакції</string>
     <string name="ForkUnifiedMenuSubtitle">Порядок і видимість дій у повідомленні</string>

@@ -219,6 +219,14 @@ public final class ForkUpdaterPanel extends LinearLayout {
             LinearLayout.LayoutParams notesParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             notesParams.topMargin = AndroidUtilities.dp(28); content.addView(notes, notesParams);
         }
+        org.telegram.ui.Cells.TextSettingsCell about = new org.telegram.ui.Cells.TextSettingsCell(c);
+        about.setText(ForkLocale.get(R.string.ForkAboutTitle), false);
+        about.setIcon(R.drawable.msg_info);
+        about.setBackground(Theme.getSelectorDrawable(false));
+        about.setOnClickListener(v -> parent.presentFragment(new ForkAboutActivity()));
+        LinearLayout.LayoutParams aboutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        aboutParams.topMargin = AndroidUtilities.dp(20);
+        content.addView(about, aboutParams);
         scroll.addView(content);
         addView(scroll, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1));
         progress = null; progressText = null; progressBytes = null;

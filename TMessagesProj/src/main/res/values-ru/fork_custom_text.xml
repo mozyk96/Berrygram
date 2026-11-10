@@ -324,7 +324,7 @@
     <string name="ForkUnifiedArchiveInfo">Архивированные чаты, создание и обновление архива и использование хранилища</string>
     <string name="ForkUnifiedPerformanceTitle">Производительность и анализатор устройства</string>
     <string name="ForkUnifiedPerformanceInfo">Автоматический и ручной профили производительности</string>
-    <string name="ForkUnifiedUpdateTitle">Центр обновлений</string>
+    <string name="ForkUnifiedUpdateTitle">Обновления</string>
     <string name="ForkUnifiedUpdateInfo">Проверка, загрузка и установка обновлений</string>
     <string name="ForkUnifiedReactionsSubtitle">Быстрые и любимые реакции</string>
     <string name="ForkUnifiedMenuSubtitle">Порядок и видимость действий в сообщении</string>
