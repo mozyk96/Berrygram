@@ -19,3 +19,5 @@ Use only authorized fork-owned credentials supplied locally or through CI secret
 ## Physical phone
 
 Do not install, uninstall, push files, clear data, change settings or otherwise modify the owner's physical phone without a new explicit instruction. Use an emulator or another authorized test environment. Do not delete user data or unrelated files.
+
+For repository-specific engineering and release commands, use .agents/skills/berrygram-development/SKILL.md.
