@@ -7,7 +7,8 @@
 - Added dedicated update screen, explicit install action, real byte progress, graphics placement and typography fixes. Debug APK build passed with multiline switch changes; smoke tests and Android instrumentation compilation passed. A later divider-group change and its instrumentation test compiled, but runtime layout validation remains pending. Test module Maps placeholder is configured.
 - Current work: shared setting titles can wrap beside values; navigation rows use icon and subtitle cells. Smoke and Android-test compilation passed, but neither the new row geometry tests nor the layout have run on a device.
 - Remaining: finish the requested settings/UI overhaul, Update Center and background downloads, archive/privacy regression review, Android build and device/emulator checks, then full release verification. Delta updates remain deferred pending a complete verified design. Remote push requires the owner's Firebase configuration.
-- Next: implement background updater scheduling and network controls, then run Android UI tests on an emulator or device and continue the remaining settings audit. Do not publish until the required checks pass.
+- Background update groundwork: `BackgroundUpdatePolicy` defines OFF/WIFI/MOBILE/ANY and has smoke coverage; it is not wired to a scheduler or UI. No automatic background download exists yet.
+- Next: implement and test a persisted JobScheduler service using the existing verified `GithubUpdateClient.downloadAndVerify`, interrupt it on stop or disallowed network, then wire settings/progress and explicit re-verification before install. Run `./fork-tests/updater-package-fixture.ps1 -JsonJar "C:\Users\Keoo2\Documents\Codex\2026-10-28\files-pasted-by-the-user-senior\work\test-deps\json-20240303.jar"` after updater changes. Do not publish until the required checks pass.
 
 # BerryGram continuation — Android 1.4.2 stabilization release
 
