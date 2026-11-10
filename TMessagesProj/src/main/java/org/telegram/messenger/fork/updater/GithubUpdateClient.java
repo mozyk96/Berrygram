@@ -156,9 +156,8 @@ public final class GithubUpdateClient {
         String releaseVersion = tag.startsWith("v") ? tag.substring(1) : tag;
         if (UpdatePolicy.isPrerelease(releaseVersion)) throw new SecurityException("Not an official version");
         if (assets==null) throw new java.io.IOException("Release has no assets");
-        boolean isArm64Device = true;
+        boolean isArm64Device = false;
         if (Build.SUPPORTED_ABIS != null && Build.SUPPORTED_ABIS.length > 0) {
-            isArm64Device = false;
             for (String abi : Build.SUPPORTED_ABIS) {
                 if ("arm64-v8a".equals(abi)) {
                     isArm64Device = true;
@@ -212,7 +211,7 @@ public final class GithubUpdateClient {
                 universalRelease = cand;
             }
         }
-        Release result = (isArm64Device && arm64Release != null) ? arm64Release : (universalRelease != null ? universalRelease : arm64Release);
+        Release result = (isArm64Device && arm64Release != null) ? arm64Release : universalRelease;
         if (result == null) throw new java.io.IOException("No verified APK asset found for this device");
         return result;
     }
@@ -345,10 +344,15 @@ public final class GithubUpdateClient {
             java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = zip.entries();
             while (entries.hasMoreElements()) {
                 String name = entries.nextElement().getName();
-                if ((name.startsWith("lib/arm64-v8a/") || name.startsWith("lib/armeabi-v7a/")) && name.endsWith(".so")) {
-                    hasCompatibleAbi = true;
-                    break;
+                if (Build.SUPPORTED_ABIS != null && name.endsWith(".so")) {
+                    for (String abi : Build.SUPPORTED_ABIS) {
+                        if (("arm64-v8a".equals(abi) || "armeabi-v7a".equals(abi)) && name.startsWith("lib/" + abi + "/")) {
+                            hasCompatibleAbi = true;
+                            break;
+                        }
+                    }
                 }
+                if (hasCompatibleAbi) break;
             }
         }
         if (!hasCompatibleAbi) throw new SecurityException("Update has no compatible native libraries");

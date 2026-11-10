@@ -6,7 +6,7 @@ $android=Join-Path $env:ANDROID_HOME 'platforms\android-36\android.jar'
 $out=Join-Path $root 'build\fork-github-fixture'
 New-Item -ItemType Directory -Force $out | Out-Null
 $base=Join-Path $root 'TMessagesProj\src\main\java\org\telegram\messenger\fork\updater'
-& (Join-Path $env:JAVA_HOME 'bin\javac.exe') -encoding UTF-8 -cp "$JsonJar;$android" -d $out (Join-Path $base 'UpdatePolicy.java') (Join-Path $base 'GithubUpdateClient.java') (Join-Path $PSScriptRoot 'GithubReleaseFixtureTest.java')
+& (Join-Path $env:JAVA_HOME 'bin\javac.exe') -encoding UTF-8 -cp "$JsonJar;$android" -d $out (Join-Path $PSScriptRoot 'updater-stubs/android/os/Build.java') (Join-Path $base 'UpdatePolicy.java') (Join-Path $base 'GithubUpdateClient.java') (Join-Path $PSScriptRoot 'GithubReleaseFixtureTest.java')
 if ($LASTEXITCODE -ne 0) { throw 'Fixture compilation failed' }
 & (Join-Path $env:JAVA_HOME 'bin\java.exe') -cp "$out;$JsonJar;$android" GithubReleaseFixtureTest
 if ($LASTEXITCODE -ne 0) { throw 'Fixture test failed' }

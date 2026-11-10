@@ -34,7 +34,8 @@ public final class UpdaterPackageFixtureTest {
   catch (InvocationTargetException e) { if (!type.isInstance(e.getCause())) throw new AssertionError("Unexpected rejection",e.getCause()); }
  }
  static File apk(boolean arm) throws IOException { return apk(arm,23,16); }
- static File apk(boolean arm,int minSdk,int valueType) throws IOException {
+ static File apk(boolean arm,int minSdk,int valueType) throws IOException { return apk(arm ? "arm64-v8a" : "x86",minSdk,valueType); }
+ static File apk(String abi,int minSdk,int valueType) throws IOException {
   File f=File.createTempFile("berrygram-fixture-", ".apk"); f.deleteOnExit();
   try(ZipOutputStream z=new ZipOutputStream(new FileOutputStream(f))){
    java.nio.ByteBuffer manifest=java.nio.ByteBuffer.allocate(76).order(java.nio.ByteOrder.LITTLE_ENDIAN);
@@ -44,11 +45,19 @@ public final class UpdaterPackageFixtureTest {
    manifest.putInt(-1).putInt(0).putShort((short)20).putShort((short)20).putShort((short)1).putShort((short)0).putShort((short)0).putShort((short)0);
    manifest.putInt(-1).putInt(0).putInt(-1).putShort((short)8).put((byte)0).put((byte)valueType).putInt(minSdk);
    z.putNextEntry(new ZipEntry("AndroidManifest.xml"));z.write(manifest.array());z.closeEntry();
-   z.putNextEntry(new ZipEntry(arm?"lib/arm64-v8a/libfixture.so":"lib/x86/libfixture.so"));z.write(1);z.closeEntry();} return f;
+   z.putNextEntry(new ZipEntry("lib/"+abi+"/libfixture.so"));z.write(1);z.closeEntry();} return f;
  }
  public static void main(String[] args) throws Exception {
   Ctx c=new Ctx();c.pm.installed=info(NAME,"1.0.0",100,0,1); File good=apk(true);
   c.pm.candidate=info(NAME,"1.0.1",101,0,1);verify(c,good,true);
+  android.os.Build.SUPPORTED_ABIS=new String[]{"armeabi-v7a"};
+  verify(c,good,false); // arm64-only APK must not pass on a 32-bit device.
+  verify(c,apk("armeabi-v7a",23,16),true);
+  String json="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.0.1\",\"assets\":[{\"name\":\"BerryGram-1.0.1-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":1,\"digest\":\"sha256:"+"a".repeat(64)+"\",\"browser_download_url\":\"https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-arm64-v8a.apk\"}]}";
+  try { GithubUpdateClient.parseRelease("example/project",json); throw new AssertionError("arm64 release offered to 32-bit device"); } catch (java.io.IOException expected) { }
+  String universal=json.replace("arm64-v8a.apk", "universal.apk");
+  if (!GithubUpdateClient.parseRelease("example/project",universal).url.endsWith("universal.apk")) throw new AssertionError("universal release not selected");
+  android.os.Build.SUPPORTED_ABIS=new String[]{"arm64-v8a"};
   c.pm.candidate=info("org.other","1.0.1",101,0,1);verify(c,good,false);
   c.pm.candidate=info(NAME,"1.0.2",101,0,1);verify(c,good,false);
   c.pm.candidate=info(NAME,"1.0.1",101,ApplicationInfo.FLAG_DEBUGGABLE,1);verify(c,good,false);

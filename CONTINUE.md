@@ -1,3 +1,12 @@
+# BerryGram 1.4.3 — work in progress
+
+- Repository: `C:\Users\Keoo2\Documents\BerryGram-1.3`; branch `feature/berrygram-1.4.3`, based on `7f7d083`. Published version remains 1.4.2 (arm64 code 72789). No 1.4.3 release or APK has been produced.
+- The updater now rejects an arm64-only release on a 32-bit device and checks APK native-library ABIs against the actual device. Existing settings and release metadata are unchanged.
+- `fork-tests/smoke.ps1`, `updater-package-fixture.ps1`, `github-fixture.ps1` and `updater-live-github.ps1` passed; package and download fixtures use mocks. Live GitHub test discovered 1.4.2. ADB reported no devices; UI, installation and actual signature checks remain unverified.
+- The original checkout contains uninitialized native submodules with untracked contents; preserve them. Do not initialize over or delete those contents without investigation and explicit deletion consent.
+- Remaining: finish the requested settings/UI overhaul, Update Center and background downloads, archive/privacy regression review, Android build and device/emulator checks, then full release verification. Delta updates remain deferred pending a complete verified design. Remote push requires the owner's Firebase configuration.
+- Next: check the Android compilation result and inspect the settings and updater UI against the 1.4.3 requirements. Do not publish until the required checks pass.
+
 # BerryGram continuation — Android 1.4.2 stabilization release
 
 ## State
