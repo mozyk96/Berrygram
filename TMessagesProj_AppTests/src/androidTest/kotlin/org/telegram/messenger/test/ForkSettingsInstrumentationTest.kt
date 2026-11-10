@@ -10,6 +10,8 @@ import org.telegram.ui.Cells.TextCheckCell
 import androidx.test.platform.app.InstrumentationRegistry
 import android.view.View
 import android.widget.TextView
+import org.telegram.messenger.R
+import org.telegram.ui.fork.settings.ForkSettingsSection
 
 /**
  * Runtime test of the unified settings.
@@ -39,6 +41,20 @@ class ForkSettingsInstrumentationTest {
         "org.telegram.ui.ForkStealthSettingsActivity",
         "org.telegram.ui.ForkTranslationSettingsActivity"
     )
+
+    @Test
+    fun sectionHeadersStartNewDividerGroups() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val section = ForkSettingsSection(context)
+            section.addHeader(R.string.ForkSectionEffects)
+            section.addToggle(R.string.ForkAdvancedAnimations, false) { }
+            section.addInfo(R.string.ForkGraphicsInfoUnified)
+            section.addHeader(R.string.ForkSectionMessages)
+            section.addToggle(R.string.ForkAdvancedAnimations, false) { }
+            assertTrue("Unexpected divider between heading and first row", section.childCount == 5)
+        }
+    }
 
     @Test
     fun longSwitchTitleWrapsOnNarrowScreen() {

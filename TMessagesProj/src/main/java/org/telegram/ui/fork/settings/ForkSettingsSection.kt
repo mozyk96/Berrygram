@@ -47,6 +47,7 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
 
     /** Adds a grey section header, the same style the Telegram screens use. */
     fun addHeader(@StringRes titleRes: Int): HeaderCell {
+        rows.clear()
         val header = HeaderCell(context)
         header.setText(ForkLocale.get(titleRes))
         addView(header)
@@ -92,6 +93,7 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
 
     /** Adds an explanatory text under a group of rows. */
     fun addInfo(@StringRes textRes: Int): TextInfoPrivacyCell {
+        rows.clear()
         val info = TextInfoPrivacyCell(context)
         info.setText(ForkLocale.get(textRes))
         addView(info)
