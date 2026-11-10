@@ -57,6 +57,7 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
     fun addToggle(@StringRes titleRes: Int, checked: Boolean, onChanged: (Boolean) -> Unit): TextCheckCell {
         val cell = TextCheckCell(context)
         cell.setTextAndCheck(ForkLocale.get(titleRes), checked, false)
+        cell.setMultilineTitle()
         cell.setOnClickListener {
             val enabled = !cell.isChecked
             cell.isChecked = enabled
@@ -101,6 +102,7 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
     fun addToggleWithText(title: CharSequence, checked: Boolean, onChanged: (Boolean) -> Unit): TextCheckCell {
         val cell = TextCheckCell(context)
         cell.setTextAndCheck(title, checked, false)
+        cell.setMultilineTitle()
         cell.setOnClickListener {
             val enabled = !cell.isChecked
             cell.isChecked = enabled

@@ -45,6 +45,7 @@ android {
     buildToolsVersion '36.0.0'
 
     defaultConfig.applicationId = APP_PACKAGE
+    defaultConfig.manifestPlaceholders.FORK_MAPS_API_KEY = System.getenv('FORK_MAPS_API_KEY') ?: ''
 
     testBuildType "debug"
 

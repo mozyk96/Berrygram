@@ -6,6 +6,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.telegram.ui.ActionBar.BaseFragment
+import org.telegram.ui.Cells.TextCheckCell
+import androidx.test.platform.app.InstrumentationRegistry
+import android.view.View
+import android.widget.TextView
 
 /**
  * Runtime test of the unified settings.
@@ -35,6 +39,22 @@ class ForkSettingsInstrumentationTest {
         "org.telegram.ui.ForkStealthSettingsActivity",
         "org.telegram.ui.ForkTranslationSettingsActivity"
     )
+
+    @Test
+    fun longSwitchTitleWrapsOnNarrowScreen() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val cell = TextCheckCell(context)
+            cell.setTextAndCheck("A long setting title that must remain readable on a narrow screen", true, false)
+            cell.setMultilineTitle()
+            val width = (240 * context.resources.displayMetrics.density).toInt()
+            cell.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+            cell.layout(0, 0, width, cell.measuredHeight)
+            val title = cell.getChildAt(0) as TextView
+            assertTrue("Long title did not wrap", title.lineCount > 1)
+            assertTrue("Title is clipped", title.bottom <= cell.measuredHeight)
+        }
+    }
 
     @Test
     fun everySettingsDestinationIsAFragment() {

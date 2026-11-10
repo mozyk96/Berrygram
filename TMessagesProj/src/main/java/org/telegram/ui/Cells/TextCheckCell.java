@@ -136,6 +136,22 @@ public class TextCheckCell extends FrameLayout {
         checkBox.setEnabled(enabled);
     }
 
+    /** Allows a settings title to wrap without overlapping the switch. Call after setTextAndCheck. */
+    public void setMultilineTitle() {
+        isMultiline = true;
+        textView.setSingleLine(false);
+        textView.setMaxLines(Integer.MAX_VALUE);
+        textView.setEllipsize(null);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        LayoutParams params = (LayoutParams) textView.getLayoutParams();
+        params.height = LayoutParams.WRAP_CONTENT;
+        params.topMargin = AndroidUtilities.dp(12);
+        params.bottomMargin = AndroidUtilities.dp(12);
+        textView.setLayoutParams(params);
+        setMinimumHeight(AndroidUtilities.dp(50));
+        requestLayout();
+    }
+
     public void setCheckBoxIcon(int icon) {
         checkBox.setIcon(icon);
     }

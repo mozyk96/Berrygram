@@ -1,7 +1,7 @@
 ## 1.4.3 — in development
 
 - Moved the official updater into a dedicated screen with verified download state, byte progress and an explicit installation action; existing release verification is retained.
-- Placed graphics controls beside theme and bubble settings, corrected two density-scaled text sizes and a Ukrainian storage label.
+- Placed graphics controls beside theme and bubble settings, enabled wrapping for switch labels in unified sections, corrected two density-scaled text sizes and a Ukrainian storage label.
 - Reject incompatible APK architectures. Automated coverage includes updater state, routing and existing updater fixtures. Device and accessibility validation remain pending.
 
 ## 1.4.2 — real device stabilization: one settings system, no `LOC_ERR:null`, stable navigation

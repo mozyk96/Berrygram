@@ -4,7 +4,7 @@
 - The updater now rejects an arm64-only release on a 32-bit device and checks APK native-library ABIs against the actual device. Existing settings and release metadata are unchanged.
 - `fork-tests/smoke.ps1`, `updater-package-fixture.ps1`, `github-fixture.ps1` and `updater-live-github.ps1` passed; package and download fixtures use mocks. Live GitHub test discovered 1.4.2. ADB reported no devices; UI, installation and actual signature checks remain unverified.
 - The original checkout contains uninitialized native submodules with untracked contents; preserve them. Do not initialize over or delete those contents without investigation and explicit deletion consent.
-- Added dedicated update screen, explicit install action, real byte progress, graphics placement and typography fixes. Smoke tests and debug Kotlin/Java compilation passed; APK build and device validation remain pending.
+- Added dedicated update screen, explicit install action, real byte progress, graphics placement and typography fixes. Debug APK build, smoke tests and debug Kotlin/Java compilation passed before the latest multiline switch changes. The multiline code and Android instrumentation tests compile; runtime layout validation remains pending. Test module Maps placeholder is configured.
 - Remaining: finish the requested settings/UI overhaul, Update Center and background downloads, archive/privacy regression review, Android build and device/emulator checks, then full release verification. Delta updates remain deferred pending a complete verified design. Remote push requires the owner's Firebase configuration.
 - Next: finish the debug APK build, inspect settings text wrapping and complete the remaining UI and updater requirements. Do not publish until the required checks pass.
 
