@@ -34,4 +34,7 @@ assert 'GithubUpdateClient.latest(REPOSITORY)' in updater
 policy = (root / 'messenger/fork/updater/UpdatePolicy.java').read_text(encoding='utf-8')
 for obsolete in ('betaChannel', 'isStableRecovery', 'stableRecovery'):
     assert obsolete not in policy, f'obsolete update channel rule remains: {obsolete}'
+settings = (root / 'ui/SettingsActivity.java').read_text(encoding='utf-8')
+legacy_settings = settings.split('case 27:', 1)[1].split('break;', 1)[0]
+assert 'presentSettingFragment(new SettingsActivity())' in legacy_settings, 'legacy settings link must lead to the unified settings'
 print('BerryGram release scope checks passed')

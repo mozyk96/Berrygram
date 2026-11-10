@@ -14,3 +14,8 @@ assert 'installIntent.request()' not in download and 'scheduleInstallerCheck()' 
 assert 'downloadedBytes = received' in download and 'totalBytes = total' in download
 assert theme.index('bubbleRadiusInfoRow = rowCount++') < theme.index('forkGraphicsRow = rowCount++') < theme.index('chatListHeaderRow = rowCount++')
 print('Update screen routing, explicit installation and graphics placement checks passed')
+
+blocks = (root / 'ForkSettingsBlocks.kt').read_text(encoding='utf-8')
+graphics = blocks.split('fun graphics(', 1)[1].split('fun chatSettings(', 1)[0]
+performance = blocks.split('fun performance(', 1)[1].split('/* ----- helpers ----- */', 1)[0]
+assert 'ForkMiniDock' in graphics and 'ForkMiniDock' not in performance, 'Mini Dock belongs with appearance'

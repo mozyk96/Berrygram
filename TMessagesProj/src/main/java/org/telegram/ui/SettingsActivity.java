@@ -851,9 +851,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 presentSettingFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC));
                 break;
             case 27:
-                // The standalone Berrygram settings entry was removed, the old
-                // link still opens the unified settings.
-                presentSettingFragment(new ForkSettingsActivity());
+                // Keep historical search entries pointing to the unified settings.
+                presentSettingFragment(new SettingsActivity());
                 break;
             case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.LEGACY_ID_PRIVACY:
                 presentSettingFragment(new ForkStealthSettingsActivity());

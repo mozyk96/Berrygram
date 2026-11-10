@@ -98,6 +98,9 @@ object ForkSettingsBlocks {
         val animations = section.addToggle(R.string.ForkAdvancedAnimations, ForkAnimationSettings.fluidPopupsEnabled()) { enabled ->
             ForkAnimationSettings.setFluidPopupsEnabled(enabled)
         }
+        val miniDock = section.addToggle(R.string.ForkMiniDock, ForkDockSettings.miniDockEnabled()) { enabled ->
+            ForkDockSettings.setMiniDockEnabled(enabled)
+        }
         section.addInfo(R.string.ForkGraphicsInfoUnified)
 
         section.refreshState {
@@ -108,6 +111,7 @@ object ForkSettingsBlocks {
                 false
             )
             animations.isChecked = ForkAnimationSettings.fluidPopupsEnabled()
+            miniDock.isChecked = ForkDockSettings.miniDockEnabled()
         }
         return section
     }
@@ -218,15 +222,11 @@ object ForkSettingsBlocks {
         level = section.addRow(R.string.ForkPerformanceManualLevel, levelLabel()) { anchor ->
             showManualLevel(fragment, anchor, level)
         }
-        val miniDock = section.addToggle(R.string.ForkMiniDock, ForkDockSettings.miniDockEnabled()) { enabled ->
-            ForkDockSettings.setMiniDockEnabled(enabled)
-        }
         section.addInfo(R.string.ForkPerformanceInfoUnified)
         section.refreshState {
             mode.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceConfigMode), configModeLabel(), false)
             level.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceManualLevel), levelLabel(), false)
             level.visibility = if (PerformancePolicy.CONFIG_MANUAL.equals(PerformanceSettings.configMode())) View.VISIBLE else View.GONE
-            miniDock.isChecked = ForkDockSettings.miniDockEnabled()
         }
         return section
     }
