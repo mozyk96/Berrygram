@@ -217,6 +217,16 @@ public final class GithubUpdateClient {
         if (result == null) throw new java.io.IOException("No verified APK asset found for this device");
         return result;
     }
+    /** Revalidates a cached update without performing any network request. */
+    public static synchronized File verifyCached(Context context, Release release) throws Exception {
+        if (release == null || release.digest == null || !release.digest.matches("[0-9a-f]{64}")
+                || release.size <= 0 || release.size > MAX_APK) throw new SecurityException("Invalid release metadata");
+        File file = new File(new File(context.getCacheDir(), "berrygram-updates"), "berrygram-" + release.digest + ".apk");
+        if (!file.isFile() || file.length() != release.size || !matchesDigest(file, release.digest))
+            throw new java.io.IOException("Verified update is no longer available");
+        verifyPackage(context, file, release.version);
+        return file;
+    }
     public static File downloadAndVerify(Context context, Release release, Progress progress) throws Exception {
         return downloadAndVerify(context, release, progress, null);
     }

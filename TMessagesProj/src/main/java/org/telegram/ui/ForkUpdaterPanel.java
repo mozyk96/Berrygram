@@ -18,6 +18,8 @@ import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.text.format.Formatter;
 import org.telegram.messenger.fork.updater.UpdateUiPolicy;
+import org.telegram.messenger.fork.updater.BackgroundUpdateJob;
+import org.telegram.messenger.fork.updater.BackgroundUpdatePolicy;
 import android.widget.TextView;
 import androidx.core.content.FileProvider;
 import java.io.File;
@@ -40,9 +42,72 @@ public final class ForkUpdaterPanel extends LinearLayout {
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final BaseFragment parent;
     private final SharedPreferences preferences;
-    private boolean expanded, busy, disposed, incompatible, failed, downloading;
+    private boolean expanded, busy, disposed, incompatible, failed, downloading, backgroundRunning;
+    private long backgroundSeen, backgroundErrorSeen;
     private long downloadedBytes, totalBytes;
     private TextView progressText, progressBytes;
+    private final Runnable backgroundPoll = new Runnable() {
+        @Override public void run() {
+            if (disposed || !isAttachedToWindow()) return;
+            boolean active = BackgroundUpdateJob.isRunning();
+            boolean changed = active != backgroundRunning;
+            backgroundRunning = active;
+            if (active && !busy) {
+                downloadedBytes = preferences.getLong("background_received", 0);
+                totalBytes = preferences.getLong("background_total", 0);
+                downloadPercent = totalBytes > 0 ? (int) Math.min(100, downloadedBytes * 100 / totalBytes) : 0;
+                if (changed) render(false); else {
+                    updateProgressText();
+                    if (progress != null) { progress.setIndeterminate(totalBytes <= 0); progress.setProgress(downloadPercent); }
+                }
+            } else if (changed) render(false);
+            long errorTime = preferences.getLong("background_error_at", 0);
+            if (!active && !busy && errorTime > 0 && errorTime != backgroundErrorSeen) {
+                backgroundErrorSeen = errorTime; failed = true;
+                status = ForkLocale.get(R.string.ForkUpdateBackgroundFailed); render(false);
+            }
+            long completed = preferences.getLong("background_verified_at", 0);
+            if (!active && !busy && completed > 0 && completed != backgroundSeen) {
+                backgroundSeen = completed;
+                GithubUpdateClient.Release candidate = restoreRelease();
+                if (candidate != null && candidate.digest.equals(preferences.getString("background_verified_digest", ""))) verifyBackground(candidate);
+            }
+            if (BackgroundUpdateJob.mode(getContext()) != BackgroundUpdatePolicy.OFF || BackgroundUpdateJob.isRunning()) postDelayed(this, 1000);
+        }
+    };
+    private void verifyBackground(GithubUpdateClient.Release candidate) {
+        busy = true; downloading = false; release = candidate; verified = null; failed = false;
+        status = ForkLocale.get(R.string.ForkUpdateVerifying); render(false);
+        Context app = getContext().getApplicationContext();
+        worker.execute(() -> {
+            try {
+                File file = GithubUpdateClient.verifyCached(app, candidate);
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (disposed) return;
+                    busy = false; verified = file; status = ForkLocale.get(R.string.ForkUpdateVerified); render(false);
+                });
+            } catch (Exception error) { fail(error); }
+        });
+    }
+    private String backgroundModeLabel(int mode) {
+        switch (mode) {
+            case BackgroundUpdatePolicy.WIFI: return ForkLocale.get(R.string.ForkUpdateNetworkWifi);
+            case BackgroundUpdatePolicy.MOBILE: return ForkLocale.get(R.string.ForkUpdateNetworkMobile);
+            case BackgroundUpdatePolicy.ANY: return ForkLocale.get(R.string.ForkUpdateNetworkBoth);
+            default: return ForkLocale.get(R.string.ForkUpdateNetworkOff);
+        }
+    }
+    private void chooseBackgroundMode() {
+        CharSequence[] options = {backgroundModeLabel(BackgroundUpdatePolicy.OFF), backgroundModeLabel(BackgroundUpdatePolicy.WIFI),
+                backgroundModeLabel(BackgroundUpdatePolicy.MOBILE), backgroundModeLabel(BackgroundUpdatePolicy.ANY)};
+        parent.showDialog(new AlertDialog.Builder(getContext()).setTitle(ForkLocale.get(R.string.ForkUpdateAutomatic))
+                .setItems(options, (dialog, which) -> {
+                    if (!BackgroundUpdateJob.configure(getContext(), which)) status = ForkLocale.get(R.string.ForkUpdateScheduleFailed);
+                    removeCallbacks(backgroundPoll);
+                    post(backgroundPoll);
+                    render(false);
+                }).create());
+    }
     private final UpdateInstallIntent installIntent = new UpdateInstallIntent();
     private boolean waitingPermission, permissionLeft, permissionSettingsOpened;
     private int downloadPercent;
@@ -130,6 +195,13 @@ public final class ForkUpdaterPanel extends LinearLayout {
         details.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
         LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         detailParams.topMargin = AndroidUtilities.dp(8); content.addView(details, detailParams); updateDetails();
+        TextSettingsCell automatic = new TextSettingsCell(c);
+        automatic.setTextAndValue(ForkLocale.get(R.string.ForkUpdateAutomatic), backgroundModeLabel(BackgroundUpdateJob.mode(c)), false);
+        automatic.setMultilineTitle();
+        automatic.setBackground(Theme.getSelectorDrawable(false));
+        automatic.setOnClickListener(v -> chooseBackgroundMode());
+        LinearLayout.LayoutParams autoParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        autoParams.topMargin = AndroidUtilities.dp(20); content.addView(automatic, autoParams);
         if (release != null && release.notes != null && !release.notes.isEmpty()) {
             TextView notes = new TextView(c); notes.setText(release.notes); notes.setTextSize(15);
             notes.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
@@ -139,9 +211,9 @@ public final class ForkUpdaterPanel extends LinearLayout {
         scroll.addView(content);
         addView(scroll, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1));
         progress = null; progressText = null; progressBytes = null;
-        if (busy && downloading) {
+        if ((busy && downloading) || backgroundRunning) {
             progress = new ProgressBar(c, null, android.R.attr.progressBarStyleHorizontal);
-            progress.setMax(100); progress.setProgress(downloadPercent);
+            progress.setMax(100); progress.setIndeterminate(backgroundRunning && totalBytes <= 0); progress.setProgress(downloadPercent);
             addView(progress, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, AndroidUtilities.dp(6)));
             LinearLayout progressLabels = new LinearLayout(c);
             progressLabels.setOrientation(HORIZONTAL);
@@ -157,11 +229,11 @@ public final class ForkUpdaterPanel extends LinearLayout {
         Button button = new Button(c); button.setAllCaps(false); button.setGravity(Gravity.CENTER); button.setTextSize(16);
         button.setTypeface(AndroidUtilities.bold()); button.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
         button.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(14), Theme.getColor(Theme.key_featuredStickers_addButton)));
-        int action = UpdateUiPolicy.action(busy, release != null && !incompatible, verified != null, failed);
-        int label = action == UpdateUiPolicy.BUSY ? (downloading ? R.string.ForkUpdateDownloadingButton : R.string.ForkUpdateCheckingButton)
+        int action = UpdateUiPolicy.action(busy || backgroundRunning, release != null && !incompatible, verified != null, failed);
+        int label = action == UpdateUiPolicy.BUSY ? ((downloading || (backgroundRunning && totalBytes > 0)) ? R.string.ForkUpdateDownloadingButton : R.string.ForkUpdateCheckingButton)
                 : action == UpdateUiPolicy.INSTALL ? R.string.ForkUpdateInstall : action == UpdateUiPolicy.DOWNLOAD ? R.string.ForkUpdateDownload
                 : action == UpdateUiPolicy.RETRY ? R.string.ForkUpdateRetry : R.string.ForkUpdateCheck;
-        button.setText(ForkLocale.get(label)); button.setEnabled(!busy);
+        button.setText(ForkLocale.get(label)); button.setEnabled(!busy && !backgroundRunning);
         button.setOnClickListener(v -> { if (action == UpdateUiPolicy.INSTALL) startInstall(); else if (action == UpdateUiPolicy.DOWNLOAD || (action == UpdateUiPolicy.RETRY && release != null && !incompatible)) download(); else check(); });
         button.setMinHeight(AndroidUtilities.dp(52));
         button.setPadding(AndroidUtilities.dp(12), AndroidUtilities.dp(10), AndroidUtilities.dp(12), AndroidUtilities.dp(10));
@@ -170,8 +242,8 @@ public final class ForkUpdaterPanel extends LinearLayout {
     }
     private void updateProgressText() {
         if (progressText == null) return;
-        progressText.setText(downloadPercent + "%");
-        progressBytes.setText(Formatter.formatFileSize(getContext(), downloadedBytes) + " / " + Formatter.formatFileSize(getContext(), totalBytes));
+        progressText.setText(totalBytes > 0 ? downloadPercent + "%" : "");
+        progressBytes.setText(totalBytes > 0 ? Formatter.formatFileSize(getContext(), downloadedBytes) + " / " + Formatter.formatFileSize(getContext(), totalBytes) : "");
     }
     private void updateDetails() {
         if (details == null || !expanded || disposed) return;
@@ -336,12 +408,15 @@ public final class ForkUpdaterPanel extends LinearLayout {
     }
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        removeCallbacks(backgroundPoll);
+        post(backgroundPoll);
         scheduleInstallerCheck();
     }
     @Override protected void onDetachedFromWindow() {
         installIntent.cancel(); waitingPermission = false;
+        removeCallbacks(backgroundPoll);
         removeCallbacks(installWhenResumed);
         super.onDetachedFromWindow();
     }
-    public void dispose() { installIntent.cancel(); removeCallbacks(installWhenResumed); if (busy) preferences.edit().putBoolean("interrupted", true).apply(); disposed = true; worker.shutdownNow(); details = null; progress = null; progressText = null; progressBytes = null; }
+    public void dispose() { installIntent.cancel(); removeCallbacks(backgroundPoll); removeCallbacks(installWhenResumed); if (busy) preferences.edit().putBoolean("interrupted", true).apply(); disposed = true; worker.shutdownNow(); details = null; progress = null; progressText = null; progressBytes = null; }
 }

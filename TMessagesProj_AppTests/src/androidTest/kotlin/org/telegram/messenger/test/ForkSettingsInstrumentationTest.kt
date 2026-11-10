@@ -13,6 +13,10 @@ import android.view.View
 import android.widget.TextView
 import org.telegram.messenger.R
 import org.telegram.ui.fork.settings.ForkSettingsSection
+import android.app.job.JobScheduler
+import android.content.Context
+import org.telegram.messenger.fork.updater.BackgroundUpdateJob
+import org.telegram.messenger.fork.updater.BackgroundUpdatePolicy
 
 /**
  * Runtime test of the unified settings.
@@ -42,6 +46,23 @@ class ForkSettingsInstrumentationTest {
         "org.telegram.ui.ForkStealthSettingsActivity",
         "org.telegram.ui.ForkTranslationSettingsActivity"
     )
+
+    @Test
+    fun automaticUpdatesScheduleAndCancelAProtectedJob() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val original = BackgroundUpdateJob.mode(context)
+        try {
+            assertTrue("Unable to schedule update job", BackgroundUpdateJob.configure(context, BackgroundUpdatePolicy.WIFI))
+            val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+            val job = scheduler.allPendingJobs.firstOrNull { it.service.className == BackgroundUpdateJob::class.java.name }
+            assertNotNull("Update job missing", job)
+            assertTrue("Update job must survive reboot", job!!.isPersisted)
+            assertTrue("Unable to disable update job", BackgroundUpdateJob.configure(context, BackgroundUpdatePolicy.OFF))
+            assertTrue("Disabled update job remains scheduled", scheduler.allPendingJobs.none { it.service.className == BackgroundUpdateJob::class.java.name })
+        } finally {
+            BackgroundUpdateJob.configure(context, original)
+        }
+    }
 
     @Test
     fun sectionHeadersStartNewDividerGroups() {

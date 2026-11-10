@@ -58,6 +58,13 @@ public final class UpdaterDownloadFixtureTest {
   File shortResumed=GithubUpdateClient.downloadAndVerify(c,release,null,network);
   if (network.connections == beforeNetworkDownload) throw new AssertionError("Download bypassed selected network");
   if(!sawRange || !java.util.Arrays.equals(valid,Files.readAllBytes(shortResumed.toPath())))throw new AssertionError("Short response did not resume");
+  int requestsBeforeVerification=assetRequests;
+  File checkedCache=GithubUpdateClient.verifyCached(c,release);
+  if (!checkedCache.equals(shortResumed) || assetRequests != requestsBeforeVerification) throw new AssertionError("Cached verification used network");
+  byte[] altered=valid.clone(); altered[0] ^= 1; Files.write(shortResumed.toPath(),altered);
+  try { GithubUpdateClient.verifyCached(c,release); throw new AssertionError("Corrupt cache accepted"); }
+  catch (IOException expected) { }
+  Files.write(shortResumed.toPath(),valid);
   if(!shortResumed.delete())throw new AssertionError("Could not clean fixture file");
   breakStream=true;
   try { GithubUpdateClient.downloadAndVerify(c,release,null); throw new AssertionError("Interrupted transfer accepted"); }

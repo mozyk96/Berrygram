@@ -416,4 +416,13 @@
     <string name="ForkUpdateCheckingButton">Checking…</string>
     <string name="ForkUpdateDownloadingButton">Downloading…</string>
     <string name="ForkUpdateRetry">Retry</string>
+
+    <string name="ForkUpdateAutomatic">Automatic downloads</string>
+    <string name="ForkUpdateNetworkOff">Off</string>
+    <string name="ForkUpdateNetworkWifi">Wi-Fi only</string>
+    <string name="ForkUpdateNetworkMobile">Mobile network only</string>
+    <string name="ForkUpdateNetworkBoth">Wi-Fi and mobile</string>
+    <string name="ForkUpdateScheduleFailed">Could not schedule background updates.</string>
+    <string name="ForkUpdateVerifying">Verifying update…</string>
+    <string name="ForkUpdateBackgroundFailed">Background update failed. Try again.</string>
 </resources>

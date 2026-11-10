@@ -292,6 +292,13 @@ public class ApplicationLoader extends Application {
 
         // AndroidUtilities must be initialized before FileLog
         final String helloWorld = AndroidUtilities.getHelloWorld();
+        Utilities.globalQueue.postRunnable(() -> {
+            try {
+                org.telegram.messenger.fork.updater.BackgroundUpdateJob.ensureScheduled(getApplicationContext());
+            } catch (RuntimeException error) {
+                FileLog.e(error);
+            }
+        });
 
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d(helloWorld);

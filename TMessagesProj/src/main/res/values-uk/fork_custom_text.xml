@@ -416,4 +416,13 @@
     <string name="ForkUpdateCheckingButton">Перевіряємо…</string>
     <string name="ForkUpdateDownloadingButton">Завантаження…</string>
     <string name="ForkUpdateRetry">Повторити</string>
+
+    <string name="ForkUpdateAutomatic">Автоматичне завантаження</string>
+    <string name="ForkUpdateNetworkOff">Вимкнено</string>
+    <string name="ForkUpdateNetworkWifi">Лише Wi-Fi</string>
+    <string name="ForkUpdateNetworkMobile">Лише мобільна мережа</string>
+    <string name="ForkUpdateNetworkBoth">Wi-Fi і мобільна мережа</string>
+    <string name="ForkUpdateScheduleFailed">Не вдалося запланувати фонові оновлення.</string>
+    <string name="ForkUpdateVerifying">Перевіряємо оновлення…</string>
+    <string name="ForkUpdateBackgroundFailed">Не вдалося завантажити оновлення у фоні. Спробуйте ще раз.</string>
 </resources>
