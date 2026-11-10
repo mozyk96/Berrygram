@@ -40,7 +40,7 @@ def git_credential():
 
 
 def api(method, path, token, data=None, raw=None, content_type=None):
-    url = "https://api.github.com" + path
+    url = path if path.startswith("https://uploads.github.com/") else "https://api.github.com" + path
     body = None
     headers = {
         "Authorization": "Bearer " + token,
