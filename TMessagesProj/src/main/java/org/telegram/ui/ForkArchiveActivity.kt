@@ -4,11 +4,13 @@ import android.content.Context
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.View
+import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.telegram.messenger.AndroidUtilities
@@ -48,6 +50,8 @@ class ForkArchiveActivity : ForkSettingsFragment() {
         const val HEADER_COUNT = 2
     }
     private var currentQuery = ""
+    private var dialogsLoaded = false
+    private var dialogsError = false
 
     override fun createView(context: Context): View {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back)
@@ -129,11 +133,12 @@ class ForkArchiveActivity : ForkSettingsFragment() {
         listView?.emptyView = emptyView
 
         listView?.setOnItemClickListener { _, position ->
-            if (isSearchMode && position < searchResults.size) {
-                val msg = searchResults[position]
+            val index = position - HEADER_COUNT
+            if (isSearchMode && index in searchResults.indices) {
+                val msg = searchResults[index]
                 presentFragment(ForkArchiveMessagesActivity(msg.dialogId))
-            } else if (!isSearchMode && position < dialogs.size) {
-                val d = dialogs[position]
+            } else if (!isSearchMode && index in dialogs.indices) {
+                val d = dialogs[index]
                 presentFragment(ForkArchiveMessagesActivity(d.dialogId))
             }
         }
@@ -143,10 +148,19 @@ class ForkArchiveActivity : ForkSettingsFragment() {
     }
 
     private fun loadDialogs() {
+        dialogsLoaded = false
+        dialogsError = false
+        adapter?.notifyDataSetChanged()
         ForkArchiveManager.loadDialogsAsync(currentAccount) { result ->
             if (fragmentView == null) return@loadDialogsAsync
-            dialogs.clear()
-            dialogs.addAll(result)
+            dialogsLoaded = true
+            dialogsError = result == null
+            if (result != null) {
+                dialogs.clear()
+                dialogs.addAll(result)
+            } else if (dialogs.isNotEmpty()) {
+                Toast.makeText(fragmentView.context, ForkLocale.get(R.string.ForkArchiveLoadError), Toast.LENGTH_LONG).show()
+            }
             adapter?.notifyDataSetChanged()
             updateEmptyView()
         }
@@ -302,20 +316,33 @@ class ForkArchiveActivity : ForkSettingsFragment() {
     }
 
     private inner class ListAdapter(private val context: Context) : RecyclerListView.SelectionAdapter() {
-        override fun isEnabled(holder: RecyclerView.ViewHolder): Boolean = true
+        override fun isEnabled(holder: RecyclerView.ViewHolder): Boolean = holder.itemViewType != 2 || (!isSearchMode && dialogsError)
+
+        private fun dataCount(): Int = if (isSearchMode) searchResults.size else dialogs.size
 
         override fun getItemCount(): Int {
-            val rows = if (isSearchMode) searchResults.size else dialogs.size
-            return rows + HEADER_COUNT
+            val rows = dataCount()
+            return rows + HEADER_COUNT + if (rows == 0) 1 else 0
         }
 
         override fun getItemViewType(position: Int): Int {
-            return if (position < HEADER_COUNT) position else 2
+            return if (position < HEADER_COUNT) 0 else if (dataCount() == 0) 2 else 1
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             if (viewType == 0) {
                 val view = TextSettingsCell(context).apply {
+                    setMultilineTitle()
+                    layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
+                }
+                return RecyclerListView.Holder(view)
+            }
+            if (viewType == 2) {
+                val view = TextView(context).apply {
+                    gravity = Gravity.CENTER
+                    setTextSize(15f)
+                    setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2))
+                    setPadding(AndroidUtilities.dp(20f), AndroidUtilities.dp(32f), AndroidUtilities.dp(20f), AndroidUtilities.dp(32f))
                     layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
                 }
                 return RecyclerListView.Holder(view)
@@ -338,6 +365,18 @@ class ForkArchiveActivity : ForkSettingsFragment() {
                     cell.setIcon(R.drawable.msg_download)
                     cell.setOnClickListener { openImportPicker(org.telegram.messenger.fork.storage.ForkArchiveImporter.Mode.UPDATE) }
                 }
+                return
+            }
+            if (holder.itemViewType == 2) {
+                val message = holder.itemView as TextView
+                message.text = when {
+                    isSearchMode && currentQuery.isNotEmpty() -> LocaleController.getString(R.string.NoResult)
+                    isSearchMode -> ForkLocale.get(R.string.ForkArchiveEmpty)
+                    !dialogsLoaded -> ForkLocale.get(R.string.ForkArchiveLoading)
+                    dialogsError -> ForkLocale.get(R.string.ForkArchiveLoadError)
+                    else -> ForkLocale.get(R.string.ForkArchiveEmpty)
+                }
+                message.setOnClickListener(if (!isSearchMode && dialogsError) View.OnClickListener { loadDialogs() } else null)
                 return
             }
             val cell = holder.itemView as DialogCell

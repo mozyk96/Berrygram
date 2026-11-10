@@ -25,9 +25,12 @@ $env:GRADLE_USER_HOME = if ($env:GRADLE_USER_HOME) { $env:GRADLE_USER_HOME } els
 
 Push-Location (Join-Path $PSScriptRoot '..')
 try {
+    $ErrorActionPreference = 'Continue'
     & '.\gradlew.bat' ':TMessagesProj_App:assembleAfatRelease' '-PforkAbi=arm64-v8a' '--console=plain' "--max-workers=2" '-Dorg.gradle.jvmargs=-Xmx8g -XX:MaxMetaspaceSize=1g' *>&1 |
         Tee-Object -FilePath $LogFile
-    if ($LASTEXITCODE -ne 0) { throw "The release build failed, see $LogFile" }
+    $gradleExitCode = $LASTEXITCODE
+    $ErrorActionPreference = 'Stop'
+    if ($gradleExitCode -ne 0) { throw "The release build failed ($gradleExitCode), see $LogFile" }
 } finally {
     Pop-Location
     Remove-Item Env:FORK_TELEGRAM_API_ID, Env:FORK_TELEGRAM_API_HASH -ErrorAction SilentlyContinue

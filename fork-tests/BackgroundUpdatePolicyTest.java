@@ -4,8 +4,10 @@ public class BackgroundUpdatePolicyTest {
   check(!BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.OFF, true, false));
   check(BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.WIFI, true, false));
   check(!BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.WIFI, false, true));
+  check(!BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.WIFI, true, true));
   check(BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.MOBILE, false, true));
   check(!BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.MOBILE, true, false));
+  check(!BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.MOBILE, true, true));
   check(BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.ANY, true, false));
   check(BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.ANY, false, true));
   check(!BackgroundUpdatePolicy.allowed(BackgroundUpdatePolicy.ANY, false, false));

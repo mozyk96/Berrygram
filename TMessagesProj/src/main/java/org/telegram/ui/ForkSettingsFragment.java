@@ -2,8 +2,13 @@ package org.telegram.ui;
 
 import android.view.View;
 import android.view.ViewGroup;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.Cells.TextCheckCell;
+import org.telegram.ui.Cells.TextDetailSettingsCell;
+import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.fork.settings.ForkInsets;
 
 /**
@@ -15,6 +20,33 @@ import org.telegram.ui.fork.settings.ForkInsets;
  * taken from the real window insets, it is never a fixed value.</p>
  */
 public abstract class ForkSettingsFragment extends BaseFragment {
+
+    @Override
+    protected void onViewCreated(View view) {
+        super.onViewCreated(view);
+        enableWrapping(view);
+    }
+
+    private void enableWrapping(View view) {
+        if (view instanceof TextSettingsCell) {
+            ((TextSettingsCell) view).setMultilineTitle();
+        } else if (view instanceof TextCheckCell) {
+            ((TextCheckCell) view).setMultilineTitle();
+        } else if (view instanceof TextDetailSettingsCell) {
+            ((TextDetailSettingsCell) view).setMultilineTitle();
+        } else if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) enableWrapping(group.getChildAt(i));
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        WindowInsetsCompat insets = fragmentView == null ? null : ViewCompat.getRootWindowInsets(fragmentView);
+        int bottom = insets == null ? getBottomInset() : insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+        applyBottomInset(bottom);
+    }
 
     @Override
     public void onInsets(int left, int top, int right, int bottom) {

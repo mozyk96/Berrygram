@@ -487,9 +487,8 @@ public class LiteModeSettingsActivity extends BaseFragment {
                     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
                 }
             };
-            textView.setLines(1);
-            textView.setSingleLine(true);
-            textView.setEllipsize(TextUtils.TruncateAt.END);
+            textView.setSingleLine(false);
+            textView.setMaxLines(4);
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
             textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
             textView.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
@@ -560,10 +559,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            super.onMeasure(
-                MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(dp(50), MeasureSpec.EXACTLY)
-            );
+            int width = MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY);
+            super.onMeasure(width, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+            int height = Math.max(dp(50), textViewLayout.getMeasuredHeight() + dp(16));
+            super.onMeasure(width, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
         }
 
         public void set(Item item, boolean divider) {

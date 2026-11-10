@@ -82,6 +82,7 @@ public final class BackgroundUpdateJob extends JobService {
     }
 
     @Override public boolean onStartJob(JobParameters params) {
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putLong("background_last_attempt_at", System.currentTimeMillis()).apply();
         Network network = allowedNetwork(params);
         if (network == null || running != null) return false;
         running = params;
@@ -90,7 +91,8 @@ public final class BackgroundUpdateJob extends JobService {
         prefs.edit().putBoolean("background_running", true).putLong("background_received", 0)
                 .putLong("background_total", 0).putLong("background_error_at", 0).apply();
         worker = new Thread(() -> {
-            boolean retry = false, failed = false;
+            boolean retry = false;
+            int failureKind = 0;
             try {
                 GithubUpdateClient.Release release = GithubUpdateClient.latest(REPO, network);
                 String installed = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -112,19 +114,21 @@ public final class BackgroundUpdateJob extends JobService {
             } catch (java.util.concurrent.CancellationException ignored) {
                 retry = true;
             } catch (java.io.IOException error) {
-                retry = true; failed = true;
+                retry = true; failureKind = 1;
+            } catch (SecurityException ignored) {
+                failureKind = 2;
             } catch (Exception ignored) {
-                // Verification and cancellation failures never produce a verified update.
-                failed = true;
+                failureKind = 3;
             }
-            final boolean reschedule = retry, reportFailure = failed;
+            final boolean reschedule = retry;
+            final int reportedFailure = failureKind;
             main.post(() -> {
                 if (running != params) return;
                 running = null;
                 active = false;
                 worker = null;
                 SharedPreferences.Editor update = prefs.edit().putBoolean("background_running", false);
-                if (reportFailure) update.putLong("background_error_at", System.currentTimeMillis());
+                if (reportedFailure != 0) update.putLong("background_error_at", System.currentTimeMillis()).putInt("background_error_kind", reportedFailure);
                 update.apply();
                 jobFinished(params, reschedule && mode(this) != BackgroundUpdatePolicy.OFF);
             });

@@ -425,4 +425,7 @@
     <string name="ForkUpdateScheduleFailed">Could not schedule background updates.</string>
     <string name="ForkUpdateVerifying">Verifying update…</string>
     <string name="ForkUpdateBackgroundFailed">Background update failed. Try again.</string>
+
+    <string name="ForkArchiveLoading">Loading archive…</string>
+    <string name="ForkArchiveLoadError">Could not read the archive. Tap to retry.</string>
 </resources>

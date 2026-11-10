@@ -301,6 +301,7 @@ public class ForkCustomTextActivity extends ForkSettingsFragment {
             controls = ForkSettingsLayout.section(rows.getContext());
             ForkSettingsLayout.addSection(rows, controls);
         }
+        if (cell instanceof TextSettingsCell) ((TextSettingsCell) cell).setMultilineTitle();
         ForkSettingsLayout.interactive(cell);
         controls.addView(cell);
     }

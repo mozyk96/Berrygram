@@ -380,4 +380,7 @@
     <string name="ForkUpdateScheduleFailed">Не удалось запланировать фоновые обновления.</string>
     <string name="ForkUpdateVerifying">Проверяем обновление…</string>
     <string name="ForkUpdateBackgroundFailed">Не удалось загрузить обновление в фоновом режиме. Попробуйте ещё раз.</string>
+
+    <string name="ForkArchiveLoading">Загрузка архива…</string>
+    <string name="ForkArchiveLoadError">Не удалось прочитать архив. Нажмите, чтобы повторить.</string>
 </resources>

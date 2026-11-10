@@ -113,6 +113,8 @@ public class TextSettingsCell extends FrameLayout {
     }
 
     private boolean multilineTitle;
+    private boolean stackedValue;
+    private int stackedTitleHeight;
     public void setMultilineTitle() {
         multilineTitle = true;
         textView.setSingleLine(false);
@@ -130,6 +132,7 @@ public class TextSettingsCell extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        stackedValue = false;
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), AndroidUtilities.dp(50) + (needDivider ? 1 : 0));
 
         int availableWidth = getMeasuredWidth() - getPaddingLeft() - getPaddingRight() - AndroidUtilities.dp(34);
@@ -181,6 +184,17 @@ public class TextSettingsCell extends FrameLayout {
             }
             width = Math.max(0, getMeasuredWidth() - getPaddingLeft() - getPaddingRight() - startMargin - endMargin);
             textView.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+            if (valueTextView.getVisibility() == VISIBLE && breaksWord(textView)) {
+                stackedValue = true;
+                width = Math.max(0, getMeasuredWidth() - getPaddingLeft() - getPaddingRight()
+                        - titleMargins.leftMargin - titleMargins.rightMargin);
+                textView.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+                stackedTitleHeight = textView.getMeasuredHeight();
+                valueTextView.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(24), MeasureSpec.EXACTLY));
+                int height = Math.max(getMeasuredHeight(), stackedTitleHeight + valueTextView.getMeasuredHeight() + AndroidUtilities.dp(22));
+                setMeasuredDimension(getMeasuredWidth(), height);
+                return;
+            }
             int height = Math.max(getMeasuredHeight(), textView.getMeasuredHeight() + AndroidUtilities.dp(20));
             setMeasuredDimension(getMeasuredWidth(), height);
             if (valueTextView.getVisibility() == VISIBLE) {
@@ -190,9 +204,31 @@ public class TextSettingsCell extends FrameLayout {
         textView.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY));
     }
 
+    private static boolean breaksWord(TextView view) {
+        android.text.Layout layout = view.getLayout();
+        CharSequence text = view.getText();
+        if (layout == null || text == null) return false;
+        for (int line = 0; line + 1 < layout.getLineCount(); line++) {
+            int end = layout.getLineEnd(line);
+            if (end > 0 && end < text.length() && Character.isLetterOrDigit(text.charAt(end - 1))
+                    && Character.isLetterOrDigit(text.charAt(end))) return true;
+        }
+        return false;
+    }
+
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
+        if (stackedValue) {
+            MarginLayoutParams margins = (MarginLayoutParams) textView.getLayoutParams();
+            int titleLeft = getPaddingLeft() + margins.leftMargin;
+            int titleTop = AndroidUtilities.dp(10);
+            int titleRight = getMeasuredWidth() - getPaddingRight() - margins.rightMargin;
+            textView.layout(titleLeft, titleTop, titleRight, titleTop + stackedTitleHeight);
+            int valueTop = titleTop + stackedTitleHeight + AndroidUtilities.dp(2);
+            int valueLeft = LocaleController.isRTL ? titleRight - valueTextView.getMeasuredWidth() : titleLeft;
+            valueTextView.layout(valueLeft, valueTop, valueLeft + valueTextView.getMeasuredWidth(), valueTop + valueTextView.getMeasuredHeight());
+        }
         if (measureDelay && getParent() != null) {
             changeProgressStartDelay = (int) ((getTop() / (float) ((View) getParent()).getMeasuredHeight()) * 150f);
         }

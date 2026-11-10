@@ -425,4 +425,7 @@
     <string name="ForkUpdateScheduleFailed">Не вдалося запланувати фонові оновлення.</string>
     <string name="ForkUpdateVerifying">Перевіряємо оновлення…</string>
     <string name="ForkUpdateBackgroundFailed">Не вдалося завантажити оновлення у фоні. Спробуйте ще раз.</string>
+
+    <string name="ForkArchiveLoading">Завантаження архіву…</string>
+    <string name="ForkArchiveLoadError">Не вдалося прочитати архів. Натисніть, щоб повторити.</string>
 </resources>

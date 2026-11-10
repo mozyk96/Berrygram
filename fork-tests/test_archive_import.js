@@ -72,6 +72,8 @@ check(manager.includes('PRIMARY KEY (dialog_id, message_id)'), 'The archive does
 // The archive screen exposes create, update, progress and cancel.
 check(activity.includes('R.string.ForkArchiveCreate'), 'The archive screen has no create action');
 check(activity.includes('R.string.ForkArchiveUpdate'), 'The archive screen has no update action');
+check(activity.includes('val index = position - HEADER_COUNT'), 'Archive row clicks must skip the header rows');
+check(activity.includes('return if (position < HEADER_COUNT) 0 else if (dataCount() == 0) 2 else 1'), 'Both archive action rows must use the header view type');
 check(activity.includes('ForkArchiveImporter.getInstance'), 'The archive screen does not start the importer');
 check(activity.includes('.cancel()'), 'The archive screen can not cancel the import');
 check(activity.includes('ForkArchiveImportRunning'), 'The archive screen does not show progress');

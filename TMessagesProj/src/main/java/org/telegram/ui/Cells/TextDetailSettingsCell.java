@@ -32,6 +32,7 @@ public class TextDetailSettingsCell extends FrameLayout {
     private ImageView imageView;
     private boolean needDivider;
     private boolean multiline;
+    private boolean multilineTitle;
 
     public TextDetailSettingsCell(Context context) {
         super(context);
@@ -65,6 +66,13 @@ public class TextDetailSettingsCell extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (multilineTitle) {
+            MarginLayoutParams titleParams = (MarginLayoutParams) textView.getLayoutParams();
+            int width = Math.max(0, MeasureSpec.getSize(widthMeasureSpec) - titleParams.leftMargin - titleParams.rightMargin);
+            textView.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+            MarginLayoutParams valueParams = (MarginLayoutParams) valueTextView.getLayoutParams();
+            valueParams.topMargin = titleParams.topMargin + textView.getMeasuredHeight() + AndroidUtilities.dp(3);
+        }
         if (!multiline) {
             super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(64) + (needDivider ? 1 : 0), MeasureSpec.EXACTLY));
         } else {
@@ -78,6 +86,20 @@ public class TextDetailSettingsCell extends FrameLayout {
 
     public TextView getValueTextView() {
         return valueTextView;
+    }
+
+    public void setMultilineTitle() {
+        multilineTitle = true;
+        int valueLeft = valueTextView.getPaddingLeft(), valueTop = valueTextView.getPaddingTop(), valueRight = valueTextView.getPaddingRight();
+        setMultilineDetail(true);
+        valueTextView.setPadding(valueLeft, valueTop, valueRight, AndroidUtilities.dp(12));
+        textView.setSingleLine(false);
+        textView.setMaxLines(Integer.MAX_VALUE);
+        textView.setEllipsize(null);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        valueTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        setMinimumHeight(AndroidUtilities.dp(64));
+        requestLayout();
     }
 
     public void setMultilineDetail(boolean value) {

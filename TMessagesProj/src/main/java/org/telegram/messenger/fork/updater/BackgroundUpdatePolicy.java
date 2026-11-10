@@ -6,8 +6,8 @@ public final class BackgroundUpdatePolicy {
     private BackgroundUpdatePolicy() { }
     public static boolean allowed(int mode, boolean wifi, boolean mobile) {
         switch (mode) {
-            case WIFI: return wifi;
-            case MOBILE: return mobile;
+            case WIFI: return wifi && !mobile;
+            case MOBILE: return mobile && !wifi;
             case ANY: return wifi || mobile;
             default: return false;
         }

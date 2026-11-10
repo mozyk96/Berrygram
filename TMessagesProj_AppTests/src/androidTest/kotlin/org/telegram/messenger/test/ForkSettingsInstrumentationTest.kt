@@ -10,6 +10,7 @@ import org.telegram.ui.Cells.TextCheckCell
 import org.telegram.ui.Cells.TextSettingsCell
 import androidx.test.platform.app.InstrumentationRegistry
 import android.view.View
+import android.graphics.Rect
 import android.widget.TextView
 import org.telegram.messenger.R
 import org.telegram.ui.fork.settings.ForkSettingsSection
@@ -106,6 +107,30 @@ class ForkSettingsInstrumentationTest {
             assertTrue("Long title did not wrap", cell.textView.lineCount > 1)
             assertTrue("Title is clipped", cell.textView.bottom <= cell.measuredHeight)
             assertTrue("Title overlaps value", cell.textView.right <= cell.valueTextView.left)
+        }
+    }
+
+    @Test
+    fun longSettingWordsRemainWholeBesideLongValue() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val cell = TextSettingsCell(context)
+            cell.setTextAndValue("Аналізатор заліза", "Сканувати пристрій", false)
+            cell.setIcon(R.drawable.msg_settings)
+            cell.setMultilineTitle()
+            val width = (240 * context.resources.displayMetrics.density).toInt()
+            cell.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+            cell.layout(0, 0, width, cell.measuredHeight)
+            val title = cell.textView
+            val layout = title.layout
+            for (line in 0 until layout.lineCount - 1) {
+                val end = layout.getLineEnd(line)
+                assertTrue("Title breaks inside a word", end == 0 || end >= title.text.length ||
+                    !Character.isLetterOrDigit(title.text[end - 1]) || !Character.isLetterOrDigit(title.text[end]))
+            }
+            val titleRect = Rect(title.left, title.top, title.right, title.bottom)
+            val value = cell.valueTextView
+            assertTrue("Title overlaps value", !Rect.intersects(titleRect, Rect(value.left, value.top, value.right, value.bottom)))
         }
     }
 

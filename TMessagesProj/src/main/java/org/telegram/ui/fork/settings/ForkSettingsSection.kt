@@ -98,6 +98,7 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
         val cell = TextDetailSettingsCell(context)
         cell.setMultilineDetail(true)
         cell.setTextAndValueAndIcon(ForkLocale.get(titleRes), ForkLocale.get(descriptionRes), iconRes, false)
+        cell.setMultilineTitle()
         cell.setOnClickListener(onClick)
         addRowView(cell)
         return cell

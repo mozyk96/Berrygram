@@ -114,16 +114,19 @@ public final class ForkMessageMenuSettingsActivity extends ForkSettingsFragment 
         @Override public MenuHolder onCreateViewHolder(ViewGroup parent, int type) {
             Context context = parent.getContext();
             LinearLayout row = new LinearLayout(context);
-            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setOrientation(LinearLayout.VERTICAL);
             TextCheckCell visible = new TextCheckCell(context);
-            row.addView(visible, new LinearLayout.LayoutParams(0, -2, 1));
+            row.addView(visible, new LinearLayout.LayoutParams(-1, -2));
+            LinearLayout actions = new LinearLayout(context);
+            actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             ImageView pin = new ImageView(context);
             pin.setScaleType(ImageView.ScaleType.CENTER);
             ForkSettingsLayout.interactive(pin);
-            row.addView(pin, new LinearLayout.LayoutParams(AndroidUtilities.dp(48), AndroidUtilities.dp(50)));
+            actions.addView(pin, new LinearLayout.LayoutParams(AndroidUtilities.dp(48), AndroidUtilities.dp(48)));
             TextView drag = button(context, "↕");
             drag.setTextSize(24);
-            row.addView(drag, new LinearLayout.LayoutParams(AndroidUtilities.dp(48), AndroidUtilities.dp(50)));
+            actions.addView(drag, new LinearLayout.LayoutParams(AndroidUtilities.dp(48), AndroidUtilities.dp(48)));
+            row.addView(actions, new LinearLayout.LayoutParams(-1, -2));
             row.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
             return new MenuHolder(row, visible, pin, drag);
         }
@@ -131,6 +134,7 @@ public final class ForkMessageMenuSettingsActivity extends ForkSettingsFragment 
             String id = order.get(position);
             CharSequence label = ForkActionLabels.label(id);
             holder.visible.setTextAndCheck(label, ActionMenuSettings.visible(currentAccount, id), true);
+            holder.visible.setMultilineTitle();
             holder.visible.setColorfullIcon(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText), ForkActionLabels.icon(id));
             holder.visible.setContentDescription(label + ", " + ForkLocale.get(R.string.ForkMenuEditorVisible));
             holder.visible.setOnClickListener(v -> {

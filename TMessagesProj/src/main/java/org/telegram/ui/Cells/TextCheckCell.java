@@ -53,6 +53,7 @@ public class TextCheckCell extends FrameLayout {
     private Switch checkBox;
     private boolean needDivider;
     private boolean isMultiline;
+    private boolean multilineTitle;
     private int height = 50;
     private int animatedColorBackground;
     private float animationProgress;
@@ -138,6 +139,7 @@ public class TextCheckCell extends FrameLayout {
 
     /** Allows a settings title to wrap without overlapping the switch. Call after setTextAndCheck. */
     public void setMultilineTitle() {
+        multilineTitle = true;
         isMultiline = true;
         textView.setSingleLine(false);
         textView.setMaxLines(Integer.MAX_VALUE);
@@ -193,6 +195,7 @@ public class TextCheckCell extends FrameLayout {
         layoutParams.topMargin = 0;
         textView.setLayoutParams(layoutParams);
         setWillNotDraw(!divider);
+        if (multilineTitle) setMultilineTitle();
     }
 
     public void updateRTL() {

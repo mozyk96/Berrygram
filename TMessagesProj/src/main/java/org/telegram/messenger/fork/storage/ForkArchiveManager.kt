@@ -342,7 +342,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
     @Synchronized
     fun getArchivedDialogs(): List<ArchivedDialogSummary> {
         val list = mutableListOf<ArchivedDialogSummary>()
-        val db = database ?: return list
+        val db = database ?: throw IllegalStateException("Archive database unavailable")
         var cursor: SQLiteCursor? = null
         try {
             cursor = db.queryFinalized(
@@ -355,7 +355,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
                 list.add(ArchivedDialogSummary(did, count, lastDate, lastSnippet(did)))
             }
         } catch (e: Exception) {
-            FileLog.e(e)
+            throw e
         } finally {
             cursor?.dispose()
         }
@@ -757,12 +757,13 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         }
 
         /** Reads the archived chats without blocking the caller. */
-        fun loadDialogsAsync(account: Int, callback: (List<ArchivedDialogSummary>) -> Unit) {
+        fun loadDialogsAsync(account: Int, callback: (List<ArchivedDialogSummary>?) -> Unit) {
             executor.execute {
                 val result = try {
                     getInstance(account).getArchivedDialogs()
                 } catch (error: Throwable) {
-                    emptyList()
+                    FileLog.e(error)
+                    null
                 }
                 org.telegram.messenger.AndroidUtilities.runOnUIThread { callback(result) }
             }

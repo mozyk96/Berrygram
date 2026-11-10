@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
@@ -55,6 +57,13 @@ public final class ForkFloatingHeader {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
         root.setPadding(0, actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0, 0, 0);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            if (actionBar.getOccupyStatusBar()) {
+                int top = insets.getInsets(WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.displayCutout()).top;
+                view.setPadding(view.getPaddingLeft(), Math.max(top, AndroidUtilities.statusBarHeight), view.getPaddingRight(), view.getPaddingBottom());
+            }
+            return insets;
+        });
 
         LinearLayout header = new LinearLayout(context);
         header.setGravity(Gravity.CENTER_VERTICAL);
