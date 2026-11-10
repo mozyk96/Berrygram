@@ -1,3 +1,9 @@
+## 1.4.3 — in development
+
+- Moved the official updater into a dedicated screen with verified download state, byte progress and an explicit installation action; existing release verification is retained.
+- Placed graphics controls beside theme and bubble settings, corrected two density-scaled text sizes and a Ukrainian storage label.
+- Reject incompatible APK architectures. Automated coverage includes updater state, routing and existing updater fixtures. Device and accessibility validation remain pending.
+
 ## 1.4.2 — real device stabilization: one settings system, no `LOC_ERR:null`, stable navigation
 
 - One settings system: every Berrygram feature is now a block inside the Telegram screen that owns it. Chat Settings carries effects, reactions, message menu, gestures, custom text, media and input; Privacy and Security carries Ghost Mode, deleted message preservation, edit history, archive privacy and retention; Notifications carries the diagnostics; Data and Storage carries the archive browser and the import; Language carries the translation options; Power Saving carries the device analyzer and the performance profile. The duplicated Berrygram rows are gone from the root, only the Update Center stays in the help section. The shared blocks live in `ForkSettingsBlocks` and `ForkSettingsSection`.

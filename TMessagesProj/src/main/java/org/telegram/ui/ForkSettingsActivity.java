@@ -28,7 +28,6 @@ import org.telegram.ui.Cells.TextDetailSettingsCell;
  * unified settings instead of a second settings system.</p>
  */
 public final class ForkSettingsActivity extends ForkSettingsFragment {
-    private ForkUpdaterPanel updater;
     private TextDetailSettingsCell[] accentCells;
     private LinearLayout settingsPage;
     @Override public View createView(Context context) {
@@ -90,9 +89,12 @@ public final class ForkSettingsActivity extends ForkSettingsFragment {
         messageMenu.setOnClickListener(v -> presentFragment(new ForkMessageMenuSettingsActivity())); ForkSettingsLayout.addCard(content, messageMenu);
         accentCells = new TextDetailSettingsCell[]{appearance, performance, stealth, notifications, video, voice, text, gestures, reactions, messageMenu};
         updateAccent(context);
-        LinearLayout updates = ForkSettingsLayout.section(context);
-        updater = new ForkUpdaterPanel(context, this); updates.addView(updater);
-        ForkSettingsLayout.addSection(content, updates);
+        org.telegram.ui.Cells.TextSettingsCell updates = new org.telegram.ui.Cells.TextSettingsCell(context);
+        updates.setText(ForkLocale.get(R.string.ForkUpdatePanel), false);
+        updates.setIcon(R.drawable.msg_download);
+        updates.setOnClickListener(v -> presentFragment(new ForkUpdateActivity()));
+        ForkSettingsLayout.interactive(updates);
+        ForkSettingsLayout.addCard(content, updates);
         ScrollView scroll = new ScrollView(context); scroll.setFillViewport(true); scroll.addView(content);
         fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkSettingsTitle), this::finishFragment); return fragmentView;
     }
@@ -103,7 +105,6 @@ public final class ForkSettingsActivity extends ForkSettingsFragment {
         int color = org.telegram.messenger.fork.panels.GraphicsColorPolicy.readableAccent(ForkAppearanceSettingsActivity.accent(context), background);
         for (TextDetailSettingsCell cell : accentCells) cell.setIconColor(color);
     }
-    @Override public void onPause() { if (updater != null) updater.onParentPaused(); super.onPause(); }
-    @Override public void onResume() { super.onResume(); if (updater != null) updater.onParentResumed(); if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView); if (settingsPage != null) { ForkSettingsLayout.refreshPage(settingsPage); updateAccent(settingsPage.getContext()); } }
-    @Override public void onFragmentDestroy() { if (updater != null) updater.dispose(); updater = null; accentCells = null; settingsPage = null; super.onFragmentDestroy(); }
+    @Override public void onResume() { super.onResume(); if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView); if (settingsPage != null) { ForkSettingsLayout.refreshPage(settingsPage); updateAccent(settingsPage.getContext()); } }
+    @Override public void onFragmentDestroy() { accentCells = null; settingsPage = null; super.onFragmentDestroy(); }
 }

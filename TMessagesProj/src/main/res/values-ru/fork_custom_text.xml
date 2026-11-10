@@ -100,15 +100,15 @@
     <string name="ForkUpdateSource">Источник: %1$s</string>
     <string name="ForkUpdateAvailable">Релиз %1$s · %2$.1f МБ</string>
     <string name="ForkUpdateConfigure">Настроить источник GitHub</string>
-    <string name="ForkUpdateCheck">Проверить</string>
-    <string name="ForkUpdateDownload">Обновить</string>
+    <string name="ForkUpdateCheck">Проверить обновления</string>
+    <string name="ForkUpdateDownload">Скачать</string>
     <string name="ForkUpdateInstall">Установить</string>
     <string name="ForkUpdateInvalidSource">Введите репозиторий GitHub в формате owner/repository.</string>
     <string name="ForkUpdateChecking">Проверяем GitHub…</string>
     <string name="ForkUpdateDownloading">Загрузка и проверка: %1$d%%</string>
     <string name="ForkUpdateVerified">Файл и подпись проверены.</string>
     <string name="ForkUpdateFailure">Ошибка обновления: %1$s</string>
-    <string name="ForkUpdateLatest">У вас последняя версия.</string>
+    <string name="ForkUpdateLatest">Вы используете последнюю версию Berrygram.</string>
     <string name="ForkUpdateNoRelease">Официальный релиз не найден или репозиторий недоступен.</string>
     <string name="ForkVideoQualityTitle">Битрейт видеосообщений</string>
     <string name="ForkVideoQualityStandard">Стандартный</string>
@@ -134,7 +134,7 @@
     <string name="ForkVoiceCustom">Пользовательское</string>
     <string name="ForkVoiceBitrate">Битрейт Opus</string>
     <string name="ForkVoiceInfo">Голосовые записываются в моно с частотой 48 кГц и программным кодированием Opus. Автоматический режим снижает битрейт при медленной сети или на слабом устройстве. Изменения применяются к новым записям.</string>
-    <string name="ForkUpdatePanel">Обновления BerryGram</string>
+    <string name="ForkUpdatePanel">Обновления</string>
     <string name="ForkUpdateLastChecked">Проверено: %1$s</string>
     <string name="ForkUpdateInterrupted">Обновление прервано. Попробуйте ещё раз.</string>
     <string name="ForkVideoSubtitle">Камера и качество записи</string>
@@ -367,4 +367,8 @@
     <string name="ForkSectionUpdates">Обновления</string>
     <string name="ForkArchiveStorage">Использование памяти</string>
     <string name="ForkArchiveStorageValue">%1$s</string>
+
+    <string name="ForkUpdateCheckingButton">Проверяем…</string>
+    <string name="ForkUpdateDownloadingButton">Загрузка…</string>
+    <string name="ForkUpdateRetry">Повторить</string>
 </resources>

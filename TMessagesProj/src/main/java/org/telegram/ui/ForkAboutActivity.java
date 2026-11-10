@@ -14,7 +14,6 @@ import org.telegram.ui.ActionBar.Theme;
 
 /** Basic attribution, installed-version information and the Update Center. */
 public final class ForkAboutActivity extends ForkSettingsFragment {
-    private ForkUpdaterPanel updater;
 
     @Override public View createView(Context context) {
         actionBar.setTitle(ForkLocale.get(R.string.ForkAboutTitle));
@@ -45,18 +44,16 @@ public final class ForkAboutActivity extends ForkSettingsFragment {
         details.setPadding(0, AndroidUtilities.dp(12), 0, 0);
         content.addView(details);
 
-        // Berrygram: the Update Center lives in the About section.
-        LinearLayout updateSection = ForkSettingsLayout.section(context);
-        updater = new ForkUpdaterPanel(context, this);
-        updateSection.addView(updater);
-        ForkSettingsLayout.addSection(content, updateSection);
+        org.telegram.ui.Cells.TextSettingsCell updates = new org.telegram.ui.Cells.TextSettingsCell(context);
+        updates.setText(ForkLocale.get(R.string.ForkUpdatePanel), false);
+        updates.setIcon(R.drawable.msg_download);
+        updates.setBackground(Theme.getSelectorDrawable(false));
+        updates.setOnClickListener(v -> presentFragment(new ForkUpdateActivity()));
+        content.addView(updates);
 
         scroll.addView(content);
         fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkAboutTitle), this::finishFragment);
         return fragmentView;
     }
 
-    @Override public void onPause() { if (updater != null) updater.onParentPaused(); super.onPause(); }
-    @Override public void onResume() { super.onResume(); if (updater != null) updater.onParentResumed(); }
-    @Override public void onFragmentDestroy() { if (updater != null) updater.dispose(); updater = null; super.onFragmentDestroy(); }
 }

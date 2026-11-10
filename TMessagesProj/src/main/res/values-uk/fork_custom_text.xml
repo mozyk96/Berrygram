@@ -130,15 +130,15 @@
     <string name="ForkUpdateSource">Джерело: %1$s</string>
     <string name="ForkUpdateAvailable">Реліз %1$s · %2$.1f МБ</string>
     <string name="ForkUpdateConfigure">Налаштувати джерело GitHub</string>
-    <string name="ForkUpdateCheck">Перевірити</string>
-    <string name="ForkUpdateDownload">Оновити</string>
+    <string name="ForkUpdateCheck">Перевірити оновлення</string>
+    <string name="ForkUpdateDownload">Завантажити</string>
     <string name="ForkUpdateInstall">Встановити</string>
     <string name="ForkUpdateInvalidSource">Введіть репозиторій GitHub у форматі owner/repository.</string>
     <string name="ForkUpdateChecking">Перевіряємо GitHub…</string>
     <string name="ForkUpdateDownloading">Завантаження й перевірка: %1$d%%</string>
     <string name="ForkUpdateVerified">Файл і підпис перевірено.</string>
     <string name="ForkUpdateFailure">Помилка оновлення: %1$s</string>
-    <string name="ForkUpdateLatest">У вас остання версія.</string>
+    <string name="ForkUpdateLatest">Ви використовуєте найновішу версію Berrygram.</string>
     <string name="ForkUpdateNoRelease">Офіційного релізу не знайдено або репозиторій недоступний.</string>
     <string name="ForkLongPress">Тривале натискання повідомлення</string>
     <string name="ForkLongPressChat">Тривале натискання для чату</string>
@@ -181,7 +181,7 @@
     <string name="ForkVoiceCustom">Користувацька</string>
     <string name="ForkVoiceBitrate">Бітрейт Opus</string>
     <string name="ForkVoiceInfo">Голосові записуються в моно з частотою 48 кГц і програмним кодуванням Opus. Автоматичний режим зменшує бітрейт за повільної мережі або на слабкому пристрої. Зміни застосовуються до нових записів.</string>
-    <string name="ForkUpdatePanel">Оновлення BerryGram</string>
+    <string name="ForkUpdatePanel">Оновлення</string>
     <string name="ForkUpdateLastChecked">Перевірено: %1$s</string>
     <string name="ForkUpdateInterrupted">Операцію оновлення перервано. Спробуйте ще раз.</string>
     <string name="ForkVideoSubtitle">Камера та якість запису</string>
@@ -410,6 +410,10 @@
     <string name="ForkSectionTranslation">Переклад</string>
     <string name="ForkSectionPerformance">Продуктивність</string>
     <string name="ForkSectionUpdates">Оновлення</string>
-    <string name="ForkArchiveStorage">Використання пам’ят’</string>
+    <string name="ForkArchiveStorage">Використання пам’яті</string>
     <string name="ForkArchiveStorageValue">%1$s</string>
+
+    <string name="ForkUpdateCheckingButton">Перевіряємо…</string>
+    <string name="ForkUpdateDownloadingButton">Завантаження…</string>
+    <string name="ForkUpdateRetry">Повторити</string>
 </resources>

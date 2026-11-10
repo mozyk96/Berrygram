@@ -105,13 +105,14 @@ public final class ForkSettingsLayout {
     public static TextView header(Context context, CharSequence title) {
         TextView view = new TextView(context);
         view.setText(title);
-        view.setTextSize(AndroidUtilities.dp(13));
+        view.setTextSize(13);
         view.setTypeface(AndroidUtilities.bold());
         view.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
         view.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         view.setAllCaps(true);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, AndroidUtilities.dp(28));
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        view.setMinHeight(AndroidUtilities.dp(28));
         params.setMargins(AndroidUtilities.dp(MARGIN_DP + 8), AndroidUtilities.dp(HEADER_DP), AndroidUtilities.dp(MARGIN_DP + 8), 0);
         view.setLayoutParams(params);
         return view;

@@ -6,7 +6,7 @@ import shutil
 
 root = Path(__file__).resolve().parents[1]
 source = (root / "TMessagesProj/src/main/java/org/telegram/ui/ForkUpdaterPanel.java").read_text(encoding="utf-8")
-settings = (root / "TMessagesProj/src/main/java/org/telegram/ui/ForkSettingsActivity.java").read_text(encoding="utf-8")
+settings = (root / "TMessagesProj/src/main/java/org/telegram/ui/ForkUpdateActivity.java").read_text(encoding="utf-8")
 start = source.index("    private final Runnable installWhenResumed")
 end = source.index("    private String status", start)
 runnable = source[start:end]

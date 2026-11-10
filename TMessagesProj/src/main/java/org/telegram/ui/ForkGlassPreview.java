@@ -127,7 +127,7 @@ final class ForkGlassPreview extends FrameLayout {
             super(context);
             setLayerType(LAYER_TYPE_SOFTWARE, null);
             stroke.setStyle(Paint.Style.STROKE);
-            text.setTextSize(AndroidUtilities.dp(20));
+            text.setTextSize(20);
             text.setFakeBoldText(true);
             line.setStrokeWidth(AndroidUtilities.dp(2));
         }

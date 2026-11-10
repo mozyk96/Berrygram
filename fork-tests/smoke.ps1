@@ -18,12 +18,12 @@ $sources = @(
     'text\CustomTextResolution.java', 'text\CustomTextContext.java', 'text\CustomTextScopePolicy.java',
     'text\CustomTextPackKeys.java', 'text\ForkLocalePolicy.java', 'camera\RoundCameraPolicy.java', 'camera\RoundVideoQualityPolicy.java',
     'camera\CameraProfilePolicy.java',
-    'voice\VoiceQualityPolicy.java', 'voice\VoiceProfilePolicy.java', 'storage\ForkArchivedRestorePolicy.java', 'panels\PanelPolicy.java', 'panels\GlassPolicy.java', 'panels\GraphicsColorPolicy.java', 'panels\MenuSurfacePolicy.java', 'diagnostics\NotificationDiagnosticsPolicy.java', 'updater\UpdatePolicy.java', 'updater\UpdateInstallIntent.java', 'stealth\StealthPolicy.java', 'performance\DeviceAnalyzerPolicy.java'
+    'voice\VoiceQualityPolicy.java', 'voice\VoiceProfilePolicy.java', 'storage\ForkArchivedRestorePolicy.java', 'panels\PanelPolicy.java', 'panels\GlassPolicy.java', 'panels\GraphicsColorPolicy.java', 'panels\MenuSurfacePolicy.java', 'diagnostics\NotificationDiagnosticsPolicy.java', 'updater\UpdatePolicy.java', 'updater\UpdateInstallIntent.java', 'updater\UpdateUiPolicy.java', 'stealth\StealthPolicy.java', 'performance\DeviceAnalyzerPolicy.java'
 ) | ForEach-Object { Join-Path $base $_ }
 $tests = @('AuthDiagnosticsTest', 'BackendPolicyTest', 'SessionCredentialsTest', 'CustomTextValidatorTest',
     'CustomTextPackValidatorTest', 'CustomTextFormatTest', 'CustomTextSafetyTest', 'LocalAliasPolicyTest',
     'CustomTextResolutionTest', 'CustomTextContextTest', 'CustomTextScopePolicyTest', 'CustomTextOriginalTest',
-    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'MenuSurfacePolicyTest', 'NotificationDiagnosticsPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'ForkTabIndicatorInterpolatorTest', 'ForkUnifiedSettingsMappingTest', 'GhostMasterPolicyTest', 'ForkArchiveImportPolicyTest', 'ForkTranslationPolicyTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest', 'ForkArchivedRestorePolicyTest')
+    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'MenuSurfacePolicyTest', 'NotificationDiagnosticsPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'UpdateUiPolicyTest', 'ForkTabIndicatorInterpolatorTest', 'ForkUnifiedSettingsMappingTest', 'GhostMasterPolicyTest', 'ForkArchiveImportPolicyTest', 'ForkTranslationPolicyTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest', 'ForkArchivedRestorePolicyTest')
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 $sources += (Join-Path $base 'performance\PerformancePolicy.java')
 $sources += (Join-Path $root 'TMessagesProj\src\main\java\org\telegram\ui\fork\navigation\ForkTabIndicatorInterpolator.java')
@@ -73,6 +73,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Glass settings test failed' }
 $python = if ($env:FORK_PYTHON) { $env:FORK_PYTHON } else { (Get-Command python -ErrorAction Stop).Source }
 & $python (Join-Path $PSScriptRoot 'test_beta8_updater_lifecycle.py')
 if ($LASTEXITCODE -ne 0) { throw 'Updater runnable lifecycle test failed' }
+& $python (Join-Path $PSScriptRoot 'test_update_screen.py')
+if ($LASTEXITCODE -ne 0) { throw 'Update screen integration checks failed' }
 & $python (Join-Path $PSScriptRoot 'test_berrygram_resources.py')
 if ($LASTEXITCODE -ne 0) { throw 'BerryGram resources test failed' }
 & $python (Join-Path $PSScriptRoot 'test_fork_string_escapes.py')

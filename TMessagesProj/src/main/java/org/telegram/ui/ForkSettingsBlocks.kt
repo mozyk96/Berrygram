@@ -81,9 +81,9 @@ object ForkSettingsBlocks {
         return section
     }
 
-    /** Effects, reactions, message menu, gestures and custom text. */
+    /** Graphics controls beside Telegram's theme and bubble settings. */
     @JvmStatic
-    fun chatSettings(fragment: BaseFragment): ForkSettingsSection {
+    fun graphics(fragment: BaseFragment): ForkSettingsSection {
         val section = ForkSettingsSection(fragment.context)
 
         section.addHeader(R.string.ForkSectionEffects)
@@ -99,6 +99,23 @@ object ForkSettingsBlocks {
             ForkAnimationSettings.setFluidPopupsEnabled(enabled)
         }
         section.addInfo(R.string.ForkGraphicsInfoUnified)
+
+        section.refreshState {
+            style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false)
+            radius.setTextAndValue(
+                ForkLocale.get(R.string.ForkAppearanceRadius),
+                ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()),
+                false
+            )
+            animations.isChecked = ForkAnimationSettings.fluidPopupsEnabled()
+        }
+        return section
+    }
+
+    /** Reactions, message menu, gestures and media controls. */
+    @JvmStatic
+    fun chatSettings(fragment: BaseFragment): ForkSettingsSection {
+        val section = ForkSettingsSection(fragment.context)
 
         section.addHeader(R.string.ForkSectionMessages)
         section.addRow(R.string.ForkReactionTitle, ForkLocale.get(R.string.ForkUnifiedReactionsSubtitle), R.drawable.msg_reactions) {
@@ -122,15 +139,6 @@ object ForkSettingsBlocks {
             fragment.presentFragment(ForkVoiceSettingsActivity())
         }
 
-        section.refreshState {
-            style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false)
-            radius.setTextAndValue(
-                ForkLocale.get(R.string.ForkAppearanceRadius),
-                ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()),
-                false
-            )
-            animations.isChecked = ForkAnimationSettings.fluidPopupsEnabled()
-        }
         return section
     }
 

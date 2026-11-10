@@ -238,7 +238,8 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
 
     private int rowCount;
 // BerryGram: the embedded chat settings block.
-private int forkChatSettingsRow;
+private int forkChatSettingsRow, forkGraphicsRow;
+private org.telegram.ui.fork.settings.ForkSettingsSection forkGraphicsSection;
 private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSection;
 
     private boolean updatingLocation;
@@ -536,6 +537,7 @@ private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSectio
 
         rowCount = 0;
         forkChatSettingsRow = -1;
+        forkGraphicsRow = -1;
         contactsReimportRow = -1;
         contactsSortRow = -1;
         scheduleLocationRow = -1;
@@ -670,6 +672,7 @@ private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSectio
             bubbleRadiusHeaderRow = rowCount++;
             bubbleRadiusRow = rowCount++;
             bubbleRadiusInfoRow = rowCount++;
+            forkGraphicsRow = rowCount++;
 
             chatListHeaderRow = rowCount++;
             chatListRow = rowCount++;
@@ -1112,7 +1115,7 @@ private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSectio
         frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         actionBar.setAdaptiveBackground(listView);
         listView.setOnItemClickListener((view, position, x, y) -> {
-            if (position == forkChatSettingsRow) {
+            if (position == forkChatSettingsRow || position == forkGraphicsRow) {
                 // The Berrygram block handles its own rows.
                 return;
             }
@@ -1560,6 +1563,9 @@ private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSectio
         super.onResume();
         if (forkChatSettingsSection != null) {
             forkChatSettingsSection.refresh();
+        }
+        if (forkGraphicsSection != null) {
+            forkGraphicsSection.refresh();
         }
         if (listAdapter != null) {
             updateRows(true);
@@ -2095,6 +2101,7 @@ private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSectio
         private final static int TYPE_APP_ICON = 20;
         private final static int TYPE_CHOOSE_COLOR = 21;
         private final static int TYPE_FORK_SECTION = 22;
+        private final static int TYPE_FORK_GRAPHICS = 23;
 
         private Context mContext;
         private boolean first = true;
@@ -2497,13 +2504,17 @@ private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSectio
                 case TYPE_FORK_SECTION:
                     view = createForkChatSettingsSection();
                     break;
+                case TYPE_FORK_GRAPHICS:
+                    if (forkGraphicsSection == null) forkGraphicsSection = ForkSettingsBlocks.graphics(ThemeActivity.this);
+                    view = forkGraphicsSection;
+                    break;
             }
             return new RecyclerListView.Holder(view);
         }
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-            if (holder.getItemViewType() == TYPE_FORK_SECTION) {
+            if ((holder.getItemViewType() == TYPE_FORK_SECTION || holder.getItemViewType() == TYPE_FORK_GRAPHICS)) {
                 // The Berrygram block owns its own rows.
                 return;
             }
@@ -2769,6 +2780,9 @@ private org.telegram.ui.fork.settings.ForkSettingsSection forkChatSettingsSectio
         public int getItemViewType(int position) {
             if (position == forkChatSettingsRow) {
                 return TYPE_FORK_SECTION;
+            }
+            if (position == forkGraphicsRow) {
+                return TYPE_FORK_GRAPHICS;
             }
             if (position == scheduleFromRow || position == distanceRow ||
                     position == scheduleToRow || position == scheduleUpdateLocationRow ||
