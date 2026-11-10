@@ -112,6 +112,16 @@ public class TextSettingsCell extends FrameLayout {
         return valueImageView;
     }
 
+    private boolean multilineTitle;
+    public void setMultilineTitle() {
+        multilineTitle = true;
+        textView.setSingleLine(false);
+        textView.setMaxLines(Integer.MAX_VALUE);
+        textView.setEllipsize(null);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        requestLayout();
+    }
+
     private boolean betterLayout = BuildVars.DEBUG_PRIVATE_VERSION;
     public void setBetterLayout(boolean betterLayout) {
         // I might break something with this, gonna need to further test
@@ -159,6 +169,23 @@ public class TextSettingsCell extends FrameLayout {
             }
         } else {
             width = availableWidth;
+        }
+        if (multilineTitle) {
+            MarginLayoutParams titleMargins = (MarginLayoutParams) textView.getLayoutParams();
+            int startMargin = LocaleController.isRTL ? titleMargins.rightMargin : titleMargins.leftMargin;
+            int endMargin = LocaleController.isRTL ? titleMargins.leftMargin : titleMargins.rightMargin;
+            if (valueTextView.getVisibility() == VISIBLE) {
+                MarginLayoutParams valueMargins = (MarginLayoutParams) valueTextView.getLayoutParams();
+                endMargin = (LocaleController.isRTL ? valueMargins.leftMargin : valueMargins.rightMargin)
+                        + valueTextView.getMeasuredWidth() + AndroidUtilities.dp(8);
+            }
+            width = Math.max(0, getMeasuredWidth() - getPaddingLeft() - getPaddingRight() - startMargin - endMargin);
+            textView.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+            int height = Math.max(getMeasuredHeight(), textView.getMeasuredHeight() + AndroidUtilities.dp(20));
+            setMeasuredDimension(getMeasuredWidth(), height);
+            if (valueTextView.getVisibility() == VISIBLE) {
+                valueTextView.measure(MeasureSpec.makeMeasureSpec(valueTextView.getMeasuredWidth(), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+            }
         }
         textView.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY));
     }

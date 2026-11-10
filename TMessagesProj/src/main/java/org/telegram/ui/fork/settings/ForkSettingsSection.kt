@@ -7,6 +7,7 @@ import androidx.annotation.StringRes
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.ui.Cells.HeaderCell
 import org.telegram.ui.Cells.TextCheckCell
+import org.telegram.ui.Cells.TextDetailSettingsCell
 import org.telegram.ui.Cells.TextInfoPrivacyCell
 import org.telegram.ui.Cells.TextSettingsCell
 import org.telegram.ui.ForkLocale
@@ -84,9 +85,20 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
         if (iconRes != 0) {
             cell.setIcon(iconRes)
         }
+        cell.setMultilineTitle()
         if (onClick != null) {
             cell.setOnClickListener(onClick)
         }
+        addRowView(cell)
+        return cell
+    }
+
+    /** A destination with an explanatory subtitle, rather than a selectable value. */
+    fun addDetailRow(@StringRes titleRes: Int, @StringRes descriptionRes: Int, iconRes: Int, onClick: (View) -> Unit): TextDetailSettingsCell {
+        val cell = TextDetailSettingsCell(context)
+        cell.setMultilineDetail(true)
+        cell.setTextAndValueAndIcon(ForkLocale.get(titleRes), ForkLocale.get(descriptionRes), iconRes, false)
+        cell.setOnClickListener(onClick)
         addRowView(cell)
         return cell
     }

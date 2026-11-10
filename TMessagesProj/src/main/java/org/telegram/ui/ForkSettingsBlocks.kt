@@ -118,24 +118,24 @@ object ForkSettingsBlocks {
         val section = ForkSettingsSection(fragment.context)
 
         section.addHeader(R.string.ForkSectionMessages)
-        section.addRow(R.string.ForkReactionTitle, ForkLocale.get(R.string.ForkUnifiedReactionsSubtitle), R.drawable.msg_reactions) {
+        section.addDetailRow(R.string.ForkReactionTitle, R.string.ForkUnifiedReactionsSubtitle, R.drawable.msg_reactions) {
             fragment.presentFragment(ForkReactionSettingsActivity())
         }
-        section.addRow(R.string.ForkMenuEditorTitle, ForkLocale.get(R.string.ForkUnifiedMenuSubtitle)) {
+        section.addDetailRow(R.string.ForkMenuEditorTitle, R.string.ForkUnifiedMenuSubtitle, R.drawable.msg_settings) {
             fragment.presentFragment(ForkMessageMenuSettingsActivity())
         }
-        section.addRow(R.string.ForkCustomTextTitle, ForkLocale.get(R.string.ForkTextSubtitle)) {
+        section.addDetailRow(R.string.ForkCustomTextTitle, R.string.ForkTextSubtitle, R.drawable.msg_edit) {
             fragment.presentFragment(ForkCustomTextActivity())
         }
 
         section.addHeader(R.string.ForkSectionMedia)
-        section.addRow(R.string.ForkGestureTitle, ForkLocale.get(R.string.ForkGestureDoubleTap)) {
+        section.addDetailRow(R.string.ForkGestureTitle, R.string.ForkGestureDoubleTap, R.drawable.menu_reply) {
             fragment.presentFragment(ForkGestureSettingsActivity())
         }
-        section.addRow(R.string.ForkVideoTitle, ForkLocale.get(R.string.ForkVideoSubtitle)) {
+        section.addDetailRow(R.string.ForkVideoTitle, R.string.ForkVideoSubtitle, R.drawable.msg_video) {
             fragment.presentFragment(ForkVideoSettingsActivity())
         }
-        section.addRow(R.string.ForkVoiceTitle, ForkLocale.get(R.string.ForkVoiceSubtitle)) {
+        section.addDetailRow(R.string.ForkVoiceTitle, R.string.ForkVoiceSubtitle, R.drawable.msg_filled_data_voice) {
             fragment.presentFragment(ForkVoiceSettingsActivity())
         }
 
@@ -147,7 +147,7 @@ object ForkSettingsBlocks {
     fun notifications(fragment: BaseFragment): ForkSettingsSection {
         val section = ForkSettingsSection(fragment.context)
         section.addHeader(R.string.ForkSectionDiagnostics)
-        section.addRow(R.string.ForkUnifiedDiagnosticsTitle, ForkLocale.get(R.string.ForkUnifiedDiagnosticsInfo), R.drawable.settings_sounds) {
+        section.addDetailRow(R.string.ForkUnifiedDiagnosticsTitle, R.string.ForkUnifiedDiagnosticsInfo, R.drawable.settings_sounds) {
             fragment.presentFragment(ForkNotificationDiagnosticsActivity())
         }
         return section
@@ -158,7 +158,7 @@ object ForkSettingsBlocks {
     fun data(fragment: BaseFragment, account: Int): ForkSettingsSection {
         val section = ForkSettingsSection(fragment.context)
         section.addHeader(R.string.ForkSectionArchive)
-        section.addRow(R.string.ForkArchiveOpenTitle, ForkLocale.get(R.string.ForkArchiveOpenSubtitle), R.drawable.msg_archive) {
+        section.addDetailRow(R.string.ForkArchiveOpenTitle, R.string.ForkArchiveOpenSubtitle, R.drawable.msg_archive) {
             fragment.presentFragment(ForkArchiveActivity())
         }
         section.addRow(R.string.ForkArchiveStorage, archiveSizeLabel(account))
