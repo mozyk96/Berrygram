@@ -1,28 +1,28 @@
 package org.telegram.ui.Components.blur3.drawable;
 
-import android.graphics.Canvas;
+import org.telegram.utils.glass.source.GlassSource;
+import org.telegram.utils.glass.source.GlassSourceWrapped;
 
-import androidx.annotation.NonNull;
-
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSource;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceWrapped;
-
+/** Compatibility wrapper for fork-owned popup surfaces. */
 public class BlurredBackgroundDrawableSource extends BlurredBackgroundDrawable {
-    private BlurredBackgroundSource source;
+    private final GlassSourceWrapped wrapped;
 
-    public BlurredBackgroundDrawableSource(BlurredBackgroundSource source) {
-        this.source = source;
+    public BlurredBackgroundDrawableSource(GlassSource source) {
+        this(new GlassSourceWrapped(), source);
     }
 
-    public void setSource(BlurredBackgroundSource source) { this.source = source; }
-
-    @Override
-    public void draw(@NonNull Canvas canvas) {
-        drawSource(canvas, source);
+    private BlurredBackgroundDrawableSource(GlassSourceWrapped wrapped, GlassSource source) {
+        super(wrapped);
+        this.wrapped = wrapped;
+        wrapped.setSource(source);
     }
 
-    @Override
-    public BlurredBackgroundSource getSource() {
-        return source;
+    public void setSource(GlassSource source) {
+        wrapped.setSource(source);
+        invalidateSelf();
+    }
+
+    @Override public GlassSource getSource() {
+        return wrapped.getSource();
     }
 }

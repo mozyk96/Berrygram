@@ -58,7 +58,7 @@ public class ForkUnifiedSettingsMappingTest {
                 "The settings root still inserts the Berrygram about row");
         check(source.contains("ForkUnifiedSettings.buildUpdateEntry"),
                 "The settings root does not contain the Update Center row");
-        check(!source.contains("SettingCell.Factory.of(27,"),
+        check(!source.contains("presentSettingFragment(new ForkSettingsActivity())"),
                 "The standalone Berrygram settings entry was not removed");
 
         // Every host screen carries its Berrygram block.

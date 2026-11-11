@@ -1,8 +1,8 @@
 import android.graphics.Canvas;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap;
+import org.telegram.utils.glass.source.GlassSourceBitmap;
 public class BitmapSourceGeometryTest {
  public static void main(String[] args) {
-  BlurredBackgroundSourceBitmap source=new BlurredBackgroundSourceBitmap();
+  GlassSourceBitmap source=new GlassSourceBitmap();
   Canvas first=source.beginRecording(120,160,2);
   if(first.bitmap.getWidth()!=60 || first.bitmap.getHeight()!=80) throw new AssertionError("Incorrect rectangular bitmap dimensions");
   if(first.scaleX!=0.5f || first.scaleY!=0.5f) throw new AssertionError("Recording must downscale the canvas");

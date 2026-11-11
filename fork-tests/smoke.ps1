@@ -40,9 +40,9 @@ foreach ($test in $tests) {
 }
 $bitmapDir = Join-Path $buildDir 'bitmap-geometry'
 New-Item -ItemType Directory -Force $bitmapDir | Out-Null
-$bitmapStubs = Get-ChildItem (Join-Path $PSScriptRoot 'bitmap-stubs') -Filter '*.java' -Recurse | ForEach-Object { $_.FullName }
-$bitmapSource = Join-Path $root 'TMessagesProj\src\main\java\org\telegram\ui\Components\blur3\source'
-& $javac -encoding UTF-8 -d $bitmapDir @bitmapStubs (Join-Path $bitmapSource 'BlurredBackgroundSource.java') (Join-Path $bitmapSource 'BlurredBackgroundSourceBitmap.java') (Join-Path $bitmapSource 'LiquidGlassBitmapSource.java') (Join-Path $PSScriptRoot 'BitmapSourceGeometryTest.java') (Join-Path $PSScriptRoot 'LiquidGlassSourceLifecycleTest.java')
+$bitmapStubs = Get-ChildItem (Join-Path $PSScriptRoot 'bitmap-stubs') -Filter '*.java' -Recurse | Where-Object { $_.FullName -notmatch '[\\/]blur3[\\/]drawable[\\/]' } | ForEach-Object { $_.FullName }
+$bitmapSource = Join-Path $root 'TMessagesProj\src\main\java\org\telegram\utils\glass\source'
+& $javac -encoding UTF-8 -d $bitmapDir @bitmapStubs (Join-Path $bitmapSource 'GlassSource.java') (Join-Path $bitmapSource 'GlassSourceBitmap.java') (Join-Path $bitmapSource 'LiquidGlassBitmapSource.java') (Join-Path $PSScriptRoot 'BitmapSourceGeometryTest.java') (Join-Path $PSScriptRoot 'LiquidGlassSourceLifecycleTest.java')
 if ($LASTEXITCODE -ne 0) { throw 'Bitmap geometry test compilation failed' }
 & $java -cp $bitmapDir BitmapSourceGeometryTest
 if ($LASTEXITCODE -ne 0) { throw 'Bitmap geometry test failed' }

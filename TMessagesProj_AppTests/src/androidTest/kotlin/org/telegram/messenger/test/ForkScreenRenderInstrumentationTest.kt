@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.UserConfig
+import org.telegram.ui.ActionBar.ActionBarLayout
 import org.telegram.ui.ActionBar.BaseFragment
 import org.telegram.ui.ActionBar.Theme
 
@@ -41,14 +42,22 @@ class ForkScreenRenderInstrumentationTest {
                 instrumentation.runOnMainSync {
                     val instance = Class.forName("org.telegram.ui.$name").getConstructor().newInstance() as BaseFragment
                     fragment = instance
+                    if (name == "LiteModeSettingsActivity") {
+                        val navigation = ActionBarLayout(activity, false)
+                        navigation.setFragmentStack(arrayListOf())
+                        instance.setParentLayout(navigation)
+                    }
                     instance.onFragmentCreate()
-                    val actionBar = instance.createActionBar(activity)
-                    val field = BaseFragment::class.java.getDeclaredField("actionBar")
-                    field.isAccessible = true
-                    field.set(instance, actionBar)
+                    val actionBar = if (name == "LiteModeSettingsActivity") null else instance.createActionBar(activity)
+                    if (actionBar != null) {
+                        val field = BaseFragment::class.java.getDeclaredField("actionBar")
+                        field.isAccessible = true
+                        field.set(instance, actionBar)
+                    }
                     val page = instance.performCreateView(activity)
                     val host = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
-                    if (actionBar.shouldAddToContainer()) host.addView(actionBar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                    if (actionBar != null && actionBar.shouldAddToContainer()) host.addView(actionBar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                    instance.simpleActionBar?.let { if (it.parent == null) host.addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)) }
                     host.addView(page, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
                     activity.setContentView(host)
                     instance.onResume()

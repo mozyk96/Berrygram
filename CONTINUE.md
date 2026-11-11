@@ -1,3 +1,13 @@
+# Berrygram 1.4.4 — current integration (2026-11-11)
+
+- Integration worktree: `C:\Users\Keoo2\Documents\Codex\2026-11-10\files-pasted-by-the-user-berrygram\work\berrygram-upstream-144`, branch `integration/berrygram-1.4.4-upstream`; parent `31cff5d5`. Original checkout and its untracked native sources are preserved. The integration is staged and uncommitted.
+- Telegram 13.2.1 source `7be672ead283d022812d75c729d3a04dd4c2a2c6` integrated using inferred closest 13.1.1 base `3de37c8cfb039452be7398909461da6288babf15`. All native gitlinks are checked out at their staged revisions. Berrygram settings, updater and glass hooks were retained.
+- Version 1.4.4 uses base code 7292 (expected ARM64 code 72929). Progressive backdrop blur uses the upstream GPU blur source and a continuous fade; an emulator GPU pixel test passed. Viewer, preview and profile menus have theme-aware glass integration.
+- Java/Kotlin compilation and smoke checks passed. On API 35 emulator, 15 of 16 targeted tests passed in the combined run; the remaining LiteMode test passed after fixing its test harness (`build-upstream-144-screens-retry.log`). No authenticated navigation, physical-device or full media interaction has been verified.
+- Next: review and commit the staged integration, then run `./fork-tests/build-release.ps1 -EnvFile <private-env-file> -LogFile <release-log>` from the integration worktree. Verify signing, package, version, ABI, SHA-256 and upgrade from published 1.4.3; publish only after release gates pass. Continue 1.4.5 after publishing 1.4.4.
+
+Historical notes below may describe earlier states.
+
 # BerryGram 1.4.3 — work in progress
 
 - Repository: `C:\Users\Keoo2\Documents\BerryGram-1.3`; branch `feature/berrygram-1.4.3`, based on `7f7d083`. Published version remains 1.4.2 (arm64 code 72789). No 1.4.3 release or APK has been produced.
