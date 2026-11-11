@@ -139,14 +139,16 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             for ((dialogId, messageId, text) in legacy) {
                 val encrypted = ForkArchiveCrypto.encrypt(currentAccount, text) ?: continue
                 try {
+                    val buffer = java.nio.ByteBuffer.allocateDirect(encrypted.size).put(encrypted).apply { flip() }
                     val state = db.executeFast(
                         "UPDATE archived_messages SET message_text = '', message_text_enc = ? WHERE dialog_id = ? AND message_id = ?;"
                     )
-                    state.bindByteBuffer(1, java.nio.ByteBuffer.wrap(encrypted))
+                    state.bindByteBuffer(1, buffer)
                     state.bindLong(2, dialogId)
                     state.bindInteger(3, messageId)
                     state.step()
                     state.dispose()
+                    buffer.clear() // Keep the direct memory alive until the statement is finalized.
                 } catch (error: Exception) {
                     FileLog.e(error)
                 }
@@ -179,11 +181,13 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         senderName: String?,
         messageText: String?,
         deleted: Boolean = false
-    ) {
-        if (messageText.isNullOrEmpty()) return
-        val db = database ?: return
+    ): Boolean {
+        if (messageText.isNullOrEmpty()) return false
+        val db = database ?: return false
         try {
             val encrypted = ForkArchiveCrypto.encrypt(currentAccount, messageText)
+                ?: throw IllegalStateException("Archive encryption is unavailable")
+            val buffer = java.nio.ByteBuffer.allocateDirect(encrypted.size).put(encrypted).apply { flip() }
             val state = db.executeFast(
                 "INSERT OR IGNORE INTO archived_messages (dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?);"
             )
@@ -196,13 +200,8 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             } else {
                 state.bindNull(5)
             }
-            if (encrypted != null) {
-                state.bindString(6, "")
-                state.bindByteBuffer(7, java.nio.ByteBuffer.wrap(encrypted))
-            } else {
-                state.bindString(6, messageText)
-                state.bindNull(7)
-            }
+            state.bindString(6, "")
+            state.bindByteBuffer(7, buffer)
             state.bindInteger(8, if (deleted) 1 else 0)
             state.step()
             state.dispose()
@@ -217,20 +216,18 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             } else {
                 update.bindNull(3)
             }
-            if (encrypted != null) {
-                update.bindString(4, "")
-                update.bindByteBuffer(5, java.nio.ByteBuffer.wrap(encrypted))
-            } else {
-                update.bindString(4, messageText)
-                update.bindNull(5)
-            }
+            update.bindString(4, "")
+            update.bindByteBuffer(5, buffer)
             update.bindInteger(6, if (deleted) 1 else 0)
             update.bindLong(7, dialogId)
             update.bindInteger(8, messageId)
             update.step()
             update.dispose()
+            buffer.clear() // SQLite keeps the bound buffer until the statement is finalized.
+            return true
         } catch (e: Exception) {
             FileLog.e(e)
+            return false
         }
     }
 

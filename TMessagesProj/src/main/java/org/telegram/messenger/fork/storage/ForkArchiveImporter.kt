@@ -121,7 +121,7 @@ class ForkArchiveImporter(private val account: Int) {
                 }
             } finally {
                 running.set(false)
-                currentPhase = if (cancelled.get()) Phase.CANCELLED else if (failed > 0 && imported == 0) Phase.FAILED else Phase.FINISHED
+                currentPhase = if (cancelled.get()) Phase.CANCELLED else if (failed > 0) Phase.FAILED else Phase.FINISHED
                 notifyProgress(0L, 0, 0, currentPhase, imported, failed)
             }
         }
@@ -169,7 +169,7 @@ class ForkArchiveImporter(private val account: Int) {
                 request.limit = PAGE_SIZE
                 request.offset_id = forwardOffset
                 request.add_offset = 0
-                val messages = requestHistory(request) ?: break
+                val messages = requestHistory(request) ?: throw IllegalStateException("Archive history request failed or was cancelled")
                 if (messages.isEmpty()) {
                     break
                 }
@@ -224,7 +224,7 @@ class ForkArchiveImporter(private val account: Int) {
             request.limit = PAGE_SIZE
             request.offset_id = offsetId
             request.add_offset = 0
-            val messages = requestHistory(request) ?: break
+            val messages = requestHistory(request) ?: throw IllegalStateException("Archive history request failed or was cancelled")
             if (messages.isEmpty()) {
                 break
             }
@@ -299,7 +299,7 @@ class ForkArchiveImporter(private val account: Int) {
             }
             val senderId = DialogObject.getPeerDialogId(message.from_id)
             val existed = store.exists(dialogId, message.id)
-            store.archiveMessage(
+            val stored = store.archiveMessage(
                 dialogId,
                 message.id,
                 message.date,
@@ -308,10 +308,11 @@ class ForkArchiveImporter(private val account: Int) {
                 text,
                 false
             )
+            check(stored) { "Unable to write encrypted archive message" }
             return !existed
         } catch (error: Throwable) {
             FileLog.e(error)
-            return false
+            throw error
         }
     }
 

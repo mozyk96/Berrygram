@@ -3,7 +3,6 @@ package org.telegram.messenger.fork.storage
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import java.security.KeyStore
-import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -65,15 +64,16 @@ object ForkArchiveCrypto {
 
     fun isAvailable(account: Int): Boolean = key(account) != null
 
-    /** Returns null when encryption is unavailable; callers then keep legacy plaintext behaviour. */
+    /** Returns null when encryption is unavailable; callers must not write plaintext. */
     fun encrypt(account: Int, plain: String): ByteArray? {
         if (plain.isEmpty()) return ByteArray(0)
         val secret = key(account) ?: return null
         return try {
-            val iv = ByteArray(IV_BYTES)
-            SecureRandom().nextBytes(iv)
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, secret, GCMParameterSpec(TAG_BITS, iv))
+            // Android Keystore rejects caller-provided IVs for randomized keys.
+            cipher.init(Cipher.ENCRYPT_MODE, secret)
+            val iv = cipher.iv ?: return null
+            if (iv.size != IV_BYTES) return null
             val body = cipher.doFinal(plain.toByteArray(Charsets.UTF_8))
             val result = ByteArray(iv.size + body.size)
             System.arraycopy(iv, 0, result, 0, iv.size)
