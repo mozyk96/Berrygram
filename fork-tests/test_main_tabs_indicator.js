@@ -106,6 +106,7 @@ if (!layout.includes('findAnchorIndex(anchorPositions, anchorCount, position)'))
 }
 
 const layoutSync = method(layout, 'private void syncSelectedTabIndicator()');
+const tabsPosition = method(activity, 'private void checkUi_tabsPosition()');
 if (layoutSync.includes('animatedLongSelectedViewCenterX = targetX')) {
     throw new Error('The indicator can still snap to a target instead of following the pager');
 }
@@ -115,7 +116,9 @@ if (!findSelected.includes('child.isSelected()')) {
 }
 
 const fixture = `public class MainTabsIndicatorTest {
-    static class View {}
+    static class View {
+        static final int VISIBLE = 0, GONE = 8;
+    }
     static class GlassTabView extends View {
         final int index;
         boolean visible = true;
@@ -124,6 +127,12 @@ const fixture = `public class MainTabsIndicatorTest {
     static class MainTabsLayout {
         GlassTabView selected;
         float indicatorPosition = -1f;
+        boolean enabled, clickable;
+        int visibility;
+        void setClickable(boolean value) { clickable = value; }
+        void setEnabled(boolean value) { enabled = value; }
+        void setAlpha(float value) { }
+        void setVisibility(int value) { visibility = value; }
         boolean isViewVisible(GlassTabView tab) { return tab != null && tab.visible; }
         void setTabSelected(View tab, boolean animated) { selected = (GlassTabView) tab; }
         void setIndicatorPosition(float position) { indicatorPosition = position; }
@@ -134,14 +143,31 @@ const fixture = `public class MainTabsIndicatorTest {
     }
     GlassTabView[] tabs;
     MainTabsLayout tabsView = new MainTabsLayout();
+    static class Wrapper { void setTranslationY(float value) { } }
+    static class UpdateLayout { boolean isUpdateLayoutVisible() { return false; } static final int HEIGHT = 0; }
+    static class Animator { float value; float getFloatValue() { return value; } }
+    Wrapper tabsViewWrapper = new Wrapper();
+    UpdateLayout updateLayoutWrapper = new UpdateLayout();
+    Animator animatorTabsVisible = new Animator();
+    static int dp(float value) { return (int) value; }
+    static float lerp(float from, float to, float factor) { return from + (to - from) * factor; }
     ViewPagerStub viewPager = new ViewPagerStub();
     int forkLastSelectedPosition = -1;
     static int indexToPosition(int index) { return index > 2 ? index - 1 : index; }
     ${activitySelect.replace('public void selectTab', 'public void selectMainTab')}
     ${statisticSelect.replace('public void selectTab', 'public void selectStatisticTab')}
+    ${tabsPosition.replace('UpdateLayoutWrapper.HEIGHT', 'UpdateLayout.HEIGHT')}
     static void check(boolean value, String message) { if (!value) throw new AssertionError(message); }
     public static void main(String[] args) {
         MainTabsIndicatorTest test = new MainTabsIndicatorTest();
+        test.animatorTabsVisible.value = 1f;
+        test.checkUi_tabsPosition();
+        check(test.tabsView.enabled && test.tabsView.clickable && test.tabsView.visibility == View.VISIBLE,
+            "Visible bottom navigation must be enabled and clickable");
+        test.animatorTabsVisible.value = 0f;
+        test.checkUi_tabsPosition();
+        check(!test.tabsView.enabled && !test.tabsView.clickable && test.tabsView.visibility == View.GONE,
+            "Hidden bottom navigation must not be enabled or clickable");
         test.tabs = new GlassTabView[] {
             new GlassTabView(0), new GlassTabView(1), new GlassTabView(2),
             new GlassTabView(3), new GlassTabView(4)
