@@ -6479,7 +6479,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (deleteItem != null) {
             deleteItem.setBackground(Blur3Utils.wrapCenteredDrawable(
                 iBlur3FactoryFrostedLiquidGlass.create(deleteItem)
-                    .setColorProvider(BlurredBackgroundProviderImpl.photoViewer(resourcesProvider))
+                    .setColorProvider(ForkGlassSurface.wrap(BlurredBackgroundProviderImpl.photoViewer(resourcesProvider)))
                     .setRadius(dp(20)).setPadding(dp(7)), dp(54), dp(54)));
         }
 
@@ -15249,7 +15249,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (needGlass && actionBarBackButtonDrawableGlass == null) {
             actionBarBackButtonDrawableGlass = Blur3Utils.wrapCenteredDrawable(
                 iBlur3FactoryFrostedLiquidGlass.create(actionBarBackButton)
-                    .setColorProvider(BlurredBackgroundProviderImpl.photoViewer(resourcesProvider))
+                    .setColorProvider(ForkGlassSurface.wrap(BlurredBackgroundProviderImpl.photoViewer(resourcesProvider)))
                     .setRadius(dp(20)).setPadding(dp(7)), dp(54), dp(54));
         }
         if (needGlass) {
