@@ -10,6 +10,8 @@ Preserve Telegram behavior and existing user work. Prefer isolated fork addition
 
 ## Build and checks
 
+At the start of each new Berrygram release cycle, run `tools/check-telegram-upstream.ps1` once and record the checked source revision, version and decision in `tools/telegram-upstream.json`. Review and integrate newer suitable official release source when safe; otherwise retain the verified existing revision and continue the release. Do not repeatedly poll or block solely because an official APK is newer than published source. The check is read-only and can be rerun when explicitly requested.
+
 Initialize recursive submodules where needed. On an appropriately configured host, run `./fork-tests/smoke.ps1`; use the updater fixtures for updater changes. Build with `./gradlew :TMessagesProj_App:assembleAfatDebug -PforkAbi=arm64-v8a` or the corresponding Release task when authorized and configured. Group changes and use incremental checks; perform relevant Android, UI and regression tests before release. Distinguish automated checks from untested device, account, media and UI behavior. Never automate a real Telegram account.
 
 ## Credentials, Git and release

@@ -1,5 +1,9 @@
 # Berrygram 1.4.4 — current integration (2026-11-11)
 
+- The owner cancelled the 13.2.2 source requirement on 2026-11-11. Use the already integrated official Telegram 13.2.1 source at 7be672ead283d022812d75c729d3a04dd4c2a2c6 for 1.4.4; do not repeat its upstream check. Finish release validation and publish only after its real gates pass. For 1.4.5 and later, check official upstream once per new release cycle using tools/check-telegram-upstream.ps1 and record the result in tools/telegram-upstream.json.
+- Android Keystore IV handling, SQLite direct-buffer binding and import failure propagation fixed; five emulator archive tests and full smoke passed. The earlier 13.2.1 ARM64 build is a preflight only, predates these fixes and must not be published. Authenticated messaging, archive and physical-device testing remain unavailable. Existing records previously erased by the old faulty migration may be unrecoverable.
+- Emulator local-photo viewer test passed and its screenshot was inspected; video, sticker preview and authenticated media interaction were not verified.
+
 - Integration worktree: `C:\Users\Keoo2\Documents\Codex\2026-11-10\files-pasted-by-the-user-berrygram\work\berrygram-upstream-144`, branch `integration/berrygram-1.4.4-upstream`; parent `31cff5d5`. Original checkout and its untracked native sources are preserved. The integration is staged and uncommitted.
 - Telegram 13.2.1 source `7be672ead283d022812d75c729d3a04dd4c2a2c6` integrated using inferred closest 13.1.1 base `3de37c8cfb039452be7398909461da6288babf15`. All native gitlinks are checked out at their staged revisions. Berrygram settings, updater and glass hooks were retained.
 - Version 1.4.4 uses base code 7292 (expected ARM64 code 72929). Progressive backdrop blur uses the upstream GPU blur source and a continuous fade; an emulator GPU pixel test passed. Viewer, preview and profile menus have theme-aware glass integration.
