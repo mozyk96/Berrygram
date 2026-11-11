@@ -1,4 +1,4 @@
-## 1.4.4 — in development
+## 1.4.4
 
 - Integrated the Telegram Android 13.2.1 source snapshot, including its native dependencies and resources, while retaining Berrygram features and settings.
 - Replaced the About entry in Settings with a direct link to the existing Update Center; application information remains accessible from the center.
