@@ -72,7 +72,7 @@ def main():
         name = parts[-1]
         if 'ForkSettingsBlocks.' not in text:
             fail(name + ' has no Berrygram block')
-        if 'ForkInsets.mainTabsBottomOffset()' not in text:
+        if 'ForkInsets.mainTabsBottomOffset()' not in text and 'ForkInsets.applySimpleGlassBottomPadding(' not in text:
             fail(name + ' does not reserve the space of the bottom navigation')
 
     # Every Berrygram screen reserves the space as well.

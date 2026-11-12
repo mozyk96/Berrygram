@@ -1504,8 +1504,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
     public void onInsets(int left, int top, int right, int bottom) {
         // The floating bottom navigation of the main tabs is drawn above the
         // content, the last row has to stay visible below it.
-        listView.setPadding(0, 0, 0, bottom + org.telegram.ui.fork.settings.ForkInsets.mainTabsBottomOffset());
-        listView.setClipToPadding(false);
+        org.telegram.ui.fork.settings.ForkInsets.applySimpleGlassBottomPadding(listView, bottom);
     }
 
     @Override

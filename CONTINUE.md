@@ -1,4 +1,9 @@
-# Berrygram 1.4.4 — current integration (2026-11-11)
+# Berrygram 1.4.5 — current development (2026-11-11)
+
+- Berrygram 1.4.4 was published from e867e6be97571bb3bd4387924376bca2beeafeeb as v1.4.4. Public ARM64 APK SHA-256 c4ec765f67367fbfc4ca08c932cd24554d52f2d7b0caf06c4945646b5265d5ae was downloaded and verified; updater discovered 1.4.4. Upgrade from 1.4.3 passed on an emulator. No physical-device or authenticated Telegram test.
+- Branch feature/berrygram-1.4.5. Its one upstream check on 2026-11-11 returned unchanged Telegram 13.2.1 at 7be672ead283d022812d75c729d3a04dd4c2a2c6. Existing CameraView disables its Camera2 path; audit and repair Camera2 lifecycle before enabling it, preserve legacy fallback, then implement the requested camera, editor, video and media settings scope. Do not start 1.5.0.
+
+# Berrygram 1.4.4 — historical integration notes
 
 - The owner cancelled the 13.2.2 source requirement on 2026-11-11. Use the already integrated official Telegram 13.2.1 source at 7be672ead283d022812d75c729d3a04dd4c2a2c6 for 1.4.4; do not repeat its upstream check. Finish release validation and publish only after its real gates pass. For 1.4.5 and later, check official upstream once per new release cycle using tools/check-telegram-upstream.ps1 and record the result in tools/telegram-upstream.json.
 - Android Keystore IV handling, SQLite direct-buffer binding and import failure propagation fixed; five emulator archive tests and full smoke passed. The earlier 13.2.1 ARM64 build is a preflight only, predates these fixes and must not be published. Authenticated messaging, archive and physical-device testing remain unavailable. Existing records previously erased by the old faulty migration may be unrecoverable.

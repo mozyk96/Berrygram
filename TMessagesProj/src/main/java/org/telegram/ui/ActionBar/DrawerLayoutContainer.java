@@ -35,6 +35,7 @@ public class DrawerLayoutContainer extends FrameLayout {
     public DrawerLayoutContainer(Context context) {
         super(context);
 
+        internalNavbarPaint.setColor(Theme.getColor(Theme.key_windowBackgroundGray));
         ViewCompat.setOnApplyWindowInsetsListener(this, this::onApplyWindowInsets);
         setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
     }

@@ -20,10 +20,17 @@ import org.telegram.ui.fork.settings.ForkInsets;
  * taken from the real window insets, it is never a fixed value.</p>
  */
 public abstract class ForkSettingsFragment extends BaseFragment {
+    private int originalBottomPadding;
+
+    @Override
+    public boolean isSupportEdgeToEdge() {
+        return true;
+    }
 
     @Override
     protected void onViewCreated(View view) {
         super.onViewCreated(view);
+        originalBottomPadding = view.getPaddingBottom();
         enableWrapping(view);
     }
 
@@ -43,9 +50,15 @@ public abstract class ForkSettingsFragment extends BaseFragment {
     @Override
     public void onResume() {
         super.onResume();
-        WindowInsetsCompat insets = fragmentView == null ? null : ViewCompat.getRootWindowInsets(fragmentView);
-        int bottom = insets == null ? getBottomInset() : insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
-        applyBottomInset(bottom);
+        if (fragmentView != null) ViewCompat.requestApplyInsets(fragmentView);
+    }
+
+    @Override
+    public WindowInsetsCompat onInsetsInternal(View view, WindowInsetsCompat insets) {
+        WindowInsetsCompat result = super.onInsetsInternal(view, insets);
+        int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+        if (imeBottom > getBottomInset()) applyBottomInset(imeBottom);
+        return result;
     }
 
     @Override
@@ -60,19 +73,7 @@ public abstract class ForkSettingsFragment extends BaseFragment {
         if (view == null) {
             return;
         }
-        int padding = ForkInsets.bottomPadding(systemBottom);
-        if (view instanceof ViewGroup) {
-            ViewGroup group = (ViewGroup) view;
-            int count = group.getChildCount();
-            for (int a = count - 1; a >= 0; a--) {
-                View child = group.getChildAt(a);
-                if (child.getVisibility() != View.VISIBLE) {
-                    continue;
-                }
-                ForkInsets.applyBottomPadding(child, padding);
-                return;
-            }
-        }
+        int padding = originalBottomPadding + Math.max(0, systemBottom) + ForkInsets.mainTabsBottomOffset();
         ForkInsets.applyBottomPadding(view, padding);
     }
 }

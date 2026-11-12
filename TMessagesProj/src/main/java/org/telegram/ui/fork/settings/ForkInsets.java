@@ -47,6 +47,16 @@ public final class ForkInsets {
         return bottom + mainTabsBottomOffset();
     }
 
+    /** Preserve the simple-glass header padding and its bottom overscan. */
+    public static void applySimpleGlassBottomPadding(ViewGroup list, int systemBottom) {
+        int bottom = systemBottom + org.telegram.utils.glass.BaseFragmentSimpleGlass.getOverscan(systemBottom)
+                + mainTabsBottomOffset();
+        if (list.getPaddingBottom() != bottom) {
+            list.setPadding(list.getPaddingLeft(), list.getPaddingTop(), list.getPaddingRight(), bottom);
+        }
+        list.setClipToPadding(false);
+    }
+
     /**
      * Applies the bottom padding to a scroll container. The padding is added
      * to the container and the content is allowed to scroll into it, so the
@@ -59,10 +69,11 @@ public final class ForkInsets {
         int left = container.getPaddingLeft();
         int top = container.getPaddingTop();
         int right = container.getPaddingRight();
-        container.setPadding(left, top, right, padding);
-        if (container instanceof ViewGroup) {
+        if (container.getPaddingBottom() != padding) {
+            container.setPadding(left, top, right, padding);
+        }
+        if (container instanceof ViewGroup && ((ViewGroup) container).getClipToPadding()) {
             ((ViewGroup) container).setClipToPadding(false);
         }
-        container.requestLayout();
     }
 }

@@ -52,7 +52,7 @@ public class Camera2Session {
 
     private boolean isError;
     private boolean isSuccess;
-    private boolean isClosed;
+    private volatile boolean isClosed;
 
     private final CameraManager cameraManager;
     private final boolean isFront;
@@ -81,8 +81,10 @@ public class Camera2Session {
     private long lastTime;
 
     public static Camera2Session create(boolean front, int viewWidth, int viewHeight) {
+        if (viewWidth <= 0 || viewHeight <= 0 || ApplicationLoader.applicationContext == null) return null;
         final Context context = ApplicationLoader.applicationContext;
         final CameraManager cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        if (cameraManager == null) return null;
 
         float bestAspectRatio = 0;
         Size bestSize = null;
@@ -93,7 +95,8 @@ public class Camera2Session {
                 final String id = cameraIds[i];
                 CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(id);
                 if (characteristics == null) continue;
-                if (characteristics.get(CameraCharacteristics.LENS_FACING) != (front ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK)) {
+                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (facing == null || facing != (front ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK)) {
                     continue;
                 }
                 StreamConfigurationMap confMap = (StreamConfigurationMap) characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -133,6 +136,10 @@ public class Camera2Session {
         cameraStateCallback = new CameraDevice.StateCallback() {
             @Override
             public void onOpened(@NonNull CameraDevice camera) {
+                if (isClosed) {
+                    camera.close();
+                    return;
+                }
                 Camera2Session.this.cameraDevice = camera;
                 Camera2Session.this.lastTime = System.currentTimeMillis();
                 FileLog.d("Camera2Session camera #" + cameraId + " opened");
@@ -158,6 +165,10 @@ public class Camera2Session {
         captureStateCallback = new CameraCaptureSession.StateCallback() {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession session) {
+                if (isClosed) {
+                    session.close();
+                    return;
+                }
                 captureSession = session;
                 FileLog.e("Camera2Session camera #" + cameraId + " capture session configured");
                 Camera2Session.this.lastTime = System.currentTimeMillis();
@@ -217,6 +228,7 @@ public class Camera2Session {
 
     public void open(SurfaceTexture surfaceTexture) {
         handler.post(() -> {
+            if (isClosed) return;
             this.surfaceTexture = surfaceTexture;
             if (surfaceTexture != null) {
                 surfaceTexture.setDefaultBufferSize(getPreviewWidth(), getPreviewHeight());
@@ -227,7 +239,7 @@ public class Camera2Session {
 
     private boolean opened = false;
     private void checkOpen() {
-        if (opened) return;
+        if (opened || isClosed || imageReader == null) return;
         if (surfaceTexture == null || cameraDevice == null) return;
         opened = true;
 
@@ -635,6 +647,7 @@ public class Camera2Session {
 
 
     public static Size chooseOptimalSize(Size[] choices, int width, int height, boolean notBigger) {
+        if (choices == null || choices.length == 0 || width <= 0 || height <= 0) return null;
         List<Size> bigEnoughWithAspectRatio = new ArrayList<>(choices.length);
         List<Size> bigEnough = new ArrayList<>(choices.length);
         int w = width;

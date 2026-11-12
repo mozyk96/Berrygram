@@ -126,6 +126,11 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     private boolean isOnLogout;
 
     @Override
+    public int getNavigationBarColor() {
+        return Theme.getColor(Theme.key_windowBackgroundWhite, getResourceProvider());
+    }
+
+    @Override
     public boolean onFragmentCreate() {
         MessagesController.getGlobalMainSettings().edit().putLong("intro_crashed_time", System.currentTimeMillis()).apply();
 
