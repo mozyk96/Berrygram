@@ -1,3 +1,34 @@
+# Berrygram 1.4.6 — release completion (2026-11-12)
+
+- Berrygram 1.4.6 release finalized from branch feature/berrygram-1.4.6 and tag v1.4.6 (commit 76e12259).
+- Mandatory bug fixes and features implemented and verified:
+  1. Glass 2.0 appearance mode switching bugs resolved:
+     - Fixed `LiteMode.java` flags check to recognize `STYLE_GLASS` (`"glass"`), normalizing style strings via `PanelPolicy.isGlassStyle()`.
+     - Fixed `ForkPanelSettings.java` so switching to `STYLE_NONE` no longer forces `"blur"`.
+     - Fixed `LiteMode.setAllFlags()` and `onFlagsUpdate()` to detect both flag enables and disables (`oldValue ^ newValue`).
+     - Added `GlassEngine.invalidateSettings()` and `checkGlassSettings()` invocation to trigger immediate repaint upon style switch.
+     - Connected `MainTabsActivity.java` to `NotificationCenter.didSetNewTheme` to immediately update tabs background and avoid stale drawables.
+  2. Experimental chat composer added:
+     - Added `ForkComposerSettings.java` with persistent opt-in key `fork_experimental_composer` (default: false).
+     - Added toggle in `ForkAppearanceSettingsActivity.java` and `ForkSettingsBlocks.kt` (Chats and Appearance settings).
+     - Dynamic styling in `ChatActivityEnterView.java`: rounded container, ~50dp height, circular voice/video/send button, preserving full gesture and sending functionality.
+     - Added localization strings in English, Ukrainian and Russian.
+  3. Upstream 1.4.5 baseline preserved (Telegram 13.2.2, screenshot unblocking, ghost mode, encrypted archive, local delete, insets).
+- Verification:
+  - Smoke tests passed 100% (`powershell -File .\fork-tests\smoke.ps1`) including new `ComposerSettingsTest` and updated `PanelSettingsTest`.
+  - Debug APK built successfully (`BUILD SUCCESSFUL in 12m 41s`).
+  - Release signed ARM64 APK built successfully via `./fork-tests/build-release.ps1` (`BUILD SUCCESSFUL in 10m 32s`):
+    - Package ID: `org.example.forkclient`
+    - Version: `1.4.6` (versionCode `72949`, arm64-v8a)
+    - Signature: CN=BerryGram Release, O=BerryGram (SHA-256 `b3ea9ca232ae03ebeab5bbc2729a306fb5eacd0520104fc52450a421efc722a5`).
+    - APK SHA-256: `3c9f589d920c70a18ca01dfc12cbc721c1e96c9e83c071b9e123710a2674e26c`
+    - Size: 44,710,656 bytes.
+    - Zipalign: verified (4-byte and 16KB-ready).
+- Release published:
+  - GitHub release `v1.4.6` created (ID 443460292): https://github.com/mozyk96/Berrygram/releases/tag/v1.4.6
+  - Assets attached: `Berrygram-1.4.6-arm64-v8a.apk` and `SHA256SUMS`.
+- Testing notice: Smoke tests, mock graphics, resource verification, and headless build tests passed. No real Telegram account automation or physical phone modifications performed.
+
 # Berrygram 1.4.5 — release completion (2026-11-12)
 
 - Berrygram 1.4.5 release finalized from branch feature/berrygram-1.4.5. Upstream Telegram 13.2.2 (base code 7303, arm64 code 72939) verified and integrated at commit a94c6d6e.
