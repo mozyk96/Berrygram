@@ -11,6 +11,10 @@ public final class PanelPolicy {
 
     private PanelPolicy() { }
 
+    public static boolean isGlassStyle(String style) {
+        return STYLE_GLASS.equals(normalizeStyle(style));
+    }
+
     public static String normalizeStyle(String style) {
         if ("glass".equals(style) || "experimental".equals(style) || "liquid".equals(style)) {
             return STYLE_GLASS;
@@ -55,9 +59,12 @@ public final class PanelPolicy {
     }
 
     public static String effectiveStyle(String requested, boolean savingPower, int sdk, boolean capable) {
-        if (("glass".equals(requested) || "liquid".equals(requested) || "blur".equals(requested) || "experimental".equals(requested))
-                && useGlass(true, savingPower, sdk, capable)) {
-            return requested;
+        String norm = normalizeStyle(requested);
+        if (STYLE_GLASS.equals(norm) && useGlass(true, savingPower, sdk, capable)) {
+            return requested != null ? requested : STYLE_GLASS;
+        }
+        if (STYLE_BLUR.equals(norm) && !savingPower && capable) {
+            return STYLE_BLUR;
         }
         return "material";
     }

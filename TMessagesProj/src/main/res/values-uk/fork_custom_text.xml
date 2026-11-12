@@ -428,4 +428,7 @@
 
     <string name="ForkArchiveLoading">Завантаження архіву…</string>
     <string name="ForkArchiveLoadError">Не вдалося прочитати архів. Натисніть, щоб повторити.</string>
+
+    <string name="ForkExperimentalComposer">Експериментальна панель введення</string>
+    <string name="ForkExperimentalComposerDescription">Вище поле повідомлення та окрема кругла кнопка голосових і відеоповідомлень.</string>
 </resources>

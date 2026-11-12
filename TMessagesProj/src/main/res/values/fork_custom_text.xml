@@ -428,4 +428,7 @@
 
     <string name="ForkArchiveLoading">Loading archive…</string>
     <string name="ForkArchiveLoadError">Could not read the archive. Tap to retry.</string>
+
+    <string name="ForkExperimentalComposer">Experimental input panel</string>
+    <string name="ForkExperimentalComposerDescription">Taller message field and separate circular voice and video message button.</string>
 </resources>

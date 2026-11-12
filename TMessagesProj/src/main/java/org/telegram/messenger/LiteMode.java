@@ -212,7 +212,7 @@ public class LiteMode {
         int active = getValue();
         if (flag == FLAG_LIQUID_GLASS) {
             String forkStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
-            return ("liquid".equals(forkStyle) || "experimental".equals(forkStyle))
+            return org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(forkStyle)
                     && org.telegram.messenger.fork.panels.PanelPolicy.useGlass(true, lastPowerSaverApplied,
                     Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(
                     SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE));
@@ -223,7 +223,7 @@ public class LiteMode {
     public static boolean isEnabledSetting(int flag) {
         if (flag == FLAG_LIQUID_GLASS) {
             String forkStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
-            return "liquid".equals(forkStyle) || "experimental".equals(forkStyle);
+            return org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(forkStyle);
         }
         return (getValue(true) & flag) > 0;
     }
@@ -233,20 +233,32 @@ public class LiteMode {
     }
 
     public static void toggleFlag(int flag, boolean enabled) {
-        if (flag == FLAG_LIQUID_GLASS) org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle(enabled ? "liquid" : "blur");
+        if (flag == FLAG_LIQUID_GLASS) {
+            String currentStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
+            if (enabled) {
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("liquid");
+            } else if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_NONE.equals(currentStyle)) {
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("blur");
+            }
+        }
         setAllFlags(enabled ? getValue(true) | flag : getValue(true) & ~flag);
     }
 
     public static void setAllFlags(int flags) {
-        if (((getValue(true) ^ flags) & FLAG_LIQUID_GLASS) != 0) {
+        int oldValue = getValue(true);
+        if (((oldValue ^ flags) & FLAG_LIQUID_GLASS) != 0) {
             boolean keepExperimental = (flags & FLAG_LIQUID_GLASS) != 0
                     && "experimental".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
             if (!keepExperimental) {
-                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle((flags & FLAG_LIQUID_GLASS) != 0 ? "liquid" : "blur");
+                String currentStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
+                if ((flags & FLAG_LIQUID_GLASS) != 0) {
+                    org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("liquid");
+                } else if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_NONE.equals(currentStyle)) {
+                    org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("blur");
+                }
             }
         }
-        // in settings it is already handled. would you handle it? 🫵
-        // onFlagsUpdate(value, flags);
+        onFlagsUpdate(oldValue, flags);
         value = flags;
         savePreference();
     }
@@ -407,7 +419,7 @@ public class LiteMode {
     }
 
     private static void onFlagsUpdate(int oldValue, int newValue) {
-        int changedFlags = ~oldValue & newValue;
+        int changedFlags = oldValue ^ newValue;
         if ((changedFlags & FLAGS_ANIMATED_EMOJI) > 0) {
             AnimatedEmojiDrawable.updateAll();
         }
@@ -419,6 +431,7 @@ public class LiteMode {
         }
         if (BitwiseUtils.hasFlag(changedFlags, FLAG_CHAT_BLUR) || BitwiseUtils.hasFlag(changedFlags, FLAG_LIQUID_GLASS)) {
             GlassEngine.getCurrentGlassSettings();
+            GlassEngine.invalidateSettings();
         }
     }
 

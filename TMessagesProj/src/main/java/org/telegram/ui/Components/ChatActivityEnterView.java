@@ -2757,7 +2757,8 @@ public class ChatActivityEnterView extends FrameLayout implements
             @Override
             protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-                final int height = Math.max(dp(44), getMeasuredHeight());
+                final int minHeight = dp(org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled() ? 50 : 44);
+                final int height = Math.max(minHeight, getMeasuredHeight());
                 if (animatorInputFieldHeight.getFactor() > 0) {
                     animatorInputFieldHeight.animateTo(height);
                 } else {
@@ -3723,6 +3724,61 @@ public class ChatActivityEnterView extends FrameLayout implements
         checkChannelRights();
 
         createMessageEditText();
+        updateExperimentalComposerStyle();
+    }
+
+    public void updateExperimentalComposerStyle() {
+        boolean exp = org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled();
+        int composerHeight = exp ? 50 : DEFAULT_HEIGHT;
+        int rightMargin = exp ? dp(54) : dp(DEFAULT_HEIGHT);
+        int leftMargin = exp ? dp(6) : 0;
+        int bottomMargin = exp ? dp(3) : 0;
+
+        if (messageEditTextContainer != null && messageEditTextContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) messageEditTextContainer.getLayoutParams();
+            if (lp.rightMargin != rightMargin || lp.leftMargin != leftMargin || lp.bottomMargin != bottomMargin) {
+                lp.rightMargin = rightMargin;
+                lp.leftMargin = leftMargin;
+                lp.bottomMargin = bottomMargin;
+                messageEditTextContainer.setLayoutParams(lp);
+            }
+            if (exp) {
+                int radius = dp(24);
+                int bgColor = getThemedColor(Theme.key_chat_messagePanelBackground);
+                messageEditTextContainer.setBackground(Theme.createRoundRectDrawable(radius, bgColor));
+            } else {
+                messageEditTextContainer.setBackground(null);
+            }
+        }
+
+        if (sendButtonContainer != null && sendButtonContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) sendButtonContainer.getLayoutParams();
+            int sendBottomMargin = exp ? dp(3) : 0;
+            int sendRightMargin = exp ? dp(4) : 0;
+            if (lp.bottomMargin != sendBottomMargin || lp.rightMargin != sendRightMargin || lp.height != dp(composerHeight)) {
+                lp.bottomMargin = sendBottomMargin;
+                lp.rightMargin = sendRightMargin;
+                lp.height = dp(composerHeight);
+                sendButtonContainer.setLayoutParams(lp);
+            }
+        }
+
+        if (audioVideoButtonContainer != null) {
+            if (audioVideoButtonContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) audioVideoButtonContainer.getLayoutParams();
+                if (lp.width != dp(composerHeight) || lp.height != dp(composerHeight)) {
+                    lp.width = dp(composerHeight);
+                    lp.height = dp(composerHeight);
+                    audioVideoButtonContainer.setLayoutParams(lp);
+                }
+            }
+            if (exp) {
+                int circleColor = getThemedColor(Theme.key_chat_messagePanelSend);
+                audioVideoButtonContainer.setBackground(Theme.createCircleDrawable(dp(composerHeight), circleColor));
+            } else {
+                audioVideoButtonContainer.setBackground(null);
+            }
+        }
     }
 
     public void setViewParentForEmoji(ViewGroup viewParent) {
@@ -10582,6 +10638,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     @Override
     public void updateColors() {
         updateColorsExtra();
+        updateExperimentalComposerStyle();
         if (messageSendPreview != null) {
             messageSendPreview.updateColors();
         }

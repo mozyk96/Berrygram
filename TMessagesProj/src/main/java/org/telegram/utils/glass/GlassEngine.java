@@ -272,6 +272,7 @@ public class GlassEngine {
     private int onDrawUpdateFlags;
 
     private void onDraw() {
+        checkGlassSettings();
         int flags = 0;
         if (lastGlassSettingsGenerationId != glassSettingsGenerationId) {
             lastGlassSettingsGenerationId = glassSettingsGenerationId;
@@ -613,6 +614,10 @@ public class GlassEngine {
             glassSettings = new GlassSettings(isBlurEnabled, isLiquidGlassEnabled);
             glassSettingsGenerationId++;
         }
+    }
+
+    public static void invalidateSettings() {
+        checkGlassSettings();
     }
 
     public static GlassSettings getCurrentGlassSettings() {

@@ -1085,8 +1085,17 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             if (updateLayout != null && LaunchActivity.instance != null) {
                 updateLayout.updateAppUpdateViews(currentAccount, LaunchActivity.instance.getMainFragmentsStackSize() == 1);
             }
-        } else if (id == NotificationCenter.needSetDayNightTheme) {
+        } else if (id == NotificationCenter.needSetDayNightTheme || id == NotificationCenter.didSetNewTheme) {
             clearAllHiddenFragments();
+            checkUi_fadeView();
+            blur3_updateColors();
+            if (tabsViewBackground != null) {
+                tabsViewBackground.updateColors();
+                tabsViewBackground.invalidateSelf();
+            }
+            if (tabsView != null) {
+                tabsView.invalidate();
+            }
         } else if (id == NotificationCenter.callTabsVisibleToggled) {
             final boolean callTabsVisible = getUserConfig().showCallsTab;
             checkUi_callTabVisible(callTabsVisible, true);
@@ -1124,7 +1133,8 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             .add(NotificationCenter.contactsPermissionBadgeCheck)
             .addGlobal(NotificationCenter.appUpdateAvailable)
             .addGlobal(NotificationCenter.appUpdateLoading)
-            .addGlobal(NotificationCenter.needSetDayNightTheme);
+            .addGlobal(NotificationCenter.needSetDayNightTheme)
+            .addGlobal(NotificationCenter.didSetNewTheme);
 
         return super.onFragmentCreate();
     }
@@ -1395,6 +1405,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         blur3_updateFadeColors();
         if (tabsViewBackground != null) {
             tabsViewBackground.updateColors();
+            tabsViewBackground.invalidateSelf();
         }
         blur3_invalidateBlur();
         if (fadeView != null) {

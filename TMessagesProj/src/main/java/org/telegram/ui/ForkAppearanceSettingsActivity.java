@@ -82,10 +82,21 @@ public final class ForkAppearanceSettingsActivity extends ForkSettingsFragment {
                 ForkPanelSettings.setStyle(chosen);
                 if (PanelPolicy.STYLE_GLASS.equals(chosen)) {
                     org.telegram.messenger.LiteMode.setAllFlags(
-                            org.telegram.messenger.LiteMode.getValue(true) | org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS);
+                            org.telegram.messenger.LiteMode.getValue(true)
+                                    | org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS
+                                    | org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR);
+                } else if (PanelPolicy.STYLE_BLUR.equals(chosen)) {
+                    org.telegram.messenger.LiteMode.setAllFlags(
+                            (org.telegram.messenger.LiteMode.getValue(true) | org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR)
+                                    & ~org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS);
                 } else {
-                    org.telegram.messenger.LiteMode.toggleFlag(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS, false);
+                    org.telegram.messenger.LiteMode.setAllFlags(
+                            org.telegram.messenger.LiteMode.getValue(true)
+                                    & ~(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS | org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR));
                 }
+                org.telegram.utils.glass.GlassEngine.invalidateSettings();
+                org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
+                        org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false);
                 styleCell.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
                 glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(chosen) ? View.VISIBLE : View.GONE);
                 ForkSettingsLayout.refreshSection(controls, false);
@@ -146,6 +157,19 @@ public final class ForkAppearanceSettingsActivity extends ForkSettingsFragment {
             dock.setChecked(enabled);
         });
         controls.addView(dock);
+
+        // Experimental Composer
+        TextCheckCell composerCell = new TextCheckCell(context);
+        composerCell.setTextAndValueAndCheck(ForkLocale.get(R.string.ForkExperimentalComposer),
+                ForkLocale.get(R.string.ForkExperimentalComposerDescription),
+                org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled(), true, false);
+        ForkSettingsLayout.interactive(composerCell);
+        composerCell.setOnClickListener(v -> {
+            boolean enabled = !org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled();
+            org.telegram.messenger.fork.panels.ForkComposerSettings.setExperimentalComposerEnabled(enabled);
+            composerCell.setChecked(enabled);
+        });
+        controls.addView(composerCell);
 
         ForkSettingsLayout.addSection(page, controls);
 

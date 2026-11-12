@@ -30916,6 +30916,9 @@ public class ChatActivity extends BaseFragment implements
         if (contentView != null) {
             contentView.onResume();
         }
+        if (chatActivityEnterView != null) {
+            chatActivityEnterView.updateExperimentalComposerStyle();
+        }
         checkChecksHint();
 
         Bulletin.addDelegate(this, bulletinDelegate = new Bulletin.Delegate() {

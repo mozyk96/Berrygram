@@ -383,4 +383,7 @@
 
     <string name="ForkArchiveLoading">Загрузка архива…</string>
     <string name="ForkArchiveLoadError">Не удалось прочитать архив. Нажмите, чтобы повторить.</string>
+
+    <string name="ForkExperimentalComposer">Экспериментальная панель ввода</string>
+    <string name="ForkExperimentalComposerDescription">Более высокое поле сообщения и отдельная круглая кнопка голосовых и видеосообщений.</string>
 </resources>

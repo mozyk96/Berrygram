@@ -33,6 +33,11 @@ public class PanelSettingsTest {
   boolean rejected=false; try { ForkPanelSettings.setStyle("invalid"); } catch (IllegalArgumentException expected) { rejected=true; }
   check(rejected && "blur".equals(ForkPanelSettings.style()));
   check(ForkPanelSettings.customAccent() == null);
+  check(org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle("glass"));
+  check(org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle("liquid"));
+  check(org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle("experimental"));
+  check(!org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle("blur"));
+  check(!org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle("none"));
   ForkPanelSettings.setCustomAccent("#15aBcd");
   check("#15ABCD".equals(ForkPanelSettings.customAccent()));
   rejected=false; try { ForkPanelSettings.setCustomAccent("#zzzzzz"); } catch (IllegalArgumentException expected) { rejected=true; }
