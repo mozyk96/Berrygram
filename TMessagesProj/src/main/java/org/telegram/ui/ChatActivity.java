@@ -1298,6 +1298,7 @@ public class ChatActivity extends BaseFragment implements
     public final static int OPTION_SEND_MONEY = 117;
     public final static int OPTION_STOP_LIVE_LOCATION = 118;
     public final static int OPTION_FORK_EDIT_HISTORY = 1001;
+    public final static int OPTION_DELETE_LOCALLY = 1002;
 
     private final static int[] allowedNotificationsDuringChatListAnimations = new int[]{
             NotificationCenter.messagesRead,
@@ -27443,7 +27444,10 @@ public class ChatActivity extends BaseFragment implements
                         updatedSelected = true;
                         addToSelectedMessages(obj, false, updatedSelectedLast = (a == size - 1));
                     }
-                    if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount) && !sent && !obj.scheduled && chatMode != MODE_SCHEDULED) {
+                    boolean isUnsentOrSending = obj.getId() <= 0 || obj.isSending() || obj.isSendError()
+                            || (obj.messageOwner != null && obj.messageOwner.send_state != 0);
+                    if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)
+                            && !sent && !obj.scheduled && chatMode != MODE_SCHEDULED && !isUnsentOrSending) {
                         obj.isForkDeleted = true;
                         org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).recordDeletedMessage(dialog_id, obj.getId(), currentTime);
                         // Keep the text locally, so the tombstone survives a restart.
@@ -34570,6 +34574,27 @@ public class ChatActivity extends BaseFragment implements
                 org.telegram.ui.Components.ForkEditHistoryBottomSheet.show(this, currentAccount, dialog_id, message.getId(), message.messageText != null ? message.messageText.toString() : "");
                 break;
             }
+            case OPTION_DELETE_LOCALLY: {
+                final MessageObject messageToDelete = selectedObject;
+                final MessageObject.GroupedMessages groupToDelete = selectedObjectGroup;
+                if (getParentActivity() == null || messageToDelete == null) {
+                    break;
+                }
+                org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity());
+                builder.setTitle(ForkLocale.get(R.string.ForkDeleteLocally));
+                builder.setMessage(ForkLocale.get(R.string.ForkDeleteLocallyAlert));
+                builder.setPositiveButton(LocaleController.getString(R.string.Delete), (dialog, which) -> {
+                    deleteMessageLocallyInternal(messageToDelete, groupToDelete);
+                });
+                builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
+                org.telegram.ui.ActionBar.AlertDialog dialog = builder.create();
+                showDialog(dialog);
+                android.widget.TextView button = (android.widget.TextView) dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
+                if (button != null) {
+                    button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
+                }
+                break;
+            }
             case OPTION_RETRY: {
                 final MessageObject object = selectedObject;
                 final MessageObject.GroupedMessages group = selectedObjectGroup;
@@ -35612,6 +35637,86 @@ public class ChatActivity extends BaseFragment implements
 
             showFieldPanelForEdit(true, editingMessageObject);
         }).show();
+    }
+
+    private void deleteMessageLocallyInternal(final MessageObject message, final MessageObject.GroupedMessages group) {
+        if (message == null) {
+            return;
+        }
+        ArrayList<MessageObject> targets = new ArrayList<>();
+        if (group != null && group.messages != null && !group.messages.isEmpty()) {
+            targets.addAll(group.messages);
+        } else {
+            targets.add(message);
+        }
+
+        final long did = getDialogId();
+        for (int i = 0; i < targets.size(); i++) {
+            MessageObject target = targets.get(i);
+            if (target == null) {
+                continue;
+            }
+            final int mid = target.getId();
+
+            try {
+                getSendMessagesHelper().cancelSendingMessage(target);
+            } catch (Throwable ignored) {
+            }
+
+            try {
+                org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).removeDeletedMessage(did, mid);
+                org.telegram.messenger.fork.storage.ForkArchiveManager.deleteMessageAsync(currentAccount, did, mid);
+            } catch (Throwable ignored) {
+            }
+
+            try {
+                final long dialogId = did;
+                getMessagesStorage().getStorageQueue().postRunnable(() -> {
+                    try {
+                        org.telegram.SQLite.SQLiteDatabase db = getMessagesStorage().getDatabase();
+                        if (db != null) {
+                            db.executeFast(String.format(java.util.Locale.US, "DELETE FROM messages_v2 WHERE mid = %d AND uid = %d", mid, dialogId)).stepThis().dispose();
+                            db.executeFast(String.format(java.util.Locale.US, "DELETE FROM messages_topics WHERE mid = %d AND uid = %d", mid, dialogId)).stepThis().dispose();
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                });
+            } catch (Throwable ignored) {
+            }
+
+            int idx = messages.indexOf(target);
+            if (idx == -1) {
+                for (int m = 0; m < messages.size(); m++) {
+                    MessageObject obj = messages.get(m);
+                    if (obj != null && obj.getId() == mid) {
+                        idx = m;
+                        break;
+                    }
+                }
+            }
+            if (idx != -1) {
+                messages.remove(idx);
+                if (chatAdapter != null) {
+                    int pos = chatAdapter.messagesStartRow + idx;
+                    if (pos >= 0 && pos < chatAdapter.getItemCount()) {
+                        chatAdapter.notifyItemRemoved(pos);
+                    }
+                }
+            }
+
+            if (chatAdapter != null && chatAdapter.isFiltered && chatAdapter.filteredMessages != null) {
+                int fidx = chatAdapter.filteredMessages.indexOf(target);
+                if (fidx != -1) {
+                    chatAdapter.filteredMessages.remove(fidx);
+                    chatAdapter.notifyItemRemoved(fidx);
+                }
+            }
+        }
+
+        if (chatAdapter != null) {
+            chatAdapter.updateRowsSafe();
+        }
+        updateVisibleRows();
     }
 
     public void checkStarsNeedSheet(Runnable runnable, AmountUtils.Amount amountRequired, boolean needCheck) {
@@ -47397,6 +47502,16 @@ public class ChatActivity extends BaseFragment implements
             items.add(getString(R.string.WelcomeMessageRevert));
             options.add(OPTION_WELCOME_REVERT);
             icons.add(R.drawable.outline_revert_24);
+        }
+
+        if (selectedObject != null && (selectedObject.isForkDeleted || selectedObject.deleted || selectedObject.getId() <= 0 || selectedObject.isSendError()
+                || (selectedObject.messageOwner != null && selectedObject.messageOwner.send_state != 0)
+                || org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).isDeleted(selectedObject.getDialogId(), selectedObject.getId()))) {
+            if (!options.contains(OPTION_DELETE_LOCALLY)) {
+                items.add(ForkLocale.get(R.string.ForkDeleteLocally));
+                options.add(OPTION_DELETE_LOCALLY);
+                icons.add(R.drawable.msg_delete);
+            }
         }
     }
 

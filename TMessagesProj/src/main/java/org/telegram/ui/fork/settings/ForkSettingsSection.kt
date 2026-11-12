@@ -56,10 +56,13 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
     }
 
     /** Adds a switch row. The listener is called with the new state. */
-    fun addToggle(@StringRes titleRes: Int, checked: Boolean, onChanged: (Boolean) -> Unit): TextCheckCell {
+    fun addToggle(@StringRes titleRes: Int, checked: Boolean, iconRes: Int = 0, onChanged: (Boolean) -> Unit): TextCheckCell {
         val cell = TextCheckCell(context)
         cell.setTextAndCheck(ForkLocale.get(titleRes), checked, false)
         cell.setMultilineTitle()
+        if (iconRes != 0) {
+            cell.setIcon(iconRes)
+        }
         cell.setOnClickListener {
             val enabled = !cell.isChecked
             cell.isChecked = enabled

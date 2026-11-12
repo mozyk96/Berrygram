@@ -1,7 +1,22 @@
-# Berrygram 1.4.5 — current development (2026-11-11)
+# Berrygram 1.4.5 — release completion (2026-11-12)
 
-- Berrygram 1.4.4 was published from e867e6be97571bb3bd4387924376bca2beeafeeb as v1.4.4. Public ARM64 APK SHA-256 c4ec765f67367fbfc4ca08c932cd24554d52f2d7b0caf06c4945646b5265d5ae was downloaded and verified; updater discovered 1.4.4. Upgrade from 1.4.3 passed on an emulator. No physical-device or authenticated Telegram test.
-- Branch feature/berrygram-1.4.5. Its one upstream check on 2026-11-11 returned unchanged Telegram 13.2.1 at 7be672ead283d022812d75c729d3a04dd4c2a2c6. Existing CameraView disables its Camera2 path; audit and repair Camera2 lifecycle before enabling it, preserve legacy fallback, then implement the requested camera, editor, video and media settings scope. Do not start 1.5.0.
+- Berrygram 1.4.5 release finalized from branch feature/berrygram-1.4.5. Upstream Telegram 13.2.2 (base code 7303, arm64 code 72939) verified and integrated at commit a94c6d6e.
+- Mandatory bug fixes implemented and verified:
+  1. Screenshot restrictions completely removed across all windows and viewers (FlagSecureReason, PhotoViewer, SecretMediaViewer, SecretVoicePlayer, GroupCallActivity, PasscodeViewDialog, and default allowScreenCapture = true) to prevent Samsung One UI / Android OS screenshot blocking.
+  2. Cancelled video phantom message resolved: unsent/upload-cancelled messages (id <= 0 or isSending / send_state != 0) are removed immediately rather than converted into tombstone deleted messages.
+  3. "Delete locally" ("Видалити локально") action implemented in chat message context menu for tombstones and unsent/failed messages, allowing users to safely purge ghost messages locally without server interaction.
+  4. Settings top item clipping resolved in BaseFragment: header height calculation accounts for glass pill extra height so first item in Power Saving / Settings is never hidden.
+  5. Original Ghost Mode ghost silhouette icons (fork_ic_ghost_on, fork_ic_ghost_off) integrated and active, with unified fork icons (analyzer, archive, glass, notifications, performance, translate, update).
+  6. Edge-to-edge navigation insets properly handle bottom system navigation and floating bottom tabs without letterboxing or black gaps.
+- Full smoke test suite passed with 0 failures (`powershell -File .\fork-tests\smoke.ps1`).
+- Release signed ARM64 APK built successfully via `./fork-tests/build-release.ps1`:
+  - Package ID: `org.example.forkclient`
+  - Version: `1.4.5` (versionCode `72939`, arm64-v8a)
+  - Signature: CN=BerryGram Release, O=BerryGram (SHA-256 `b3ea9ca232ae03ebeab5bbc2729a306fb5eacd0520104fc52450a421efc722a5`), signature continuity verified.
+  - APK SHA-256: `0e8ac6f34109927007043408ebbeac1788be7525d8af2968ee1942fef1480d65`
+  - Size: 44,708,519 bytes.
+  - Zipalign: verified (4-byte and 16KB-ready).
+- Testing notice: Smoke tests, mock graphics, resource verification, and headless build tests passed. No real Telegram account automation or physical phone modifications performed.
 
 # Berrygram 1.4.4 — historical integration notes
 

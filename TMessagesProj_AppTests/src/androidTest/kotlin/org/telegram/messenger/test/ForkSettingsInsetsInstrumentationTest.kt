@@ -54,7 +54,7 @@ class ForkSettingsInsetsInstrumentationTest {
                 val firstPos = IntArray(2); first!!.itemView.getLocationOnScreen(firstPos)
                 val header = requireNotNull(fragment.simpleActionBar)
                 val headerPos = IntArray(2); header.getLocationOnScreen(headerPos)
-                assertTrue("Power Saving first row overlaps the toolbar", firstPos[1] >= headerPos[1] + header.height)
+                assertTrue("Power Saving first row overlaps the toolbar: first=" + firstPos[1] + " header=" + headerPos[1] + " height=" + header.height + " padTop=" + list.paddingTop + " listTop=" + list.top + " scrollOffset=" + list.computeVerticalScrollOffset(), firstPos[1] >= headerPos[1] + header.height)
             }
             instrumentation.uiAutomation.executeShellCommand("screencap -p /sdcard/Download/Berrygram-145-power-top.png").use { ParcelFileDescriptor.AutoCloseInputStream(it).use { input -> input.readBytes() } }
             instrumentation.runOnMainSync { list.scrollToPosition(list.adapter!!.itemCount - 1) }

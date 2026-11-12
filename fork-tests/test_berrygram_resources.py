@@ -25,7 +25,7 @@ for line in (root / 'gradle.properties').read_text(encoding='utf-8').splitlines(
         if key in {'APP_VERSION_NAME', 'APP_VERSION_CODE', 'APP_PACKAGE'}:
             properties[key] = value.strip()
 assert properties.get('APP_VERSION_NAME') in (
-    '1.3.0', '1.4.0-beta.2', '1.4.0-rc.1', '1.4.0', '1.4.1-rc.1', '1.4.1', '1.4.2', '1.4.3', '1.4.4'
+    '1.3.0', '1.4.0-beta.2', '1.4.0-rc.1', '1.4.0', '1.4.1-rc.1', '1.4.1', '1.4.2', '1.4.3', '1.4.4', '1.4.5'
 )
 assert int(properties['APP_VERSION_CODE']) > 7262
 assert int(properties.get('APP_VERSION_CODE', '0')) > 0

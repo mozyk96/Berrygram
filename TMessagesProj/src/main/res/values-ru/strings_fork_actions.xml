@@ -37,4 +37,6 @@
     <string name="ForkPerformanceCopyDiagnostics">Копировать диагностику</string>
     <string name="ForkPerformanceDiagnosticsCopied">Диагностика скопирована</string>
     <string name="ForkPerformanceInfo">На слабых устройствах или в режиме экономии BerryGram сохраняет родной рендеринг Telegram и переходит на непрозрачные поверхности. Профили меняют только необязательную графику и анимации появления; они не влияют на доставку сообщений, безопасность, медиа или настройки Lite Mode Telegram. Диагностика не содержит данных аккаунта или сообщений.</string>
+    <string name="ForkDeleteLocally">Удалить локально</string>
+    <string name="ForkDeleteLocallyAlert">Удалить это сообщение из локальной памяти? Это действие нельзя будет отменить.</string>
 </resources>

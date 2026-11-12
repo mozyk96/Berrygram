@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Berrygram: original Ghost Mode artwork, disabled state (outlined silhouette with eyes). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,3.2C8,3.2 4.55,6.55 4.55,10.65L4.55,19.3Q7,21.3 9.5,19.3Q12,21.3 14.5,19.3Q17,21.3 19.45,19.3L19.45,10.65C19.45,6.55 16,3.2 12,3.2Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M7.95,9.7a1.4,1.4 0 1,1 2.8,0a1.4,1.4 0 1,1 -2.8,0ZM13.25,9.7a1.4,1.4 0 1,1 2.8,0a1.4,1.4 0 1,1 -2.8,0Z" />
+</vector>

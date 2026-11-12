@@ -34,13 +34,13 @@ public class GestureNativePathTest {
  static class MessageObject {Owner messageOwner=new Owner(); int currentAccount;boolean isDateObject;boolean isMediaEmpty(){return true;}boolean isSending(){return false;}boolean isEditing(){return false;}boolean canEditMessage(Object c){return true;} long getGroupId(){return 0;} Object getFromPeer(){return null;} boolean isTodo(){return false;} boolean isPoll(){return false;} boolean isPublicPoll(){return false;} boolean isInvoice(){return false;} static class GroupedMessages{MessageObject captionMessage;}}
  static class ChatMessageCell extends View {MessageObject message=new MessageObject();MessageObject getMessageObject(){return message;}MessageObject getPrimaryMessageObject(){return message;}}
  static class Bar {boolean isActionModeShowed(){return false;}}
- static class Chat {long linked_monoforum_id;boolean megagroup;}
- static class ChatObject {static boolean isMonoForum(Chat c){return false;} static boolean canManageMonoForum(int a,Chat c){return false;} static boolean isNotInChat(Chat c){return false;} static boolean isChannel(Chat c){return false;} static boolean canPost(Chat c){return true;} static boolean canSendMessages(Chat c){return true;}}
+ static class Chat {long id;long linked_monoforum_id;boolean megagroup;boolean broadcast_messages_allowed;}
+ static class ChatObject {static boolean isMonoForum(Chat c){return false;} static boolean isChannelAndNotMegaGroup(Chat c){return false;} static boolean canManageMonoForum(int a,long d){return false;} static boolean canManageMonoForum(int a,Chat c){return false;} static boolean isNotInChat(Chat c){return false;} static boolean isChannel(Chat c){return false;} static boolean canPost(Chat c){return true;} static boolean canSendMessages(Chat c){return true;}}
  static class Bundle {Map<String,Object> values=new HashMap<>();void putBoolean(String k,boolean v){values.put(k,v);}void putInt(String k,int v){values.put(k,v);}void putLong(String k,long v){values.put(k,v);}}
  static class DialogsActivity {static final int DIALOGS_TYPE_FORWARD=3;Bundle args;DialogsActivity(Bundle a){args=a;}void setDelegate(Object o){}}
  static class DialogObject {static long getPeerDialogId(Object o){return 0;}}
  static class Config {long getClientUserId(){return 100;}}
- static class Controller {boolean isFrozen(){return false;}}
+ static class Controller {boolean isFrozen(){return false;}Object getChat(long id){return null;}void putMonoForumLinkedChat(long a,long b){}}
  static class AccountFrozenAlert {static void show(int a){}}
  static class UndoView {static final int ACTION_MESSAGE_COPIED=1;void showWithAction(int i,int a,Object o){}}
  static class AndroidUtilities {static CharSequence clipboard;static void addToClipboard(CharSequence s){clipboard=s;}}
@@ -59,6 +59,7 @@ public class GestureNativePathTest {
  void presentFragment(DialogsActivity f){destination=f;}void showFieldPanelForReply(MessageObject m){replied=m;check(forkRequestedAction==null,"request escaped into native callback");check(forkHandleGesture(new ChatMessageCell(),20,25,"double_tap",true),"reentry must be consumed");}
  CharSequence getMessageCaption(MessageObject m,MessageObject.GroupedMessages g){return null;}CharSequence getMessageContent(MessageObject m,int a,boolean b){return "native text";}void createUndoView(){undoView=new UndoView();}void closeMenu(boolean b){closed=true;}
  boolean showWelcomeMessageRevertOption(MessageObject m){return false;}
+ ${block('    private void putReplyToArgs(')}
  ArrayList<Integer> allowed=new ArrayList<>(Arrays.asList(8,2,3));
  void fillMessageMenu(MessageObject m,ArrayList<Integer> icons,ArrayList<CharSequence> items,ArrayList<Integer> options){options.addAll(allowed);}
  ${block('    private boolean forkHandleGesture(')}

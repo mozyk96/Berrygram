@@ -25,7 +25,7 @@ object ForkUnifiedSettings {
             ForkUnifiedSettingsMapping.ID_UPDATES,
             COLOR_TOP,
             COLOR_BOTTOM,
-            R.drawable.msg_download,
+            R.drawable.fork_ic_update,
             ForkLocale.get(R.string.ForkUnifiedUpdateTitle),
             ForkLocale.get(R.string.ForkUnifiedUpdateInfo)
         )

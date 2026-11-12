@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.TextView
 import org.telegram.messenger.R
 import org.telegram.ui.ForkLocale
@@ -13,8 +12,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.telegram.ui.ActionBar.BaseFragment
+import org.telegram.ui.ActionBar.ActionBarLayout
+import org.telegram.ui.ActionBar.DrawerLayoutContainer
+import org.telegram.ui.ActionBar.INavigationLayout
 import org.telegram.ui.ActionBar.Theme
+import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.UserConfig
 import org.telegram.ui.ForkUpdateActivity
@@ -38,16 +40,20 @@ class ForkUpdateUiInstrumentationTest {
                 controller.applyLanguage(selected, false, true, UserConfig.selectedAccount)
             }
             Theme.createCommonResources(activity)
-            val actionBar = fragment.createActionBar(activity)
-            val field = BaseFragment::class.java.getDeclaredField("actionBar")
-            field.isAccessible = true
-            field.set(fragment, actionBar)
-            val page = fragment.performCreateView(activity)
-            val host = LinearLayout(activity)
-            host.orientation = LinearLayout.VERTICAL
-            host.addView(actionBar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-            host.addView(page, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-            activity.setContentView(host)
+            // Host the screen exactly like the application does: the navigation container wires
+            // onInsetsInternal to the fragment view, which is what reserves the system navigation
+            // and the floating bottom navigation. targetSdk 36 enforces edge-to-edge, so a bare
+            // LinearLayout host would draw the update action under the system bar.
+            AndroidUtilities.enableEdgeToEdge(activity)
+            val root = DrawerLayoutContainer(activity)
+            val navigation = ActionBarLayout(activity, false)
+            navigation.setFragmentStack(arrayListOf())
+            navigation.setDrawerLayoutContainer(root)
+            root.setParentActionBarLayout(navigation)
+            root.setActionBarLayout(navigation)
+            root.addView(navigation)
+            activity.setContentView(root)
+            assertTrue(navigation.presentFragment(INavigationLayout.NavigationParams(fragment).setNoAnimation(true)))
         }
         instrumentation.waitForIdleSync()
         instrumentation.runOnMainSync { fragment.onResume() }

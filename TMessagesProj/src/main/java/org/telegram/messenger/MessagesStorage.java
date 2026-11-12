@@ -14789,7 +14789,7 @@ public class MessagesStorage extends BaseController {
                     while (cursor.next()) {
                         long did = cursor.longValue(0);
                         int mid = cursor.intValue(5);
-                        if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)) {
+                        if (mid > 0 && org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)) {
                             org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).recordDeletedMessage(did, mid, (int) (System.currentTimeMillis() / 1000));
                         }
                         unknownMessages.remove((Integer) mid);

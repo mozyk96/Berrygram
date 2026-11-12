@@ -29,7 +29,7 @@ object ForkSettingsBlocks {
         val section = ForkSettingsSection(fragment.context)
 
         section.addHeader(R.string.ForkSectionGhostMode)
-        val ghost = section.addToggle(R.string.ForkGhostModeMaster, ForkStealthSettings.ghostModeEnabled(account)) { enabled ->
+        val ghost = section.addToggle(R.string.ForkGhostModeMaster, ForkStealthSettings.ghostModeEnabled(account), R.drawable.fork_ic_ghost_off) { enabled ->
             ForkStealthSettings.setGhostModeEnabled(account, enabled)
         }
         val privateRead = section.addToggle(R.string.ForkStealthPrivate, ForkStealthSettings.stealthReadPrivate(account)) { enabled ->
@@ -53,11 +53,11 @@ object ForkSettingsBlocks {
         section.addInfo(R.string.ForkDeletedMessagesInfo)
 
         section.addHeader(R.string.ForkSectionArchive)
-        section.addToggle(R.string.ForkArchiveEnableToggle, ForkStealthSettings.archiveEnabled(account)) { enabled ->
+        section.addToggle(R.string.ForkArchiveEnableToggle, ForkStealthSettings.archiveEnabled(account), R.drawable.fork_ic_archive) { enabled ->
             ForkStealthSettings.setArchiveEnabled(account, enabled)
         }
         lateinit var retention: org.telegram.ui.Cells.TextSettingsCell
-        retention = section.addRow(R.string.ForkArchiveRetention, ForkLocale.get(retentionLabel(account))) { anchor ->
+        retention = section.addRow(R.string.ForkArchiveRetention, ForkLocale.get(retentionLabel(account)), R.drawable.fork_ic_archive) { anchor ->
             showRetention(fragment, account, anchor, retention)
         }
         section.addInfo(R.string.ForkArchiveRetentionInfo)
@@ -88,11 +88,11 @@ object ForkSettingsBlocks {
 
         section.addHeader(R.string.ForkSectionEffects)
         lateinit var style: org.telegram.ui.Cells.TextSettingsCell
-        style = section.addRow(R.string.ForkGraphicsStyle, styleLabel()) { anchor ->
+        style = section.addRow(R.string.ForkGraphicsStyle, styleLabel(), R.drawable.fork_ic_glass) { anchor ->
             showStyle(fragment, anchor, style)
         }
         lateinit var radius: org.telegram.ui.Cells.TextSettingsCell
-        radius = section.addRow(R.string.ForkAppearanceRadius, ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp())) { anchor ->
+        radius = section.addRow(R.string.ForkAppearanceRadius, ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), R.drawable.fork_ic_glass) { anchor ->
             showRadius(fragment, anchor, radius)
         }
         val animations = section.addToggle(R.string.ForkAdvancedAnimations, ForkAnimationSettings.fluidPopupsEnabled()) { enabled ->
@@ -151,7 +151,7 @@ object ForkSettingsBlocks {
     fun notifications(fragment: BaseFragment): ForkSettingsSection {
         val section = ForkSettingsSection(fragment.context)
         section.addHeader(R.string.ForkSectionDiagnostics)
-        section.addDetailRow(R.string.ForkUnifiedDiagnosticsTitle, R.string.ForkUnifiedDiagnosticsInfo, R.drawable.settings_sounds) {
+        section.addDetailRow(R.string.ForkUnifiedDiagnosticsTitle, R.string.ForkUnifiedDiagnosticsInfo, R.drawable.fork_ic_notifications) {
             fragment.presentFragment(ForkNotificationDiagnosticsActivity())
         }
         return section
@@ -162,7 +162,7 @@ object ForkSettingsBlocks {
     fun data(fragment: BaseFragment, account: Int): ForkSettingsSection {
         val section = ForkSettingsSection(fragment.context)
         section.addHeader(R.string.ForkSectionArchive)
-        section.addDetailRow(R.string.ForkArchiveOpenTitle, R.string.ForkArchiveOpenSubtitle, R.drawable.msg_archive) {
+        section.addDetailRow(R.string.ForkArchiveOpenTitle, R.string.ForkArchiveOpenSubtitle, R.drawable.fork_ic_archive) {
             fragment.presentFragment(ForkArchiveActivity())
         }
         section.addRow(R.string.ForkArchiveStorage, archiveSizeLabel(account))
@@ -189,12 +189,12 @@ object ForkSettingsBlocks {
         val section = ForkSettingsSection(fragment.context)
         val settings = ForkTranslationSettings(account)
         section.addHeader(R.string.ForkSectionTranslation)
-        val auto = section.addToggle(R.string.ForkTranslationAutoTranslate, settings.autoTranslateEnabled) { enabled ->
+        val auto = section.addToggle(R.string.ForkTranslationAutoTranslate, settings.autoTranslateEnabled, R.drawable.fork_ic_translate) { enabled ->
             settings.autoTranslateEnabled = enabled
             settings.save()
         }
         lateinit var target: org.telegram.ui.Cells.TextSettingsCell
-        target = section.addRow(R.string.ForkTranslationTargetLanguage, ForkLocale.get(R.string.ForkTranslationAutomatic)) { anchor ->
+        target = section.addRow(R.string.ForkTranslationTargetLanguage, ForkLocale.get(R.string.ForkTranslationAutomatic), R.drawable.fork_ic_translate) { anchor ->
             showTranslationTarget(fragment, settings, anchor, target)
         }
         section.addInfo(R.string.ForkTranslationInfo)
@@ -215,11 +215,11 @@ object ForkSettingsBlocks {
         val section = ForkSettingsSection(fragment.context)
         section.addHeader(R.string.ForkSectionPerformance)
         lateinit var mode: org.telegram.ui.Cells.TextSettingsCell
-        mode = section.addRow(R.string.ForkPerformanceConfigMode, configModeLabel()) { anchor ->
+        mode = section.addRow(R.string.ForkPerformanceConfigMode, configModeLabel(), R.drawable.fork_ic_analyzer) { anchor ->
             showConfigMode(fragment, anchor, mode)
         }
         lateinit var level: org.telegram.ui.Cells.TextSettingsCell
-        level = section.addRow(R.string.ForkPerformanceManualLevel, levelLabel()) { anchor ->
+        level = section.addRow(R.string.ForkPerformanceManualLevel, levelLabel(), R.drawable.fork_ic_performance) { anchor ->
             showManualLevel(fragment, anchor, level)
         }
         section.addInfo(R.string.ForkPerformanceInfoUnified)

@@ -21383,11 +21383,21 @@ public class MessagesController extends BaseController implements NotificationCe
                         if (deletedIds == null || deletedIds.isEmpty()) {
                             continue;
                         }
+                        ArrayList<Integer> validDeletedIds = new ArrayList<>();
+                        for (int i = 0; i < deletedIds.size(); i++) {
+                            Integer id = deletedIds.get(i);
+                            if (id != null && id > 0) {
+                                validDeletedIds.add(id);
+                            }
+                        }
+                        if (validDeletedIds.isEmpty()) {
+                            continue;
+                        }
                         try {
                             if (deletedDialogId == 0) {
-                                org.telegram.messenger.fork.storage.ForkArchiveManager.markDeletedByIdsAsync(currentAccount, deletedIds);
+                                org.telegram.messenger.fork.storage.ForkArchiveManager.markDeletedByIdsAsync(currentAccount, validDeletedIds);
                             } else {
-                                org.telegram.messenger.fork.storage.ForkArchiveManager.markDeletedAsync(currentAccount, deletedDialogId, deletedIds);
+                                org.telegram.messenger.fork.storage.ForkArchiveManager.markDeletedAsync(currentAccount, deletedDialogId, validDeletedIds);
                             }
                         } catch (Throwable ignored) {
                         }

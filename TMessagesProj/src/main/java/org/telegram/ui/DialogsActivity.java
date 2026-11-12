@@ -506,10 +506,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
      * the feature, the detailed private and group preferences are preserved.
      */
     private void toggleForkGhostMode() {
+        // The quick control and the Privacy screen share one master switch: the
+        // effective state is ghostActive(), so toggling it keeps both places in
+        // sync and never leaves the button on while the feature stays inactive.
         boolean enabled = !org.telegram.messenger.fork.stealth.ForkStealthSettings
-                .ghostMasterEnabled(currentAccount);
+                .ghostActive(currentAccount);
         org.telegram.messenger.fork.stealth.ForkStealthSettings
                 .setGhostMasterEnabled(currentAccount, enabled);
+        org.telegram.messenger.fork.stealth.ForkStealthSettings
+                .setGhostModeEnabled(currentAccount, enabled);
         updateForkGhostButton();
         Toast.makeText(getContext(), ForkLocale.get(enabled ? R.string.ForkGhostEnabled : R.string.ForkGhostDisabled), Toast.LENGTH_SHORT).show();
     }
@@ -519,8 +524,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return;
         }
         boolean enabled = org.telegram.messenger.fork.stealth.ForkStealthSettings
-                .ghostMasterEnabled(currentAccount);
-        ghostItem.setAlpha(enabled ? 1f : 0.55f);
+                .ghostActive(currentAccount);
+        // Filled ghost with the accent tint when on, outlined ghost in the regular
+        // toolbar colour when off: the states differ in shape, not only in colour.
+        ghostItem.setIcon(enabled ? R.drawable.fork_ic_ghost_on : R.drawable.fork_ic_ghost_off,
+                org.telegram.messenger.SharedConfig.animationsEnabled());
+        ghostItem.setIconColor(org.telegram.ui.ActionBar.Theme.getColor(enabled
+                ? org.telegram.ui.ActionBar.Theme.key_windowBackgroundWhiteBlueIcon
+                : org.telegram.ui.ActionBar.Theme.key_actionBarDefaultIcon));
         ghostItem.setContentDescription(ForkLocale.get(enabled ? R.string.ForkGhostEnabled : R.string.ForkGhostDisabled));
     }
 
@@ -3220,7 +3231,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             passcodeItem.setContentDescription(getString(R.string.AccDescrPasscodeLock));
 
             // Berrygram: quick Ghost Mode control in the chats toolbar.
-            ghostItem = menu.addItem(6, R.drawable.msg_secret);
+            ghostItem = menu.addItem(6, R.drawable.fork_ic_ghost_off);
             ghostItem.setContentDescription(ForkLocale.get(R.string.ForkGhostToggle));
             ghostItem.setOnClickListener(v -> toggleForkGhostMode());
             ghostItem.setOnLongClickListener(v -> {

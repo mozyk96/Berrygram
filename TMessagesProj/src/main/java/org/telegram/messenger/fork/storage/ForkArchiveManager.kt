@@ -302,6 +302,23 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         }
     }
 
+    /** Removes an archived message entry completely from local storage. */
+    @Synchronized
+    fun deleteMessage(dialogId: Long, messageId: Int): Boolean {
+        val db = database ?: return false
+        return try {
+            val state = db.executeFast("DELETE FROM archived_messages WHERE dialog_id = ? AND message_id = ?;")
+            state.bindLong(1, dialogId)
+            state.bindInteger(2, messageId)
+            state.step()
+            state.dispose()
+            true
+        } catch (e: Exception) {
+            FileLog.e(e)
+            false
+        }
+    }
+
     /** Returns locally preserved messages that were deleted in Telegram. */
     @Synchronized
     fun getDeletedMessages(dialogId: Long, limit: Int): List<ArchivedMessage> {
@@ -731,6 +748,18 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             executor.execute {
                 try {
                     getInstance(account).markDeletedByIds(messageIds)
+                } catch (error: Throwable) {
+                    FileLog.e(error)
+                }
+            }
+        }
+
+        /** Deletes an archived message asynchronously. */
+        @JvmStatic
+        fun deleteMessageAsync(account: Int, dialogId: Long, messageId: Int) {
+            executor.execute {
+                try {
+                    getInstance(account).deleteMessage(dialogId, messageId)
                 } catch (error: Throwable) {
                     FileLog.e(error)
                 }

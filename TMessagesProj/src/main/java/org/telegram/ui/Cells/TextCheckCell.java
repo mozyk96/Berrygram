@@ -472,4 +472,24 @@ public class TextCheckCell extends FrameLayout {
         imageView.setColorFilter(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
         imageView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(9), color));
     }
+
+    /**
+     * Berrygram: a plain leading icon for a switch row, aligned with the icon
+     * of the value rows of the same screen (no coloured chip, theme tinted).
+     */
+    public void setIcon(int resId) {
+        if (imageView == null) {
+            imageView = new RLottieImageView(getContext());
+            imageView.setScaleType(ImageView.ScaleType.CENTER);
+            addView(imageView, LayoutHelper.createFrame(29, 29, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL, 19, 0, 19, 0));
+            padding = AndroidUtilities.dp(65);
+            ((MarginLayoutParams) textView.getLayoutParams()).leftMargin = LocaleController.isRTL ? 70 : padding;
+            ((MarginLayoutParams) textView.getLayoutParams()).rightMargin = LocaleController.isRTL ? padding : 70;
+        }
+        imageView.setVisibility(VISIBLE);
+        imageView.setPadding(AndroidUtilities.dp(2), AndroidUtilities.dp(2), AndroidUtilities.dp(2), AndroidUtilities.dp(2));
+        imageView.setBackground(null);
+        imageView.setImageResource(resId);
+        ThemeBind.colorFilter(imageView, Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider, PorterDuff.Mode.MULTIPLY);
+    }
 }

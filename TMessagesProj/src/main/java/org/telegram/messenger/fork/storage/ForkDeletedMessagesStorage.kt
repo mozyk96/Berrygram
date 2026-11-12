@@ -80,6 +80,21 @@ class ForkDeletedMessagesStorage private constructor(private val currentAccount:
         return result
     }
 
+    fun removeDeletedMessage(dialogId: Long, messageId: Int) {
+        val key = "$dialogId:$messageId"
+        deletedCache.remove(key)
+        val db = database ?: return
+        try {
+            val state = db.executeFast("DELETE FROM deleted_messages WHERE dialog_id = ? AND message_id = ?;")
+            state.bindLong(1, dialogId)
+            state.bindInteger(2, messageId)
+            state.step()
+            state.dispose()
+        } catch (e: Exception) {
+            FileLog.e(e)
+        }
+    }
+
     /** Removes stored markers older than the given timestamp. */
     fun cleanupOlderThan(cutoffDate: Int): Int {
         val db = database ?: return 0

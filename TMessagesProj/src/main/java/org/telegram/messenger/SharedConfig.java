@@ -532,7 +532,7 @@ public class SharedConfig {
             lastPauseTime = preferences.getInt("lastPauseTime", 0);
             useFingerprintLock = preferences.getBoolean("useFingerprint", true);
             walletUseFingerprintLock = preferences.getBoolean("walletUseFingerprintLock", true);
-            allowScreenCapture = preferences.getBoolean("allowScreenCapture", false);
+            allowScreenCapture = preferences.getBoolean("allowScreenCapture", true);
             lastLocalId = preferences.getInt("lastLocalId", -210000);
             pushString = preferences.getString("pushString2", "");
             pushType = preferences.getInt("pushType", PushListenerController.PUSH_TYPE_FIREBASE);
@@ -886,7 +886,7 @@ public class SharedConfig {
         useFingerprintLock = true;
         walletUseFingerprintLock = true;
         isWaitingForPasscodeEnter = false;
-        allowScreenCapture = false;
+        allowScreenCapture = true;
         textSelectionHintShows = 0;
         scheduledOrNoSoundHintShows = 0;
         scheduledOrNoSoundHintSeenAt = 0;

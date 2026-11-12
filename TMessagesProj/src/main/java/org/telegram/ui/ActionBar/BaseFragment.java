@@ -1654,7 +1654,16 @@ public abstract class BaseFragment {
         final Insets insets = AndroidUtilities.getDefaultWindowInsets(windowInsets, false);
         mSystemInsets = insets;
         if (listViewForSimpleGlass != null) {
-            BaseFragmentSimpleGlass.setListViewParams(listViewForSimpleGlass, mSystemInsets.top, mSystemInsets.bottom, ActionBar.getCurrentActionBarHeight(), 0);
+            // The glass header is taller than the plain action bar: it carries the extra height of
+            // the glass pill. Counting only the plain height left the first row partly behind the
+            // header, which is the reported "first setting hidden" defect of the Power Saving screen.
+            int headerHeight = ActionBar.getCurrentActionBarHeight();
+            if (simpleActionBar != null) {
+                headerHeight += simpleActionBar.getExtraHeight();
+            } else if (actionBar != null) {
+                headerHeight += actionBar.getExtraHeight();
+            }
+            BaseFragmentSimpleGlass.setListViewParams(listViewForSimpleGlass, mSystemInsets.top, mSystemInsets.bottom, headerHeight, 0);
         }
         if (navigationBarFadeView != null) {
             final int visibility = mSystemInsets.bottom >= dp(40) ? View.VISIBLE : View.GONE;
