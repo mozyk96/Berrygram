@@ -19,6 +19,8 @@ import androidx.annotation.NonNull;
 
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.ChatActivityEnterView;
+import org.telegram.messenger.fork.panels.ForkComposerSettings;
 import org.telegram.ui.Components.blur3.BlurredBackgroundWithFadeDrawable;
 import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
 import org.telegram.ui.Components.inset.InAppKeyboardInsetView;
@@ -253,6 +255,7 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
     /* Render */
 
     private final Rect tmpRect = new Rect();
+    private final Rect inputFieldBounds = new Rect();
     private final RectF tmpRectF = new RectF();
 
     @Override
@@ -274,6 +277,20 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
         );
         tmpRect.inset(0, -dp(7));
         tmpRect.offset(0, blurTop + (int) bubbleInputTranlationY);
+
+        if (ForkComposerSettings.isExperimentalComposerEnabled()) {
+            for (int i = 0; i < inputIslandBubbleContainer.getChildCount(); i++) {
+                View child = inputIslandBubbleContainer.getChildAt(i);
+                if (child instanceof ChatActivityEnterView && child.getVisibility() == VISIBLE) {
+                    ChatActivityEnterView input = (ChatActivityEnterView) child;
+                    input.messageEditTextContainer.getDrawingRect(inputFieldBounds);
+                    offsetDescendantRectToMyCoords(input.messageEditTextContainer, inputFieldBounds);
+                    tmpRect.left = inputFieldBounds.left - dp(7);
+                    tmpRect.right = inputFieldBounds.right + dp(7);
+                    break;
+                }
+            }
+        }
 
         blurredBackgroundDrawable.setBounds(tmpRect);
         if (drawInputBackground)

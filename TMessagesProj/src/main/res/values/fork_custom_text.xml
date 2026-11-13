@@ -196,7 +196,7 @@
     <string name="ForkCameraFrontShort">Front</string>
     <string name="ForkCameraBackShort">Rear</string>
     <string name="ForkUpdateChangelog">Changelog</string>
-    <string name="ForkGlassTitle">Experimental Glass</string>
+    <string name="ForkGlassTitle">Liquid Glass</string>
     <string name="ForkGlassSubtitle">Transparency, blur and surface</string>
     <string name="ForkGlassInfo">These controls change the actual tint, backdrop blur, diffusion, saturation, edge light and shadow of BerryGram popup surfaces. Blur and transparency are independent. High transparency keeps a readable tint and falls back to a simpler surface when the device cannot render it safely.</string>
     <string name="ForkGlassPreset">Preset</string>
@@ -272,9 +272,9 @@
     <string name="ForkArchiveClear">Clear archive</string>
     <string name="ForkArchiveClearConfirm">Are you sure you want to delete all archived messages on this device?</string>
     <string name="ForkArchiveEmpty">No archived messages yet.</string>
-    <string name="ForkGraphicsGlass">Glass 2.0</string>
+    <string name="ForkGraphicsGlass">Liquid Glass</string>
     <string name="ForkGraphicsNone">No effects</string>
-    <string name="ForkGraphicsInfoUnified">Choose between Glass 2.0, standard blur, or no visual effects for maximum performance on any device.</string>
+    <string name="ForkGraphicsInfoUnified">Choose Liquid Glass, Blur, or no effects.</string>
     <string name="ForkDeviceScan">Device Analyzer</string>
     <string name="ForkDeviceScanAction">Scan hardware</string>
     <string name="ForkDeviceScanResults">Hardware Assessment</string>

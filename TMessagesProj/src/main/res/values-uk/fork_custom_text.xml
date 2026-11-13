@@ -196,7 +196,7 @@
     <string name="ForkCameraFrontShort">Передня</string>
     <string name="ForkCameraBackShort">Задня</string>
     <string name="ForkUpdateChangelog">Список змін</string>
-    <string name="ForkGlassTitle">Experimental Glass</string>
+    <string name="ForkGlassTitle">Liquid Glass</string>
     <string name="ForkGlassSubtitle">Прозорість, розмиття та поверхня</string>
     <string name="ForkGlassInfo">Ці параметри змінюють фактичний відтінок, розмиття фону, дифузію, насиченість, підсвічування країв і тінь поверхонь BerryGram. Розмиття та прозорість незалежні. За високої прозорості зберігається читабельний відтінок, а на слабких пристроях застосовується безпечніша поверхня.</string>
     <string name="ForkGlassPreset">Пресет</string>
@@ -272,9 +272,9 @@
     <string name="ForkArchiveClear">Очистити архів</string>
     <string name="ForkArchiveClearConfirm">Ви впевнені, що хочете видалити всі збережені архівні повідомлення на цьому пристрої?</string>
     <string name="ForkArchiveEmpty">В архіві поки немає повідомлень.</string>
-    <string name="ForkGraphicsGlass">Glass 2.0</string>
+    <string name="ForkGraphicsGlass">Liquid Glass</string>
     <string name="ForkGraphicsNone">Без ефектів</string>
-    <string name="ForkGraphicsInfoUnified">Оберіть Glass 2.0, класичне розмиття або режим без ефектів для максимальної швидкодії на будь-якому пристрої.</string>
+    <string name="ForkGraphicsInfoUnified">Оберіть Liquid Glass, розмиття або режим без ефектів.</string>
     <string name="ForkDeviceScan">Аналізатор заліза</string>
     <string name="ForkDeviceScanAction">Сканувати пристрій</string>
     <string name="ForkDeviceScanResults">Результати діагностики</string>

@@ -613,6 +613,18 @@ public class ChatActivityEnterView extends FrameLayout implements
     private boolean botKeyboardViewVisible;
     private TimerView recordTimerView;
     private FrameLayout audioVideoButtonContainer;
+    private final int[] recordingButtonLocation = new int[2];
+    private final int[] recordingOverlayLocation = new int[2];
+
+    private int getRecordingAnchorX(View overlay) {
+        if (!isChat || !org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled()
+                || audioVideoButtonContainer == null || audioVideoButtonContainer.getWidth() == 0) {
+            return overlay.getMeasuredWidth() - AndroidUtilities.dp2(26);
+        }
+        audioVideoButtonContainer.getLocationInWindow(recordingButtonLocation);
+        overlay.getLocationInWindow(recordingOverlayLocation);
+        return recordingButtonLocation[0] + audioVideoButtonContainer.getWidth() / 2 - recordingOverlayLocation[0];
+    }
     private boolean audioVideoButtonContainerForbidden;
     private ChatActivityEnterViewAnimatedIconView audioVideoSendButton;
     private boolean isInVideoMode;
@@ -1476,7 +1488,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
             }
 
-            final int cx = getMeasuredWidth() - AndroidUtilities.dp2(26);
+            final int cx = getRecordingAnchorX(this);
             float moveProgress = 1.0f - yAdd / dp(57);
             final float multilinTooltipOffset = getMeasuredHeight() - dp(194);
 
@@ -2273,7 +2285,7 @@ public class ChatActivityEnterView extends FrameLayout implements
 //            if (tooltipLayout != null && tooltipLayout.getLineCount() > 1) {
 //                multilinTooltipOffset = tooltipLayout.getHeight() - tooltipLayout.getLineBottom(0);
 //            }
-            int cx = getMeasuredWidth() - AndroidUtilities.dp2(26);
+            int cx = getRecordingAnchorX(this);
             int cy = (int) (dp(170) + multilinTooltipOffset);
 //            float yAdd = 0;
 //            if (lockAnimatedTranslation != 10000) {
@@ -3212,7 +3224,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                     return true;
                 } else if (motionEvent.getAction() == MotionEvent.ACTION_UP || motionEvent.getAction() == MotionEvent.ACTION_CANCEL) {
-                    if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL && recordAudioVideoRunnableStarted && isInVideoMode() && "choose".equals(org.telegram.messenger.fork.camera.RoundCameraSettings.mode())) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL && recordAudioVideoRunnableStarted && !recordingAudioVideo) {
+                        AndroidUtilities.cancelRunOnUIThread(recordAudioVideoRunnable);
                         AndroidUtilities.cancelRunOnUIThread(forkCameraPickerRunnable);
                         recordAudioVideoRunnableStarted = false;
                         return false;
@@ -3263,6 +3276,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                         if (recordAudioVideoRunnableStarted) {
                             AndroidUtilities.cancelRunOnUIThread(recordAudioVideoRunnable);
                             AndroidUtilities.cancelRunOnUIThread(forkCameraPickerRunnable);
+                            recordAudioVideoRunnableStarted = false;
                             if (sendVoiceEnabled && sendRoundEnabled) {
                                 delegate.onSwitchRecordMode(!isInVideoMode());
                                 setRecordVideoButtonVisible(!isInVideoMode(), true);
@@ -3385,11 +3399,12 @@ public class ChatActivityEnterView extends FrameLayout implements
                         }
                     }
 
-                    final float r = dpf2(19);
                     paint.setColor(getThemedColor(Theme.key_chat_messagePanelSend));
                     final float margin = dpf2(3);
-                    final float height = dpf2(38);
-                    final float width = dpf2(38);
+                    final boolean experimental = isChat && org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled();
+                    final float height = experimental ? Math.min(getMeasuredWidth(), getMeasuredHeight()) - margin * 2 : dpf2(38);
+                    final float width = height;
+                    final float r = height / 2f;
                     backgroundRect.set(
                             getMeasuredWidth() - width - margin,
                             getMeasuredHeight() - height - margin,
@@ -3729,8 +3744,9 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     public void updateExperimentalComposerStyle() {
         boolean exp = org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled();
+        boolean modernChat = exp && isChat;
         int composerHeight = exp ? 50 : DEFAULT_HEIGHT;
-        int rightMargin = exp ? dp(54) : dp(DEFAULT_HEIGHT);
+        int rightMargin = exp ? dp(modernChat ? 60 : 54) : dp(DEFAULT_HEIGHT);
         int leftMargin = exp ? dp(6) : 0;
         int bottomMargin = exp ? dp(3) : 0;
 
@@ -3742,13 +3758,11 @@ public class ChatActivityEnterView extends FrameLayout implements
                 lp.bottomMargin = bottomMargin;
                 messageEditTextContainer.setLayoutParams(lp);
             }
-            if (exp) {
-                int radius = dp(24);
-                int bgColor = getThemedColor(Theme.key_chat_messagePanelBackground);
-                messageEditTextContainer.setBackground(Theme.createRoundRectDrawable(radius, bgColor));
-            } else {
-                messageEditTextContainer.setBackground(null);
-            }
+            messageEditTextContainer.setBackground(exp && !modernChat
+                    ? Theme.createRoundRectDrawable(dp(24), getThemedColor(Theme.key_chat_messagePanelBackground))
+                    : null);
+            messageEditTextContainer.setMinimumHeight(modernChat ? dp(50) : 0);
+            messageEditTextContainer.setPadding(0, modernChat ? dp(3) : 0, 0, modernChat ? dp(3) : 0);
         }
 
         if (sendButtonContainer != null && sendButtonContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
@@ -3772,12 +3786,12 @@ public class ChatActivityEnterView extends FrameLayout implements
                     audioVideoButtonContainer.setLayoutParams(lp);
                 }
             }
-            if (exp) {
-                int circleColor = getThemedColor(Theme.key_chat_messagePanelSend);
-                audioVideoButtonContainer.setBackground(Theme.createCircleDrawable(dp(composerHeight), circleColor));
-            } else {
-                audioVideoButtonContainer.setBackground(null);
-            }
+            audioVideoButtonContainer.setBackground(exp && !modernChat
+                    ? Theme.createCircleDrawable(dp(composerHeight), getThemedColor(Theme.key_chat_messagePanelSend))
+                    : null);
+            FrameLayout.LayoutParams iconParams = (FrameLayout.LayoutParams) audioVideoSendButton.getLayoutParams();
+            iconParams.gravity = modernChat ? Gravity.CENTER : Gravity.TOP | Gravity.LEFT;
+            audioVideoSendButton.setLayoutParams(iconParams);
         }
     }
 

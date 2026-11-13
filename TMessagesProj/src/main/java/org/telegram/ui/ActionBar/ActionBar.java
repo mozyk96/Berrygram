@@ -205,6 +205,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     private ChatAvatarContainer chatAvatarContainer;
     public boolean doNotDrawCenterGlass;
+    public boolean compactChatGlass;
 
     public void setGlassOnlyBack() {
         glassOnlyBack = true;
@@ -2477,14 +2478,18 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         final int t = getHeight() - extraHeight - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
+        final boolean unifiedChatSurface = compactChatGlass && glassDrawable != null
+                && !glassOnlyBack && drawGlassTitle && !doNotDrawCenterGlass
+                && !doNotDrawGlassMenu && searchFactor == 0 && actionModeFactor == 0
+                && !isMenuPillInOverlay();
 
         if (glassDrawable != null && !glassOnlyBack && drawGlassTitle) {
             if (centerTitleAndGlass && titleTextView[0] != null && titleTextView[0].getVisibility() == View.VISIBLE) {
                 int titleWidth = (int) Math.ceil(titleTextView[0].getTextWidth()) + p * 2 + dp(48);
                 int titleLeft = (getWidth() - titleWidth) / 2 + Math.round(titleTextView[0].getTranslationX());
-                glassDrawable.setBounds(titleLeft, t, titleLeft + titleWidth, b);
-                if (!doNotDrawCenterGlass) {
-                    glassDrawable.draw(canvas);
+                if (!unifiedChatSurface) {
+                    glassDrawable.setBounds(titleLeft, t, titleLeft + titleWidth, b);
+                    if (!doNotDrawCenterGlass) glassDrawable.draw(canvas);
                 }
             } else {
                 final int menuWidthWithPadding = menuWidth + ((hasForcedMenuWidth || hasForcedMenuMinWidth) ? (menuWidth > 0 ? p : 0) : (int) (p * animatorHasMenuItems.getFloatValue()));
@@ -2510,20 +2515,24 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                     right = rightDefault;
                 }
 
-                glassDrawable.setBounds(left, t, right, b);
-                if (!doNotDrawCenterGlass) {
-                    glassDrawable.draw(canvas);
+                if (!unifiedChatSurface) {
+                    glassDrawable.setBounds(left, t, right, b);
+                    if (!doNotDrawCenterGlass) glassDrawable.draw(canvas);
                 }
             }
         }
-        if (glassDrawableBack != null && hasBackButton) {
+        if (unifiedChatSurface) {
+            glassDrawable.setBounds(0, t, getWidth(), b);
+            glassDrawable.draw(canvas);
+        }
+        if (glassDrawableBack != null && hasBackButton && !unifiedChatSurface) {
             glassDrawableBack.setBounds(0, t, s + p * 2, b);
             glassDrawableBack.draw(canvas);
         }
         if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay()) {
             glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
             glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
-            glassDrawableMenu.draw(canvas);
+            if (!unifiedChatSurface) glassDrawableMenu.draw(canvas);
         }
 
         if (blurredBackground && actionBarColor != Color.TRANSPARENT && drawGlassTitle) {
