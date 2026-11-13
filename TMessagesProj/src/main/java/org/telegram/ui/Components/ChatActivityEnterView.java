@@ -6756,6 +6756,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     public void onDestroy() {
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.didSetNewTheme);
         AndroidUtilities.cancelRunOnUIThread(forkCameraPickerRunnable);
         dismissForkCameraPicker();
         if (audioTimelineView != null) {

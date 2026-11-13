@@ -35,6 +35,66 @@ import org.telegram.ui.Components.inset.WindowInsetsStateHolder
 
 @RunWith(AndroidJUnit4::class)
 class ForkComposerInstrumentationTest {
+    @Test fun classicComposerAndKeyboardRemainReadableWithoutBackgroundMode() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
+            SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val oldComposer = ForkComposerSettings.isExperimentalComposerEnabled()
+        val oldStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style()
+        var composer: ChatActivityEnterView? = null
+        try {
+            instrumentation.runOnMainSync {
+                Theme.createCommonResources(activity)
+                ForkComposerSettings.setExperimentalComposerEnabled(false)
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("none")
+                val root = SizeNotifierFrameLayout(activity)
+                val container = ChatInputViewsContainer(activity)
+                container.setWindowInsetsProvider(object : WindowInsetsProvider {
+                    override fun getAnimatedMaxBottomInset() = dp(200f).toFloat()
+                    override fun getAnimatedImeBottomInset() = dp(200f).toFloat()
+                    override fun getAnimatedKeyboardVisibility() = 1f
+                    override fun getCurrentMaxBottomInset() = dp(200f)
+                    override fun getInsets(type: Int) = Insets.NONE
+                    override fun inAppViewIsVisible() = true
+                    override fun getInAppKeyboardRecommendedViewHeight() = dp(200f)
+                })
+                val source = GlassSourceColor().apply { setColor(Color.RED) }
+                container.setInputIslandBubbleDrawable(BlurredBackgroundDrawable(source))
+                container.setUnderKeyboardBackgroundDrawable(BlurredBackgroundDrawable(source))
+                val input = ChatActivityEnterView(activity, root, null, true).apply { shouldDrawBackground = false }
+                composer = input
+                container.inputIslandBubbleContainer.addView(input, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
+                root.addView(container, FrameLayout.LayoutParams(-1, -1))
+                activity.setContentView(root)
+                root.measure(View.MeasureSpec.makeMeasureSpec(dp(393f), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(dp(720f), View.MeasureSpec.EXACTLY))
+                root.layout(0, 0, root.measuredWidth, root.measuredHeight)
+                container.setInputBubbleHeight(input.height.toFloat())
+                container.checkInsets()
+                val bitmap = Bitmap.createBitmap(container.width, container.height, Bitmap.Config.ARGB_8888)
+                try {
+                    container.draw(Canvas(bitmap))
+                    val point = IntArray(2); input.getLocationOnScreen(point)
+                    val containerPoint = IntArray(2); container.getLocationOnScreen(containerPoint)
+                    val centerY = point[1] - containerPoint[1] + input.height / 2
+                    assertTrue("Classic composer needs a contrast surface", Color.alpha(bitmap.getPixel(container.width / 2, centerY)) > 0)
+                    assertTrue("In-app keyboard needs a contrast surface", Color.alpha(bitmap.getPixel(container.width / 2, container.height - dp(100f))) > 0)
+                    ForkComposerSettings.setExperimentalComposerEnabled(true)
+                    input.visibility = View.INVISIBLE
+                    bitmap.eraseColor(Color.TRANSPARENT)
+                    container.draw(Canvas(bitmap))
+                    assertTrue("Hidden composer needs a contrast surface for channel actions", Color.alpha(bitmap.getPixel(container.width / 2, centerY)) > 0)
+                } finally { bitmap.recycle() }
+            }
+        } finally {
+            instrumentation.runOnMainSync {
+                composer?.onDestroy()
+                ForkComposerSettings.setExperimentalComposerEnabled(oldComposer)
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle(oldStyle)
+                activity.finish()
+            }
+        }
+    }
     @Test fun focusedComposerRemainsAboveRealIme() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,

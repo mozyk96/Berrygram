@@ -278,10 +278,12 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
         tmpRect.inset(0, -dp(7));
         tmpRect.offset(0, blurTop + (int) bubbleInputTranlationY);
 
+        boolean modernComposerVisible = false;
         if (ForkComposerSettings.isExperimentalComposerEnabled()) {
             for (int i = 0; i < inputIslandBubbleContainer.getChildCount(); i++) {
                 View child = inputIslandBubbleContainer.getChildAt(i);
                 if (child instanceof ChatActivityEnterView && child.getVisibility() == VISIBLE) {
+                    modernComposerVisible = true;
                     ChatActivityEnterView input = (ChatActivityEnterView) child;
                     input.messageEditTextContainer.getDrawingRect(inputFieldBounds);
                     offsetDescendantRectToMyCoords(input.messageEditTextContainer, inputFieldBounds);
@@ -294,10 +296,10 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
 
         blurredBackgroundDrawable.setBounds(tmpRect);
         final boolean backgroundless = org.telegram.ui.ForkGraphicsSurface.backgroundless();
-        if (drawInputBackground && !backgroundless)
+        if (drawInputBackground && (!backgroundless || !modernComposerVisible))
             blurredBackgroundDrawable.draw(canvas);
 
-        if (needDrawInAppKeyboard && !backgroundless) {
+        if (needDrawInAppKeyboard) {
             underKeyboardBackgroundDrawable.draw(canvas);
         }
 
