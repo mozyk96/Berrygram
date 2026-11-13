@@ -8,6 +8,8 @@ public class UpdatePolicyTest {
   check(!UpdatePolicy.validIdentity("app",10,signer,"app",11,java.util.Collections.singleton("cert-b")));
   check(!UpdatePolicy.validIdentity("app",10,java.util.Collections.emptySet(),"app",11,java.util.Collections.emptySet()));
   check(UpdatePolicy.compatibleCode(100, 101));
+  check(UpdatePolicy.compatibleCode(72949, 72959), "1.5.0 ARM64 must upgrade 1.4.6");
+  check(UpdatePolicy.shouldShowRelease("1.5.0", "1.4.6"), "1.5.0 must be offered to 1.4.6");
   check(!UpdatePolicy.compatibleCode(100, 100));
   check(!UpdatePolicy.compatibleCode(100, 99));
   check(UpdatePolicy.enoughSpace(100, 100, 0));

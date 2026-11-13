@@ -1,6 +1,6 @@
 {
-  "berrygramVersion": "1.4.5",
-  "checkedAt": "2026-11-12",
+  "berrygramVersion": "1.5.0",
+  "checkedAt": "2026-11-13",
   "sourceRepository": "https://github.com/DrKLO/Telegram",
   "sourceBranch": "master",
   "integratedVersion": "13.2.2",
@@ -8,5 +8,5 @@
   "latestVerifiedVersion": "13.2.2",
   "latestVerifiedCommit": "21f7d109da6ab3506c9e9577f98c6a38771ab335",
   "latestVerifiedCode": 7303,
-  "decision": "integrated"
+  "decision": "retain integrated 13.2.2; official master unchanged"
 }
