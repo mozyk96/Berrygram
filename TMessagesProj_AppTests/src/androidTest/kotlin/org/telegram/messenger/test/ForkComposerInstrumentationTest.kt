@@ -137,11 +137,13 @@ class ForkComposerInstrumentationTest {
                 val input = ChatActivityEnterView(activity, root, null, true).apply { shouldDrawBackground = false }
                 composer = input
                 var switches = 0
+                var audioCallbacks = 0
                 input.setDelegate(java.lang.reflect.Proxy.newProxyInstance(
                     ChatActivityEnterView.ChatActivityEnterViewDelegate::class.java.classLoader,
                     arrayOf(ChatActivityEnterView.ChatActivityEnterViewDelegate::class.java)
                 ) { _, method, _ ->
                     if (method.name == "onSwitchRecordMode") switches++
+                    if (method.name == "needStartRecordAudio") audioCallbacks++
                     when (method.returnType) {
                         java.lang.Boolean.TYPE -> false
                         java.lang.Integer.TYPE -> 0
@@ -172,6 +174,15 @@ class ForkComposerInstrumentationTest {
                     button.onTouchEvent(up)
                     assertEquals("A completed tap switches recording mode once", 1, switches)
                 } finally { nextDown.recycle(); up.recycle() }
+                ChatActivityEnterView::class.java.getDeclaredField("hasRecordVideo")
+                    .apply { isAccessible = true }.setBoolean(input, false)
+                ChatActivityEnterView::class.java.getDeclaredField("calledRecordRunnable")
+                    .apply { isAccessible = true }.setBoolean(input, true)
+                val inactiveCancel = MotionEvent.obtain(4, 4, MotionEvent.ACTION_CANCEL, 10f, 10f, 0)
+                try {
+                    button.onTouchEvent(inactiveCancel)
+                    assertEquals("Cancelling without an active recording must not finish audio", 0, audioCallbacks)
+                } finally { inactiveCancel.recycle() }
             }
         } finally { instrumentation.runOnMainSync {
             composer?.onDestroy()

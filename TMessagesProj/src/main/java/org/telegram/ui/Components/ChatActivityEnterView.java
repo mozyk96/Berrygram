@@ -3224,7 +3224,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                     return true;
                 } else if (motionEvent.getAction() == MotionEvent.ACTION_UP || motionEvent.getAction() == MotionEvent.ACTION_CANCEL) {
-                    if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL && recordAudioVideoRunnableStarted && !recordingAudioVideo) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL && !recordingAudioVideo) {
                         AndroidUtilities.cancelRunOnUIThread(recordAudioVideoRunnable);
                         AndroidUtilities.cancelRunOnUIThread(forkCameraPickerRunnable);
                         recordAudioVideoRunnableStarted = false;
