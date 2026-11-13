@@ -273,8 +273,8 @@
     <string name="ForkArchiveClearConfirm">Are you sure you want to delete all archived messages on this device?</string>
     <string name="ForkArchiveEmpty">No archived messages yet.</string>
     <string name="ForkGraphicsGlass">Liquid Glass</string>
-    <string name="ForkGraphicsNone">No effects</string>
-    <string name="ForkGraphicsInfoUnified">Choose Liquid Glass, Blur, or no effects.</string>
+    <string name="ForkGraphicsNone">No Background</string>
+    <string name="ForkGraphicsInfoUnified">Choose Liquid Glass, Blur, or no background.</string>
     <string name="ForkDeviceScan">Device Analyzer</string>
     <string name="ForkDeviceScanAction">Scan hardware</string>
     <string name="ForkDeviceScanResults">Hardware Assessment</string>
@@ -429,6 +429,6 @@
     <string name="ForkArchiveLoading">Loading archive…</string>
     <string name="ForkArchiveLoadError">Could not read the archive. Tap to retry.</string>
 
-    <string name="ForkExperimentalComposer">Experimental input panel</string>
-    <string name="ForkExperimentalComposerDescription">Taller message field and separate circular voice and video message button.</string>
+    <string name="ForkExperimentalComposer">Modern input panel</string>
+    <string name="ForkExperimentalComposerDescription">Rounded message field with a separate circular voice and video message button. Turn off to use Telegram\'s classic panel.</string>
 </resources>

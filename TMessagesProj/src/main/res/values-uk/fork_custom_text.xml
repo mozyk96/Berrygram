@@ -273,8 +273,8 @@
     <string name="ForkArchiveClearConfirm">Ви впевнені, що хочете видалити всі збережені архівні повідомлення на цьому пристрої?</string>
     <string name="ForkArchiveEmpty">В архіві поки немає повідомлень.</string>
     <string name="ForkGraphicsGlass">Liquid Glass</string>
-    <string name="ForkGraphicsNone">Без ефектів</string>
-    <string name="ForkGraphicsInfoUnified">Оберіть Liquid Glass, розмиття або режим без ефектів.</string>
+    <string name="ForkGraphicsNone">Без фону</string>
+    <string name="ForkGraphicsInfoUnified">Оберіть Liquid Glass, розмиття або режим без фону.</string>
     <string name="ForkDeviceScan">Аналізатор заліза</string>
     <string name="ForkDeviceScanAction">Сканувати пристрій</string>
     <string name="ForkDeviceScanResults">Результати діагностики</string>
@@ -429,6 +429,6 @@
     <string name="ForkArchiveLoading">Завантаження архіву…</string>
     <string name="ForkArchiveLoadError">Не вдалося прочитати архів. Натисніть, щоб повторити.</string>
 
-    <string name="ForkExperimentalComposer">Експериментальна панель введення</string>
-    <string name="ForkExperimentalComposerDescription">Вище поле повідомлення та окрема кругла кнопка голосових і відеоповідомлень.</string>
+    <string name="ForkExperimentalComposer">Сучасна панель введення</string>
+    <string name="ForkExperimentalComposerDescription">Округле поле повідомлення та окрема кругла кнопка голосових і відеоповідомлень. Вимкніть, щоб повернути класичну панель Telegram.</string>
 </resources>

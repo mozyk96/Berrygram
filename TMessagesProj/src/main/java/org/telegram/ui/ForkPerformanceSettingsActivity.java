@@ -247,7 +247,7 @@ public final class ForkPerformanceSettingsActivity extends ForkSettingsFragment 
 
     private static String styleLabel() {
         String style = ForkGraphicsSurface.effectiveStyle();
-        if (PanelPolicy.STYLE_GLASS.equals(style) || "experimental".equals(style)) {
+        if (PanelPolicy.isGlassStyle(style)) {
             return ForkLocale.get(R.string.ForkGraphicsGlass);
         } else if (PanelPolicy.STYLE_BLUR.equals(style)) {
             return ForkLocale.get(R.string.ForkGraphicsBlur);

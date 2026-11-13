@@ -2478,12 +2478,14 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         final int t = getHeight() - extraHeight - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
+        final boolean noChatBackground = compactChatGlass && org.telegram.ui.ForkGraphicsSurface.backgroundless();
         final boolean unifiedChatSurface = compactChatGlass && glassDrawable != null
+                && !noChatBackground
                 && !glassOnlyBack && drawGlassTitle && !doNotDrawCenterGlass
                 && !doNotDrawGlassMenu && searchFactor == 0 && actionModeFactor == 0
                 && !isMenuPillInOverlay();
 
-        if (glassDrawable != null && !glassOnlyBack && drawGlassTitle) {
+        if (glassDrawable != null && !glassOnlyBack && drawGlassTitle && !noChatBackground) {
             if (centerTitleAndGlass && titleTextView[0] != null && titleTextView[0].getVisibility() == View.VISIBLE) {
                 int titleWidth = (int) Math.ceil(titleTextView[0].getTextWidth()) + p * 2 + dp(48);
                 int titleLeft = (getWidth() - titleWidth) / 2 + Math.round(titleTextView[0].getTranslationX());
@@ -2525,17 +2527,17 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             glassDrawable.setBounds(0, t, getWidth(), b);
             glassDrawable.draw(canvas);
         }
-        if (glassDrawableBack != null && hasBackButton && !unifiedChatSurface) {
+        if (glassDrawableBack != null && hasBackButton && !unifiedChatSurface && !noChatBackground) {
             glassDrawableBack.setBounds(0, t, s + p * 2, b);
             glassDrawableBack.draw(canvas);
         }
-        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay()) {
+        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay() && !noChatBackground) {
             glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
             glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
             if (!unifiedChatSurface) glassDrawableMenu.draw(canvas);
         }
 
-        if (blurredBackground && actionBarColor != Color.TRANSPARENT && drawGlassTitle) {
+        if (blurredBackground && actionBarColor != Color.TRANSPARENT && drawGlassTitle && !noChatBackground) {
             rectTmp.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
             blurScrimPaint.setColor(actionBarColor);
             if (adaptiveBackground) {

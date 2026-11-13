@@ -92,7 +92,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Settings inset regression test failed' }
 $surfaceDir = Join-Path $buildDir 'surface-animation'
 New-Item -ItemType Directory -Force $surfaceDir | Out-Null
 $surfaceStubs = Get-ChildItem (Join-Path $PSScriptRoot 'surface-animation-stubs') -Filter '*.java' -Recurse | ForEach-Object { $_.FullName }
-& $javac -encoding UTF-8 -d $surfaceDir @surfaceStubs (Join-Path $root 'TMessagesProj/src/main/java/org/telegram/ui/ForkSurfaceAnimation.java') (Join-Path $PSScriptRoot 'SurfaceAnimationLifecycleTest.java')
+& $javac -encoding UTF-8 -d $surfaceDir @surfaceStubs (Join-Path $base 'panels/PanelPolicy.java') (Join-Path $root 'TMessagesProj/src/main/java/org/telegram/ui/ForkSurfaceAnimation.java') (Join-Path $PSScriptRoot 'SurfaceAnimationLifecycleTest.java')
 if ($LASTEXITCODE -ne 0) { throw 'Surface animation test compilation failed' }
 & $java -cp $surfaceDir SurfaceAnimationLifecycleTest
 if ($LASTEXITCODE -ne 0) { throw 'Surface animation lifecycle test failed' }

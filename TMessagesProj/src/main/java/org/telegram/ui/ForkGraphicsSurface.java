@@ -27,6 +27,21 @@ public final class ForkGraphicsSurface {
                 || systemPowerSaver() || org.telegram.messenger.LiteMode.isPowerSaverApplied();
     }
 
+    /**
+     * True when the selected mode is No Background. The chat header, the
+     * composer island and the bottom tabs then draw no plate and no blur.
+     * Popup menus stay on the Telegram material so they keep their contrast.
+     */
+    public static boolean backgroundless() {
+        return org.telegram.messenger.fork.panels.PanelPolicy.isBackgroundless(effectiveStyle());
+    }
+
+    /** True when a blur-based surface may be drawn at all (Blur or Liquid Glass). */
+    public static boolean blurSurfacesEnabled() {
+        String style = effectiveStyle();
+        return !backgroundless() && !"material".equals(style);
+    }
+
     public static boolean systemPowerSaver() {
         Context context = org.telegram.messenger.ApplicationLoader.applicationContext;
         if (context == null) return false;

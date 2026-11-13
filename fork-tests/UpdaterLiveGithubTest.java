@@ -21,6 +21,12 @@ public class UpdaterLiveGithubTest {
     public static void main(String[] args) throws Exception {
         GithubUpdateClient.Release latest = GithubUpdateClient.latest(REPO);
         System.out.println("official release found: " + latest.version + " (" + latest.size + " bytes)");
+        if (args.length > 0) {
+            check(args[0].equals(latest.version), "expected release " + args[0] + ", got " + latest.version);
+        }
+        if (args.length > 1) {
+            check(args[1].equalsIgnoreCase(latest.digest), "published digest differs from the verified artifact");
+        }
         check(latest.version != null && !latest.version.isEmpty(), "the official stream returned no release");
         check(!UpdatePolicy.isPrerelease(latest.version), "the official stream returned a prerelease: " + latest.version);
         check(latest.digest != null && latest.digest.matches("[0-9a-f]{64}"), "the official release has no verifiable checksum");

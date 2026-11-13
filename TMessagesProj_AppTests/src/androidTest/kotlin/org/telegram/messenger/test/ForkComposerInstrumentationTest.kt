@@ -291,6 +291,8 @@ class ForkComposerInstrumentationTest {
                     for (text in listOf("", "First line\nSecond line\nThird line",
                         "Українська 🇺🇦\nРусский\nEnglish\nالعربية\n".repeat(8))) {
                         input.setFieldText(text)
+                        input.checkSendButton(false)
+                        assertEquals("Send state must follow the actual draft", text.isNotBlank(), input.isSendButtonVisible)
                         root.measure(View.MeasureSpec.makeMeasureSpec(dp(width.toFloat()), View.MeasureSpec.EXACTLY),
                             View.MeasureSpec.makeMeasureSpec(dp(720f), View.MeasureSpec.EXACTLY))
                         root.layout(0, 0, root.measuredWidth, root.measuredHeight)
@@ -325,6 +327,83 @@ class ForkComposerInstrumentationTest {
                 input.updateExperimentalComposerStyle()
                 assertEquals("Classic recorder width must restore", dp(ChatActivityEnterView.DEFAULT_HEIGHT.toFloat()),
                     field("audioVideoButtonContainer").layoutParams.width)
+            }
+        } finally {
+            instrumentation.runOnMainSync {
+                composer?.onDestroy()
+                ForkComposerSettings.setExperimentalComposerEnabled(original)
+                activity.finish()
+            }
+        }
+    }
+
+    @Test fun renderComposerSnapshotForVisualAudit() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
+            SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val original = ForkComposerSettings.isExperimentalComposerEnabled()
+        var composer: ChatActivityEnterView? = null
+        try {
+            instrumentation.runOnMainSync {
+                Theme.createCommonResources(activity)
+                ForkComposerSettings.setExperimentalComposerEnabled(true)
+                val root = SizeNotifierFrameLayout(activity)
+                val container = ChatInputViewsContainer(activity)
+                container.setWindowInsetsProvider(object : WindowInsetsProvider {
+                    override fun getAnimatedMaxBottomInset() = 0f
+                    override fun getAnimatedImeBottomInset() = 0f
+                    override fun getAnimatedKeyboardVisibility() = 0f
+                    override fun getCurrentMaxBottomInset() = 0
+                    override fun getInsets(type: Int) = Insets.NONE
+                    override fun inAppViewIsVisible() = false
+                    override fun getInAppKeyboardRecommendedViewHeight() = 0
+                })
+                val plate = androidx.core.graphics.ColorUtils.setAlphaComponent(
+                    Theme.getColor(Theme.key_windowBackgroundWhite), 235)
+                val source = GlassSourceColor().apply { setColor(plate) }
+                container.setInputIslandBubbleDrawable(BlurredBackgroundDrawable(source))
+                container.setUnderKeyboardBackgroundDrawable(BlurredBackgroundDrawable(source))
+                val input = ChatActivityEnterView(activity, root, null, true).apply { shouldDrawBackground = false }
+                input.setDelegate(java.lang.reflect.Proxy.newProxyInstance(
+                    ChatActivityEnterView.ChatActivityEnterViewDelegate::class.java.classLoader,
+                    arrayOf(ChatActivityEnterView.ChatActivityEnterViewDelegate::class.java)
+                ) { _, method, _ -> when (method.returnType) {
+                    java.lang.Boolean.TYPE -> false
+                    java.lang.Integer.TYPE -> 0
+                    java.lang.Long.TYPE -> 0L
+                    else -> null
+                } } as ChatActivityEnterView.ChatActivityEnterViewDelegate)
+                composer = input
+                container.inputIslandBubbleContainer.addView(input,
+                    FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { leftMargin = dp(7f); rightMargin = dp(7f) })
+                root.addView(container, FrameLayout.LayoutParams(-1, -1))
+                activity.setContentView(root)
+                input.setFieldText("Hello Berrygram\nSecond line of a real draft")
+                root.measure(View.MeasureSpec.makeMeasureSpec(dp(393f), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(dp(720f), View.MeasureSpec.EXACTLY))
+                root.layout(0, 0, root.measuredWidth, root.measuredHeight)
+                container.setInputBubbleHeight(input.height.toFloat())
+                container.checkInsets()
+                val bitmap = Bitmap.createBitmap(container.width, container.height, Bitmap.Config.ARGB_8888)
+                try {
+                    container.draw(Canvas(bitmap))
+                    val file = java.io.File(activity.getExternalFilesDir(null), "berrygram-1.5-composer.png")
+                    file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                    assertTrue("Composer snapshot must be written", file.length() > 0)
+
+                    input.setFieldText("")
+                    input.checkSendButton(false)
+                    root.measure(View.MeasureSpec.makeMeasureSpec(dp(393f), View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(dp(720f), View.MeasureSpec.EXACTLY))
+                    root.layout(0, 0, root.measuredWidth, root.measuredHeight)
+                    container.setInputBubbleHeight(input.height.toFloat())
+                    container.checkInsets()
+                    bitmap.eraseColor(Color.TRANSPARENT)
+                    container.draw(Canvas(bitmap))
+                    val empty = java.io.File(activity.getExternalFilesDir(null), "berrygram-1.5-composer-empty.png")
+                    empty.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                    assertTrue("Empty composer snapshot must be written", empty.length() > 0)
+                } finally { bitmap.recycle() }
             }
         } finally {
             instrumentation.runOnMainSync {

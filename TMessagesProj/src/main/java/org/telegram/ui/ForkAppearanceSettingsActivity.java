@@ -63,7 +63,7 @@ public final class ForkAppearanceSettingsActivity extends ForkSettingsFragment {
                 ForkLocale.get(R.string.ForkGlassSubtitle), false);
         glassPreviewCell.setIcon(R.drawable.msg_palette);
         ForkSettingsLayout.interactive(glassPreviewCell);
-        glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
+        glassPreviewCell.setVisibility(PanelPolicy.isGlassStyle(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
         glassPreviewCell.setOnClickListener(v -> presentFragment(new ForkExperimentalGlassActivity()));
         controls.addView(glassPreviewCell);
 
@@ -79,24 +79,7 @@ public final class ForkAppearanceSettingsActivity extends ForkSettingsFragment {
 
             ForkChoicePopup.show(this, v, labels, null, currentSelection, index -> {
                 String chosen = modes[index];
-                ForkPanelSettings.setStyle(chosen);
-                if (PanelPolicy.STYLE_GLASS.equals(chosen)) {
-                    org.telegram.messenger.LiteMode.setAllFlags(
-                            org.telegram.messenger.LiteMode.getValue(true)
-                                    | org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS
-                                    | org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR);
-                } else if (PanelPolicy.STYLE_BLUR.equals(chosen)) {
-                    org.telegram.messenger.LiteMode.setAllFlags(
-                            (org.telegram.messenger.LiteMode.getValue(true) | org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR)
-                                    & ~org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS);
-                } else {
-                    org.telegram.messenger.LiteMode.setAllFlags(
-                            org.telegram.messenger.LiteMode.getValue(true)
-                                    & ~(org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS | org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR));
-                }
-                org.telegram.utils.glass.GlassEngine.invalidateSettings();
-                org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
-                        org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false);
+                org.telegram.messenger.LiteMode.setForkVisualMode(chosen);
                 styleCell.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false);
                 glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(chosen) ? View.VISIBLE : View.GONE);
                 ForkSettingsLayout.refreshSection(controls, false);
@@ -208,7 +191,7 @@ public final class ForkAppearanceSettingsActivity extends ForkSettingsFragment {
     public void onResume() {
         super.onResume();
         if (glassPreviewCell != null) {
-            glassPreviewCell.setVisibility(PanelPolicy.STYLE_GLASS.equals(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
+            glassPreviewCell.setVisibility(PanelPolicy.isGlassStyle(ForkPanelSettings.style()) ? View.VISIBLE : View.GONE);
         }
         if (fragmentView != null) ForkFloatingHeader.refresh(fragmentView);
     }

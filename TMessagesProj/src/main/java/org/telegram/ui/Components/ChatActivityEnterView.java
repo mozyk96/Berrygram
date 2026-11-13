@@ -2739,6 +2739,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         NotificationCenter.getInstance(currentAccount).addWeakObserver(this, NotificationCenter.didUpdatePremiumGiftFieldIcon);
         NotificationCenter.getInstance(currentAccount).addWeakObserver(this, NotificationCenter.currentUserPremiumStatusChanged);
         NotificationCenter.getGlobalInstance().addWeakObserver(this, NotificationCenter.emojiLoaded);
+        NotificationCenter.getGlobalInstance().addWeakObserver(this, NotificationCenter.didSetNewTheme);
 
         parentActivity = context;
         parentFragment = fragment;
@@ -3758,7 +3759,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 lp.bottomMargin = bottomMargin;
                 messageEditTextContainer.setLayoutParams(lp);
             }
-            messageEditTextContainer.setBackground(exp && !modernChat
+            messageEditTextContainer.setBackground(exp && (!modernChat || org.telegram.ui.ForkGraphicsSurface.backgroundless())
                     ? Theme.createRoundRectDrawable(dp(24), getThemedColor(Theme.key_chat_messagePanelBackground))
                     : null);
             messageEditTextContainer.setMinimumHeight(modernChat ? dp(50) : 0);
@@ -13725,6 +13726,12 @@ public class ChatActivityEnterView extends FrameLayout implements
     @SuppressWarnings("unchecked")
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.didSetNewTheme) {
+            if (messageEditTextContainer != null) {
+                updateExperimentalComposerStyle();
+            }
+            return;
+        }
         if (id == NotificationCenter.emojiLoaded) {
             if (emojiView != null) {
                 emojiView.invalidateViews();

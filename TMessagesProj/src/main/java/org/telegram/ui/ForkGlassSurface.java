@@ -36,7 +36,7 @@ public final class ForkGlassSurface {
     public static BlurredBackgroundProvider provider(Theme.ResourcesProvider resourcesProvider,
                                                      ForkGlassSettings.Config config) {
         String eff = ForkGraphicsSurface.effectiveStyle();
-        boolean experimental = org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) || "experimental".equals(eff);
+        boolean experimental = org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(eff);
         boolean isNone = org.telegram.messenger.fork.panels.PanelPolicy.STYLE_NONE.equals(eff);
         float strength = ForkPanelSettings.effectStrength() / 100f;
         final float opacity;
@@ -49,6 +49,15 @@ public final class ForkGlassSurface {
             shadow = colorWithAlpha(0xFF000000, GlassPolicy.shadowAlpha(config.shadow));
             strokeWidth = AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(config.edge));
             shadowRadius = AndroidUtilities.dpf2(GlassPolicy.shadowRadiusDp(config.shadow));
+        } else if (isNone) {
+            // No Background: menus keep Telegram's opaque material so they stay
+            // readable over the wallpaper, without a glass tint or hairline.
+            opacity = 1f;
+            strokeTop = 0;
+            strokeBottom = 0;
+            shadow = 0x26000000;
+            strokeWidth = 0;
+            shadowRadius = AndroidUtilities.dpf2(5f);
         } else {
             opacity = 0.94f - 0.16f * strength;
             strokeTop = 0x44ffffff;
@@ -85,7 +94,7 @@ public final class ForkGlassSurface {
         return new BlurredBackgroundProvider() {
             private boolean experimental() {
                 String eff = ForkGraphicsSurface.effectiveStyle();
-                return org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) || "experimental".equals(eff);
+                return org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(eff);
             }
 
             @Override public int getShadowColor() {
@@ -146,13 +155,14 @@ public final class ForkGlassSurface {
     /** Blur intensity for one-shot popup captures; keeps the caller's base when not experimental. */
     public static int captureBlurAmount(int base) {
         String eff = ForkGraphicsSurface.effectiveStyle();
-        if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) && !"experimental".equals(eff)) return base;
+        if (org.telegram.messenger.fork.panels.PanelPolicy.isBackgroundless(eff)) return 0;
+        if (!org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(eff)) return base;
         return ForkGlassSettings.captureBlurAmount(base);
     }
 
     public static float backdropSaturation(float base) {
         String eff = ForkGraphicsSurface.effectiveStyle();
-        if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) && !"experimental".equals(eff)) return base;
+        if (!org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(eff)) return base;
         return ForkGlassSettings.backdropSaturation(base);
     }
 
@@ -162,7 +172,7 @@ public final class ForkGlassSurface {
      */
     public static Bitmap processBackdrop(Bitmap bitmap) {
         String eff = ForkGraphicsSurface.effectiveStyle();
-        if (bitmap == null || (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(eff) && !"experimental".equals(eff))) return bitmap;
+        if (bitmap == null || !org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(eff)) return bitmap;
         ForkGlassSettings.Config config = ForkGlassSettings.config();
         float saturation = GlassPolicy.saturation(config.saturation, config.frost);
         if (Math.abs(saturation - 1f) < 0.03f) return bitmap;

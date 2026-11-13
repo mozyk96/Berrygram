@@ -236,7 +236,9 @@ public class LiteMode {
         if (flag == FLAG_LIQUID_GLASS) {
             String currentStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
             if (enabled) {
-                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("liquid");
+                if (!org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(currentStyle)) {
+                    org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("liquid");
+                }
             } else if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_NONE.equals(currentStyle)) {
                 org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("blur");
             }
@@ -247,20 +249,36 @@ public class LiteMode {
     public static void setAllFlags(int flags) {
         int oldValue = getValue(true);
         if (((oldValue ^ flags) & FLAG_LIQUID_GLASS) != 0) {
-            boolean keepExperimental = (flags & FLAG_LIQUID_GLASS) != 0
-                    && "experimental".equals(org.telegram.messenger.fork.panels.ForkPanelSettings.style());
-            if (!keepExperimental) {
-                String currentStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
-                if ((flags & FLAG_LIQUID_GLASS) != 0) {
+            String currentStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style();
+            if ((flags & FLAG_LIQUID_GLASS) != 0) {
+                if (!org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(currentStyle)) {
                     org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("liquid");
-                } else if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_NONE.equals(currentStyle)) {
-                    org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("blur");
                 }
+            } else if (!org.telegram.messenger.fork.panels.PanelPolicy.STYLE_NONE.equals(currentStyle)) {
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("blur");
             }
         }
         onFlagsUpdate(oldValue, flags);
         value = flags;
         savePreference();
+    }
+
+    /** Applies Berrygram's selected panel mode and its corresponding Telegram flags. */
+    public static void setForkVisualMode(String mode) {
+        org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle(mode);
+        String normalized = org.telegram.messenger.fork.panels.PanelPolicy.normalizeStyle(mode);
+        int flags = getValue(true);
+        if (org.telegram.messenger.fork.panels.PanelPolicy.STYLE_GLASS.equals(normalized)) {
+            flags |= FLAG_LIQUID_GLASS | FLAG_CHAT_BLUR;
+        } else if (org.telegram.messenger.fork.panels.PanelPolicy.STYLE_BLUR.equals(normalized)) {
+            flags = (flags | FLAG_CHAT_BLUR) & ~FLAG_LIQUID_GLASS;
+        } else {
+            flags &= ~(FLAG_LIQUID_GLASS | FLAG_CHAT_BLUR);
+        }
+        setAllFlags(flags);
+        GlassEngine.invalidateSettings();
+        NotificationCenter.getGlobalInstance().postNotificationName(
+                NotificationCenter.didSetNewTheme, false, false);
     }
 
     public static void updatePresets(TLRPC.TL_jsonObject json) {

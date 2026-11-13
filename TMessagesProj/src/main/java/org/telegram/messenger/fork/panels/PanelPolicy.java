@@ -15,6 +15,14 @@ public final class PanelPolicy {
         return STYLE_GLASS.equals(normalizeStyle(style));
     }
 
+    /**
+     * No Background: the chat chrome draws no plate or blur at all, so the
+     * wallpaper stays visible behind the header, the composer and the tabs.
+     */
+    public static boolean isBackgroundless(String style) {
+        return STYLE_NONE.equals(style);
+    }
+
     public static String normalizeStyle(String style) {
         if ("glass".equals(style) || "experimental".equals(style) || "liquid".equals(style)) {
             return STYLE_GLASS;
@@ -59,6 +67,10 @@ public final class PanelPolicy {
     }
 
     public static String effectiveStyle(String requested, boolean savingPower, int sdk, boolean capable) {
+        if (STYLE_NONE.equals(requested)) {
+            // Explicit No Background is a user choice; power saving must not swap it back to a plate.
+            return STYLE_NONE;
+        }
         String norm = normalizeStyle(requested);
         if (STYLE_GLASS.equals(norm) && useGlass(true, savingPower, sdk, capable)) {
             return requested != null ? requested : STYLE_GLASS;

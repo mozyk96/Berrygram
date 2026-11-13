@@ -418,7 +418,37 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
                 ForkGlassSurface.wrap(BlurredBackgroundProviderImpl.mainTabs(resourceProvider)));
         tabsViewBackground.setRadius(dp(DialogsActivity.MAIN_TABS_HEIGHT / 2f));
         tabsViewBackground.setPadding(dp(DialogsActivity.MAIN_TABS_MARGIN - 0.334f));
-        tabsView.setBackground(tabsViewBackground);
+        tabsView.setBackground(new android.graphics.drawable.Drawable() {
+            @Override
+            public void draw(@NonNull Canvas canvas) {
+                // No Background: the tabs float over the page without a plate.
+                if (org.telegram.ui.ForkGraphicsSurface.backgroundless()) {
+                    return;
+                }
+                tabsViewBackground.setBounds(getBounds());
+                tabsViewBackground.draw(canvas);
+            }
+
+            @Override
+            public void setAlpha(int alpha) {
+                tabsViewBackground.setAlpha(alpha);
+            }
+
+            @Override
+            public void setColorFilter(android.graphics.ColorFilter colorFilter) {
+                tabsViewBackground.setColorFilter(colorFilter);
+            }
+
+            @Override
+            public int getOpacity() {
+                return android.graphics.PixelFormat.TRANSLUCENT;
+            }
+
+            @Override
+            protected void onBoundsChange(android.graphics.Rect bounds) {
+                tabsViewBackground.setBounds(bounds);
+            }
+        });
 
         BlurredBackgroundDrawableViewFactory iBlur3FactoryFade = new BlurredBackgroundDrawableViewFactory(iBlur3SourceColor);
         iBlur3FactoryFade.setSourceRootView(viewPositionWatcher, contentView);
@@ -1171,7 +1201,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         }
 
         if (progressiveTabFade != null) {
-            boolean enabled = !"material".equals(ForkGraphicsSurface.effectiveStyle())
+            boolean enabled = ForkGraphicsSurface.blurSurfacesEnabled()
                     && GlassEngine.getCurrentGlassSettings().isBlurEnabled;
             android.graphics.drawable.Drawable background = enabled ? progressiveTabFade : fadeFallback;
             if (fadeView.getBackground() != background) {

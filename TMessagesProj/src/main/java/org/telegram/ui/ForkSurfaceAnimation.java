@@ -29,7 +29,7 @@ public final class ForkSurfaceAnimation {
         int width = view.getWidth() > 0 ? view.getWidth() : view.getMeasuredWidth();
         int height = view.getHeight() > 0 ? view.getHeight() : view.getMeasuredHeight();
         if (!enabled() || width <= 0 || height <= 0) return null;
-        boolean liquid = "liquid".equals(ForkGraphicsSurface.effectiveStyle());
+        boolean liquid = org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(ForkGraphicsSurface.effectiveStyle());
         int[] location = new int[2];
         view.getLocationOnScreen(location);
         float sourceX = sourceOnScreen == null ? width : sourceOnScreen.exactCenterX() - location[0];

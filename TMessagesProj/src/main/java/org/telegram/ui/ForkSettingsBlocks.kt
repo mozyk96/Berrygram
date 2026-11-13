@@ -13,7 +13,6 @@ import org.telegram.messenger.fork.stealth.ForkStealthSettings
 import org.telegram.messenger.fork.text.ForkTranslationSettings
 import org.telegram.ui.ActionBar.BaseFragment
 import org.telegram.ui.fork.settings.ForkSettingsSection
-import org.telegram.utils.glass.GlassEngine
 
 /**
  * Builds the Berrygram blocks that live inside the Telegram settings screens.
@@ -257,28 +256,7 @@ object ForkSettingsBlocks {
         val current = modes.indexOf(ForkPanelSettings.style()).let { if (it < 0) 0 else it }
         ForkChoicePopup.show(fragment, anchor, labels, null, current) { index ->
             val chosen = modes[index]
-            ForkPanelSettings.setStyle(chosen)
-            if (PanelPolicy.STYLE_GLASS == chosen) {
-                org.telegram.messenger.LiteMode.setAllFlags(
-                    org.telegram.messenger.LiteMode.getValue(true) or
-                    org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS or
-                    org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR
-                )
-            } else if (PanelPolicy.STYLE_BLUR == chosen) {
-                org.telegram.messenger.LiteMode.setAllFlags(
-                    (org.telegram.messenger.LiteMode.getValue(true) or org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR) and
-                    org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS.inv()
-                )
-            } else {
-                org.telegram.messenger.LiteMode.setAllFlags(
-                    org.telegram.messenger.LiteMode.getValue(true) and
-                    (org.telegram.messenger.LiteMode.FLAG_LIQUID_GLASS or org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR).inv()
-                )
-            }
-            GlassEngine.invalidateSettings()
-            org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
-                org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false
-            )
+            org.telegram.messenger.LiteMode.setForkVisualMode(chosen)
             cell.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false)
         }
     }
