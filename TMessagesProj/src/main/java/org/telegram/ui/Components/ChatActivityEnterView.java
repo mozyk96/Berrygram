@@ -618,14 +618,22 @@ public class ChatActivityEnterView extends FrameLayout implements
     private final int[] recordingOverlayLocation = new int[2];
 
     private int getRecordingAnchorX(View overlay) {
-        if (!isChat || !org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled()
-                || audioVideoButtonContainer == null || audioVideoButtonContainer.getWidth() == 0) {
+        if (!isChat || audioVideoButtonContainer == null || audioVideoButtonContainer.getWidth() == 0) {
             return overlay.getMeasuredWidth() - AndroidUtilities.dp2(26);
         }
         audioVideoButtonContainer.getLocationInWindow(recordingButtonLocation);
         overlay.getLocationInWindow(recordingOverlayLocation);
         return recordingButtonLocation[0] + audioVideoButtonContainer.getWidth() / 2 - recordingOverlayLocation[0];
     }
+    private int getRecordingAnchorY(View overlay) {
+        if (!isChat || audioVideoButtonContainer == null || audioVideoButtonContainer.getHeight() == 0) {
+            return overlay.getMeasuredHeight() - dp(24);
+        }
+        audioVideoButtonContainer.getLocationInWindow(recordingButtonLocation);
+        overlay.getLocationInWindow(recordingOverlayLocation);
+        return recordingButtonLocation[1] + audioVideoButtonContainer.getHeight() / 2 - recordingOverlayLocation[1];
+    }
+
     private boolean audioVideoButtonContainerForbidden;
     private ChatActivityEnterViewAnimatedIconView audioVideoSendButton;
     private boolean isInVideoMode;
@@ -1322,15 +1330,51 @@ public class ChatActivityEnterView extends FrameLayout implements
 
         private VirtualViewHelper virtualViewHelper;
 
+        private final LinearLayout recordingDock;
+        private final ImageView dockPause;
+        private final ImageView dockCancel;
+        private final ImageView dockOnce;
+        private final RectF dockFieldBounds = new RectF();
+        private boolean dockPaused;
+        private boolean compactRecordingDock() { return isChat && sendButtonVisible; }
+
+        private ImageView dockButton(Context context, int icon, int description, Runnable action) {
+            ImageView view = new ImageView(context);
+            view.setScaleType(ImageView.ScaleType.CENTER);
+            view.setImageResource(icon);
+            view.setContentDescription(getString(description));
+            view.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
+            view.setOnClickListener(v -> action.run());
+            recordingDock.addView(view, new LinearLayout.LayoutParams(dp(44), dp(44)));
+            return view;
+        }
+
         public ControlsView(Context context) {
             super(context);
 
+            recordingDock = new LinearLayout(context);
+            recordingDock.setOrientation(LinearLayout.HORIZONTAL);
+            recordingDock.setVisibility(GONE);
+            addView(recordingDock, LayoutHelper.createFrame(132, 44));
+            dockCancel = dockButton(context, R.drawable.msg_delete, R.string.Cancel, () -> {
+                if (slideText != null) slideText.onCancelButtonPressed();
+            });
+            dockPause = dockButton(context, R.drawable.ic_pause, R.string.AccActionPause, this::togglePause);
+            dockOnce = dockButton(context, R.drawable.msg_stories_timer, R.string.AccActionOnceActivate, () -> {
+                voiceOnce = !voiceOnce;
+                periodDrawable.setValue(1, voiceOnce, true);
+                MediaDataController.getInstance(currentAccount).toggleDraftVoiceOnce(dialog_id,
+                        parentFragment != null && parentFragment.isTopic ? parentFragment.getTopicId() : 0, voiceOnce);
+                showOnceHint();
+                invalidate();
+            });
             virtualViewHelper = new VirtualViewHelper(this);
             ViewCompat.setAccessibilityDelegate(this, virtualViewHelper);
 
             periodDrawable = new CaptionContainerView.PeriodDrawable();
             periodDrawable.setCallback(this);
             periodDrawable.setValue(1, voiceOnce, false);
+            dockOnce.setImageDrawable(periodDrawable);
 
             lockOutlinePaint.setStyle(Paint.Style.STROKE);
             lockOutlinePaint.setStrokeCap(Paint.Cap.ROUND);
@@ -1458,6 +1502,37 @@ public class ChatActivityEnterView extends FrameLayout implements
             );
         }
 
+        @Override
+        protected void dispatchDraw(Canvas canvas) {
+            boolean compact = compactRecordingDock();
+            if ((recordingDock.getVisibility() == VISIBLE) != compact) recordingDock.setVisibility(compact ? VISIBLE : GONE);
+            if (compact && org.telegram.ui.Components.chat.ViewPositionWatcher.computeRectInParent(
+                    messageEditTextContainer, this, dockFieldBounds)) {
+                dockOnce.setVisibility(delegate != null && delegate.onceVoiceAvailable() ? VISIBLE : GONE);
+                int dockWidth = dp(dockOnce.getVisibility() == VISIBLE ? 132 : 88);
+                if (recordingDock.getMeasuredWidth() != dockWidth || recordingDock.getMeasuredHeight() != dp(44) || recordingDock.isLayoutRequested()) {
+                    recordingDock.measure(MeasureSpec.makeMeasureSpec(dockWidth, MeasureSpec.EXACTLY),
+                            MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY));
+                }
+                int x = Math.round(dockFieldBounds.right) - dockWidth;
+                int y = Math.round(dockFieldBounds.centerY()) - dp(22);
+                if (recordingDock.getLeft() != x || recordingDock.getTop() != y || recordingDock.getWidth() != dockWidth || recordingDock.isLayoutRequested()) {
+                    recordingDock.layout(x, y, x + dockWidth, y + dp(44));
+                }
+                if (dockPaused != (transformToSeekbar > .5f)) {
+                    dockPaused = transformToSeekbar > .5f;
+                    dockPause.setImageResource(dockPaused ? (isInVideoMode ? R.drawable.input_video : R.drawable.input_mic) : R.drawable.ic_pause);
+                }
+                dockPause.setContentDescription(getString(transformToSeekbar > .5f ? R.string.AccActionResume : R.string.AccActionPause));
+                dockPause.setEnabled(exitTransition == 0 && !(isInVideoMode && millisecondsRecorded >= 59_000));
+                dockCancel.setEnabled(exitTransition == 0);
+                dockOnce.setEnabled(exitTransition == 0);
+                recordingDock.setAlpha(1f - exitTransition);
+                dockOnce.setAlpha(voiceOnce ? 1f : .65f);
+            }
+            super.dispatchDraw(canvas);
+        }
+
         private final RectF rectF = new RectF();
         public final RectF onceRect = new RectF();
 
@@ -1470,6 +1545,22 @@ public class ChatActivityEnterView extends FrameLayout implements
 
         @Override
         protected void onDraw(Canvas canvas) {
+            if (compactRecordingDock()) {
+                pauseRect.setEmpty();
+                onceRect.setEmpty();
+                if (transformToSeekbar == 0 && recordCircle != null &&
+                        org.telegram.ui.Components.chat.ViewPositionWatcher.computeRectInParent(messageEditTextContainer, this, dockFieldBounds)) {
+                    float left = dockFieldBounds.left + dp(116);
+                    float right = dockFieldBounds.right - dp(delegate != null && delegate.onceVoiceAvailable() ? 136 : 92);
+                    lockPaint.setColor(getThemedColor(Theme.key_chat_recordTime));
+                    float cy = dockFieldBounds.centerY();
+                    for (float x = left; x + dp(3) < right; x += dp(6)) {
+                        float height = dp(3) + dp(12) * recordCircle.amplitude * (0.5f + 0.5f * (float) Math.abs(Math.sin(x)));
+                        canvas.drawRoundRect(x, cy - height, x + dp(3), cy + height, dp(1.5f), dp(1.5f), lockPaint);
+                    }
+                }
+                return;
+            }
             float sc;
             if (scale <= 0.5f) {
                 sc = scale / 0.5f;
@@ -1849,6 +1940,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                 0xFFFFFFFF
             );
 
+            int dockColor = getThemedColor(Theme.key_chat_recordTime);
+            dockPause.setColorFilter(dockColor);
+            dockCancel.setColorFilter(dockColor);
+            dockOnce.setColorFilter(dockColor);
             tooltipPaint.setColor(getThemedColor(Theme.key_chat_gifSaveHintText));
             if (tooltipBackground != null) {
                 Theme.setDrawableColor(tooltipBackground, getThemedColor(Theme.key_chat_gifSaveHintBackground));
@@ -1885,23 +1980,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             rect.bottom = lerp(cy, rect.bottom, s);
         }
 
-        private boolean oncePressed;
-        private boolean pausePressed;
-
-        @Override
-        public boolean onTouchEvent(MotionEvent event) {
-            final int x = (int) event.getX();
-            final int y = (int) event.getY();
-
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                if (sendButtonVisible) {
-                    pausePressed = pauseRect.contains(x, y);
-                }
-                if (onceVisible && (recordCircle != null && snapAnimationProgress > .1f)) {
-                    oncePressed = onceRect.contains(x, y);
-                }
-            } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                if (pausePressed && pauseRect.contains(x, y)) {
+        private void togglePause() {
                     if (isInVideoMode()) {
                         if (slideText != null) {
                             slideText.setEnabled(false);
@@ -1949,6 +2028,27 @@ public class ChatActivityEnterView extends FrameLayout implements
                             resume.run();
                         }
                     }
+        }
+
+        private boolean oncePressed;
+        private boolean pausePressed;
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            if (compactRecordingDock()) return false;
+            final int x = (int) event.getX();
+            final int y = (int) event.getY();
+
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                if (sendButtonVisible) {
+                    pausePressed = pauseRect.contains(x, y);
+                }
+                if (onceVisible && (recordCircle != null && snapAnimationProgress > .1f)) {
+                    oncePressed = onceRect.contains(x, y);
+                }
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                if (pausePressed && pauseRect.contains(x, y)) {
+                    togglePause();
                     pausePressed = oncePressed = false;
                     return true;
                 } else if (oncePressed && onceRect.contains(x, y)) {
@@ -1988,7 +2088,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 if (sendButtonVisible && recordCircle != null && pauseRect.contains(x, y)) {
                     return 2;
                 }
-                if (onceVisible && (recordCircle != null && snapAnimationProgress > .1f) && onceRect.contains(x, y)) {
+                if (!compactRecordingDock() && onceVisible && (recordCircle != null && snapAnimationProgress > .1f) && onceRect.contains(x, y)) {
                     return 4;
                 }
                 return HOST_ID;
@@ -1996,6 +2096,7 @@ public class ChatActivityEnterView extends FrameLayout implements
 
             @Override
             protected void getVisibleVirtualViews(List<Integer> list) {
+                if (compactRecordingDock()) return;
                 if (sendButtonVisible) {
                     list.add(2);
                 }
@@ -2287,7 +2388,7 @@ public class ChatActivityEnterView extends FrameLayout implements
 //                multilinTooltipOffset = tooltipLayout.getHeight() - tooltipLayout.getLineBottom(0);
 //            }
             int cx = getRecordingAnchorX(this);
-            int cy = (int) (dp(170) + multilinTooltipOffset);
+            int cy = isChat ? getRecordingAnchorY(this) : (int) (dp(170) + multilinTooltipOffset);
 //            float yAdd = 0;
 //            if (lockAnimatedTranslation != 10000) {
 //                yAdd = Math.max(0, (int) (startTranslation - lockAnimatedTranslation));
@@ -2329,7 +2430,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             } else {
                 slideToCancelScale = (0.7f + slideToCancelProgress * 0.3f);
             }
-            float radius = (circleRadius + circleRadiusAmplitude * amplitude) * sc * slideToCancelScale;
+            float radius = (isChat ? dp(26) + dp(2) * amplitude : circleRadius + circleRadiusAmplitude * amplitude) * sc * slideToCancelScale;
 
             progressToSeekbarStep3 = 0f;
             float progressToSeekbarStep1 = 0f;
@@ -2434,7 +2535,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             lastUpdateTime = System.currentTimeMillis();
             float slideToCancelProgress1 = slideToCancelProgress > 0.7f ? 1f : slideToCancelProgress / 0.7f;
 
-            if (LiteMode.isEnabled(LiteMode.FLAGS_CHAT) && progressToSeekbarStep2 != 1 && exitProgress2 < 0.4f && slideToCancelProgress1 > 0 && !canceledByGesture) {
+            if (!isChat && LiteMode.isEnabled(LiteMode.FLAGS_CHAT) && progressToSeekbarStep2 != 1 && exitProgress2 < 0.4f && slideToCancelProgress1 > 0 && !canceledByGesture) {
                 if (showWaves && wavesEnterAnimation != 1f) {
                     wavesEnterAnimation += 0.04f;
                     if (wavesEnterAnimation > 1f) {
@@ -2496,10 +2597,10 @@ public class ChatActivityEnterView extends FrameLayout implements
                             rectF.set(left, top, right, bottom);
                             audioTimelineView.drawIn(canvas, rectF, progressToSeekbarStep3);
                         } else {
-                            canvas.drawCircle(cx + slideDelta, cy, radius * (1f - progressToSeekbarStep3), paint);
+                            drawCompactCircle(canvas, cx + slideDelta, cy, radius * (1f - progressToSeekbarStep3));
                         }
                     } else {
-                        canvas.drawCircle(cx + slideDelta, cy, radius, paint);
+                        drawCompactCircle(canvas, cx + slideDelta, cy, radius);
                     }
                     canvas.save();
                     float a = (1f - exitProgress2);
@@ -2510,7 +2611,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
 
             if (scale != 1f) {
-                canvas.drawCircle(cx + slideDelta, cy, radius, paint);
+                drawCompactCircle(canvas, cx + slideDelta, cy, radius);
                 float a = (canceledByGesture ? (1f - slideToCancelProgress) : 1);
                 canvas.save();
                 canvas.translate(slideDelta, 0);
@@ -2518,6 +2619,20 @@ public class ChatActivityEnterView extends FrameLayout implements
                 canvas.restore();
             }
             drawingCircleRadius = radius;
+        }
+
+        private BlurredBackgroundDrawable compactCircleGlass;
+        private void drawCompactCircle(Canvas canvas, float x, float y, float radius) {
+            if (isChat && parentFragment != null && org.telegram.ui.ForkGraphicsSurface.blurSurfacesEnabled()) {
+                if (compactCircleGlass == null) compactCircleGlass = parentFragment.getGlassHintFactory().create(this,
+                        org.telegram.ui.ForkGlassSurface.wrap(org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.topPanelChatActivity(resourcesProvider)));
+                compactCircleGlass.setRadius(radius);
+                compactCircleGlass.setBounds(Math.round(x-radius), Math.round(y-radius), Math.round(x+radius), Math.round(y+radius));
+                compactCircleGlass.setAlpha(paint.getAlpha());
+                compactCircleGlass.draw(canvas);
+            } else {
+                canvas.drawCircle(x, y, radius, paint);
+            }
         }
 
         @Override
@@ -2623,6 +2738,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
 
         public void drawWaves(Canvas canvas, float cx, float cy, float additionalScale) {
+            if (isChat) return;
             float enter = CubicBezierInterpolator.EASE_OUT.getInterpolation(wavesEnterAnimation);
             float slideToCancelProgress1 = slideToCancelProgress > 0.7f ? 1f : slideToCancelProgress / 0.7f;
             canvas.save();
@@ -4294,7 +4410,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         recordedAudioPanel.setFocusable(true);
         recordedAudioPanel.setFocusableInTouchMode(true);
         recordedAudioPanel.setClickable(true);
-        messageEditTextContainer.addView(recordedAudioPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, DEFAULT_HEIGHT, Gravity.BOTTOM));
+        messageEditTextContainer.addView(recordedAudioPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, isChat ? 48 : DEFAULT_HEIGHT, Gravity.CENTER_VERTICAL));
 
         recordDeleteImageView = new RLottieImageView(getContext());
         recordDeleteImageView.setScaleType(ImageView.ScaleType.CENTER);
@@ -9543,7 +9659,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                     oldLayoutParams = recordedAudioPanel.getLayoutParams();
                     parent.removeView(recordedAudioPanel);
 
-                    FrameLayout.LayoutParams newLayoutParams = new FrameLayout.LayoutParams(parent.getMeasuredWidth() - (editingMessageObject == null ? Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT)) : 0), dp(DEFAULT_HEIGHT));
+                    FrameLayout.LayoutParams newLayoutParams = new FrameLayout.LayoutParams(Math.max(dp(100), parent.getMeasuredWidth()
+                            - (editingMessageObject == null ? Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT)) : 0)
+                            - (isChat ? dp(delegate != null && delegate.onceVoiceAvailable() ? 132 : 88) : 0)), dp(isChat ? 48 : DEFAULT_HEIGHT));
                     newLayoutParams.gravity = Gravity.BOTTOM;
                     newLayoutParams.leftMargin = dp(7);
                     newLayoutParams.rightMargin = dp(7);
@@ -10073,7 +10191,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         };
         recordPanel.setClipChildren(false);
         recordPanel.setVisibility(GONE);
-        messageEditTextContainer.addView(recordPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, DEFAULT_HEIGHT));
+        messageEditTextContainer.addView(recordPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, isChat ? 48 : DEFAULT_HEIGHT, Gravity.CENTER_VERTICAL));
         recordPanel.setOnTouchListener((v, event) -> true);
         recordPanel.addView(slideText = new SlideTextView(getContext()), LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.NO_GRAVITY, 45, 0, 0, 0));
 
@@ -10085,7 +10203,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         recordTimeContainer.addView(recordDot = new RecordDot(getContext()), LayoutHelper.createLinear(28, 28, Gravity.CENTER_VERTICAL, 0, 0, 0, 0));
         recordTimeContainer.addView(recordTimerView = new TimerView(getContext()), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER_VERTICAL, 6, 0, 0, 0));
 
-        recordPanel.addView(recordTimeContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER_VERTICAL));
+        recordPanel.addView(recordTimeContainer, LayoutHelper.createFrame(isChat ? 112 : LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER_VERTICAL));
     }
 
     @Override
@@ -14609,6 +14727,7 @@ public class ChatActivityEnterView extends FrameLayout implements
 
         @Override
         protected void onDraw(Canvas canvas) {
+            if (isChat && sendButtonVisible) return;
             if (slideToLayout == null || cancelLayout == null || recordCircle == null) {
                 return;
             }
@@ -15001,6 +15120,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
         }
         updateBotCommandsMenuContainerTopPadding();
+        if (isChat && recordedAudioPanel != null && recordedAudioPanel.getParent() == messageEditTextContainer) {
+            FrameLayout.LayoutParams previewParams = (FrameLayout.LayoutParams) recordedAudioPanel.getLayoutParams();
+            previewParams.rightMargin = sendButtonVisible && controlsView != null && exitTransition == 0
+                    ? dp(delegate != null && delegate.onceVoiceAvailable() ? 132 : 88) : 0;
+        }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         if (botWebViewButton != null) {

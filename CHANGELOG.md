@@ -1,8 +1,9 @@
-## 1.5.1 — private regression correction
+## 1.5.1 — private recording and optional header update
 
-- Restore the modern Telegram 13.2.2 conversation header directly from official revision 21f7d109: separate back, avatar/title and action surfaces; keep Berrygram glass providers.
-- Correct composer glass coordinates using Telegram's existing ViewPositionWatcher, which includes ancestor translations for navigation/IME insets. The background now follows the actual input field instead of its untranslated layout position.
-- Keep package, visible version and signing identity; ARM64 update code 72989. A focused coordinate fixture runs within the existing smoke pass. Actual UI and account behavior require owner testing; no publication.
+- Limit the live round-video preview to a responsive 272dp target with a thinner progress ring and space reserved for system UI and recording controls.
+- Use a 52–56dp separate recording/send circle anchored to the actual composer control; consolidate locked-recording pause/resume, discard and view-once actions into a measured row, with existing timer/amplitude and preview playback paths.
+- Add Appearance → Chat header style: Telegram (default) or iOS-style. Reuse the existing avatar, title/status, navigation and actions with independent rounded controls; persist the preference and refresh layouts on return/theme notification.
+- Preserve application ID, 1.5.1 version name and generation-2 key. ARM64 update code 72999. Actual recording/gesture and visual acceptance remain owner checks; no publication.
 
 ## 1.4.4
 

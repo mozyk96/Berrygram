@@ -153,4 +153,6 @@ node (Join-Path $PSScriptRoot 'test_message_menu_integration.js')
 if ($LASTEXITCODE -ne 0) { throw 'Message menu integration test failed' }
 node (Join-Path $PSScriptRoot 'test_composer_coordinates.js')
 if ($LASTEXITCODE -ne 0) { throw 'Composer coordinate regression test failed' }
+node (Join-Path $PSScriptRoot 'test_recording_geometry.js')
+if ($LASTEXITCODE -ne 0) { throw 'Recording geometry test failed' }
 Write-Output 'Fork smoke tests passed (no Android device or account used)'

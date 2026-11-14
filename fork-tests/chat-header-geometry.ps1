@@ -14,11 +14,11 @@ foreach ($file in @($SourceFile,
     }
 }
 $appearance = Get-Content (Join-Path $root 'TMessagesProj/src/main/java/org/telegram/ui/ForkAppearanceSettingsActivity.java') -Raw
-if ($appearance -match 'ForkNewChatHeader|ForkChatHeaderSettings') { throw 'Retired chat header setting remains visible' }
+if ($appearance -match 'ForkNewChatHeader|ForkChatHeaderSettings\.setEnabled') { throw 'Retired chat header setting remains visible' }
 $settings = Join-Path $root 'TMessagesProj/src/main/java/org/telegram/messenger/fork/panels/ForkChatHeaderSettings.java'
 $javac = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin/javac.exe' } else { (Get-Command javac -ErrorAction Stop).Source }
 $java = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin/java.exe' } else { (Get-Command java -ErrorAction Stop).Source }
-& $javac -encoding UTF-8 -d $build $settings (Join-Path $PSScriptRoot 'FloatingChatHeaderGeometryTest.java')
+& $javac -encoding UTF-8 -sourcepath (Join-Path $PSScriptRoot 'stubs') -d $build $settings (Join-Path $PSScriptRoot 'FloatingChatHeaderGeometryTest.java')
 if ($LASTEXITCODE -ne 0) { throw 'Native chat header compatibility compilation failed' }
 & $java -cp $build FloatingChatHeaderGeometryTest
 if ($LASTEXITCODE -ne 0) { throw 'Native chat header compatibility test failed' }

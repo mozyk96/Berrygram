@@ -279,4 +279,5 @@
     <string name="ForkAppearance">Зовнішній вигляд</string>
     <string name="ForkAppName">BerryGram</string>
     <string name="ForkCredentialsMissing">Для цієї збірки не налаштовано дані Telegram API. Додайте власні API ID та API hash і зберіть застосунок знову.</string>
+    <string name="ForkChatHeaderStyle">Стиль верхньої панелі чату</string>
 </resources>

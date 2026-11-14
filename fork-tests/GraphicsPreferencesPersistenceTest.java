@@ -6,6 +6,14 @@ import org.telegram.messenger.fork.panels.ForkPanelSettings;
 
 public class GraphicsPreferencesPersistenceTest {
     public static void main(String[] args) {
+        if (ForkChatHeaderSettings.isIosStyle()) throw new AssertionError("Telegram header must be the default");
+        ForkChatHeaderSettings.setIosStyle(true);
+        ForkPanelSettings.setStyle("none");
+        if (!ForkChatHeaderSettings.isIosStyle()) throw new AssertionError("Header style was not persisted independently");
+        if (!ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE)
+                .getBoolean("ios_chat_header", false)) throw new AssertionError("Header style missing from storage");
+        ForkChatHeaderSettings.setIosStyle(false);
+        if (ForkChatHeaderSettings.isIosStyle()) throw new AssertionError("Cannot restore Telegram header");
         // Simulate upgrading a device which previously opted in.
         ApplicationLoader.applicationContext.getSharedPreferences("fork_panels", Context.MODE_PRIVATE)
                 .edit().putBoolean("floating_chat_header", true).apply();

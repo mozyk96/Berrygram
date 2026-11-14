@@ -634,6 +634,8 @@ public class ActionBarMenu extends LinearLayout {
 
     public boolean isGlassMode() { return glassMode; }
 
+    private final java.util.WeakHashMap<View, Integer> forkItemWidths = new java.util.WeakHashMap<>();
+
     public void setGlassMode(boolean glassMode) {
         this.glassMode = glassMode;
     }
@@ -647,8 +649,14 @@ public class ActionBarMenu extends LinearLayout {
                     final ViewGroup.LayoutParams lp = view.getLayoutParams();
                     if (lp instanceof MarginLayoutParams) {
                         MarginLayoutParams mlp = (MarginLayoutParams) lp;
-                        mlp.leftMargin = -dp(5);
-                        mlp.rightMargin = -dp(5);
+                        boolean separate = parentActionBar != null && parentActionBar.isIosChatHeader();
+                        if (separate) {
+                            if (!forkItemWidths.containsKey(view)) forkItemWidths.put(view, mlp.width);
+                            mlp.width = dp(44);
+                        } else if (forkItemWidths.containsKey(view)) {
+                            mlp.width = forkItemWidths.remove(view);
+                        }
+                        mlp.leftMargin = mlp.rightMargin = separate ? dp(3) : -dp(5);
                     }
                 }
             }

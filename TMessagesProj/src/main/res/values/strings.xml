@@ -11683,4 +11683,5 @@
     <string name="FpnvConsentSimSlotValue">SIM %1$d</string>
     <string name="FpnvConsentPhoneNumber">Phone Number</string>
 
+    <string name="ForkChatHeaderStyle">Chat header style</string>
 </resources>

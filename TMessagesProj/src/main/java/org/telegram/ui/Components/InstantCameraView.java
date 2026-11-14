@@ -289,7 +289,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         };
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeCap(Paint.Cap.ROUND);
-        paint.setStrokeWidth(dp(3));
+        paint.setStrokeWidth(dp(2));
         paint.setColor(0xffffffff);
 
         rect = new RectF();
@@ -508,18 +508,16 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
 
     public void setInternalPadding(int padding) {
         internalPaddingBottom = padding;
-        setPadding(0, 0, 0, padding);
+        setPadding(0, AndroidUtilities.statusBarHeight + org.telegram.ui.ActionBar.ActionBar.getCurrentActionBarHeight() + dp(12), 0, padding);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (updateTextureViewSize) {
+        {
             int newSize;
-            if ((MeasureSpec.getSize(heightMeasureSpec) - getPaddingBottom()) > MeasureSpec.getSize(widthMeasureSpec) * 1.3f) {
-                newSize = AndroidUtilities.roundPlayingMessageSize;
-            } else {
-                newSize = AndroidUtilities.roundMessageSize;
-            }
+            newSize = Math.max(1, Math.min(dp(272), Math.min(
+                    MeasureSpec.getSize(widthMeasureSpec) - dp(32),
+                    MeasureSpec.getSize(heightMeasureSpec) - getPaddingTop() - getPaddingBottom() - dp(80))));
             if (newSize != textureViewSize) {
                 textureViewSize = newSize;
                 textureOverlayView.getLayoutParams().width = textureOverlayView.getLayoutParams().height = textureViewSize;
@@ -537,6 +535,18 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         final int flashHeightSpec = MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY);
         flashViews.backgroundView.measure(flashWidthSpec, flashHeightSpec);
         flashViews.foregroundView.measure(flashWidthSpec, flashHeightSpec);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        int safeBottom = Math.max(getPaddingTop(), getHeight() - getPaddingBottom() - dp(68));
+        int x = (getWidth() - textureViewSize) / 2;
+        int y = getPaddingTop() + Math.max(0, safeBottom - getPaddingTop() - textureViewSize) / 2;
+        cameraContainer.layout(x, y, x + textureViewSize, y + textureViewSize);
+        textureOverlayView.layout(x, y, x + textureViewSize, y + textureViewSize);
+        int cx = x + textureViewSize / 2, cy = y + textureViewSize / 2;
+        muteImageView.layout(cx - dp(24), cy - dp(24), cx + dp(24), cy + dp(24));
     }
 
     private boolean checkPointerIds(MotionEvent ev) {
@@ -618,7 +628,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
     protected void onDraw(Canvas canvas) {
         float x = cameraContainer.getX();
         float y = cameraContainer.getY();
-        rect.set(x - dp(8), y - dp(8), x + cameraContainer.getMeasuredWidth() + dp(8), y + cameraContainer.getMeasuredHeight() + dp(8));
+        rect.set(x - dp(4), y - dp(4), x + cameraContainer.getMeasuredWidth() + dp(4), y + cameraContainer.getMeasuredHeight() + dp(4));
         if (recording) {
             recordedTime = System.currentTimeMillis() - recordStartTime + recordPlusTime;
             progress = Math.min(1f, recordedTime / 60000.0f);
