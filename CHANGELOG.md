@@ -1,9 +1,8 @@
-## 1.5.1 — private test build
+## 1.5.1 — private regression correction
 
-- Restore standard Telegram chat header proportions, spacing and menu layout.
-- Bound the modern composer background to the measured field, with height-derived rounded ends, centered controls and a separate recording circle.
-- Apply Berrygram glass styling to chat chrome and recording, refresh stroke geometry on mode changes, and retain capture sources when switching appearance modes.
-- Keep org.berrygram.client, version 1.5.1 and the generation-2 signing identity; increase the ARM64 code to 72979 for an in-place update. Visual and live-account behavior require owner testing; no publication.
+- Restore the modern Telegram 13.2.2 conversation header directly from official revision 21f7d109: separate back, avatar/title and action surfaces; keep Berrygram glass providers.
+- Correct composer glass coordinates using Telegram's existing ViewPositionWatcher, which includes ancestor translations for navigation/IME insets. The background now follows the actual input field instead of its untranslated layout position.
+- Keep package, visible version and signing identity; ARM64 update code 72989. A focused coordinate fixture runs within the existing smoke pass. Actual UI and account behavior require owner testing; no publication.
 
 ## 1.4.4
 

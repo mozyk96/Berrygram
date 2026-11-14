@@ -4253,7 +4253,7 @@ public class ChatActivity extends BaseFragment implements
                 openSearchWithText(isSupportedTags() ? "" : null);
             }
         };
-        // Use Telegram's standard avatar, title and status proportions.
+        avatarContainer.setGlassMode();
         avatarContainer.allowShorterStatus = true;
         avatarContainer.premiumIconHiddable = true;
         avatarContainer.allowDrawStories = dialog_id < 0 && !isTopic;
@@ -4668,7 +4668,7 @@ public class ChatActivity extends BaseFragment implements
             glassBackgroundDrawableFactory,
             ForkGlassSurface.wrap(BlurredBackgroundProviderImpl.topPanelChatActivity(themeDelegate)),
             ChatObject.isForum(currentChat));
-        // Standard header menus use their existing popup factory.
+        setupHeaderMenuOverlay(parentView);
 
         if (chatMode == MODE_PINNED) {
             actionBar.setChatAvatarContainer(avatarContainer);

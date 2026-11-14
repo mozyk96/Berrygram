@@ -255,7 +255,7 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
     /* Render */
 
     private final Rect tmpRect = new Rect();
-    private final Rect inputFieldBounds = new Rect();
+    private final RectF inputFieldBounds = new RectF();
     private final RectF tmpRectF = new RectF();
 
     @Override
@@ -283,11 +283,14 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
             for (int i = 0; i < inputIslandBubbleContainer.getChildCount(); i++) {
                 View child = inputIslandBubbleContainer.getChildAt(i);
                 if (child instanceof ChatActivityEnterView && child.getVisibility() == VISIBLE) {
-                    modernComposerVisible = true;
                     ChatActivityEnterView input = (ChatActivityEnterView) child;
-                    input.messageEditTextContainer.getDrawingRect(inputFieldBounds);
-                    offsetDescendantRectToMyCoords(input.messageEditTextContainer, inputFieldBounds);
-                    tmpRect.set(inputFieldBounds);
+                    // Insets move the island with translationY. Layout-only descendant offsets
+                    // leave the glass at the unshifted bottom, underneath gesture navigation.
+                    if (!ViewPositionWatcher.computeRectInParent(input.messageEditTextContainer, this, inputFieldBounds)) {
+                        continue;
+                    }
+                    modernComposerVisible = true;
+                    inputFieldBounds.round(tmpRect);
                     tmpRect.inset(-dp(7), -dp(7));
                     break;
                 }
