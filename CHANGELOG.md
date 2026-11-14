@@ -1,3 +1,10 @@
+## 2.0.0
+
+- First official org.berrygram.client / generation-2 signing release, updating new-generation private 1.5.1 installations in place. Old org.example.forkclient remains a separate app; accounts/local-only data/secret chats/archives are not automatically migrated.
+- Distinguish local deletion from observed remote deletion using account/dialog/message identity and durable archive suppression; clean selection before preserving or removing rows and reject stale restore callbacks.
+- Keep encrypted deleted-message snapshots and known metadata, restrict preserved-message actions to local information/history/delete, and hide unavailable media playback controls.
+- Retain accepted chat, composer, recording, optional header styles and appearance modes. Add a short 2.1.0 palette/wallpaper roadmap note only.
+
 ## 1.5.1 — private recording and optional header update
 
 - Limit the live round-video preview to a responsive 272dp target with a thinner progress ring and space reserved for system UI and recording controls.

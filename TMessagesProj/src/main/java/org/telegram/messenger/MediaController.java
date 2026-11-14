@@ -3733,6 +3733,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
     }
 
     public boolean playMessage(final MessageObject messageObject) {
+        if (messageObject != null && messageObject.isForkDeleted && !messageObject.hasForkLocalMedia()) return false;
         return playMessage(messageObject, false);
     }
 

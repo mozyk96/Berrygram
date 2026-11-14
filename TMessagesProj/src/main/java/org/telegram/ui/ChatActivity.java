@@ -1779,6 +1779,10 @@ public class ChatActivity extends BaseFragment implements
         MessageObject message = ((ChatMessageCell) view).getMessageObject();
         if (message == null || message.messageOwner == null || message.currentAccount != currentAccount
                 || message.isDateObject || message.isSending() || message.isEditing()) return true;
+        if (message.isForkDeleted) {
+            if ("menu".equals(action)) return showForkPreservedMenu(message);
+            return true;
+        }
         if ("edit".equals(action) && !message.canEditMessage(currentChat)) {
             forkShowActionUnavailable("edit");
             return true;
@@ -15525,11 +15529,13 @@ public class ChatActivity extends BaseFragment implements
     }
 
     public void showFieldPanelForReply(MessageObject messageObjectToReply) {
+        if (messageObjectToReply != null && messageObjectToReply.isForkDeleted) return;
         showFieldPanel(true, messageObjectToReply, null, null, null, true, 0, null, false, 0, true);
     }
 
     private Runnable onHideFieldPanelRunnable;
     public void showFieldPanelForReplyQuote(MessageObject messageObjectToReply, ReplyQuote quote) {
+        if (messageObjectToReply != null && messageObjectToReply.isForkDeleted) return;
         showFieldPanel(true, messageObjectToReply, null, null, null, true, 0, quote, false, 0, true);
     }
 
@@ -19979,6 +19985,8 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private void addToSelectedMessages(MessageObject messageObject, boolean outside, boolean last) {
+        if (messageObject != null && messageObject.isForkDeleted
+                && selectedMessagesIds[messageObject.getDialogId() == dialog_id ? 0 : 1].get(messageObject.getId()) == null) return;
         int prevCantForwardCount = cantForwardMessagesCount;
         if (messageObject != null) {
             if (threadMessageObjects != null && threadMessageObjects.contains(messageObject) && !isThreadChat()) {
@@ -22798,7 +22806,8 @@ public class ChatActivity extends BaseFragment implements
                         if (entry == null) {
                             continue;
                         }
-                        if (!org.telegram.messenger.fork.storage.ForkArchivedRestorePolicy.shouldRestore(entry.messageId, entry.deleted, known)) {
+                        if (org.telegram.messenger.fork.storage.ForkDeletionPolicy.isLocal(currentAccount, dialogId, entry.messageId)
+                                || !org.telegram.messenger.fork.storage.ForkArchivedRestorePolicy.shouldRestore(entry.messageId, entry.deleted, known)) {
                             continue;
                         }
                         MessageObject obj = org.telegram.messenger.fork.storage.ForkArchivedMessageFactory.create(currentAccount, entry);
@@ -22814,6 +22823,8 @@ public class ChatActivity extends BaseFragment implements
                         int index = org.telegram.messenger.fork.storage.ForkArchivedRestorePolicy.insertIndex(dates,
                                 obj.messageOwner != null ? obj.messageOwner.date : 0);
                         messages.add(index, obj);
+                        messagesDict[0].put(obj.getId(), obj);
+                        known.add(obj.getId());
                         inserted.add(index);
                     }
                     if (inserted.isEmpty()) {
@@ -27334,6 +27345,75 @@ public class ChatActivity extends BaseFragment implements
         return sponsoredMessagesCount;
     }
 
+    private void clearForkDeletedSelection(int loadIndex, java.util.List<Integer> ids) {
+        boolean changed = false;
+        for (int mid : ids) {
+            MessageObject selected = selectedMessagesIds[loadIndex].get(mid);
+            if (selected != null) {
+                addToSelectedMessages(selected, false, false);
+                selectedMessagesCanCopyIds[loadIndex].remove(mid);
+                selectedMessagesCanStarIds[loadIndex].remove(mid);
+                changed = true;
+            }
+        }
+        if (changed || actionBar != null && actionBar.isActionModeShowed()
+                && selectedMessagesIds[0].size() + selectedMessagesIds[1].size() == 0) {
+            addToSelectedMessages(null, false, true);
+            updateSelectedMessageReactions();
+            updateVisibleRows();
+        }
+    }
+
+    private void deleteForkPreservedMessage(MessageObject message) {
+        long did = message.getDialogId();
+        if (did == 0) did = dialog_id;
+        ArrayList<Integer> ids = new ArrayList<>();
+        ids.add(message.getId());
+        org.telegram.messenger.fork.storage.ForkArchiveManager.suppressLocalDeletes(currentAccount, did, ids);
+        // Local historical records never pass through Telegram's delete/cancel-sending API.
+        processDeletedMessages(ids, ChatObject.isChannel(currentChat) && did == dialog_id ? -did : 0, false, false);
+    }
+
+    private void showForkPreservedInfo(MessageObject message) {
+        org.telegram.messenger.fork.storage.ForkArchiveManager.loadPreservedMessage(currentAccount,
+                message.getDialogId(), message.getId(), entries -> {
+            if (getParentActivity() == null) return;
+            org.telegram.messenger.fork.storage.ForkArchiveManager.ArchivedMessage entry = entries.isEmpty() ? null : entries.get(0);
+            java.text.DateFormat format = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT);
+            StringBuilder text = new StringBuilder(ForkLocale.get(R.string.ForkPreservedMessage));
+            int date = message.messageOwner.date;
+            int edit = message.messageOwner.edit_date;
+            int observed = message.forkDeletionObservedAt;
+            if (entry != null) {
+                if (edit == 0) edit = entry.editDate;
+                if (observed == 0) observed = entry.observedAt;
+            }
+            if (date > 0) text.append("\n\n").append(ForkLocale.get(R.string.ForkPreservedSent)).append(": ").append(format.format(new java.util.Date(date * 1000L)));
+            if (edit > 0) text.append("\n").append(ForkLocale.get(R.string.ForkPreservedEdited)).append(": ").append(format.format(new java.util.Date(edit * 1000L)));
+            if (observed > 0) text.append("\n").append(ForkLocale.get(R.string.ForkPreservedObserved)).append(": ").append(format.format(new java.util.Date(observed * 1000L)));
+            if ((message.isVoice() || message.isRoundVideo() || message.isVideo() || message.isMusic()) && !message.hasForkLocalMedia()) {
+                text.append("\n\n").append(ForkLocale.get(R.string.ForkPreservedMediaMissing));
+            }
+            showDialog(new AlertDialog.Builder(getParentActivity(), themeDelegate)
+                    .setTitle(ForkLocale.get(R.string.ForkPreservedInfo)).setMessage(text)
+                    .setPositiveButton(getString(R.string.OK), null)
+                    .setNeutralButton(ForkLocale.get(R.string.ForkPreservedHistory), (dialog, which) ->
+                            org.telegram.ui.Components.ForkEditHistoryBottomSheet.show(this, currentAccount,
+                                    message.getDialogId(), message.getId(), message.messageOwner.message == null ? "" : message.messageOwner.message))
+                    .create());
+        });
+    }
+
+    private boolean showForkPreservedMenu(MessageObject message) {
+        showDialog(new AlertDialog.Builder(getParentActivity(), themeDelegate)
+                .setTitle(ForkLocale.get(R.string.ForkPreservedMessage))
+                .setItems(new CharSequence[] {ForkLocale.get(R.string.ForkPreservedInfo), getString(R.string.Delete)}, (dialog, which) -> {
+                    if (which == 0) showForkPreservedInfo(message);
+                    else deleteForkPreservedMessage(message);
+                }).create());
+        return true;
+    }
+
     private void processDeletedMessages(ArrayList<Integer> markAsDeletedMessages, long channelId, boolean sent) {
         processDeletedMessages(markAsDeletedMessages, channelId, sent, true);
     }
@@ -27353,6 +27433,7 @@ public class ChatActivity extends BaseFragment implements
         } else if (channelId != 0) {
             return;
         }
+        clearForkDeletedSelection(loadIndex, markAsDeletedMessages);
         if (replyingMessageObject != null && markAsDeletedMessages.contains(replyingMessageObject.getId())) {
             replyingMessageObject = null;
             replyingQuote = null;
@@ -27449,26 +27530,15 @@ public class ChatActivity extends BaseFragment implements
                     boolean isUnsentOrSending = obj.getId() <= 0 || obj.isSending() || obj.isSendError()
                             || (obj.messageOwner != null && obj.messageOwner.send_state != 0);
                     if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)
-                            && !sent && !obj.scheduled && chatMode != MODE_SCHEDULED && !isUnsentOrSending) {
+                            && !sent && !obj.scheduled && chatMode == MODE_DEFAULT && currentEncryptedChat == null
+                            && !obj.isEphemeral() && !obj.isSecretMedia() && !isUnsentOrSending
+                            && !org.telegram.messenger.fork.storage.ForkDeletionPolicy.isLocal(currentAccount,
+                                    loadIndex == 1 ? mergeDialogId : dialog_id, obj.getId())) {
                         obj.isForkDeleted = true;
                         org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).recordDeletedMessage(dialog_id, obj.getId(), currentTime);
-                        // Keep the text locally, so the tombstone survives a restart.
-                        try {
-                            String deletedText = obj.messageOwner != null ? obj.messageOwner.message : null;
-                            if (deletedText != null && !deletedText.isEmpty()) {
-                                org.telegram.messenger.fork.storage.ForkArchiveManager.archiveMessageAsync(
-                                        currentAccount,
-                                        dialog_id,
-                                        obj.getId(),
-                                        obj.messageOwner != null ? obj.messageOwner.date : currentTime,
-                                        org.telegram.messenger.DialogObject.getPeerDialogId(obj.messageOwner != null ? obj.messageOwner.from_id : null),
-                                        null,
-                                        deletedText,
-                                        true
-                                );
-                            }
-                        } catch (Throwable ignored) {
-                        }
+                        if (obj.forkDeletionObservedAt == 0) obj.forkDeletionObservedAt = (int) (System.currentTimeMillis() / 1000L);
+                        org.telegram.messenger.fork.storage.ForkArchiveManager.captureMessageAsync(currentAccount,
+                                loadIndex == 1 ? mergeDialogId : dialog_id, obj.messageOwner, true);
                         if (chatAdapter != null) {
                             chatAdapter.notifyItemChanged(chatAdapter.messagesStartRow + index);
                         }
@@ -31911,6 +31981,7 @@ public class ChatActivity extends BaseFragment implements
         if (message == null) {
             return false;
         }
+        if (message.isForkDeleted) return showForkPreservedMenu(message);
         if (!single && TlUtils.isInstance(message.messageOwner.action,
                 TLRPC.TL_messageActionChangeCommunity.class,
                 TLRPC.TL_messageActionGiftPremium.class,
@@ -35646,6 +35717,7 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private void deleteMessageLocallyInternal(final MessageObject message, final MessageObject.GroupedMessages group) {
+        if (message != null && message.isForkDeleted) { deleteForkPreservedMessage(message); return; }
         if (message == null) {
             return;
         }
@@ -35670,8 +35742,7 @@ public class ChatActivity extends BaseFragment implements
             }
 
             try {
-                org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).removeDeletedMessage(did, mid);
-                org.telegram.messenger.fork.storage.ForkArchiveManager.deleteMessageAsync(currentAccount, did, mid);
+                org.telegram.messenger.fork.storage.ForkArchiveManager.suppressLocalDeletes(currentAccount, did, java.util.Collections.singletonList(mid));
             } catch (Throwable ignored) {
             }
 
@@ -42843,6 +42914,7 @@ public class ChatActivity extends BaseFragment implements
         @Override
         public void didPressImage(ChatMessageCell cell, float x, float y, boolean fullPreview) {
             MessageObject message = cell.getMessageObject();
+            if (message != null && message.isForkDeleted && !message.hasForkLocalMedia()) { showForkPreservedInfo(message); return; }
             if (message.type == MessageObject.TYPE_STORY) {
                 if (message.messageOwner.media.storyItem != null && !(message.messageOwner.media.storyItem instanceof TL_stories.TL_storyItemDeleted)) {
                     TL_stories.StoryItem storyItem = message.messageOwner.media.storyItem;
@@ -46383,7 +46455,7 @@ public class ChatActivity extends BaseFragment implements
         } else {
             return;
         }
-        if (messageObject == null) return;
+        if (messageObject == null || messageObject.isForkDeleted) return;
         if (getUserConfig().getClientUserId() == getDialogId() && messageObject.areTags() && !getUserConfig().isPremium()) {
             if (longpress) return;
             new PremiumFeatureBottomSheet(ChatActivity.this, PremiumPreviewFragment.PREMIUM_FEATURE_SAVED_TAGS, true).show();

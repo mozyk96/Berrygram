@@ -103,8 +103,9 @@ class ForkEditHistoryStorage private constructor(private val currentAccount: Int
         }
     }
 
+    @Synchronized
     fun recordPriorVersion(dialogId: Long, messageId: Int, editDate: Int, text: String?) {
-        if (text.isNullOrEmpty()) return
+        if (text.isNullOrEmpty() || ForkDeletionPolicy.isLocal(currentAccount, dialogId, messageId)) return
         val db = database ?: return
         try {
             // Never store the same version twice, for example when the same edit
@@ -159,6 +160,7 @@ class ForkEditHistoryStorage private constructor(private val currentAccount: Int
         }
     }
 
+    @Synchronized
     fun getRevisions(dialogId: Long, messageId: Int): List<EditRevision> {
         val list = mutableListOf<EditRevision>()
         val db = database ?: return list
@@ -185,6 +187,12 @@ class ForkEditHistoryStorage private constructor(private val currentAccount: Int
         return list
     }
 
+    @Synchronized
+    fun deleteMessage(dialogId: Long, messageId: Int) {
+        database?.executeFast("DELETE FROM edit_history WHERE dialog_id = $dialogId AND message_id = $messageId;")?.stepThis()?.dispose()
+    }
+
+    @Synchronized
     fun hasEdits(dialogId: Long, messageId: Int): Boolean {
         val db = database ?: return false
         var cursor: SQLiteCursor? = null
@@ -202,6 +210,7 @@ class ForkEditHistoryStorage private constructor(private val currentAccount: Int
     }
 
     /** Removes stored versions older than the given timestamp. */
+    @Synchronized
     fun cleanupOlderThan(cutoffDate: Int): Int {
         val db = database ?: return 0
         return try {
@@ -221,6 +230,7 @@ class ForkEditHistoryStorage private constructor(private val currentAccount: Int
         }
     }
 
+    @Synchronized
     fun clear() {
         val db = database ?: return
         try {
@@ -235,7 +245,7 @@ class ForkEditHistoryStorage private constructor(private val currentAccount: Int
 
         @JvmStatic
         fun getInstance(currentAccount: Int): ForkEditHistoryStorage {
-            return instances.getOrPut(currentAccount) {
+            return instances.computeIfAbsent(currentAccount) {
                 ForkEditHistoryStorage(currentAccount)
             }
         }

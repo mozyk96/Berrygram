@@ -3254,6 +3254,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     }
 
     private boolean checkRoundSeekbar(MotionEvent event) {
+        if (currentMessageObject != null && currentMessageObject.isForkMediaUnavailable()) return false;
         if (!MediaController.getInstance().isPlayingMessage(currentMessageObject) || !MediaController.getInstance().isMessagePaused()) {
             return false;
         }
@@ -3432,6 +3433,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     }
 
     private boolean checkAudioMotionEvent(MotionEvent event) {
+        if (currentMessageObject != null && currentMessageObject.isForkMediaUnavailable()) return false;
         if (documentAttachType != DOCUMENT_ATTACH_TYPE_AUDIO && documentAttachType != DOCUMENT_ATTACH_TYPE_MUSIC && (documentAttachType != DOCUMENT_ATTACH_TYPE_ROUND || documentAttachType == DOCUMENT_ATTACH_TYPE_ROUND && currentMessageObject != null && !currentMessageObject.isVoiceTranscriptionOpen())) {
             return false;
         }
@@ -14537,6 +14539,15 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
 
     public void updateButtonState(boolean ifSame, boolean animated, boolean fromSet) {
         if (currentMessageObject == null) {
+            return;
+        }
+        if (currentMessageObject.isForkMediaUnavailable()) {
+            buttonState = miniButtonState = -1;
+            radialProgress.setIcon(MediaActionDrawable.ICON_NONE, false, false);
+            radialProgress.setMiniIcon(MediaActionDrawable.ICON_NONE, false, false);
+            videoRadialProgress.setIcon(MediaActionDrawable.ICON_NONE, false, false);
+            videoRadialProgress.setMiniIcon(MediaActionDrawable.ICON_NONE, false, false);
+            DownloadController.getInstance(currentAccount).removeLoadingFileObserver(this);
             return;
         }
         if (currentMessageObject.type == MessageObject.TYPE_STORY && currentMessageObject.isVideoStory()) {

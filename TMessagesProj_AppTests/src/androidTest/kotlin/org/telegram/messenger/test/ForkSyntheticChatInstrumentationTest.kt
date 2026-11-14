@@ -27,6 +27,75 @@ import org.telegram.ui.Components.ChatAvatarContainer
 /** Exercises the production chat view using a synthetic peer on a logged-out emulator. */
 @RunWith(AndroidJUnit4::class)
 class ForkSyntheticChatInstrumentationTest {
+    @Test fun syntheticBotGroupAndChannelDisplayHeaders() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
+            SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        try {
+            for (kind in listOf("bot", "group", "channel")) {
+                var chat: ChatActivity? = null
+                try {
+                    instrumentation.runOnMainSync {
+                        for (account in 0 until UserConfig.MAX_ACCOUNT_COUNT) {
+                            assertFalse("This fixture requires a logged-out emulator",
+                                UserConfig.getInstance(account).isClientActivated)
+                        }
+                        val connectivity = activity.getSystemService(ConnectivityManager::class.java)
+                        val network = connectivity.activeNetwork
+                        assertFalse("This fixture requires an offline emulator",
+                            network != null && connectivity.getNetworkCapabilities(network)
+                                ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true)
+                        Theme.createCommonResources(activity)
+                        AndroidUtilities.enableEdgeToEdge(activity)
+                        val controller = MessagesController.getInstance(UserConfig.selectedAccount)
+                        val args = Bundle()
+                        if (kind == "bot") {
+                            val peer = TLRPC.TL_user().apply {
+                                id = 987654322L
+                                first_name = "Тестовий бот"
+                                bot = true
+                            }
+                            controller.putUser(peer, false)
+                            args.putLong("user_id", peer.id)
+                        } else {
+                            val peer = if (kind == "group") TLRPC.TL_chat() else TLRPC.TL_channel()
+                            peer.id = if (kind == "group") 987654323L else 987654324L
+                            peer.title = if (kind == "group") "Тестова група" else "Тестовий канал"
+                            if (kind == "channel") peer.broadcast = true
+                            controller.putChat(peer, false)
+                            args.putLong("chat_id", peer.id)
+                        }
+                        val root = DrawerLayoutContainer(activity)
+                        val navigation = ActionBarLayout(activity, false)
+                        navigation.setFragmentStack(arrayListOf())
+                        navigation.setDrawerLayoutContainer(root)
+                        root.setParentActionBarLayout(navigation)
+                        root.setActionBarLayout(navigation)
+                        root.addView(navigation)
+                        activity.setContentView(root)
+                        val fragment = ChatActivity(args)
+                        chat = fragment
+                        assertTrue("Synthetic $kind chat could not be opened",
+                            navigation.presentFragment(INavigationLayout.NavigationParams(fragment).setNoAnimation(true)))
+                        val avatar = fragment.avatarContainer
+                        assertTrue("Synthetic $kind avatar is not visible", avatar.avatarImageView.visibility == View.VISIBLE)
+                        assertTrue("Synthetic $kind title is missing", avatar.titleTextView.text.toString().contains("Тестов"))
+                    }
+                    instrumentation.waitForIdleSync()
+                    val screenshot = instrumentation.uiAutomation.takeScreenshot()
+                    try {
+                        java.io.File(activity.getExternalFilesDir(null), "berrygram-151-synthetic-$kind.png")
+                            .outputStream().use { screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+                    } finally { screenshot.recycle() }
+                } finally {
+                    instrumentation.runOnMainSync { chat?.onFragmentDestroy() }
+                }
+            }
+        } finally {
+            instrumentation.runOnMainSync { activity.finish() }
+        }
+    }
+
     @Test fun syntheticPrivateChatDisplaysHeaderAndComposer() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,

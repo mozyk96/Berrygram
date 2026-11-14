@@ -67,7 +67,8 @@ public final class UpdatePolicy {
         if (tag == null || name == null) return false;
         String version = tag.startsWith("v") ? tag.substring(1) : tag;
         if (version(version) == null) return false;
-        return ("BerryGram-" + version + "-org.berrygram.client-arm64-v8a.apk").equalsIgnoreCase(name);
+        return ("BerryGram-" + version + "-org.berrygram.client-arm64-v8a.apk").equalsIgnoreCase(name)
+                || (compareVersions(version, "2.0.0") >= 0 && ("Berrygram-" + version + "-arm64-v8a.apk").equalsIgnoreCase(name));
     }
 
     public static boolean isUniversalAsset(String tag, String name) {

@@ -31,7 +31,7 @@ public class GestureNativePathTest {
  static final int OPTION_REPLY=8,OPTION_FORWARD=2,OPTION_COPY=3,OPTION_DELETE=1;
  static class View {float getX(){return 15;} float getY(){return 100;}}
  static class Owner {boolean noforwards;}
- static class MessageObject {Owner messageOwner=new Owner(); int currentAccount;boolean isDateObject;boolean isMediaEmpty(){return true;}boolean isSending(){return false;}boolean isEditing(){return false;}boolean canEditMessage(Object c){return true;} long getGroupId(){return 0;} Object getFromPeer(){return null;} boolean isTodo(){return false;} boolean isPoll(){return false;} boolean isPublicPoll(){return false;} boolean isInvoice(){return false;} static class GroupedMessages{MessageObject captionMessage;}}
+ static class MessageObject {Owner messageOwner=new Owner(); int currentAccount;boolean isDateObject,isForkDeleted;boolean isMediaEmpty(){return true;}boolean isSending(){return false;}boolean isEditing(){return false;}boolean canEditMessage(Object c){return true;} long getGroupId(){return 0;} Object getFromPeer(){return null;} boolean isTodo(){return false;} boolean isPoll(){return false;} boolean isPublicPoll(){return false;} boolean isInvoice(){return false;} static class GroupedMessages{MessageObject captionMessage;}}
  static class ChatMessageCell extends View {MessageObject message=new MessageObject();MessageObject getMessageObject(){return message;}MessageObject getPrimaryMessageObject(){return message;}}
  static class Bar {boolean isActionModeShowed(){return false;}}
  static class Chat {long id;long linked_monoforum_id;boolean megagroup;boolean broadcast_messages_allowed;}
@@ -62,6 +62,7 @@ public class GestureNativePathTest {
  ${block('    private void putReplyToArgs(')}
  ArrayList<Integer> allowed=new ArrayList<>(Arrays.asList(8,2,3));
  void fillMessageMenu(MessageObject m,ArrayList<Integer> icons,ArrayList<CharSequence> items,ArrayList<Integer> options){options.addAll(allowed);}
+ boolean showForkPreservedMenu(MessageObject message){return true;}
  ${block('    private boolean forkHandleGesture(')}
  int getPlainMessageType(MessageObject messageObject){${plainType}return -1;}
  boolean createMenu(View v,boolean single,boolean listView,float x,float y,boolean longpress){

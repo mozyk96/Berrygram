@@ -1,3 +1,9 @@
+## 2.0.0 / 2.1.0 — current owner scope
+
+2.0.0 stabilizes deleted-message handling and publishes the first official `org.berrygram.client` / generation-2 signing release. Keep the accepted UI.
+
+2.1.0 will separate app-wide named color palettes (a diagonal two-color circular preview), independent wallpapers (patterns/images/solid/theme-derived/gradients), and the existing effect mode. Palette changes must preserve a chosen wallpaper. No full theme-pack system; none of this is implemented in 2.0.0.
+
 ## Active: Android 1.4.0 Beta 1 — Implemented & Verified
 
 Ghost Mode (Privacy) -> Deleted Messages preservation (AyuGram style) -> Message Edit History -> Berry Archive (Local SQLite Chat Archive) -> 1-Tap Message Translator -> Glass 2.0 & Unified 3 Visual Modes -> Device Analyzer (Samsung Galaxy A25 correction) -> Performance Center 2.0 -> Advanced Animations 2.0 -> Kotlin transition for fork modules.

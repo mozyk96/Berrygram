@@ -1,6 +1,6 @@
 {
-  "berrygramVersion": "1.5.1",
-  "checkedAt": "2026-11-13",
+  "berrygramVersion": "2.0.0",
+  "checkedAt": "2026-11-14",
   "sourceRepository": "https://github.com/DrKLO/Telegram",
   "sourceBranch": "master",
   "integratedVersion": "13.2.2",
@@ -8,5 +8,5 @@
   "latestVerifiedVersion": "13.2.2",
   "latestVerifiedCommit": "21f7d109da6ab3506c9e9577f98c6a38771ab335",
   "latestVerifiedCode": 7303,
-  "decision": "retain integrated 13.2.2; official master unchanged"
+  "decision": "retain verified official Telegram 13.2.2 at 21f7d109; master unchanged; focused 2.0.0 stabilization only"
 }

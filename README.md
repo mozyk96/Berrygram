@@ -4,13 +4,13 @@
 
 BerryGram is an unofficial Android client based on the official Telegram Android source. It keeps Telegram's messaging interface and adds focused settings for video messages, voice recording, text overrides and optional experimental panels.
 
-**Development status:** 1.0.4 is in development. Version 1.0.3 fixes the 1.0.2 test-only installation issue. Android device acceptance, updater installation and visual checks remain incomplete; no stable release is available from this repository. Background FCM notifications require a fork-owned Firebase configuration and have not been verified.
-
-Releases will be available from [GitHub Releases](https://github.com/mozyk96/Berrygram/releases) after publication. See [CHANGELOG.md](CHANGELOG.md) for the current development status.
+**Version 2.0.0** starts the new application and signing generation: `org.berrygram.client`. Official APKs and SHA256SUMS are available from [GitHub Releases](https://github.com/mozyk96/Berrygram/releases). See [CHANGELOG.md](CHANGELOG.md).
 
 ## Requirements and installation
 
-Android 6.0 (API 23) or newer. Current development APKs target `arm64-v8a`. Install only a verified APK from the project's Releases page when a stable release is published; Android's installer must confirm updates. Debug and Release currently use distinct application IDs and are separate installations.
+Android 6.0 (API 23) or newer; ARM64 APK. The new package installs separately from old-generation `org.example.forkclient`: it is not an in-place update of that app. Signing in again may be required. Old local-only data, secret chats and archives do not migrate automatically. New-generation private 1.5.1 installations can be updated in place with the same signing certificate.
+
+Background FCM delivery requires fork-owned Firebase configuration and is not claimed as verified. Use only signed assets from this repository's Releases page and verify SHA256SUMS.
 
 ## Build from source
 

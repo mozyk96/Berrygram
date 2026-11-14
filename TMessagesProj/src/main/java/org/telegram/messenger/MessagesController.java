@@ -9374,6 +9374,9 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                 }
             }
+            if (!cacheOnly && !scheduled && !quickReplies && !welcomeMessages && !movedToScheduled && dialogId != 0) {
+                org.telegram.messenger.fork.storage.ForkArchiveManager.suppressLocalDeletes(currentAccount, dialogId, messages);
+            }
             if (scheduled) {
                 getMessagesStorage().markMessagesAsDeleted(dialogId, messages, true, false, ChatActivity.MODE_SCHEDULED, 0);
             } else if (quickReplies) {
@@ -18672,6 +18675,11 @@ public class MessagesController extends BaseController implements NotificationCe
                                 message.message
                         );
                     }
+                }
+                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled(currentAccount)
+                        && message.id > 0 && message.ttl_period == 0 && !message.noforwards) {
+                    org.telegram.messenger.fork.storage.ForkArchiveManager.captureMessageAsync(
+                            currentAccount, MessageObject.getDialogId(message), message, false);
                 }
                 if (newMessageCallback != null && newMessageCallback.onMessageReceived(message)) {
                     newMessageCallback = null;

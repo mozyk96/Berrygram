@@ -25,7 +25,8 @@ class ForkEditHistoryBottomSheet(
     dialogId: Long,
     messageId: Int,
     currentText: String?,
-    resourcesProvider: Theme.ResourcesProvider?
+    resourcesProvider: Theme.ResourcesProvider?,
+    revisions: List<ForkEditHistoryStorage.EditRevision> = emptyList()
 ) : BottomSheet(context, true, resourcesProvider) {
 
     init {
@@ -64,7 +65,6 @@ class ForkEditHistoryBottomSheet(
         )
 
         // Previous revisions
-        val revisions = ForkEditHistoryStorage.getInstance(currentAccount).getRevisions(dialogId, messageId)
         for (i in revisions.indices.reversed()) {
             val rev = revisions[i]
             val dateStr = LocaleController.formatDateTime(rev.editDate.toLong(), false)
@@ -132,15 +132,14 @@ class ForkEditHistoryBottomSheet(
             currentText: String?
         ) {
             val activity = fragment?.parentActivity ?: return
-            val sheet = ForkEditHistoryBottomSheet(
-                activity,
-                currentAccount,
-                dialogId,
-                messageId,
-                currentText,
-                fragment.resourceProvider
-            )
-            sheet.show()
+            org.telegram.messenger.Utilities.globalQueue.postRunnable {
+                val revisions = ForkEditHistoryStorage.getInstance(currentAccount).getRevisions(dialogId, messageId)
+                AndroidUtilities.runOnUIThread {
+                    if (fragment.parentActivity !== activity || org.telegram.messenger.fork.storage.ForkDeletionPolicy.isLocal(currentAccount, dialogId, messageId)) return@runOnUIThread
+                    ForkEditHistoryBottomSheet(activity, currentAccount, dialogId, messageId, currentText,
+                            fragment.resourceProvider, revisions).show()
+                }
+            }
         }
     }
 }

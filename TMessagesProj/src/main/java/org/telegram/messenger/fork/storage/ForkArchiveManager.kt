@@ -34,7 +34,10 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         @JvmField val senderId: Long,
         @JvmField val senderName: String?,
         @JvmField val messageText: String,
-        @JvmField val deleted: Boolean = false
+        @JvmField val deleted: Boolean = false,
+        @JvmField val observedAt: Int = 0,
+        @JvmField val editDate: Int = 0,
+        @JvmField val serializedMessage: ByteArray? = null
     )
 
     class ArchivedDialogSummary(
@@ -77,6 +80,15 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
                     "updated_at INTEGER NOT NULL DEFAULT 0" +
                     ");"
             )?.stepThis()?.dispose()
+            database?.executeFast("CREATE TABLE IF NOT EXISTS local_deletions (owner_id INTEGER NOT NULL, dialog_id INTEGER NOT NULL, message_id INTEGER NOT NULL, PRIMARY KEY(owner_id, dialog_id, message_id));")?.stepThis()?.dispose()
+            database?.executeFast("CREATE TABLE IF NOT EXISTS archived_message_state (dialog_id INTEGER NOT NULL, message_id INTEGER NOT NULL, observed_at INTEGER NOT NULL DEFAULT 0, edit_date INTEGER NOT NULL DEFAULT 0, message_enc BLOB, PRIMARY KEY(dialog_id, message_id));")?.stepThis()?.dispose()
+            var markers: SQLiteCursor? = null
+            try {
+                markers = database?.queryFinalized("SELECT owner_id, dialog_id, message_id FROM local_deletions;")
+                while (markers != null && markers.next()) {
+                    ForkDeletionPolicy.markLocal(currentAccount, markers.longValue(0), markers.longValue(1), listOf(markers.intValue(2)))
+                }
+            } finally { markers?.dispose() }
             migrateLegacyRows()
         } catch (e: SQLiteException) {
             FileLog.e(e)
@@ -182,7 +194,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         messageText: String?,
         deleted: Boolean = false
     ): Boolean {
-        if (messageText.isNullOrEmpty()) return false
+        if (messageText.isNullOrEmpty() || isLocallyDeleted(dialogId, messageId)) return false
         val db = database ?: return false
         try {
             val encrypted = ForkArchiveCrypto.encrypt(currentAccount, messageText)
@@ -231,25 +243,81 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         }
     }
 
-    /** Marks already archived messages of one chat as deleted. */
     @Synchronized
-    fun markDeleted(dialogId: Long, messageIds: List<Int>): Int {
-        val chunks = sqlIdChunks(messageIds)
+    private fun isLocallyDeleted(dialogId: Long, messageId: Int): Boolean {
+        if (ForkDeletionPolicy.isLocal(currentAccount, dialogId, messageId)) return true
+        val db = database ?: return true
+        var cursor: SQLiteCursor? = null
+        return try {
+            cursor = db.queryFinalized("SELECT 1 FROM local_deletions WHERE owner_id = ${org.telegram.messenger.UserConfig.getInstance(currentAccount).clientUserId} AND dialog_id = $dialogId AND message_id = $messageId;")
+            cursor != null && cursor.next()
+        } finally { cursor?.dispose() }
+    }
+
+    @Synchronized
+    private fun suppressLocal(owner: Long, dialogId: Long, ids: List<Int>) {
+        val db = database ?: throw IllegalStateException("Archive database unavailable")
+        for (id in ids.filter { it > 0 }.distinct()) {
+            db.executeFast("INSERT OR IGNORE INTO local_deletions VALUES ($owner, $dialogId, $id);").stepThis().dispose()
+            if (org.telegram.messenger.UserConfig.getInstance(currentAccount).clientUserId != owner) continue
+            deleteMessage(dialogId, id)
+            ForkMessageTextCache.remove(currentAccount, dialogId, id)
+            ForkDeletedMessagesStorage.getInstance(currentAccount).removeDeletedMessage(dialogId, id)
+            ForkEditHistoryStorage.getInstance(currentAccount).deleteMessage(dialogId, id)
+        }
+    }
+
+    @Synchronized
+    private fun saveMessageState(dialogId: Long, id: Int, observedAt: Int, editDate: Int, snapshot: String?) {
+        if (isLocallyDeleted(dialogId, id)) return
+        val db = database ?: return
+        db.executeFast("INSERT OR IGNORE INTO archived_message_state(dialog_id, message_id) VALUES ($dialogId, $id);").stepThis().dispose()
+        val encrypted = snapshot?.let { ForkArchiveCrypto.encrypt(currentAccount, it) }
+        if (snapshot != null && encrypted == null) throw IllegalStateException("Archive encryption is unavailable")
+        val buffer = encrypted?.let { java.nio.ByteBuffer.allocateDirect(it.size).put(it).apply { flip() } }
+        val state = db.executeFast("UPDATE archived_message_state SET observed_at = CASE WHEN observed_at = 0 THEN ? ELSE observed_at END, edit_date = MAX(edit_date, ?), message_enc = COALESCE(?, message_enc) WHERE dialog_id = ? AND message_id = ?;")
+        try {
+            state.bindInteger(1, observedAt)
+            state.bindInteger(2, editDate)
+            if (buffer == null) state.bindNull(3) else state.bindByteBuffer(3, buffer)
+            state.bindLong(4, dialogId)
+            state.bindInteger(5, id)
+            state.step()
+        } finally { state.dispose(); buffer?.clear() }
+    }
+
+    private fun readPreservedEntry(cursor: SQLiteCursor): ArchivedMessage {
+        val entry = readEntry(cursor)
+        val db = database ?: return entry
+        var state: SQLiteCursor? = null
+        return try {
+            state = db.queryFinalized("SELECT observed_at, edit_date, message_enc FROM archived_message_state WHERE dialog_id = ${entry.dialogId} AND message_id = ${entry.messageId};")
+            if (state != null && state.next()) {
+                val plain = ForkArchiveCrypto.decrypt(currentAccount, state.byteArrayValue(2))
+                val bytes = plain?.let { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }
+                ArchivedMessage(entry.dialogId, entry.messageId, entry.date, entry.senderId, entry.senderName,
+                        entry.messageText, entry.deleted, state.intValue(0), state.intValue(1), bytes)
+            } else entry
+        } catch (error: Exception) { FileLog.e(error); entry }
+        finally { state?.dispose() }
+    }
+
+    /** Marks already archived messages of one chat as deleted. */
+    @JvmOverloads
+    @Synchronized
+    fun markDeleted(dialogId: Long, messageIds: List<Int>, observedAt: Int = (System.currentTimeMillis() / 1000L).toInt()): Int {
+        val eligible = messageIds.filter { !ForkDeletionPolicy.isLocal(currentAccount, dialogId, it) }
+        val chunks = sqlIdChunks(eligible)
         if (chunks.isEmpty()) return 0
         val db = database ?: return 0
         return try {
             for (chunk in chunks) {
-                val state = db.executeFast(
-                    "UPDATE archived_messages SET deleted = 1 WHERE dialog_id = $dialogId AND message_id IN ($chunk);"
-                )
-                state.step()
-                state.dispose()
+                db.executeFast("INSERT OR IGNORE INTO archived_message_state(dialog_id, message_id, observed_at) SELECT dialog_id, message_id, $observedAt FROM archived_messages WHERE dialog_id = $dialogId AND message_id IN ($chunk);").stepThis().dispose()
+                db.executeFast("UPDATE archived_message_state SET observed_at = $observedAt WHERE observed_at = 0 AND dialog_id = $dialogId AND message_id IN ($chunk);").stepThis().dispose()
+                db.executeFast("UPDATE archived_messages SET deleted = 1 WHERE dialog_id = $dialogId AND message_id IN ($chunk);").stepThis().dispose()
             }
-            messageIds.size
-        } catch (e: Exception) {
-            FileLog.e(e)
-            0
-        }
+            eligible.size
+        } catch (e: Exception) { FileLog.e(e); 0 }
     }
 
     /**
@@ -268,8 +336,9 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
      * Common chat message ids are account wide unique, so the affected chats
      * are resolved from the archive itself.
      */
+    @JvmOverloads
     @Synchronized
-    fun markDeletedByIds(messageIds: List<Int>): List<Long> {
+    fun markDeletedByIds(messageIds: List<Int>, observedAt: Int = (System.currentTimeMillis() / 1000L).toInt()): List<Long> {
         val chunks = sqlIdChunks(messageIds)
         if (chunks.isEmpty()) return emptyList()
         val db = database ?: return emptyList()
@@ -286,16 +355,14 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
                     cursor?.dispose()
                 }
             }
-            if (dialogs.isNotEmpty()) {
-                for (chunk in chunks) {
-                    val state = db.executeFast(
-                        "UPDATE archived_messages SET deleted = 1 WHERE message_id IN ($chunk);"
-                    )
-                    state.step()
-                    state.dispose()
+            val commonDialogs = dialogs.filter { dialog ->
+                if (dialog > 0) true else {
+                    val chat = org.telegram.messenger.MessagesController.getInstance(currentAccount).getChat(-dialog)
+                    chat != null && !org.telegram.messenger.ChatObject.isChannel(chat)
                 }
             }
-            dialogs.toList()
+            for (dialog in commonDialogs) markDeleted(dialog, messageIds, observedAt)
+            commonDialogs
         } catch (e: Exception) {
             FileLog.e(e)
             emptyList()
@@ -312,6 +379,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             state.bindInteger(2, messageId)
             state.step()
             state.dispose()
+            db.executeFast("DELETE FROM archived_message_state WHERE dialog_id = $dialogId AND message_id = $messageId;").stepThis().dispose()
             true
         } catch (e: Exception) {
             FileLog.e(e)
@@ -328,10 +396,10 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         try {
             cursor = db.queryFinalized(
                 "SELECT dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc, deleted" +
-                    " FROM archived_messages WHERE dialog_id = $dialogId AND deleted = 1 ORDER BY date ASC LIMIT $limit;"
+                    " FROM archived_messages WHERE dialog_id = $dialogId AND deleted = 1 AND NOT EXISTS (SELECT 1 FROM local_deletions l WHERE l.owner_id = ${org.telegram.messenger.UserConfig.getInstance(currentAccount).clientUserId} AND l.dialog_id = archived_messages.dialog_id AND l.message_id = archived_messages.message_id) ORDER BY date ASC LIMIT $limit;"
             )
             while (cursor != null && cursor.next()) {
-                list.add(readEntry(cursor))
+                list.add(readPreservedEntry(cursor))
             }
         } catch (e: Exception) {
             FileLog.e(e)
@@ -453,6 +521,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         return try {
             val removed = countMessages("WHERE date < $cutoffDate")
             db.executeFast("DELETE FROM archived_messages WHERE date < $cutoffDate;").stepThis().dispose()
+            db.executeFast("DELETE FROM archived_message_state WHERE NOT EXISTS (SELECT 1 FROM archived_messages m WHERE m.dialog_id = archived_message_state.dialog_id AND m.message_id = archived_message_state.message_id);").stepThis().dispose()
             removed
         } catch (e: Exception) {
             FileLog.e(e)
@@ -466,6 +535,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         return try {
             val removed = countMessages("WHERE dialog_id = $dialogId")
             db.executeFast("DELETE FROM archived_messages WHERE dialog_id = $dialogId;").stepThis().dispose()
+            db.executeFast("DELETE FROM archived_message_state WHERE dialog_id = $dialogId;").stepThis().dispose()
             // The import cursors of a removed chat must not survive, otherwise a
             // later re-import would skip the range that was just deleted.
             db.executeFast("DELETE FROM archive_import_state WHERE dialog_id = $dialogId;").stepThis().dispose()
@@ -601,6 +671,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         val db = database ?: return
         try {
             db.executeFast("DELETE FROM archived_messages;").stepThis().dispose()
+            db.executeFast("DELETE FROM archived_message_state;").stepThis().dispose()
             // Import cursors describe content that no longer exists. Keeping
             // them would make a fresh archive look complete and skip history.
             db.executeFast("DELETE FROM archive_import_state;").stepThis().dispose()
@@ -706,6 +777,21 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             }
         }
 
+        @JvmStatic
+        fun loadPreservedMessage(account: Int, dialogId: Long, id: Int, callback: ForkArchiveCallback) {
+            executor.execute {
+                val result = try {
+                    val manager = getInstance(account)
+                    synchronized(manager) {
+                        val cursor = manager.database?.queryFinalized("SELECT dialog_id, message_id, date, sender_id, sender_name, message_text, message_text_enc, deleted FROM archived_messages WHERE dialog_id = $dialogId AND message_id = $id;")
+                        try { if (cursor != null && cursor.next()) listOf(manager.readPreservedEntry(cursor)) else emptyList() }
+                        finally { cursor?.dispose() }
+                    }
+                } catch (error: Throwable) { FileLog.e(error); emptyList() }
+                AndroidUtilities.runOnUIThread { callback.onLoaded(result) }
+            }
+        }
+
         /** Stores a message without blocking the caller. */
         @JvmStatic
         fun archiveMessageAsync(            account: Int,
@@ -728,11 +814,52 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
             }
         }
 
+        @JvmStatic
+        fun suppressLocalDeletes(account: Int, dialogId: Long, messageIds: List<Int>) {
+            val ids = messageIds.toList()
+            val owner = org.telegram.messenger.UserConfig.getInstance(account).clientUserId
+            ForkDeletionPolicy.markLocal(account, owner, dialogId, ids)
+            executor.execute {
+                try { getInstance(account).suppressLocal(owner, dialogId, ids) }
+                catch (error: Throwable) { FileLog.e(error) }
+            }
+        }
+
+        @JvmStatic
+        fun captureMessageAsync(account: Int, dialogId: Long, message: org.telegram.tgnet.TLRPC.Message, deleted: Boolean) {
+            if (message.id <= 0 || ForkDeletionPolicy.isLocal(account, dialogId, message.id)) return
+            val owner = org.telegram.messenger.UserConfig.getInstance(account).clientUserId
+            val id = message.id
+            val date = message.date
+            val edit = message.edit_date
+            val sender = org.telegram.messenger.DialogObject.getPeerDialogId(message.from_id)
+            val text = message.message.orEmpty()
+            val observed = if (deleted) (System.currentTimeMillis() / 1000L).toInt() else 0
+            val stream = org.telegram.tgnet.SerializedData(message.objectSize)
+            val snapshot = try {
+                message.serializeToStream(stream)
+                android.util.Base64.encodeToString(stream.toByteArray(), android.util.Base64.NO_WRAP)
+            } finally { stream.cleanup() }
+            executor.execute {
+                try {
+                    if (org.telegram.messenger.UserConfig.getInstance(account).clientUserId != owner) return@execute
+                    val manager = getInstance(account)
+                    // Empty text is valid for voice/video; the full TL message is encrypted separately.
+                    if (manager.archiveMessage(dialogId, id, date, sender, null, text.ifEmpty { " " }, deleted)) {
+                        manager.saveMessageState(dialogId, id, observed, edit, snapshot)
+                    }
+                } catch (error: Throwable) { FileLog.e(error) }
+            }
+        }
+
         /** Marks messages as deleted without blocking the caller. */
         @JvmStatic
-        fun markDeletedAsync(account: Int, dialogId: Long, messageIds: List<Int>) {            executor.execute {
+        fun markDeletedAsync(account: Int, dialogId: Long, messageIds: List<Int>) {
+            val observed = (System.currentTimeMillis() / 1000L).toInt()
+            val ids = messageIds.toList()
+            executor.execute {
                 try {
-                    getInstance(account).markDeleted(dialogId, messageIds)
+                    getInstance(account).markDeleted(dialogId, ids, observed)
                 } catch (error: Throwable) {
                     FileLog.e(error)
                 }
@@ -745,9 +872,11 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
          */
         @JvmStatic
         fun markDeletedByIdsAsync(account: Int, messageIds: List<Int>) {
+            val observed = (System.currentTimeMillis() / 1000L).toInt()
+            val ids = messageIds.toList()
             executor.execute {
                 try {
-                    getInstance(account).markDeletedByIds(messageIds)
+                    getInstance(account).markDeletedByIds(ids, observed)
                 } catch (error: Throwable) {
                     FileLog.e(error)
                 }
@@ -757,13 +886,7 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         /** Deletes an archived message asynchronously. */
         @JvmStatic
         fun deleteMessageAsync(account: Int, dialogId: Long, messageId: Int) {
-            executor.execute {
-                try {
-                    getInstance(account).deleteMessage(dialogId, messageId)
-                } catch (error: Throwable) {
-                    FileLog.e(error)
-                }
-            }
+            suppressLocalDeletes(account, dialogId, listOf(messageId))
         }
 
         /**

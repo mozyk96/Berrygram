@@ -1,3 +1,7 @@
+# 2.0.0 stabilization — 2026-11-14
+
+Owner accepted the current new-generation UI. Release scope is deletion provenance, archive persistence/metadata, selection cleanup and the official generation-2 release; no UI redesign or 2.1.0 theme implementation. Signed artifact, phone upgrade and publication are pending the current release gates; see CONTINUE.md for final verified evidence.
+
 # Android 1.4.1 — built and published as an official release
 
 ## Repository and branch

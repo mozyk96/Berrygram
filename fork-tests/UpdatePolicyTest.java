@@ -1,6 +1,11 @@
 import org.telegram.messenger.fork.updater.UpdatePolicy;
 public class UpdatePolicyTest {
  public static void main(String[] args) {
+  check(UpdatePolicy.shouldShowRelease("2.0.0", "1.5.1"), "new major generation must compare correctly");
+  check(UpdatePolicy.shouldShowRelease("2.0.1", "2.0.0"), "patch releases must compare correctly");
+  check(UpdatePolicy.compatibleCode(72999, 73009), "2.0.0 must update the newest private build");
+  check(UpdatePolicy.isArm64Asset("v2.0.0", "Berrygram-2.0.0-arm64-v8a.apk"), "official 2.x filename must be accepted");
+  check(!UpdatePolicy.isArm64Asset("v2.0.0", "Berrygram-1.5.0-arm64-v8a.apk"), "old-generation asset must remain rejected");
   check(UpdatePolicy.isArm64Asset("v1.5.2", "BerryGram-1.5.2-org.berrygram.client-arm64-v8a.apk"), "new generation asset must be accepted");
   check(!UpdatePolicy.isArm64Asset("v1.5.2", "BerryGram-1.5.2-arm64-v8a.apk"), "legacy asset must not be offered to the new generation");
   java.util.Set<String> signer=java.util.Collections.singleton("cert-a");

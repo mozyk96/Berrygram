@@ -230,6 +230,16 @@ public class MessageObject {
     public boolean deleted;
     public boolean deletedByThanos;
     public boolean isForkDeleted;
+    public int forkDeletionObservedAt;
+    public boolean isForkMediaUnavailable() {
+        return isForkDeleted && (isVoice() || isRoundVideo() || isVideo() || isMusic()) && !hasForkLocalMedia();
+    }
+    public boolean hasForkLocalMedia() {
+        if (messageOwner == null) return false;
+        if (!TextUtils.isEmpty(messageOwner.attachPath) && new java.io.File(messageOwner.attachPath).isFile()) return true;
+        return FileLoader.getInstance(currentAccount).getPathToMessage(messageOwner, false).isFile();
+    }
+
 
     public boolean isForkDeleted() {
         return isForkDeleted;
@@ -11952,6 +11962,7 @@ public class MessageObject {
     }
 
     public boolean canEditMessage(TLRPC.Chat chat) {
+        if (isForkDeleted) return false;
         return !isEphemeralAndNotWelcome() && canEditMessage(currentAccount, messageOwner, chat, scheduled);
     }
 
@@ -11960,6 +11971,7 @@ public class MessageObject {
     }
 
     public boolean canForwardMessage() {
+        if (isForkDeleted) return false;
         if (isQuickReply()) return false;
         if (type == TYPE_GIFT_STARS || type == TYPE_GIFT_THEME_UPDATE || type == TYPE_SUGGEST_BIRTHDAY || type == TYPE_GIFT_OFFER || type == TYPE_SHARING_OFFER || type == TYPE_COMMUNITY_CHANGED) return false;
         return !(messageOwner instanceof TLRPC.TL_message_secret) && !needDrawBluredPreview() && !isLiveLocation() && type != MessageObject.TYPE_PHONE_CALL && !isSponsored() && !messageOwner.noforwards;
@@ -12097,6 +12109,7 @@ public class MessageObject {
     }
 
     public boolean canDeleteMessage(boolean inScheduleMode, TLRPC.Chat chat) {
+        if (isForkDeleted) return false;
         return (
             isStory() && messageOwner != null && messageOwner.dialog_id == UserConfig.getInstance(currentAccount).getClientUserId() ||
             eventId == 0 && sponsoredId == null && canDeleteMessage(currentAccount, inScheduleMode, messageOwner, chat) || isEphemeral()

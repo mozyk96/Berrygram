@@ -18,12 +18,13 @@ $sources = @(
     'text\CustomTextResolution.java', 'text\CustomTextContext.java', 'text\CustomTextScopePolicy.java',
     'text\CustomTextPackKeys.java', 'text\ForkLocalePolicy.java', 'camera\RoundCameraPolicy.java', 'camera\RoundVideoQualityPolicy.java',
     'camera\CameraProfilePolicy.java',
-    'voice\VoiceQualityPolicy.java', 'voice\VoiceProfilePolicy.java', 'storage\ForkArchivedRestorePolicy.java', 'panels\PanelPolicy.java', 'panels\GlassPolicy.java', 'panels\GraphicsColorPolicy.java', 'panels\MenuSurfacePolicy.java', 'diagnostics\NotificationDiagnosticsPolicy.java', 'updater\UpdatePolicy.java', 'updater\UpdateInstallIntent.java', 'updater\UpdateUiPolicy.java', 'updater\BackgroundUpdatePolicy.java', 'stealth\StealthPolicy.java', 'performance\DeviceAnalyzerPolicy.java'
+    'voice\VoiceQualityPolicy.java', 'voice\VoiceProfilePolicy.java', 'storage\ForkArchivedRestorePolicy.java', 'storage\ForkDeletionPolicy.java', 'panels\PanelPolicy.java', 'panels\GlassPolicy.java', 'panels\GraphicsColorPolicy.java', 'panels\MenuSurfacePolicy.java', 'diagnostics\NotificationDiagnosticsPolicy.java', 'updater\UpdatePolicy.java', 'updater\UpdateInstallIntent.java', 'updater\UpdateUiPolicy.java', 'updater\BackgroundUpdatePolicy.java', 'stealth\StealthPolicy.java', 'performance\DeviceAnalyzerPolicy.java'
 ) | ForEach-Object { Join-Path $base $_ }
+$sources += (Join-Path $PSScriptRoot 'stubs/org/telegram/messenger/UserConfig.java')
 $tests = @('AuthDiagnosticsTest', 'BackendPolicyTest', 'SessionCredentialsTest', 'CustomTextValidatorTest',
     'CustomTextPackValidatorTest', 'CustomTextFormatTest', 'CustomTextSafetyTest', 'LocalAliasPolicyTest',
     'CustomTextResolutionTest', 'CustomTextContextTest', 'CustomTextScopePolicyTest', 'CustomTextOriginalTest',
-    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'MenuSurfacePolicyTest', 'NotificationDiagnosticsPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'UpdateUiPolicyTest', 'BackgroundUpdatePolicyTest', 'ForkTabIndicatorInterpolatorTest', 'ForkUnifiedSettingsMappingTest', 'GhostMasterPolicyTest', 'ForkArchiveImportPolicyTest', 'ForkTranslationPolicyTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest', 'ForkArchivedRestorePolicyTest')
+    'CustomTextPackKeysTest', 'ForkLocalePolicyTest', 'RoundCameraPolicyTest', 'RoundVideoQualityPolicyTest', 'CameraProfilePolicyTest', 'VoiceQualityPolicyTest', 'VoiceProfilePolicyTest', 'PanelPolicyTest', 'GlassPolicyTest', 'GraphicsColorPolicyTest', 'MenuSurfacePolicyTest', 'NotificationDiagnosticsPolicyTest', 'UpdatePolicyTest', 'UpdateInstallIntentTest', 'UpdateUiPolicyTest', 'BackgroundUpdatePolicyTest', 'ForkTabIndicatorInterpolatorTest', 'ForkUnifiedSettingsMappingTest', 'GhostMasterPolicyTest', 'ForkArchiveImportPolicyTest', 'ForkTranslationPolicyTest', 'StealthPolicyTest', 'DeviceAnalyzerPolicyTest', 'ForkArchivedRestorePolicyTest', 'ForkDeletionPolicyTest')
 $testFiles = $tests | ForEach-Object { Join-Path $PSScriptRoot "$_.java" }
 $sources += (Join-Path $base 'performance\PerformancePolicy.java')
 $sources += (Join-Path $root 'TMessagesProj\src\main\java\org\telegram\ui\fork\navigation\ForkTabIndicatorInterpolator.java')
@@ -155,4 +156,6 @@ node (Join-Path $PSScriptRoot 'test_composer_coordinates.js')
 if ($LASTEXITCODE -ne 0) { throw 'Composer coordinate regression test failed' }
 node (Join-Path $PSScriptRoot 'test_recording_geometry.js')
 if ($LASTEXITCODE -ne 0) { throw 'Recording geometry test failed' }
+python (Join-Path $PSScriptRoot 'test_deletion_persistence.py')
+if ($LASTEXITCODE -ne 0) { throw 'Deletion persistence test failed' }
 Write-Output 'Fork smoke tests passed (no Android device or account used)'

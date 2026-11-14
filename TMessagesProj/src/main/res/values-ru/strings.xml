@@ -264,4 +264,11 @@
     <string name="RemindDayAt">\'Отправить\' d MMM \'в\' HH:mm</string>
     <string name="RemindDayYearAt">\'Напомнить\' d MMM yyyy \'в\' HH:mm</string>
     <string name="ForkChatHeaderStyle">Стиль верхней панели чата</string>
+    <string name="ForkPreservedMessage">Локально сохранённое удалённое сообщение</string>
+    <string name="ForkPreservedInfo">Информация о сохранённом сообщении</string>
+    <string name="ForkPreservedSent">Отправлено</string>
+    <string name="ForkPreservedEdited">Изменено</string>
+    <string name="ForkPreservedObserved">Удаление замечено этим клиентом</string>
+    <string name="ForkPreservedMediaMissing">Локальный медиафайл недоступен</string>
+    <string name="ForkPreservedHistory">История изменений</string>
 </resources>

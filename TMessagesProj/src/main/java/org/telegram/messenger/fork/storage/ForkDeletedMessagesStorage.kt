@@ -39,12 +39,13 @@ class ForkDeletedMessagesStorage private constructor(private val currentAccount:
         }
     }
 
+    @Synchronized
     fun recordDeletedMessage(dialogId: Long, messageId: Int, deleteDate: Int) {
         val key = "$dialogId:$messageId"
         deletedCache[key] = true
         val db = database ?: return
         try {
-            val state = db.executeFast("INSERT OR REPLACE INTO deleted_messages VALUES (?, ?, ?);")
+            val state = db.executeFast("INSERT OR IGNORE INTO deleted_messages VALUES (?, ?, ?);")
             state.bindLong(1, dialogId)
             state.bindInteger(2, messageId)
             state.bindInteger(3, deleteDate)
@@ -55,6 +56,7 @@ class ForkDeletedMessagesStorage private constructor(private val currentAccount:
         }
     }
 
+    @Synchronized
     fun isDeleted(dialogId: Long, messageId: Int): Boolean {
         val key = "$dialogId:$messageId"
         val cached = deletedCache[key]
@@ -80,6 +82,7 @@ class ForkDeletedMessagesStorage private constructor(private val currentAccount:
         return result
     }
 
+    @Synchronized
     fun removeDeletedMessage(dialogId: Long, messageId: Int) {
         val key = "$dialogId:$messageId"
         deletedCache.remove(key)
@@ -96,6 +99,7 @@ class ForkDeletedMessagesStorage private constructor(private val currentAccount:
     }
 
     /** Removes stored markers older than the given timestamp. */
+    @Synchronized
     fun cleanupOlderThan(cutoffDate: Int): Int {
         val db = database ?: return 0
         return try {
@@ -116,6 +120,7 @@ class ForkDeletedMessagesStorage private constructor(private val currentAccount:
         }
     }
 
+    @Synchronized
     fun clear() {
         deletedCache.clear()
         val db = database ?: return
@@ -131,7 +136,7 @@ class ForkDeletedMessagesStorage private constructor(private val currentAccount:
 
         @JvmStatic
         fun getInstance(currentAccount: Int): ForkDeletedMessagesStorage {
-            return instances.getOrPut(currentAccount) {
+            return instances.computeIfAbsent(currentAccount) {
                 ForkDeletedMessagesStorage(currentAccount)
             }
         }

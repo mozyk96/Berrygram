@@ -12,7 +12,7 @@ public class GestureDispatchTest {
  static class LinkedText implements Spanned{public int length(){return 4;}public char charAt(int i){return 'x';}public CharSequence subSequence(int a,int b){return "xx";}public <T>T[]getSpans(int a,int b,Class<T> c){return (T[])new ClickableSpan[]{new ClickableSpan()};}}
  static class TLRPC{static class TL_messageMediaEmpty{}}
  static class Owner{Object media,reply_markup;ArrayList<Object> entities=new ArrayList<>();}
- static class MessageObject{static final int TYPE_TEXT=0;int type,textWidth=100,currentAccount;CharSequence messageText="body";Owner messageOwner=new Owner();boolean sponsored,isDateObject;boolean isSending(){return false;}boolean isEditing(){return false;}boolean isSponsored(){return sponsored;}boolean canEditMessage(Object c){return true;}int textHeight(){return 40;}}
+ static class MessageObject{static final int TYPE_TEXT=0;int type,textWidth=100,currentAccount;CharSequence messageText="body";Owner messageOwner=new Owner();boolean sponsored,isDateObject,isForkDeleted;boolean isSending(){return false;}boolean isEditing(){return false;}boolean isSponsored(){return sponsored;}boolean canEditMessage(Object c){return true;}int textHeight(){return 40;}}
  static class ChatMessageCell extends View{MessageObject m=new MessageObject();MessageObject getMessageObject(){return m;}MessageObject getPrimaryMessageObject(){return m;}boolean isInsideBackground(float x,float y){return x>=0&&x<200;}int getTextX(){return 10;}int getTextY(){return 20;}}
  static class Bar{boolean mode;boolean isActionModeShowed(){return mode;}}
  Bar actionBar=new Bar();boolean searching,inPreviewMode,selection,trying,forkGestureDispatching;String forkRequestedAction;Object selectedObject,selectedObjectGroup,selectedObjectToEditCaption;int currentAccount,lastOption=-1,reactions,unavailable;float reactionX,reactionY;
@@ -21,6 +21,7 @@ public class GestureDispatchTest {
  boolean forkSendDoubleTapReaction(View v,MessageObject m,float x,float y){reactions++;reactionX=x;reactionY=y;return true;}
  void forkShowActionUnavailable(){unavailable++;}
  void forkShowActionUnavailable(String action){unavailable++;}
+ boolean showForkPreservedMenu(MessageObject message){return true;}
  Object currentChat;
  boolean lastSingle,lastListView,lastLongpress,failMenu;
  boolean createMenu(View v,boolean single,boolean listView,float x,float y,boolean longpress){
@@ -48,6 +49,7 @@ public class GestureDispatchTest {
  t.reentered=false;ActionSettings.setGesture(0,"tap","menu");t.forkHandleGesture(v,15,25,"tap",true);check(t.reentered,"Menu dispatch did not run");
  ActionSettings.setGesture(0,"tap","copy");int unavailableBefore=t.unavailable;t.failMenu=true;t.forkHandleGesture(v,15,25,"tap",true);check(t.unavailable==unavailableBefore+1,"Early menu exit must report unavailable instead of silently swallowing");
 
+ v.m.isForkDeleted=true;int savedOption=t.lastOption;ActionSettings.setGesture(0,"tap","reply");t.forkHandleGesture(v,15,25,"tap",true);check(t.lastOption==savedOption,"Historical message executed active action");v.m.isForkDeleted=false;ActionSettings.setGesture(0,"tap","copy");
  check(ActionRegistry.availableOption("edit",Arrays.asList(1,3))==-1,"Edit permission bypass");check(ActionRegistry.needsConfirmation("delete")&&ActionRegistry.needsConfirmation("pin"),"Destructive metadata");
  check("native".equals(ActionSettings.gesture(1,"tap")),"Cross-account leak");org.telegram.messenger.UserConfig.setTestUserId(0,999);check("native".equals(ActionSettings.gesture(0,"tap")),"Reused account slot leaks settings");org.telegram.messenger.UserConfig.setTestUserId(0,100);check("copy".equals(ActionSettings.gesture(0,"tap")),"Settings not persisted");ActionSettings.resetGestures(0);check("native".equals(ActionSettings.gesture(0,"tap")),"Reset failed");
  System.out.println("GestureDispatchTest passed (production body/dispatch, native flags, reentrancy, fake Android host; no device claims)");}
