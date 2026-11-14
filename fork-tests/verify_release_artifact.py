@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--aapt', required=True)
     parser.add_argument('--apksigner', required=True)
     parser.add_argument('--zipalign', required=True)
+    parser.add_argument('--package', default='org.berrygram.client')
     parser.add_argument('--version', required=True)
     parser.add_argument('--version-code', type=int, required=True)
     parser.add_argument('--signer-sha256', required=True)
@@ -26,7 +27,7 @@ def main():
 
     verifier = Path(__file__).with_name('verify_apk.py')
     run(sys.executable, str(verifier), args.apk, '--aapt', args.aapt,
-        '--package', 'org.example.forkclient', '--version', args.version)
+        '--package', args.package, '--version', args.version)
     badging = run(args.aapt, 'dump', 'badging', args.apk)
     package = next((line for line in badging.splitlines() if line.startswith('package: ')), '')
     native = next((line for line in badging.splitlines() if line.startswith('native-code:')), '')

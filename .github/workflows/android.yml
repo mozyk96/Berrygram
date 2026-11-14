@@ -67,7 +67,7 @@ jobs:
           test -n "$apk"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$apk"
           version=$(python -c "from pathlib import Path; print(next(x.split('=',1)[1].strip() for x in Path('gradle.properties').read_text().splitlines() if x.startswith('APP_VERSION_NAME=')))")
-          python fork-tests/verify_apk.py "$apk" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt" --package org.example.forkclient.beta --version "$version"
+          python fork-tests/verify_apk.py "$apk" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt" --package org.berrygram.client.beta --version "$version"
   release:
     if: github.event_name == 'workflow_dispatch' && inputs.build_release
     needs: [checks, android_debug]
@@ -77,10 +77,10 @@ jobs:
       FORK_TELEGRAM_API_HASH: ${{ secrets.FORK_TELEGRAM_API_HASH }}
       FORK_MAPS_API_KEY: ${{ secrets.FORK_MAPS_API_KEY }}
       FORK_SAFETYNET_API_KEY: ${{ secrets.FORK_SAFETYNET_API_KEY }}
-      BERRYGRAM_KEYSTORE_BASE64: ${{ secrets.BERRYGRAM_KEYSTORE_BASE64 }}
-      BERRYGRAM_RELEASE_STORE_PASSWORD: ${{ secrets.BERRYGRAM_STORE_PASSWORD }}
-      BERRYGRAM_RELEASE_KEY_ALIAS: ${{ secrets.BERRYGRAM_KEY_ALIAS }}
-      BERRYGRAM_RELEASE_KEY_PASSWORD: ${{ secrets.BERRYGRAM_KEY_PASSWORD }}
+      BERRYGRAM_KEYSTORE_BASE64: ${{ secrets.BERRYGRAM_GEN2_KEYSTORE_BASE64 }}
+      BERRYGRAM_RELEASE_STORE_PASSWORD: ${{ secrets.BERRYGRAM_GEN2_STORE_PASSWORD }}
+      BERRYGRAM_RELEASE_KEY_ALIAS: ${{ secrets.BERRYGRAM_GEN2_KEY_ALIAS }}
+      BERRYGRAM_RELEASE_KEY_PASSWORD: ${{ secrets.BERRYGRAM_GEN2_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -125,10 +125,10 @@ jobs:
             --apksigner "$ANDROID_HOME/build-tools/36.0.0/apksigner" \
             --zipalign "$ANDROID_HOME/build-tools/36.0.0/zipalign" \
             --version "$version" --version-code "$code" \
-            --signer-sha256 b3ea9ca232ae03ebeab5bbc2729a306fb5eacd0520104fc52450a421efc722a5
+            --signer-sha256 4d6aa81c4c2fe399854a3bb8c4fd6c4e989584c2298afdc7871d47c871759aec
           mkdir -p release-artifact
-          cp "$apk" "release-artifact/Berrygram-$version-arm64-v8a.apk"
-          (cd release-artifact && sha256sum "Berrygram-$version-arm64-v8a.apk" > SHA256SUMS)
+          cp "$apk" "release-artifact/BerryGram-$version-org.berrygram.client-arm64-v8a.apk"
+          (cd release-artifact && sha256sum "BerryGram-$version-org.berrygram.client-arm64-v8a.apk" > SHA256SUMS)
           printf '%s\n' "$GITHUB_SHA" > release-artifact/source-commit.txt
           printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
       - name: Retain verified APK for release testing
@@ -136,7 +136,7 @@ jobs:
         with:
           name: berrygram-release-${{ github.sha }}
           path: |
-            release-artifact/Berrygram-${{ steps.verify.outputs.version }}-arm64-v8a.apk
+            release-artifact/BerryGram-${{ steps.verify.outputs.version }}-org.berrygram.client-arm64-v8a.apk
             release-artifact/SHA256SUMS
             release-artifact/source-commit.txt
           if-no-files-found: error

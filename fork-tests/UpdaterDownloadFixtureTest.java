@@ -12,7 +12,7 @@ public final class UpdaterDownloadFixtureTest {
   @Override public URLConnection openConnection(URL url) throws IOException { connections++; return url.openConnection(); }
  }
  static byte[] body; static String metadata; static boolean redirect, missingRelease, breakStream, shortStream, sawRange, ignoreRange, badRange; static int assetRequests;
- static final String ASSET="https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-arm64-v8a.apk";
+ static final String ASSET="https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-org.berrygram.client-arm64-v8a.apk";
  static final class Handler extends URLStreamHandler {
   protected URLConnection openConnection(URL url) { if(url.toString().equals(ASSET))assetRequests++; return new HttpURLConnection(url) {
    long offset;
@@ -37,7 +37,7 @@ public final class UpdaterDownloadFixtureTest {
  public static void main(String[] args) throws Exception {
   URL.setURLStreamHandlerFactory(protocol -> protocol.equals("https") ? new Handler() : null);
   byte[] valid=Files.readAllBytes(UpdaterPackageFixtureTest.apk(true).toPath());body=valid;
-  metadata="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.0.1\",\"body\":\"Test\",\"assets\":[{\"name\":\"BerryGram-1.0.1-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":"+valid.length+",\"digest\":\"sha256:"+sha(valid)+"\",\"browser_download_url\":\""+ASSET+"\"}]}";
+  metadata="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.0.1\",\"body\":\"Test\",\"assets\":[{\"name\":\"BerryGram-1.0.1-org.berrygram.client-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":"+valid.length+",\"digest\":\"sha256:"+sha(valid)+"\",\"browser_download_url\":\""+ASSET+"\"}]}";
   metadata="["+metadata+"]";
   BoundNetwork network=new BoundNetwork();
   GithubUpdateClient.Release release=GithubUpdateClient.latest("example/project", network);

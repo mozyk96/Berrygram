@@ -53,7 +53,7 @@ public final class UpdaterPackageFixtureTest {
   android.os.Build.SUPPORTED_ABIS=new String[]{"armeabi-v7a"};
   verify(c,good,false); // arm64-only APK must not pass on a 32-bit device.
   verify(c,apk("armeabi-v7a",23,16),true);
-  String json="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.0.1\",\"assets\":[{\"name\":\"BerryGram-1.0.1-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":1,\"digest\":\"sha256:"+"a".repeat(64)+"\",\"browser_download_url\":\"https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-arm64-v8a.apk\"}]}";
+  String json="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.0.1\",\"assets\":[{\"name\":\"BerryGram-1.0.1-org.berrygram.client-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":1,\"digest\":\"sha256:"+"a".repeat(64)+"\",\"browser_download_url\":\"https://github.com/example/project/releases/download/v1.0.1/BerryGram-1.0.1-org.berrygram.client-arm64-v8a.apk\"}]}";
   try { GithubUpdateClient.parseRelease("example/project",json); throw new AssertionError("arm64 release offered to 32-bit device"); } catch (java.io.IOException expected) { }
   String universal=json.replace("arm64-v8a.apk", "universal.apk");
   if (!GithubUpdateClient.parseRelease("example/project",universal).url.endsWith("universal.apk")) throw new AssertionError("universal release not selected");

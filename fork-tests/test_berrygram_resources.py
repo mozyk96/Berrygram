@@ -27,7 +27,7 @@ for line in (root / 'gradle.properties').read_text(encoding='utf-8').splitlines(
 assert properties.get('APP_VERSION_NAME') == '1.5.1'
 assert int(properties['APP_VERSION_CODE']) > 7295
 assert int(properties.get('APP_VERSION_CODE', '0')) > 0
-assert properties.get('APP_PACKAGE') == 'org.example.forkclient'
+assert properties.get('APP_PACKAGE') == 'org.berrygram.client'
 resources = root / 'TMessagesProj/src/main/res'
 def locale_strings(locale):
     values = {}

@@ -67,14 +67,14 @@ public final class UpdatePolicy {
         if (tag == null || name == null) return false;
         String version = tag.startsWith("v") ? tag.substring(1) : tag;
         if (version(version) == null) return false;
-        return ("BerryGram-" + version + "-arm64-v8a.apk").equalsIgnoreCase(name);
+        return ("BerryGram-" + version + "-org.berrygram.client-arm64-v8a.apk").equalsIgnoreCase(name);
     }
 
     public static boolean isUniversalAsset(String tag, String name) {
         if (tag == null || name == null) return false;
         String version = tag.startsWith("v") ? tag.substring(1) : tag;
         if (version(version) == null) return false;
-        return ("BerryGram-" + version + "-universal.apk").equalsIgnoreCase(name);
+        return ("BerryGram-" + version + "-org.berrygram.client-universal.apk").equalsIgnoreCase(name);
     }
 
     public static boolean validAsset(String tag, String name) {
@@ -83,8 +83,8 @@ public final class UpdatePolicy {
     public static boolean validDigest(String digest) { return digest != null && digest.matches("sha256:[0-9a-fA-F]{64}"); }
     public static boolean validSavedRelease(String repo, String version, String installed, String url, String digest, long size) {
         if (!shouldShowRelease(version, installed) || size <= 0 || size > 512L * 1024 * 1024 || !validDigest("sha256:" + digest)) return false;
-        String arm64 = "BerryGram-" + version + "-arm64-v8a.apk";
-        String universal = "BerryGram-" + version + "-universal.apk";
+        String arm64 = "BerryGram-" + version + "-org.berrygram.client-arm64-v8a.apk";
+        String universal = "BerryGram-" + version + "-org.berrygram.client-universal.apk";
         return validAssetUrl(repo, "v" + version, arm64, url) || validAssetUrl(repo, version, arm64, url)
             || validAssetUrl(repo, "v" + version, universal, url) || validAssetUrl(repo, version, universal, url);
     }

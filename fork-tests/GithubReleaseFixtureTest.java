@@ -2,10 +2,10 @@ import org.telegram.messenger.fork.updater.GithubUpdateClient;
 public class GithubReleaseFixtureTest {
  static String digest="a".repeat(64);
  static String fixture(String state, boolean draft, String digestValue, String url) {
-  return "{\"draft\":"+draft+",\"prerelease\":false,\"tag_name\":\"v1.2.3\",\"body\":\"Changes\",\"assets\":[{\"name\":\"BerryGram-1.2.3-arm64-v8a.apk\",\"state\":\""+state+"\",\"size\":1234,\"digest\":\""+digestValue+"\",\"browser_download_url\":\""+url+"\"}]}";
+  return "{\"draft\":"+draft+",\"prerelease\":false,\"tag_name\":\"v1.2.3\",\"body\":\"Changes\",\"assets\":[{\"name\":\"BerryGram-1.2.3-org.berrygram.client-arm64-v8a.apk\",\"state\":\""+state+"\",\"size\":1234,\"digest\":\""+digestValue+"\",\"browser_download_url\":\""+url+"\"}]}";
  }
  public static void main(String[] args) throws Exception {
-  String url="https://github.com/example/project/releases/download/v1.2.3/BerryGram-1.2.3-arm64-v8a.apk";
+  String url="https://github.com/example/project/releases/download/v1.2.3/BerryGram-1.2.3-org.berrygram.client-arm64-v8a.apk";
   GithubUpdateClient.Release release=GithubUpdateClient.parseRelease("example/project",fixture("uploaded",false,"sha256:"+digest,url));
   check(release.version.equals("1.2.3") && release.size==1234 && release.digest.equals(digest) && release.notes.equals("Changes"));
   reject(fixture("uploaded",true,"sha256:"+digest,url));
@@ -13,6 +13,10 @@ public class GithubReleaseFixtureTest {
   reject(fixture("uploaded",false,"sha256:"+digest,"https://evil.test/a"));
   reject(fixture("pending",false,"sha256:"+digest,url));
   String valid=fixture("uploaded",false,"sha256:"+digest,url);
+  String legacy = valid.replace("-org.berrygram.client-", "-");
+  expectNoRelease("[" + legacy + "]");
+  check(GithubUpdateClient.parseReleaseList("example/project", "[" + legacy + "," + valid + "]").version.equals("1.2.3"),
+      "new generation selects only its own asset name");
   String prerelease=valid.replace("\"prerelease\":false", "\"prerelease\":true");
   reject(prerelease);
   // The official stream ignores prerelease entries and never selects them.
@@ -51,7 +55,7 @@ public class GithubReleaseFixtureTest {
   reject(valid.substring(0,valid.length()-2)+","+asset+"]}");
   // A release without an API digest is only accepted when it ships a checksum file.
   String sumsAsset="{\"name\":\"SHA256SUMS\",\"state\":\"uploaded\",\"size\":104,\"digest\":\"sha256:"+digest+"\",\"browser_download_url\":\"https://github.com/example/project/releases/download/v1.2.3/SHA256SUMS\"}";
-  String apkAsset="{\"name\":\"BerryGram-1.2.3-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":1234,\"digest\":\"\",\"browser_download_url\":\"https://github.com/example/project/releases/download/v1.2.3/BerryGram-1.2.3-arm64-v8a.apk\"}";
+  String apkAsset="{\"name\":\"BerryGram-1.2.3-org.berrygram.client-arm64-v8a.apk\",\"state\":\"uploaded\",\"size\":1234,\"digest\":\"\",\"browser_download_url\":\"https://github.com/example/project/releases/download/v1.2.3/BerryGram-1.2.3-org.berrygram.client-arm64-v8a.apk\"}";
   String withSums="{\"draft\":false,\"prerelease\":false,\"tag_name\":\"v1.2.3\",\"body\":\"Changes\",\"assets\":["+sumsAsset+","+apkAsset+"]}";
   GithubUpdateClient.Release fallback=GithubUpdateClient.parseRelease("example/project",withSums);
   check(fallback.digest.isEmpty() && fallback.sumsUrl!=null,"a release with a checksum file is accepted without an API digest");

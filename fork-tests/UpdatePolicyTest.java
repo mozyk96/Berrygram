@@ -1,6 +1,8 @@
 import org.telegram.messenger.fork.updater.UpdatePolicy;
 public class UpdatePolicyTest {
  public static void main(String[] args) {
+  check(UpdatePolicy.isArm64Asset("v1.5.2", "BerryGram-1.5.2-org.berrygram.client-arm64-v8a.apk"), "new generation asset must be accepted");
+  check(!UpdatePolicy.isArm64Asset("v1.5.2", "BerryGram-1.5.2-arm64-v8a.apk"), "legacy asset must not be offered to the new generation");
   java.util.Set<String> signer=java.util.Collections.singleton("cert-a");
   check(UpdatePolicy.validIdentity("app",10,signer,"app",11,signer));
   check(!UpdatePolicy.validIdentity("app",10,signer,"other",11,signer));
@@ -42,19 +44,19 @@ public class UpdatePolicyTest {
   check(!UpdatePolicy.shouldShowRelease("1.4.1-beta.1", "1.4.0-beta.2"), "a prerelease candidate is never offered");
   check(!UpdatePolicy.shouldShowRelease("bad", "1.4.0"), "an invalid candidate is rejected");
   check(!UpdatePolicy.shouldShowRelease("1.4.1", "bad"), "an invalid installed version is rejected");
-  check(UpdatePolicy.validAsset("v1.2.0-beta.1","BerryGram-1.2.0-beta.1-arm64-v8a.apk"));
+  check(UpdatePolicy.validAsset("v1.2.0-beta.1","BerryGram-1.2.0-beta.1-org.berrygram.client-arm64-v8a.apk"));
   check(UpdatePolicy.validIdentity("app",72489,signer,"app",72499,signer));
-  check(UpdatePolicy.validAsset("v1.0.0","BerryGram-1.0.0-arm64-v8a.apk"));
-  check(!UpdatePolicy.validAsset("v1.0.0-beta.01","BerryGram-1.0.0-beta.01-arm64-v8a.apk"));
-  check(!UpdatePolicy.validAsset("v1.0.0","BerryGram-1.0.1-arm64-v8a.apk"));
+  check(UpdatePolicy.validAsset("v1.0.0","BerryGram-1.0.0-org.berrygram.client-arm64-v8a.apk"));
+  check(!UpdatePolicy.validAsset("v1.0.0-beta.01","BerryGram-1.0.0-beta.01-org.berrygram.client-arm64-v8a.apk"));
+  check(!UpdatePolicy.validAsset("v1.0.0","BerryGram-1.0.1-org.berrygram.client-arm64-v8a.apk"));
   check(UpdatePolicy.validDigest("sha256:"+"a".repeat(64)));
   check(!UpdatePolicy.validDigest("sha256:"+"z".repeat(64)));
   check(UpdatePolicy.validRepository("owner/project"));
   check(!UpdatePolicy.validRepository("owner/../other"));
   check(!UpdatePolicy.validRepository("https://github.com/owner/project"));
-  check(UpdatePolicy.validAssetUrl("owner/project","v1.0.0","BerryGram-1.0.0-arm64-v8a.apk","https://github.com/owner/project/releases/download/v1.0.0/BerryGram-1.0.0-arm64-v8a.apk"));
-  check(!UpdatePolicy.validAssetUrl("owner/project","v1.0.0","BerryGram-1.0.0-arm64-v8a.apk","https://github.com.evil.test/a"));
-  String url="https://github.com/owner/project/releases/download/v1.4.1/BerryGram-1.4.1-arm64-v8a.apk";
+  check(UpdatePolicy.validAssetUrl("owner/project","v1.0.0","BerryGram-1.0.0-org.berrygram.client-arm64-v8a.apk","https://github.com/owner/project/releases/download/v1.0.0/BerryGram-1.0.0-org.berrygram.client-arm64-v8a.apk"));
+  check(!UpdatePolicy.validAssetUrl("owner/project","v1.0.0","BerryGram-1.0.0-org.berrygram.client-arm64-v8a.apk","https://github.com.evil.test/a"));
+  String url="https://github.com/owner/project/releases/download/v1.4.1/BerryGram-1.4.1-org.berrygram.client-arm64-v8a.apk";
   String digest="a".repeat(64);
   check(UpdatePolicy.validSavedRelease("owner/project", "1.4.1", "1.4.0", url, digest, 100));
   check(UpdatePolicy.validSavedRelease("owner/project", "1.4.1", "1.4.0-beta.2", url, digest, 100), "a saved official release is offered to an older beta install");
