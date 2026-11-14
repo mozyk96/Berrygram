@@ -13,7 +13,7 @@ permissions:
   contents: read
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -92,7 +92,7 @@ jobs:
           java-version: '17'
       - uses: android-actions/setup-android@v3
       - name: Install Android dependencies
-        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0' 'ndk;27.2.12479018' 'cmake;3.22.1'
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.2.12479018' 'cmake;3.22.1'
       - name: Configure signing locally
         shell: python
         run: |
@@ -108,13 +108,36 @@ jobs:
       - name: Build signed ARM64 APK
         run: chmod +x gradlew && ./gradlew :TMessagesProj_App:assembleAfatRelease -PforkAbi=arm64-v8a --no-daemon
       - name: Verify artifact
+        id: verify
         shell: bash
         run: |
-          apk=$(find TMessagesProj_App/build -type f -name '*.apk' -print -quit)
-          test -n "$apk"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
+          set -euo pipefail
+          apk=TMessagesProj_App/build/outputs/apk/afat/release/app.apk
+          test -f "$apk"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           version=$(python -c "from pathlib import Path; print(next(x.split('=',1)[1].strip() for x in Path('gradle.properties').read_text().splitlines() if x.startswith('APP_VERSION_NAME=')))")
-          python fork-tests/verify_apk.py "$apk" --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" --package org.example.forkclient --version "$version"
-          sha256sum "$apk"
-      - name: Keep credential-bearing build local to the runner
-        run: echo 'Release artifact is not uploaded while API credential publication is unresolved.'
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          base=$(python -c "from pathlib import Path; print(next(x.split('=',1)[1].strip() for x in Path('gradle.properties').read_text().splitlines() if x.startswith('APP_VERSION_CODE=')))")
+          code=$((base * 10 + 9))
+          test "$code" -gt 72959
+          python fork-tests/verify_release_artifact.py "$apk" \
+            --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt" \
+            --apksigner "$ANDROID_HOME/build-tools/36.0.0/apksigner" \
+            --zipalign "$ANDROID_HOME/build-tools/36.0.0/zipalign" \
+            --version "$version" --version-code "$code" \
+            --signer-sha256 b3ea9ca232ae03ebeab5bbc2729a306fb5eacd0520104fc52450a421efc722a5
+          mkdir -p release-artifact
+          cp "$apk" "release-artifact/Berrygram-$version-arm64-v8a.apk"
+          (cd release-artifact && sha256sum "Berrygram-$version-arm64-v8a.apk" > SHA256SUMS)
+          printf '%s\n' "$GITHUB_SHA" > release-artifact/source-commit.txt
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+      - name: Retain verified APK for release testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: berrygram-release-${{ github.sha }}
+          path: |
+            release-artifact/Berrygram-${{ steps.verify.outputs.version }}-arm64-v8a.apk
+            release-artifact/SHA256SUMS
+            release-artifact/source-commit.txt
+          if-no-files-found: error
+          retention-days: 7
