@@ -371,6 +371,7 @@ class ForkComposerInstrumentationTest {
                             actionLocation[0] + action.width / 2 - rootLocation[0], anchor)
                         assertEquals("Recorder must be circular", action.width, action.height)
                         assertTrue("Recorder touch target must be at least 48dp", action.width >= dp(48f))
+                        assertTrue("Recorder should fit a compact 48dp row", action.height <= dp(48f))
                         assertTrue("Recorder must have an accessibility label", !action.contentDescription.isNullOrBlank())
                         assertTrue("Measured input must contain recorder and margins at ${width}dp",
                             input.measuredHeight >= actions.height + (actions.layoutParams as FrameLayout.LayoutParams).bottomMargin)

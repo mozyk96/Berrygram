@@ -1,3 +1,9 @@
+## 1.5.1 — in development
+
+- Refine the compact chat header surface and reduce the modern composer height while retaining the separate recording control.
+- Restore the flat header surface when a reused ActionBar receives a new glass drawable.
+- Smoke checks and targeted emulator instrumentation have passed; authenticated chats, live recording and physical-device behavior remain unverified. A signed release has not been built or published.
+
 ## 1.4.4
 
 - Integrated the Telegram Android 13.2.1 source snapshot, including its native dependencies and resources, while retaining Berrygram features and settings.

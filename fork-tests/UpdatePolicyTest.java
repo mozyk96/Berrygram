@@ -10,6 +10,8 @@ public class UpdatePolicyTest {
   check(UpdatePolicy.compatibleCode(100, 101));
   check(UpdatePolicy.compatibleCode(72949, 72959), "1.5.0 ARM64 must upgrade 1.4.6");
   check(UpdatePolicy.shouldShowRelease("1.5.0", "1.4.6"), "1.5.0 must be offered to 1.4.6");
+  check(UpdatePolicy.compatibleCode(72959, 72969), "1.5.1 ARM64 must upgrade 1.5.0");
+  check(UpdatePolicy.shouldShowRelease("1.5.1", "1.5.0"), "1.5.1 must be offered to 1.5.0");
   check(!UpdatePolicy.compatibleCode(100, 100));
   check(!UpdatePolicy.compatibleCode(100, 99));
   check(UpdatePolicy.enoughSpace(100, 100, 0));

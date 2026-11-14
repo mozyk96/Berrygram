@@ -206,6 +206,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private ChatAvatarContainer chatAvatarContainer;
     public boolean doNotDrawCenterGlass;
     public boolean compactChatGlass;
+    private boolean flatChatSurface;
 
     public void setGlassOnlyBack() {
         glassOnlyBack = true;
@@ -228,6 +229,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         glassModeIsForum = isForum;
         glassFactory = factory;
         glassColorProvider = colorProvider;
+        flatChatSurface = false;
 
         glassDrawable = factory.create(this)
                 .setColorProvider(colorProvider)
@@ -2484,6 +2486,17 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 && !glassOnlyBack && drawGlassTitle && !doNotDrawCenterGlass
                 && !doNotDrawGlassMenu && searchFactor == 0 && actionModeFactor == 0
                 && !isMenuPillInOverlay();
+
+        if (glassDrawable != null && flatChatSurface != unifiedChatSurface) {
+            flatChatSurface = unifiedChatSurface;
+            if (flatChatSurface) {
+                glassDrawable.setRadius(0);
+            } else if (glassModeIsForum) {
+                glassDrawable.setRadius(dp(18.33f), dp(23), dp(23), dp(18.33f));
+            } else {
+                glassDrawable.setRadius(dp(23));
+            }
+        }
 
         if (glassDrawable != null && !glassOnlyBack && drawGlassTitle && !noChatBackground) {
             if (centerTitleAndGlass && titleTextView[0] != null && titleTextView[0].getVisibility() == View.VISIBLE) {

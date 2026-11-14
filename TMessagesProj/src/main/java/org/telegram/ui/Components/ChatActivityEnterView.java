@@ -2770,7 +2770,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             @Override
             protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-                final int minHeight = dp(org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled() ? 50 : 44);
+                final int minHeight = dp(org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled() ? (isChat ? 48 : 50) : 44);
                 final int height = Math.max(minHeight, getMeasuredHeight());
                 if (animatorInputFieldHeight.getFactor() > 0) {
                     animatorInputFieldHeight.animateTo(height);
@@ -3746,10 +3746,10 @@ public class ChatActivityEnterView extends FrameLayout implements
     public void updateExperimentalComposerStyle() {
         boolean exp = org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled();
         boolean modernChat = exp && isChat;
-        int composerHeight = exp ? 50 : DEFAULT_HEIGHT;
+        int composerHeight = exp ? (modernChat ? 48 : 50) : DEFAULT_HEIGHT;
         int rightMargin = exp ? dp(modernChat ? 60 : 54) : dp(DEFAULT_HEIGHT);
         int leftMargin = exp ? dp(6) : 0;
-        int bottomMargin = exp ? dp(3) : 0;
+        int bottomMargin = exp ? dp(modernChat ? 2 : 3) : 0;
 
         if (messageEditTextContainer != null && messageEditTextContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) messageEditTextContainer.getLayoutParams();
@@ -3762,13 +3762,13 @@ public class ChatActivityEnterView extends FrameLayout implements
             messageEditTextContainer.setBackground(exp && (!modernChat || org.telegram.ui.ForkGraphicsSurface.backgroundless())
                     ? Theme.createRoundRectDrawable(dp(24), getThemedColor(Theme.key_chat_messagePanelBackground))
                     : null);
-            messageEditTextContainer.setMinimumHeight(modernChat ? dp(50) : 0);
-            messageEditTextContainer.setPadding(0, modernChat ? dp(3) : 0, 0, modernChat ? dp(3) : 0);
+            messageEditTextContainer.setMinimumHeight(modernChat ? dp(48) : 0);
+            messageEditTextContainer.setPadding(0, 0, 0, 0);
         }
 
         if (sendButtonContainer != null && sendButtonContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) sendButtonContainer.getLayoutParams();
-            int sendBottomMargin = exp ? dp(3) : 0;
+            int sendBottomMargin = exp ? dp(modernChat ? 2 : 3) : 0;
             int sendRightMargin = exp ? dp(4) : 0;
             if (lp.bottomMargin != sendBottomMargin || lp.rightMargin != sendRightMargin || lp.height != dp(composerHeight)) {
                 lp.bottomMargin = sendBottomMargin;
