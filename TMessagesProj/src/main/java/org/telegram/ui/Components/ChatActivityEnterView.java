@@ -613,6 +613,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     private boolean botKeyboardViewVisible;
     private TimerView recordTimerView;
     private FrameLayout audioVideoButtonContainer;
+    private BlurredBackgroundDrawable recordingGlassBackground;
     private final int[] recordingButtonLocation = new int[2];
     private final int[] recordingOverlayLocation = new int[2];
 
@@ -2783,6 +2784,13 @@ public class ChatActivityEnterView extends FrameLayout implements
             @Override
             protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
                 super.onLayout(changed, left, top, right, bottom);
+                if (isChat && org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled()
+                        && getBackground() instanceof android.graphics.drawable.ShapeDrawable) {
+                    float radius = getHeight() / 2f;
+                    ((android.graphics.drawable.ShapeDrawable) getBackground()).setShape(
+                            new android.graphics.drawable.shapes.RoundRectShape(
+                                    new float[] {radius, radius, radius, radius, radius, radius, radius, radius}, null, null));
+                }
                 if (!animationParamsX.isEmpty()) {
                     for (int i = 0; i < getChildCount(); i++) {
                         View child = getChildAt(i);
@@ -3401,8 +3409,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
 
                     paint.setColor(getThemedColor(Theme.key_chat_messagePanelSend));
-                    final float margin = dpf2(3);
                     final boolean experimental = isChat && org.telegram.messenger.fork.panels.ForkComposerSettings.isExperimentalComposerEnabled();
+                    final float margin = experimental ? 0 : dpf2(3);
                     final float height = experimental ? Math.min(getMeasuredWidth(), getMeasuredHeight()) - margin * 2 : dpf2(38);
                     final float width = height;
                     final float r = height / 2f;
@@ -3415,7 +3423,18 @@ public class ChatActivityEnterView extends FrameLayout implements
 
                     canvas.save();
                     canvas.scale(s, s, backgroundRect.centerX(), backgroundRect.centerY());
-                    canvas.drawRoundRect(backgroundRect, r, r, paint);
+                    if (experimental && parentFragment != null && !org.telegram.ui.ForkGraphicsSurface.backgroundless()) {
+                        if (recordingGlassBackground == null) {
+                            recordingGlassBackground = parentFragment.getGlassHintFactory().create(this,
+                                    org.telegram.ui.ForkGlassSurface.wrap(org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.topPanelChatActivity(resourcesProvider)));
+                        }
+                        recordingGlassBackground.setRadius(r);
+                        recordingGlassBackground.setBounds((int) backgroundRect.left, (int) backgroundRect.top,
+                                (int) backgroundRect.right, (int) backgroundRect.bottom);
+                        recordingGlassBackground.draw(canvas);
+                    } else {
+                        canvas.drawRoundRect(backgroundRect, r, r, paint);
+                    }
                     canvas.restore();
                 }
                 super.dispatchDraw(canvas);
@@ -3749,7 +3768,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         int composerHeight = exp ? (modernChat ? 48 : 50) : DEFAULT_HEIGHT;
         int rightMargin = exp ? dp(modernChat ? 60 : 54) : dp(DEFAULT_HEIGHT);
         int leftMargin = exp ? dp(6) : 0;
-        int bottomMargin = exp ? dp(modernChat ? 2 : 3) : 0;
+        int bottomMargin = exp && !modernChat ? dp(3) : 0;
 
         if (messageEditTextContainer != null && messageEditTextContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) messageEditTextContainer.getLayoutParams();
@@ -3764,11 +3783,32 @@ public class ChatActivityEnterView extends FrameLayout implements
                     : null);
             messageEditTextContainer.setMinimumHeight(modernChat ? dp(48) : 0);
             messageEditTextContainer.setPadding(0, 0, 0, 0);
+            if (modernChat) {
+                textFieldContainer.setPadding(0, 0, 0, 0);
+                FrameLayout.LayoutParams fieldParams = (FrameLayout.LayoutParams) textFieldContainer.getLayoutParams();
+                fieldParams.topMargin = 0;
+                textFieldContainer.setLayoutParams(fieldParams);
+                if (messageEditText != null) {
+                    messageEditText.setGravity(Gravity.CENTER_VERTICAL);
+                    messageEditText.setPadding(0, dp(9), messageEditText.getPaddingRight(), dp(9));
+                    FrameLayout.LayoutParams textParams = (FrameLayout.LayoutParams) messageEditText.getLayoutParams();
+                    textParams.gravity = Gravity.CENTER_VERTICAL;
+                    textParams.bottomMargin = 0;
+                    messageEditText.setLayoutParams(textParams);
+                }
+                for (View control : new View[] {emojiButton, attachLayout, attachButton}) {
+                    if (control != null && control.getParent() == messageEditTextContainer) {
+                        FrameLayout.LayoutParams controlParams = (FrameLayout.LayoutParams) control.getLayoutParams();
+                        controlParams.gravity = (controlParams.gravity & ~Gravity.VERTICAL_GRAVITY_MASK) | Gravity.CENTER_VERTICAL;
+                        control.setLayoutParams(controlParams);
+                    }
+                }
+            }
         }
 
         if (sendButtonContainer != null && sendButtonContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) sendButtonContainer.getLayoutParams();
-            int sendBottomMargin = exp ? dp(modernChat ? 2 : 3) : 0;
+            int sendBottomMargin = bottomMargin;
             int sendRightMargin = exp ? dp(4) : 0;
             if (lp.bottomMargin != sendBottomMargin || lp.rightMargin != sendRightMargin || lp.height != dp(composerHeight)) {
                 lp.bottomMargin = sendBottomMargin;

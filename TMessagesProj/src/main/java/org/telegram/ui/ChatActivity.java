@@ -2699,7 +2699,7 @@ public class ChatActivity extends BaseFragment implements
         super(args);
 
         navbarContentSourceWallpaper = new GlassSourceWrapped();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SharedConfig.chatBlurEnabled()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             scrollableViewNoiseSuppressor = new DownscaleScrollableNoiseSuppressor();
 
             recommendedAdditionalSizeY = Math.max(0, dp(48) - Math.min(AndroidUtilities.navigationBarHeight, AndroidUtilities.statusBarHeight));
@@ -2711,7 +2711,7 @@ public class ChatActivity extends BaseFragment implements
             glassBackgroundDrawableFactoryFrosted = new BlurredBackgroundDrawableViewFactory(glassBackgroundSourceFrostedRenderNode);
             glassBackgroundDrawableFactoryFrosted.setLiquidGlassEffectAllowed(true);
 
-            if (LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS)) {
+            if (Build.VERSION.SDK_INT >= 33) {
                 glassBackgroundSourceRenderNode = new GlassSourceRenderNode(navbarContentSourceWallpaper);
                 glassBackgroundSourceRenderNode.setScrollableNoiseSuppressor(scrollableViewNoiseSuppressor, DownscaleScrollableNoiseSuppressor.DRAW_GLASS);
                 glassBackgroundSourceRenderNode.setUnderSource(navbarContentSourceWallpaper);
@@ -4253,7 +4253,7 @@ public class ChatActivity extends BaseFragment implements
                 openSearchWithText(isSupportedTags() ? "" : null);
             }
         };
-        avatarContainer.setGlassMode();
+        // Use Telegram's standard avatar, title and status proportions.
         avatarContainer.allowShorterStatus = true;
         avatarContainer.premiumIconHiddable = true;
         avatarContainer.allowDrawStories = dialog_id < 0 && !isTopic;
@@ -4663,12 +4663,12 @@ public class ChatActivity extends BaseFragment implements
 
         contentView.setOccupyStatusBar(!inBubbleMode && !isInsideContainer && !inPreviewMode);
 
+        actionBar.compactChatGlass = true;
         actionBar.setupGlass(
             glassBackgroundDrawableFactory,
-            BlurredBackgroundProviderImpl.topPanelChatActivity(themeDelegate),
+            ForkGlassSurface.wrap(BlurredBackgroundProviderImpl.topPanelChatActivity(themeDelegate)),
             ChatObject.isForum(currentChat));
-        actionBar.compactChatGlass = true;
-        setupHeaderMenuOverlay(parentView);
+        // Standard header menus use their existing popup factory.
 
         if (chatMode == MODE_PINNED) {
             actionBar.setChatAvatarContainer(avatarContainer);
@@ -4688,9 +4688,9 @@ public class ChatActivity extends BaseFragment implements
         chatInputViewsContainer.setClipChildren(false);
         chatInputViewsContainer.setWindowInsetsProvider(windowInsetsStateHolder);
         chatInputViewsContainer.setInputIslandBubbleDrawable(
-            glassBackgroundDrawableFactory.create(chatInputViewsContainer, blurredBackgroundColorProvider));
+            glassBackgroundDrawableFactory.create(chatInputViewsContainer, ForkGlassSurface.wrap(blurredBackgroundColorProvider)));
         chatInputViewsContainer.setUnderKeyboardBackgroundDrawable(
-            glassBackgroundDrawableFactoryFrosted.create(chatInputViewsContainer, blurredBackgroundColorProvider));
+            glassBackgroundDrawableFactoryFrosted.create(chatInputViewsContainer, ForkGlassSurface.wrap(blurredBackgroundColorProvider)));
 
 
         chatInputBubbleContainer = chatInputViewsContainer.getInputIslandBubbleContainer();

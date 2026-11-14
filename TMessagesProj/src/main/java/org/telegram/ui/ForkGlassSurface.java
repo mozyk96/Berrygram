@@ -87,7 +87,7 @@ public final class ForkGlassSurface {
      * changing its base color. Outside Experimental Glass the delegate is
      * returned untouched.
      */
-    public static BlurredBackgroundProvider wrap(final BlurredBackgroundProvider delegate) {
+    public static BlurredBackgroundProvider wrap(final org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProvider delegate) {
         if (delegate == null) return null;
         // This wrapper is evaluated on every color refresh, so switching to or
         // from Experimental Glass takes effect without recreating the host view.
@@ -104,10 +104,15 @@ public final class ForkGlassSurface {
             }
 
             @Override public int getBackgroundColor() {
+                if (delegate instanceof org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProviderThemed) {
+                    ((org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProviderThemed) delegate).updateColors();
+                }
                 if (!experimental()) return delegate.getBackgroundColor();
                 ForkGlassSettings.Config config = ForkGlassSettings.config();
-                return Theme.multAlpha(delegate.getBackgroundColor(),
-                        GlassPolicy.opacity(config.transparency));
+                int base = delegate.getBackgroundColor();
+                Integer tint = config.customTintEnabled() ? GraphicsColorPolicy.parseHex(config.customTint) : null;
+                if (tint != null) base = ColorUtils.blendARGB(base, tint, 0.55f);
+                return Theme.multAlpha(base, GlassPolicy.opacity(config.transparency));
             }
 
             @Override public int getStrokeColorTop() {
@@ -124,30 +129,34 @@ public final class ForkGlassSurface {
                         GlassPolicy.strokeAlpha(config.edge, config.highlight, false));
             }
 
+            @Override public int getOutlineColor() { return experimental() ? 0 : delegate.getOutlineColor(); }
+            @Override public int getOutlineShadowColor() { return experimental() ? 0 : delegate.getOutlineShadowColor(); }
+            @Override public float getOutlineWidth() { return experimental() ? 0 : delegate.getOutlineWidth(); }
+
             @Override public float getStrokeWidthTop() {
-                if (!experimental()) return delegate.getStrokeWidthTop();
+                if (!experimental()) return (delegate instanceof BlurredBackgroundProvider ? ((BlurredBackgroundProvider) delegate).getStrokeWidthTop() : 0);
                 return AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(
                         ForkGlassSettings.config().edge));
             }
 
             @Override public float getStrokeWidthBottom() {
-                if (!experimental()) return delegate.getStrokeWidthBottom();
+                if (!experimental()) return (delegate instanceof BlurredBackgroundProvider ? ((BlurredBackgroundProvider) delegate).getStrokeWidthBottom() : 0);
                 return AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(
                         ForkGlassSettings.config().edge));
             }
 
             @Override public float getShadowRadius() {
-                if (!experimental()) return delegate.getShadowRadius();
+                if (!experimental()) return (delegate instanceof BlurredBackgroundProvider ? ((BlurredBackgroundProvider) delegate).getShadowRadius() : Math.max(0, delegate.getShadowRadiusOverride()));
                 return AndroidUtilities.dpf2(GlassPolicy.shadowRadiusDp(
                         ForkGlassSettings.config().shadow));
             }
 
             @Override public float getShadowDx() {
-                return experimental() ? 0 : delegate.getShadowDx();
+                return experimental() ? 0 : (delegate instanceof BlurredBackgroundProvider ? ((BlurredBackgroundProvider) delegate).getShadowDx() : 0);
             }
 
             @Override public float getShadowDy() {
-                return experimental() ? 0 : delegate.getShadowDy();
+                return experimental() ? 0 : (delegate instanceof BlurredBackgroundProvider ? ((BlurredBackgroundProvider) delegate).getShadowDy() : Math.max(0, delegate.getShadowDyOverride()));
             }
         };
     }

@@ -330,6 +330,7 @@ public class BlurredBackgroundDrawable extends GlassDrawable implements Theme.Co
         outlineWidth = colorProvider.getOutlineWidth();
         if (colorProvider instanceof BlurredBackgroundProvider) {
             final BlurredBackgroundProvider provider = (BlurredBackgroundProvider) colorProvider;
+            setStrokeWidth(provider.getStrokeWidthTop(), provider.getStrokeWidthBottom());
             setShadowParams(provider.getShadowRadius(), provider.getShadowDx(), provider.getShadowDy());
         } else if (colorProvider.getShadowRadiusOverride() >= 0) {
             setShadowParams(colorProvider.getShadowRadiusOverride(), 0, colorProvider.getShadowDyOverride());

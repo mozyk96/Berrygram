@@ -1,8 +1,9 @@
-## 1.5.1 — in development
+## 1.5.1 — private test build
 
-- Refine the compact chat header surface and reduce the modern composer height while retaining the separate recording control.
-- Restore the flat header surface when a reused ActionBar receives a new glass drawable.
-- Smoke checks and targeted emulator instrumentation have passed; authenticated chats, live recording and physical-device behavior remain unverified. A signed release has not been built or published.
+- Restore standard Telegram chat header proportions, spacing and menu layout.
+- Bound the modern composer background to the measured field, with height-derived rounded ends, centered controls and a separate recording circle.
+- Apply Berrygram glass styling to chat chrome and recording, refresh stroke geometry on mode changes, and retain capture sources when switching appearance modes.
+- Keep org.berrygram.client, version 1.5.1 and the generation-2 signing identity; increase the ARM64 code to 72979 for an in-place update. Visual and live-account behavior require owner testing; no publication.
 
 ## 1.4.4
 

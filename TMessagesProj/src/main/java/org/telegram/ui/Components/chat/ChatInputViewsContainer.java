@@ -287,13 +287,15 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
                     ChatActivityEnterView input = (ChatActivityEnterView) child;
                     input.messageEditTextContainer.getDrawingRect(inputFieldBounds);
                     offsetDescendantRectToMyCoords(input.messageEditTextContainer, inputFieldBounds);
-                    tmpRect.left = inputFieldBounds.left - dp(7);
-                    tmpRect.right = inputFieldBounds.right + dp(7);
+                    tmpRect.set(inputFieldBounds);
+                    tmpRect.inset(-dp(7), -dp(7));
                     break;
                 }
             }
         }
 
+        blurredBackgroundDrawable.setRadius(modernComposerVisible
+                ? inputFieldBounds.height() / 2f : dp(INPUT_BUBBLE_RADIUS));
         blurredBackgroundDrawable.setBounds(tmpRect);
         final boolean backgroundless = org.telegram.ui.ForkGraphicsSurface.backgroundless();
         if (drawInputBackground && (!backgroundless || !modernComposerVisible))

@@ -206,7 +206,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private ChatAvatarContainer chatAvatarContainer;
     public boolean doNotDrawCenterGlass;
     public boolean compactChatGlass;
-    private boolean flatChatSurface;
 
     public void setGlassOnlyBack() {
         glassOnlyBack = true;
@@ -225,11 +224,10 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                            boolean isForum) {
         setBackground(null);
         setClipChildren(false);
-        glassMode = true;
+        glassMode = !compactChatGlass;
         glassModeIsForum = isForum;
         glassFactory = factory;
         glassColorProvider = colorProvider;
-        flatChatSurface = false;
 
         glassDrawable = factory.create(this)
                 .setColorProvider(colorProvider)
@@ -252,15 +250,15 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 .setPadding(dp(6));
 
         if (menu != null) {
-            menu.setTranslationX(-dp(10));
-            menu.setGlassMode(true);
+            menu.setTranslationX(glassMode ? -dp(10) : 0);
+            menu.setGlassMode(glassMode);
         }
         if (actionMode != null) {
-            actionMode.setTranslationX(-dp(10));
-            actionMode.setGlassMode(true);
+            actionMode.setTranslationX(glassMode ? -dp(10) : 0);
+            actionMode.setGlassMode(glassMode);
         }
         if (backButtonImageView != null) {
-            backButtonImageView.setTranslationX(dp(2));
+            backButtonImageView.setTranslationX(glassMode ? dp(2) : 0);
         }
     }
 
@@ -2481,73 +2479,60 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         final int t = getHeight() - extraHeight - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
         final boolean noChatBackground = compactChatGlass && org.telegram.ui.ForkGraphicsSurface.backgroundless();
-        final boolean unifiedChatSurface = compactChatGlass && glassDrawable != null
-                && !noChatBackground
-                && !glassOnlyBack && drawGlassTitle && !doNotDrawCenterGlass
-                && !doNotDrawGlassMenu && searchFactor == 0 && actionModeFactor == 0
-                && !isMenuPillInOverlay();
-
-        if (glassDrawable != null && flatChatSurface != unifiedChatSurface) {
-            flatChatSurface = unifiedChatSurface;
-            if (flatChatSurface) {
-                glassDrawable.setRadius(0);
-            } else if (glassModeIsForum) {
-                glassDrawable.setRadius(dp(18.33f), dp(23), dp(23), dp(18.33f));
-            } else {
-                glassDrawable.setRadius(dp(23));
-            }
-        }
-
-        if (glassDrawable != null && !glassOnlyBack && drawGlassTitle && !noChatBackground) {
-            if (centerTitleAndGlass && titleTextView[0] != null && titleTextView[0].getVisibility() == View.VISIBLE) {
-                int titleWidth = (int) Math.ceil(titleTextView[0].getTextWidth()) + p * 2 + dp(48);
-                int titleLeft = (getWidth() - titleWidth) / 2 + Math.round(titleTextView[0].getTranslationX());
-                if (!unifiedChatSurface) {
-                    glassDrawable.setBounds(titleLeft, t, titleLeft + titleWidth, b);
-                    if (!doNotDrawCenterGlass) glassDrawable.draw(canvas);
-                }
-            } else {
-                final int menuWidthWithPadding = menuWidth + ((hasForcedMenuWidth || hasForcedMenuMinWidth) ? (menuWidth > 0 ? p : 0) : (int) (p * animatorHasMenuItems.getFloatValue()));
-                final int rightOffset = lerp(menuWidthWithPadding, Math.max(menuWidthWithPadding, p + s), chatAvatarContainer == null ? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
-
-                final int leftDefault = lerp(hasBackButton ? s + p : 0, s + p, chatAvatarContainer == null? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
-                final int rightDefault = getWidth() - rightOffset;
-                final int widthDefault = rightDefault - leftDefault;
-                final int left, right;
-                if (chatAvatarContainer != null) {
-                    final int width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2), widthDefault, Math.max(searchFactor, actionModeFactor));
-                    left = (rightDefault + leftDefault - width) / 2;
-                    right = left + width;
-
-                    final float translationX = left
-                            - ((MarginLayoutParams)(chatAvatarContainer.getLayoutParams())).leftMargin
-                            - chatAvatarContainer.getLeftPadding()
-                            + p + dp(3);
-                    chatAvatarContainer.setTranslationX(translationX);
-                    chatAvatarContainer.setPivotX((chatAvatarContainer.getMeasuredWidth()) / 2f - translationX );
-                } else {
-                    left = leftDefault;
-                    right = rightDefault;
-                }
-
-                if (!unifiedChatSurface) {
-                    glassDrawable.setBounds(left, t, right, b);
-                    if (!doNotDrawCenterGlass) glassDrawable.draw(canvas);
-                }
-            }
-        }
-        if (unifiedChatSurface) {
-            glassDrawable.setBounds(0, t, getWidth(), b);
+        if (compactChatGlass && glassDrawable != null && !noChatBackground && drawGlassTitle) {
+            glassDrawable.setRadius(0);
+            glassDrawable.setBounds(-p, -p, getWidth() + p, getHeight() + p);
             glassDrawable.draw(canvas);
         }
-        if (glassDrawableBack != null && hasBackButton && !unifiedChatSurface && !noChatBackground) {
-            glassDrawableBack.setBounds(0, t, s + p * 2, b);
-            glassDrawableBack.draw(canvas);
-        }
-        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay() && !noChatBackground) {
-            glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
-            glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
-            if (!unifiedChatSurface) glassDrawableMenu.draw(canvas);
+        if (!compactChatGlass) {
+            if (glassDrawable != null && !glassOnlyBack && drawGlassTitle && !noChatBackground) {
+                if (centerTitleAndGlass && titleTextView[0] != null && titleTextView[0].getVisibility() == View.VISIBLE) {
+                    int titleWidth = (int) Math.ceil(titleTextView[0].getTextWidth()) + p * 2 + dp(48);
+                    int titleLeft = (getWidth() - titleWidth) / 2 + Math.round(titleTextView[0].getTranslationX());
+                    {
+                        glassDrawable.setBounds(titleLeft, t, titleLeft + titleWidth, b);
+                        if (!doNotDrawCenterGlass) glassDrawable.draw(canvas);
+                    }
+                } else {
+                    final int menuWidthWithPadding = menuWidth + ((hasForcedMenuWidth || hasForcedMenuMinWidth) ? (menuWidth > 0 ? p : 0) : (int) (p * animatorHasMenuItems.getFloatValue()));
+                    final int rightOffset = lerp(menuWidthWithPadding, Math.max(menuWidthWithPadding, p + s), chatAvatarContainer == null ? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
+
+                    final int leftDefault = lerp(hasBackButton ? s + p : 0, s + p, chatAvatarContainer == null? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
+                    final int rightDefault = getWidth() - rightOffset;
+                    final int widthDefault = rightDefault - leftDefault;
+                    final int left, right;
+                    if (chatAvatarContainer != null) {
+                        final int width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2), widthDefault, Math.max(searchFactor, actionModeFactor));
+                        left = (rightDefault + leftDefault - width) / 2;
+                        right = left + width;
+
+                        final float translationX = left
+                                - ((MarginLayoutParams)(chatAvatarContainer.getLayoutParams())).leftMargin
+                                - chatAvatarContainer.getLeftPadding()
+                                + p + dp(3);
+                        chatAvatarContainer.setTranslationX(translationX);
+                        chatAvatarContainer.setPivotX((chatAvatarContainer.getMeasuredWidth()) / 2f - translationX );
+                    } else {
+                        left = leftDefault;
+                        right = rightDefault;
+                    }
+
+                    {
+                        glassDrawable.setBounds(left, t, right, b);
+                        if (!doNotDrawCenterGlass) glassDrawable.draw(canvas);
+                    }
+                }
+            }
+            if (glassDrawableBack != null && hasBackButton && !noChatBackground) {
+                glassDrawableBack.setBounds(0, t, s + p * 2, b);
+                glassDrawableBack.draw(canvas);
+            }
+            if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay() && !noChatBackground) {
+                glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
+                glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
+                glassDrawableMenu.draw(canvas);
+            }
+
         }
 
         if (blurredBackground && actionBarColor != Color.TRANSPARENT && drawGlassTitle && !noChatBackground) {

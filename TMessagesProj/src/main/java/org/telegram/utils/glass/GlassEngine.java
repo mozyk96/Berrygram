@@ -603,8 +603,9 @@ public class GlassEngine {
     private static int glassSettingsGenerationId;
 
     private static void checkGlassSettings() {
-        final boolean isBlurEnabled = LiteMode.isEnabled(LiteMode.FLAG_CHAT_BLUR);
-        final boolean isLiquidGlassEnabled = LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS);
+        final String style = org.telegram.ui.ForkGraphicsSurface.effectiveStyle();
+        final boolean isBlurEnabled = org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(style) || "blur".equals(style);
+        final boolean isLiquidGlassEnabled = org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(style);
 
         final boolean glassSettingsInvalidated = glassSettings == null
             || glassSettings.isBlurEnabled != isBlurEnabled
