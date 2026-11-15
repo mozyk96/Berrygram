@@ -667,7 +667,7 @@ public class TranscribeButton {
     }
 
     private static void transcribePressed(MessageObject messageObject, boolean open, ChatMessageCell.ChatMessageCellDelegate delegate) {
-        if (messageObject == null || messageObject.messageOwner == null || !messageObject.isSent()) {
+        if (messageObject == null || messageObject.isForkDeleted || messageObject.messageOwner == null || !messageObject.isSent()) {
             return;
         }
         int account = messageObject.currentAccount;

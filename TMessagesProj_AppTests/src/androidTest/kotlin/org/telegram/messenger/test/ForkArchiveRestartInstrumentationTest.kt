@@ -12,7 +12,8 @@ import org.telegram.messenger.fork.storage.ForkArchiveManager
 @RunWith(AndroidJUnit4::class)
 class ForkArchiveRestartInstrumentationTest {
     @Test fun archivedTextSurvivesProcessRestart() {
-        val manager = ForkArchiveManager.getInstance(987655)
+        org.junit.Assert.assertFalse(org.telegram.messenger.UserConfig.getInstance(3).isClientActivated)
+        val manager = ForkArchiveManager.getInstance(3)
         val dialog = 98765501L
         when (InstrumentationRegistry.getArguments().getString("phase") ?: "write") {
             "write" -> assertTrue(manager.archiveMessage(dialog, 1, 1, 1, null, "restart test", false))

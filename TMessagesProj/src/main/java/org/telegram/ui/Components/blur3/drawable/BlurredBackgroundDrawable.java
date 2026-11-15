@@ -747,7 +747,7 @@ public class BlurredBackgroundDrawable extends GlassDrawable implements Theme.Co
         return liquidGlassEffectAllowed && getGlassSettings().isLiquidGlassEnabled && Build.VERSION.SDK_INT >= 33;
     }
 
-    private boolean forkBitmapRefraction;
+    private boolean forkBitmapRefraction = true;
     private org.telegram.utils.glass.source.GlassSourceBitmap forkBitmapSource;
     private org.telegram.utils.glass.source.LiquidGlassBitmapSource forkRefractiveSource;
 
@@ -764,10 +764,11 @@ public class BlurredBackgroundDrawable extends GlassDrawable implements Theme.Co
             return staticSource;
         }
         GlassSource selected = isLiquidGlassEffectEnabled() ? glassSource : frostedSource;
+        GlassSource bitmapSource = unwrap(selected);
         if (forkBitmapRefraction && isLiquidGlassEffectEnabled()
-                && selected instanceof org.telegram.utils.glass.source.GlassSourceBitmap) {
+                && bitmapSource instanceof org.telegram.utils.glass.source.GlassSourceBitmap) {
             org.telegram.utils.glass.source.GlassSourceBitmap bitmap =
-                    (org.telegram.utils.glass.source.GlassSourceBitmap) selected;
+                    (org.telegram.utils.glass.source.GlassSourceBitmap) bitmapSource;
             if (forkBitmapSource != bitmap || forkRefractiveSource == null) {
                 forkBitmapSource = bitmap;
                 forkRefractiveSource = new org.telegram.utils.glass.source.LiquidGlassBitmapSource(bitmap);
@@ -886,7 +887,7 @@ public class BlurredBackgroundDrawable extends GlassDrawable implements Theme.Co
      * without blur), the liquid glass may be switched on or off.
      */
     private Impl resolveImpl() {
-        if (implInvalidated) {
+        if (implInvalidated || forkBitmapRefraction && isLiquidGlassEffectEnabled()) {
             final GlassSource picked = pickSource();
             if (source != picked) {
                 source = picked;

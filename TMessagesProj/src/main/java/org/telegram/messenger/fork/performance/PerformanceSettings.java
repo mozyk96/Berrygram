@@ -116,6 +116,7 @@ public final class PerformanceSettings {
     }
 
     public static String effectiveTier() {
+        if (PerformancePolicy.CONFIG_MANUAL.equals(configMode())) return manualLevel();
         return PerformancePolicy.resolveActiveTier(configMode(), manualLevel(), autoTier());
     }
 

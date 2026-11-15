@@ -1,6 +1,6 @@
-# 2.0.0 stabilization — 2026-11-14
+# Private two-stage 2.0.0 work — 2026-11-14
 
-Owner accepted the current new-generation UI. Release scope is deletion provenance, archive persistence/metadata, selection cleanup and the official generation-2 release; no UI redesign or 2.1.0 theme implementation. Signed artifact, phone upgrade and publication are pending the current release gates; see CONTINUE.md for final verified evidence.
+The latest owner request supersedes the earlier publication scope: finish optional header/deletion/performance/glass UI, privately deploy Stage 1, verify a source backup, then perform buildable Kotlin/Compose migration milestones and privately deploy Stage 2. No publication, push or release tag is authorized. The owner confirmed first installation on connected Redmi 23021RAAEG / 5bf68684. See CONTINUE.md for actual build/test/deployment evidence; the 2.1.0 color system and 3.0 desktop remain deferred.
 
 # Android 1.4.1 — built and published as an official release
 

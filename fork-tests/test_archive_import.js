@@ -92,7 +92,7 @@ const controller = read('org/telegram/messenger/MessagesController.java');
 check(manager.includes('@Synchronized'), 'The archive database is not serialized');
 check((manager.match(/@Synchronized/g) || []).length >= 15, 'Not every archive access is serialized');
 check(manager.includes('computeIfAbsent'), 'The archive can open the same database twice');
-check(controller.includes('ForkArchiveManager.archiveMessageAsync'),
+check(controller.includes('ForkArchiveManager.captureMessageAsync'),
     'An incoming message still writes to the archive on the UI thread');
 check(!controller.includes('ForkArchiveManager.getInstance(currentAccount).archiveMessage'),
     'An incoming message still writes to the archive on the UI thread');

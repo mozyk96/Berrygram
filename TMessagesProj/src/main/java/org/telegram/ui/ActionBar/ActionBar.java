@@ -337,6 +337,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     @Override
     public boolean getMenuItemGlassRect(ActionBarMenuItem item, RectF out) {
+        if (isIosChatHeader() && item.getParent() == menu) {
+            // Each island owns its icon. Let the overlay take only the pressed
+            // icon, rather than hiding/replaying the entire action menu pill.
+            out.set(menu.getX() + item.getX(), menu.getY() + item.getY(),
+                    menu.getX() + item.getX() + item.getWidth(), menu.getY() + item.getY() + item.getHeight());
+            return false;
+        }
         final int p = dp(6);
         if (item.getParent() == menu && glassDrawableMenu != null && !doNotDrawGlassMenu && !glassOnlyBack
                 && searchFactor == 0 && getActionModeFactor() == 0 && !glassDrawableMenu.getBounds().isEmpty()) {
@@ -537,9 +544,12 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
 
         boolean clip = shouldClipChild(child);
-        if (clip) {
+        boolean clipHeaderIsland = child == forkHeaderAvatar && isIosChatHeader();
+        if (clip || clipHeaderIsland) {
             canvas.save();
-            canvas.clipRect(0, -getTranslationY() + (occupyStatusBar ? AndroidUtilities.statusBarHeight : 0), getMeasuredWidth(), getMeasuredHeight());
+            if (clip) canvas.clipRect(0, -getTranslationY() + (occupyStatusBar ? AndroidUtilities.statusBarHeight : 0), getMeasuredWidth(), getMeasuredHeight());
+            if (clipHeaderIsland) canvas.clipRect(child.getX(), child.getY(),
+                    child.getX() + child.getWidth(), child.getY() + child.getHeight());
         }
         boolean result = super.drawChild(canvas, child, drawingTime);
         if (supportsHolidayImage && !titleOverlayShown && !LocaleController.isRTL && (child == titleTextView[0] || child == titleTextView[1] || child == titlesContainer && useContainerForTitles)) {
@@ -577,7 +587,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 }
             }
         }
-        if (clip) {
+        if (clip || clipHeaderIsland) {
             canvas.restore();
         }
         return result;
@@ -1696,14 +1706,15 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
 
         int childCount = getChildCount();
+        final boolean iosHeader = isIosChatHeader();
         for (int i = 0; i < childCount; i++) {
             View child = getChildAt(i);
-            if (child.getVisibility() == GONE || child == titleTextView[0] || child == titleTextView[1] || child == additionalSubTitleOverlayContainer || child == subtitleTextView || child == menu || child == backButtonImageView || child == additionalSubtitleTextView || child == avatarSearchImageView) {
+            if (child.getVisibility() == GONE || child == titleTextView[0] || child == titleTextView[1] || child == additionalSubTitleOverlayContainer || child == subtitleTextView || child == menu || child == backButtonImageView || child == additionalSubtitleTextView || child == avatarSearchImageView || iosHeader && child == forkHeaderAvatar) {
                 continue;
             }
             measureChildWithMargins(child, widthMeasureSpec, 0, MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY), 0);
         }
-        if (isIosChatHeader()) {
+        if (iosHeader) {
             int available = Math.max(0, getMeasuredWidth() - dp(68) - (menu == null ? 0 : menu.getMeasuredWidth()));
             forkHeaderAvatar.measure(MeasureSpec.makeMeasureSpec(Math.min(dp(232), available), MeasureSpec.EXACTLY),
                     MeasureSpec.makeMeasureSpec(getCurrentActionBarHeight(), MeasureSpec.EXACTLY));

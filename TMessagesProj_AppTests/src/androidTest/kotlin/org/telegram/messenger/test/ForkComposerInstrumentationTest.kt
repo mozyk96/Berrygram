@@ -134,19 +134,22 @@ class ForkComposerInstrumentationTest {
             for (attempt in 0 until 30) {
                 Thread.sleep(100)
                 instrumentation.runOnMainSync {
-                    visible = activity.window.decorView.rootWindowInsets?.isVisible(WindowInsets.Type.ime()) == true
+                    visible = ViewCompat.getRootWindowInsets(activity.window.decorView)
+                        ?.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime()) == true
                 }
                 if (visible) break
             }
             Thread.sleep(600)
             instrumentation.runOnMainSync {
                 assertTrue("The emulator IME must actually open", visible)
-                val insets = activity.window.decorView.rootWindowInsets
-                val screenHeight = activity.windowManager.currentWindowMetrics.bounds.height()
+                val insets = ViewCompat.getRootWindowInsets(activity.window.decorView)!!
+                val screen = android.graphics.Point()
+                activity.windowManager.defaultDisplay.getRealSize(screen)
+                val screenHeight = screen.y
                 val pos = IntArray(2)
                 composer!!.getLocationOnScreen(pos)
                 assertTrue("Composer overlaps the visible keyboard",
-                    pos[1] + composer!!.height <= screenHeight - insets.getInsets(WindowInsets.Type.ime()).bottom + dp(2f))
+                    pos[1] + composer!!.height <= screenHeight - insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom + dp(2f))
             }
         } finally {
             instrumentation.runOnMainSync {

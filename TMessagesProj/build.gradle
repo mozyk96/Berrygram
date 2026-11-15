@@ -171,7 +171,7 @@ android {
         manifestPlaceholders.FORK_MAPS_API_KEY = forkMapsKey
         buildConfigField 'int', 'FORK_TELEGRAM_API_ID', forkApiId
         buildConfigField 'String', 'FORK_TELEGRAM_API_HASH', '"' + forkApiHash + '"'
-        minSdkVersion 23
+        minSdkVersion 29
         targetSdkVersion 36
         vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
 

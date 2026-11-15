@@ -135,7 +135,7 @@ class ForkGlassModesInstrumentationTest {
                 PerformanceSettings.setManualLevel("high")
                 LiteMode.setPowerSaverLevel(0)
                 ForkPanelSettings.setStyle("glass")
-                assertEquals("glass", ForkGraphicsSurface.effectiveStyle())
+                assertEquals(if (android.os.Build.VERSION.SDK_INT >= 33) "glass" else "material", ForkGraphicsSurface.effectiveStyle())
                 val delegate = BlurredBackgroundProviderBuilder(null)
                     .setBackgroundColor { _, _ -> Color.WHITE }.build()
                 val baseline = ForkGlassSurface.provider(null)
@@ -149,7 +149,7 @@ class ForkGlassModesInstrumentationTest {
                 val glassLabel = labelMethod.invoke(null)
                 for (legacy in listOf("liquid", "experimental")) {
                     ForkPanelSettings.setStyle(legacy)
-                    assertEquals(legacy, ForkGraphicsSurface.effectiveStyle())
+                    assertEquals(if (android.os.Build.VERSION.SDK_INT >= 33) legacy else "material", ForkGraphicsSurface.effectiveStyle())
                     assertEquals("$legacy background", baselineColor, ForkGlassSurface.provider(null).backgroundColor)
                     assertEquals("$legacy edge", baselineStroke, ForkGlassSurface.provider(null).strokeColorTop)
                     assertEquals("$legacy wrapped surface", wrappedColor, ForkGlassSurface.wrap(delegate).backgroundColor)

@@ -27532,6 +27532,8 @@ public class ChatActivity extends BaseFragment implements
                     if (org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)
                             && !sent && !obj.scheduled && chatMode == MODE_DEFAULT && currentEncryptedChat == null
                             && !obj.isEphemeral() && !obj.isSecretMedia() && !isUnsentOrSending
+                            && org.telegram.messenger.fork.storage.ForkArchiveManager.canPreserveMessage(currentAccount,
+                                    loadIndex == 1 ? mergeDialogId : dialog_id, obj.messageOwner)
                             && !org.telegram.messenger.fork.storage.ForkDeletionPolicy.isLocal(currentAccount,
                                     loadIndex == 1 ? mergeDialogId : dialog_id, obj.getId())) {
                         obj.isForkDeleted = true;
@@ -41163,6 +41165,7 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public void didPressAddPollOptionButton(ChatMessageCell cell) {
+            if (cell.getMessageObject().isForkDeleted) return;
             pollAddOptionModeStart(cell);
         }
 
@@ -41481,6 +41484,7 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public void didPressBotButton(ChatMessageCell cell, TL_keyboard.KeyboardButtonProto button) {
+            if (cell.getMessageObject() != null && cell.getMessageObject().isForkDeleted) return;
             if (isQuickRepliesOrWelcomeMessagesMode()) return;
 
             final TL_keyboard.TL_inlineButtonTypeUrl buttonTypeUrl = TLKeyboardHelper.getType(button, TL_keyboard.TL_inlineButtonTypeUrl.class);
@@ -41502,7 +41506,7 @@ public class ChatActivity extends BaseFragment implements
         @Override
         public void didPressCustomBotButton(ChatMessageCell cell, BotInlineKeyboard.ButtonCustom button) {
             final MessageObject messageObject = cell.getMessageObject();
-            if (messageObject == null) {
+            if (messageObject == null || messageObject.isForkDeleted) {
                 return;
             }
 
@@ -42021,6 +42025,7 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public boolean didLongPressPollOption(ChatMessageCell cell, TLRPC.PollAnswer answer) {
+            if (cell.getMessageObject().isForkDeleted) return showForkPreservedMenu(cell.getMessageObject());
             if (getParentActivity() == null || getContext() == null) {
                 return false;
             }
@@ -42059,7 +42064,7 @@ public class ChatActivity extends BaseFragment implements
         @Override
         public void didPressVoteButtons(ChatMessageCell cell, ArrayList<TLRPC.PollAnswer> buttons, int showCount, int x, int y) {
             final MessageObject message = cell.getMessageObject();
-            if (message == null) {
+            if (message == null || message.isForkDeleted) {
                 return;
             }
 
@@ -42111,6 +42116,7 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public boolean didPressToDoButton(ChatMessageCell cell, TLRPC.TodoItem task, boolean enable) {
+            if (cell.getMessageObject().isForkDeleted) return false;
             if (cell.getMessageObject().isForwarded()) {
                 final long fromId = DialogObject.getPeerDialogId(cell.getMessageObject().getFromPeer());
                 BulletinFactory.of(ChatActivity.this)
@@ -42356,6 +42362,7 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public void didPressExtendedMediaPreview(ChatMessageCell cell, TL_keyboard.KeyboardInlineButton button) {
+            if (cell.getMessageObject().isForkDeleted) return;
             getSendMessagesHelper().sendCallback(true, cell.getMessageObject(), button, ChatActivity.this);
         }
 
@@ -42662,6 +42669,7 @@ public class ChatActivity extends BaseFragment implements
         @Override
         public void didPressPollMedia(ChatMessageCell cell, ImageReceiver imageReceiver, TLRPC.PollAnswer answer, TLRPC.MessageMedia media, float x, float y, int unshuffledIndex) {
             final MessageObject messageObject = cell.getMessageObject();
+            if (messageObject != null && messageObject.isForkDeleted) { showForkPreservedInfo(messageObject); return; }
             final TLRPC.MessageMedia messageMedia = MessageObject.getMedia(messageObject);
             if (media == null || messageObject == null || !(messageMedia instanceof TLRPC.TL_messageMediaPoll)) {
                 return;

@@ -31,6 +31,10 @@ class ForkProgressiveBlurInstrumentationTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val hadBlur = LiteMode.isEnabled(LiteMode.FLAG_CHAT_BLUR)
+        val oldStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style()
+        val oldAdaptive = org.telegram.messenger.fork.panels.ForkPanelSettings.adaptiveEffects()
+        val oldMode = org.telegram.messenger.fork.performance.PerformanceSettings.configMode()
+        val oldLevel = org.telegram.messenger.fork.performance.PerformanceSettings.manualLevel()
         val source = GlassSourceRenderNode(null)
         val engine = GlassEngine()
         var root: FrameLayout? = null
@@ -43,7 +47,11 @@ class ForkProgressiveBlurInstrumentationTest {
         }
         try {
             instrumentation.runOnMainSync {
-                LiteMode.toggleFlag(LiteMode.FLAG_CHAT_BLUR, true)
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setAdaptiveEffects(false)
+                org.telegram.messenger.fork.performance.PerformanceSettings.setConfigMode("manual")
+                org.telegram.messenger.fork.performance.PerformanceSettings.setManualLevel("high")
+                LiteMode.setForkVisualMode("blur")
+                GlassEngine.invalidateSettings()
                 val frame = FrameLayout(activity)
                 root = frame
                 frame.addView(object : View(activity) {
@@ -99,6 +107,11 @@ class ForkProgressiveBlurInstrumentationTest {
             instrumentation.runOnMainSync {
                 engine.setRoot(null)
                 LiteMode.toggleFlag(LiteMode.FLAG_CHAT_BLUR, hadBlur)
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle(oldStyle)
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setAdaptiveEffects(oldAdaptive)
+                org.telegram.messenger.fork.performance.PerformanceSettings.setConfigMode(oldMode)
+                org.telegram.messenger.fork.performance.PerformanceSettings.setManualLevel(oldLevel)
+                GlassEngine.invalidateSettings()
                 activity.finish()
             }
         }

@@ -33,8 +33,9 @@ public final class PanelPolicy {
         return STYLE_NONE;
     }
 
-    public static int popupRadiusDp(boolean experimental) { return experimental ? 26 : 12; }
-    public static int popupRadiusDp(boolean experimental, int requested) { return experimental ? Math.max(12, Math.min(32, requested)) : 12; }
+    public static int popupRadiusDp(boolean experimental) { return 26; }
+    public static int popupRadiusDp(boolean experimental, int requested) { return Math.max(12, Math.min(32, requested)); }
+    public static int largeSurfaceRadiusDp(int requested) { return Math.max(24, Math.min(32, requested)); }
 
     public static int surfaceRadiusDp(String style, int requested) {
         return "material".equals(style) || "none".equals(style) || "blur".equals(style) || "glass".equals(style) || "liquid".equals(style) || "experimental".equals(style) ? popupRadiusDp(true, requested) : 12;

@@ -221,7 +221,7 @@ object ForkSettingsBlocks {
         section.addHeader(R.string.ForkSectionPerformance)
         lateinit var mode: org.telegram.ui.Cells.TextSettingsCell
         mode = section.addRow(R.string.ForkPerformanceConfigMode, configModeLabel(), R.drawable.fork_ic_analyzer) { anchor ->
-            showConfigMode(fragment, anchor, mode)
+            showConfigMode(fragment, anchor, section)
         }
         lateinit var level: org.telegram.ui.Cells.TextSettingsCell
         level = section.addRow(R.string.ForkPerformanceManualLevel, levelLabel(), R.drawable.fork_ic_performance) { anchor ->
@@ -347,7 +347,7 @@ object ForkSettingsBlocks {
         }
     }
 
-    private fun showConfigMode(fragment: BaseFragment, anchor: View, cell: org.telegram.ui.Cells.TextSettingsCell) {
+    private fun showConfigMode(fragment: BaseFragment, anchor: View, section: ForkSettingsSection) {
         val modes = arrayOf(PerformancePolicy.CONFIG_AUTO, PerformancePolicy.CONFIG_MANUAL)
         val labels = arrayOf(
             ForkLocale.get(R.string.ForkPerformanceAutoMode),
@@ -356,7 +356,7 @@ object ForkSettingsBlocks {
         val current = modes.indexOf(PerformancePolicy.normalizeConfigMode(PerformanceSettings.configMode())).let { if (it < 0) 0 else it }
         ForkChoicePopup.show(fragment, anchor, labels, null, current) { index ->
             PerformanceSettings.setConfigMode(modes[index])
-            cell.setTextAndValue(ForkLocale.get(R.string.ForkPerformanceConfigMode), configModeLabel(), false)
+            section.refresh()
         }
     }
 

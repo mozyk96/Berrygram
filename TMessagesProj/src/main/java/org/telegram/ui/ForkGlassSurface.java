@@ -166,7 +166,9 @@ public final class ForkGlassSurface {
         String eff = ForkGraphicsSurface.effectiveStyle();
         if (org.telegram.messenger.fork.panels.PanelPolicy.isBackgroundless(eff)) return 0;
         if (!org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(eff)) return base;
-        return ForkGlassSettings.captureBlurAmount(base);
+        return org.telegram.messenger.fork.performance.PerformancePolicy.captureDownscale(
+                ForkGlassSettings.captureBlurAmount(base),
+                org.telegram.messenger.fork.performance.PerformanceSettings.effectiveTier());
     }
 
     public static float backdropSaturation(float base) {

@@ -41,6 +41,11 @@ public final class PerformancePolicy {
         return autoTier != null ? autoTier : LEVEL_MEDIUM;
     }
 
+    /** Global backdrop capture uses this factor for both bitmap downscale and diffusion. */
+    public static int captureDownscale(int configured, String tier) {
+        return Math.max(6, configured + (LEVEL_HIGH.equals(tier) ? 0 : LEVEL_MEDIUM.equals(tier) ? 4 : 8));
+    }
+
     /**
      * True when BerryGram should fall back to opaque surfaces and skip nonessential
      * reveal animations. System power saving is handled by the caller as well.

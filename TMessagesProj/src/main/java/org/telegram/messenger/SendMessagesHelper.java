@@ -3909,7 +3909,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     public int sendVote(final MessageObject messageObject, final ArrayList<TLRPC.PollAnswer> answers, final Runnable finishRunnable) {
-        if (messageObject == null) {
+        if (messageObject == null || messageObject.isForkDeleted) {
             return 0;
         }
         final String key = "poll_" + messageObject.getPollId();
@@ -3952,7 +3952,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         return waitingForTodoUpdate.get(Objects.hash(messageObject.getDialogId(), messageObject.getId(), task.id));
     }
     public int toggleTodo(final long send_as, final MessageObject messageObject, final TLRPC.TodoItem task, final boolean enabled, final Runnable finishRunnable) {
-        if (messageObject == null) {
+        if (messageObject == null || messageObject.isForkDeleted) {
             return 0;
         }
         int hash = Objects.hash(messageObject.getDialogId(), messageObject.getId(), task.id);
@@ -4068,7 +4068,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     public void sendCallback(final boolean cache, final MessageObject messageObject, final TL_keyboard.KeyboardButtonProto button, TLRPC.InputCheckPasswordSRP srp, TwoStepVerificationActivity passwordFragment, final ChatActivity parentFragment) {
-        if (messageObject == null || button == null || parentFragment == null) {
+        if (messageObject == null || messageObject.isForkDeleted || button == null || parentFragment == null) {
             return;
         }
         final boolean cacheFinal;

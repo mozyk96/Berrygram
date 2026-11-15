@@ -14459,7 +14459,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void markMessageContentAsRead(MessageObject messageObject) {
-        if (messageObject.scheduled) {
+        if (messageObject.isForkDeleted || messageObject.scheduled) {
             return;
         }
         ArrayList<Integer> arrayList = new ArrayList<>();
@@ -18657,29 +18657,16 @@ public class MessagesController extends BaseController implements NotificationCe
                 if (message instanceof TLRPC.TL_messageEmpty) {
                     continue;
                 }
-                if (message.message != null && !android.text.TextUtils.isEmpty(message.message)) {
-                    long did = MessageObject.getDialogId(message);
+                long forkArchiveDialogId = MessageObject.getDialogId(message);
+                boolean forkCanArchive = org.telegram.messenger.fork.storage.ForkArchiveManager.canPreserveMessage(
+                        currentAccount, forkArchiveDialogId, message);
+                if (forkCanArchive && message.message != null && !android.text.TextUtils.isEmpty(message.message)) {
                     // Remember the current text so a later edit can be versioned reliably.
-                    org.telegram.messenger.fork.storage.ForkMessageTextCache.put(currentAccount, did, message.id, message.date, message.message);
-                    if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled(currentAccount)) {
-                        long senderId = DialogObject.getPeerDialogId(message.from_id);
-                        // The archive write runs on the archive executor, the
-                        // UI thread must not touch the SQLite database.
-                        org.telegram.messenger.fork.storage.ForkArchiveManager.archiveMessageAsync(
-                                currentAccount,
-                                did,
-                                message.id,
-                                message.date,
-                                senderId,
-                                null,
-                                message.message
-                        );
-                    }
+                    org.telegram.messenger.fork.storage.ForkMessageTextCache.put(currentAccount, forkArchiveDialogId, message.id, message.date, message.message);
                 }
-                if (org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled(currentAccount)
-                        && message.id > 0 && message.ttl_period == 0 && !message.noforwards) {
+                if (forkCanArchive && org.telegram.messenger.fork.stealth.ForkStealthSettings.archiveEnabled(currentAccount)) {
                     org.telegram.messenger.fork.storage.ForkArchiveManager.captureMessageAsync(
-                            currentAccount, MessageObject.getDialogId(message), message, false);
+                            currentAccount, forkArchiveDialogId, message, false);
                 }
                 if (newMessageCallback != null && newMessageCallback.onMessageReceived(message)) {
                     newMessageCallback = null;

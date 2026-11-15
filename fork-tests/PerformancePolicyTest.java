@@ -14,6 +14,10 @@ public class PerformancePolicyTest {
         check(PerformancePolicy.reduceEffects(PerformancePolicy.SMOOTH, true, false, false), "System power saver wins");
         check(PerformancePolicy.reduceEffects(PerformancePolicy.CUSTOM, false, false, true), "Custom reduce toggle");
         check(!PerformancePolicy.reduceEffects(PerformancePolicy.CUSTOM, false, true, false), "Custom keeps device capable");
+        check(PerformancePolicy.captureDownscale(15, "high") == 15, "High capture quality");
+        check(PerformancePolicy.captureDownscale(15, "medium") == 19, "Medium capture pixel budget");
+        check(PerformancePolicy.captureDownscale(15, "low") == 23, "Low capture pixel budget");
+        check(PerformancePolicy.captureDownscale(-20, "high") == 6, "Capture safety minimum");
         System.out.println("PerformancePolicyTest passed (automatic, smooth, battery, custom, power saver)");
     }
 }

@@ -48,7 +48,6 @@ import java.util.ArrayList;
  * a single owner.
  */
 public class SimpleActionBarMenuOverlay extends FrameLayout {
-    private static final float MENU_RADIUS = 22;
 
     private float glassColorsFactor = 1f;
     private PopupSwipeBackLayout swipeBackListening;
@@ -604,7 +603,9 @@ public class SimpleActionBarMenuOverlay extends FrameLayout {
             final float hw = shapeRect.width() / 2f * (1f + wobble * 0.5f), hh = shapeRect.height() / 2f * (1f - wobble);
             shapeRect.set(cx - hw, cy - hh, cx + hw, cy + hh);
         }
-        final float radius = Math.min(Math.min(shapeRect.height(), shapeRect.width()) / 2f, lerp(startRect.height() / 2f, dp(MENU_RADIUS), Utilities.clamp01(ph)));
+        final float radius = Math.min(Math.min(shapeRect.height(), shapeRect.width()) / 2f,
+                lerp(startRect.height() / 2f, dp(org.telegram.messenger.fork.panels.PanelPolicy.popupRadiusDp(true,
+                        org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp())), Utilities.clamp01(ph)));
         // out of a pill below (the QR screen's chip menu): the moving top edge bulges forward with its speed, as liquid;
         // a dome of the glass's own shape, the top raised and its corners rounder, so the rim follows it
         final float bulge = pillBelow ? 0.75f * dp(5) * Utilities.clamp01(menuHVel / 9f) : 0f;

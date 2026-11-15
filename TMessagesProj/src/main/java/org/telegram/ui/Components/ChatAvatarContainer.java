@@ -676,7 +676,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         final int width = MeasureSpec.getSize(widthMeasureSpec);
-        final int availableWidth = width - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16);
+        final int availableWidth = Math.max(0, width - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16));
         avatarImageView.measure(MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY));
         titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
@@ -702,7 +702,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
         SimpleTextView titleTextLargerCopyView = this.titleTextLargerCopyView.get();
         if (titleTextLargerCopyView != null) {
-            int largerAvailableWidth = largerWidth - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16);
+            int largerAvailableWidth = Math.max(0, largerWidth - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16));
             titleTextLargerCopyView.measure(MeasureSpec.makeMeasureSpec(largerAvailableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24), MeasureSpec.AT_MOST));
         }
         lastWidth = width;

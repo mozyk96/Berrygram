@@ -31,11 +31,13 @@ class ForkSyntheticChatInstrumentationTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
             SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val oldHeaderStyle = org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()
         try {
-            for (kind in listOf("bot", "group", "channel")) {
+            for ((kind, ios) in listOf(false, true).flatMap { ios -> listOf("bot", "group", "channel").map { it to ios } }) {
                 var chat: ChatActivity? = null
                 try {
                     instrumentation.runOnMainSync {
+                        org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(ios)
                         for (account in 0 until UserConfig.MAX_ACCOUNT_COUNT) {
                             assertFalse("This fixture requires a logged-out emulator",
                                 UserConfig.getInstance(account).isClientActivated)
@@ -84,7 +86,7 @@ class ForkSyntheticChatInstrumentationTest {
                     instrumentation.waitForIdleSync()
                     val screenshot = instrumentation.uiAutomation.takeScreenshot()
                     try {
-                        java.io.File(activity.getExternalFilesDir(null), "berrygram-151-synthetic-$kind.png")
+                        java.io.File(activity.getExternalFilesDir(null), "berrygram-200-synthetic-$kind-${if (ios) "ios" else "telegram"}.png")
                             .outputStream().use { screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
                     } finally { screenshot.recycle() }
                 } finally {
@@ -92,7 +94,7 @@ class ForkSyntheticChatInstrumentationTest {
                 }
             }
         } finally {
-            instrumentation.runOnMainSync { activity.finish() }
+            instrumentation.runOnMainSync { org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(oldHeaderStyle); activity.finish() }
         }
     }
 

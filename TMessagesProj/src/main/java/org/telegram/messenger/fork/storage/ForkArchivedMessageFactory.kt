@@ -41,6 +41,7 @@ object ForkArchivedMessageFactory {
             }
             message.dialog_id = entry.dialogId
             message.date = entry.date
+            if (!ForkArchiveManager.canPreserveMessage(account, entry.dialogId, message)) return null
             if (message.edit_date == 0) message.edit_date = entry.editDate
             if (message.message.isNullOrBlank() && message.media == null) {
                 message.message = org.telegram.ui.ForkLocale.get(org.telegram.messenger.R.string.ForkPreservedMessage)

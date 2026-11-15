@@ -15,7 +15,8 @@ import java.lang.reflect.InvocationTargetException
 @RunWith(AndroidJUnit4::class)
 class ForkArchiveEncryptionInstrumentationTest {
     @Test fun keystoreEncryptionRoundTripsAndFailedWritesPreserveCiphertext() {
-        val account = 987654
+        val account = 3
+        assertFalse(org.telegram.messenger.UserConfig.getInstance(account).isClientActivated)
         val text = "archive test message"
         val encrypted = ForkArchiveCrypto.encrypt(account, text)
         assertNotNull("Android Keystore must encrypt archive text", encrypted)
@@ -45,7 +46,8 @@ class ForkArchiveEncryptionInstrumentationTest {
     }
 
     @Test fun failedArchiveWriteStopsImport() {
-        val account = 987654
+        val account = 3
+        assertFalse(org.telegram.messenger.UserConfig.getInstance(account).isClientActivated)
         val manager = ForkArchiveManager.getInstance(account)
         val dbField = ForkArchiveManager::class.java.getDeclaredField("database").apply { isAccessible = true }
         val db = synchronized(manager) { dbField.get(manager).also { dbField.set(manager, null) } }
@@ -67,7 +69,8 @@ class ForkArchiveEncryptionInstrumentationTest {
     }
 
     @Test fun legacyPlaintextIsMigratedWithoutLosingContent() {
-        val account = 987654
+        val account = 3
+        assertFalse(org.telegram.messenger.UserConfig.getInstance(account).isClientActivated)
         val dialogId = System.nanoTime().and(Long.MAX_VALUE)
         val manager = ForkArchiveManager.getInstance(account)
         val dbField = ForkArchiveManager::class.java.getDeclaredField("database").apply { isAccessible = true }

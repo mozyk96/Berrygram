@@ -4346,6 +4346,7 @@ public class MessageObject {
     }
 
     public boolean canCompleteTodo() {
+        if (isForkDeleted) return false;
         TLRPC.MessageMedia m = getMedia(messageOwner);
         if (!(m instanceof TLRPC.TL_messageMediaToDo)) {
             return false;
@@ -8641,6 +8642,7 @@ public class MessageObject {
     }
 
     public boolean needDrawShareButton() {
+        if (isForkDeleted) return false;
         if (isRepostPreview) {
             return false;
         }
@@ -10505,6 +10507,7 @@ public class MessageObject {
     }
 
     public boolean canSetReaction() {
+        if (isForkDeleted) return false;
         if (isEphemeral()) {
             return false;
         }

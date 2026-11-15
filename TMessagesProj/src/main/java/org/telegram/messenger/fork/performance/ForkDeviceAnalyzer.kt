@@ -48,7 +48,11 @@ object ForkDeviceAnalyzer {
         } else {
             Build.HARDWARE ?: ""
         }
-        val gpu = Build.HARDWARE ?: ""
+        // GL_RENDERER requires a current context. A board/SoC name is not a GPU
+        // renderer; keep it unknown when diagnostics run outside a GL thread.
+        val gpu = if (android.opengl.EGL14.eglGetCurrentContext() != android.opengl.EGL14.EGL_NO_CONTEXT) {
+            android.opengl.GLES20.glGetString(android.opengl.GLES20.GL_RENDERER).orEmpty()
+        } else ""
 
         return DeviceAnalyzerPolicy.DeviceSpecs(
             cpuCores,

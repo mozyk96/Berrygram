@@ -14,6 +14,16 @@ apply plugin: 'kotlin-android'
 apply plugin: 'test-generator'
 apply plugin: 'org.telegram.build-app-plugin'
 
+// Focus fork UI regressions without recompiling the unrelated generated TL scheme suite.
+// The default test build still includes every upstream test.
+if (project.hasProperty('forkFocusedTests')) {
+    kotlin.sourceSets.configureEach {
+        if (name.toLowerCase(Locale.ROOT).contains('androidtest')) {
+            kotlin.exclude('org/telegram/tgnet/**')
+        }
+    }
+}
+
 repositories {
     mavenCentral()
     google()
@@ -44,6 +54,10 @@ dependencies {
 android {
     compileSdkVersion 36
     buildToolsVersion '36.0.0'
+
+    packagingOptions {
+        resources.excludes += ['lib/*.dll', 'lib/*.dylib']
+    }
 
     defaultConfig.applicationId = APP_PACKAGE
     defaultConfig.manifestPlaceholders.FORK_MAPS_API_KEY = System.getenv('FORK_MAPS_API_KEY') ?: ''
@@ -113,6 +127,15 @@ android {
 
     sourceSets.debug {
         manifest.srcFile '../TMessagesProj/config/release/AndroidManifest.xml'
+        if (project.hasProperty('forkTestNativeDir')) {
+            def nativeRoot = rootProject.file(project.property('forkTestNativeDir'))
+            for (name in ['libtmessages.49.so', 'libtwidget.so']) {
+                if (!new File(nativeRoot, "x86_64/$name").isFile()) {
+                    throw new GradleException("Missing explicitly reused test native library: $name")
+                }
+            }
+            jniLibs.srcDir nativeRoot
+        }
     }
     sourceSets.standalone {
         manifest.srcFile '../TMessagesProj/config/release/AndroidManifest.xml'
@@ -151,7 +174,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 26
+        minSdkVersion 29
         targetSdkVersion 36
         versionName APP_VERSION_NAME
         ndkVersion "27.2.12479018"

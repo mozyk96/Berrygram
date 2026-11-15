@@ -367,7 +367,8 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
 
         backgroundPaddings = new Rect();
         if (progressStyle != ALERT_TYPE_SPINNER || blurredBackground) {
-            shadowDrawable = context.getResources().getDrawable(R.drawable.popup_fixed_alert4).mutate();
+            shadowDrawable = org.telegram.ui.ForkShapeSurface.modalBackground(
+                    context.getResources().getDrawable(R.drawable.popup_fixed_alert4).mutate(), false);
             blurOpacity = progressStyle == ALERT_TYPE_SPINNER ? 0.55f : (isDark ? 0.80f : 0.985f);
             shadowDrawable.setColorFilter(new PorterDuffColorFilter(backgroundColor, PorterDuff.Mode.MULTIPLY));
             shadowDrawable.getPadding(backgroundPaddings);
@@ -645,7 +646,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                             (getHeight() + h) / 2f
                     );
                 } else {
-                    r = dp(20);
+                    r = dp(org.telegram.ui.ForkShapeSurface.largeRadiusDp());
                     AndroidUtilities.rectTmp.set(getPaddingLeft(), getPaddingTop(), getMeasuredWidth() - getPaddingRight(), getMeasuredHeight() - getPaddingBottom());
                 }
 
@@ -1453,7 +1454,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                 if (progressViewStyle == ALERT_TYPE_MESSAGE) {
                     blurredNativeBackground = true;
                     window.setBackgroundBlurRadius(50);
-                    float rad = dp(12);
+                    float rad = dp(org.telegram.ui.ForkShapeSurface.largeRadiusDp());
                     ShapeDrawable shapeDrawable = new ShapeDrawable(new RoundRectShape(new float[]{rad, rad, rad, rad, rad, rad, rad, rad}, null, null));
                     shapeDrawable.getPaint().setColor(ColorUtils.setAlphaComponent(backgroundColor, (int) (blurAlpha * 255)));
                     window.setBackgroundDrawable(shapeDrawable);

@@ -1353,7 +1353,8 @@ public class BottomSheet extends Dialog implements BaseFragment.AttachedSheet {
         touchSlop = vc.getScaledTouchSlop();
 
         Rect padding = new Rect();
-        shadowDrawable = new FilterTrackingDrawable(context.getResources().getDrawable(R.drawable.sheet_shadow_round).mutate());
+        shadowDrawable = new FilterTrackingDrawable(org.telegram.ui.ForkShapeSurface.modalBackground(
+                context.getResources().getDrawable(R.drawable.sheet_shadow_round).mutate(), true));
         shadowDrawable.setColorFilter(themedBackgroundFilter = new PorterDuffColorFilter(internalBackgroundColor = getThemedColor(Theme.key_dialogBackground), PorterDuff.Mode.MULTIPLY));
         shadowDrawable.getPadding(padding);
         backgroundPaddingLeft = padding.left;

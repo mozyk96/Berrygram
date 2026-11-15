@@ -11170,6 +11170,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
         useTranscribeButton = (
             currentMessageObject != null &&
+            !currentMessageObject.isForkDeleted &&
             !currentMessageObject.isQuickReply() &&
             !currentMessageObject.isRepostPreview &&
             (!currentMessageObject.isOutOwner() || currentMessageObject.isSent()) &&

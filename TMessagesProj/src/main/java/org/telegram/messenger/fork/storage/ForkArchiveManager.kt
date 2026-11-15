@@ -826,8 +826,22 @@ class ForkArchiveManager private constructor(private val currentAccount: Int) {
         }
 
         @JvmStatic
+        fun canPreserveMessage(account: Int, dialogId: Long, message: org.telegram.tgnet.TLRPC.Message): Boolean {
+            if (dialogId == 0L || org.telegram.messenger.DialogObject.isEncryptedDialog(dialogId)
+                    || message.id <= 0 || message is org.telegram.tgnet.TLRPC.TL_message_secret
+                    || org.telegram.messenger.MessageObject.isEphemeral(message)
+                    || message.ttl_period > 0 || message.noforwards
+                    || !ForkArchiveImportPolicy.isEligible(
+                        message.action != null && message.action !is org.telegram.tgnet.TLRPC.TL_messageActionEmpty,
+                        message.ttl, message.media?.ttl_seconds ?: 0)) return false
+            val controller = org.telegram.messenger.MessagesController.getInstance(account)
+            return if (dialogId < 0) !controller.isChatNoForwards(-dialogId)
+                else !controller.isUserNoForwards(dialogId)
+        }
+
+        @JvmStatic
         fun captureMessageAsync(account: Int, dialogId: Long, message: org.telegram.tgnet.TLRPC.Message, deleted: Boolean) {
-            if (message.id <= 0 || ForkDeletionPolicy.isLocal(account, dialogId, message.id)) return
+            if (!canPreserveMessage(account, dialogId, message) || ForkDeletionPolicy.isLocal(account, dialogId, message.id)) return
             val owner = org.telegram.messenger.UserConfig.getInstance(account).clientUserId
             val id = message.id
             val date = message.date

@@ -24,10 +24,13 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check(!PanelPolicy.captureMenuGlass(true, false, 33, true, true, true));
  check(!PanelPolicy.captureMenuGlass(true, false, 33, true, false, false));
  check(!PanelPolicy.captureMenuGlass(true, true, 33, true, false, true));
- check(PanelPolicy.popupRadiusDp(false) == 12);
- check(PanelPolicy.popupRadiusDp(false, 30) == 12);
+ check(PanelPolicy.popupRadiusDp(false) == 26);
+ check(PanelPolicy.popupRadiusDp(false, 30) == 30);
  check(PanelPolicy.popupRadiusDp(true, 30) == 30);
  check(PanelPolicy.popupRadiusDp(true, 100) == 32);
+ check(PanelPolicy.largeSurfaceRadiusDp(12) == 24);
+ check(PanelPolicy.largeSurfaceRadiusDp(26) == 26);
+ check(PanelPolicy.largeSurfaceRadiusDp(99) == 32);
  check(PanelPolicy.surfaceRadiusDp("material", 30) == 30);
  check(PanelPolicy.surfaceRadiusDp("blur", 8) == 12);
  check(PanelPolicy.surfaceRadiusDp("liquid", 99) == 32);
