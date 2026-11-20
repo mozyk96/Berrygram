@@ -5,6 +5,7 @@
 - Keep encrypted deleted-message snapshots and known metadata, restrict preserved-message actions to local information/history/delete, and hide unavailable media playback controls.
 - Retain accepted chat, composer, recording, optional header styles and appearance modes. Add a short 2.1.0 palette/wallpaper roadmap note only.
 - Keep iOS header menu transitions scoped to the pressed island; immediately refresh manual performance controls and stop reporting a hardware board name as a GPU renderer.
+- Place iOS-style chat titles, status and avatars below the system inset without applying it twice.
 - Reject disappearing/protected content at shared snapshot capture; prevent preserved-message voting, task changes, bot callbacks, reactions, read receipts and server transcription.
 - Android 10 (API 29) is the minimum across application variants, as requested by the owner.
 - Keep reply and edit banners readable above the modern composer without filling the gap beside the separate action button.

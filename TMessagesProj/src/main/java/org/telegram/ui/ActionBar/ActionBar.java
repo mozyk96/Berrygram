@@ -1716,8 +1716,10 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
         if (iosHeader) {
             int available = Math.max(0, getMeasuredWidth() - dp(68) - (menu == null ? 0 : menu.getMeasuredWidth()));
+            // The avatar container positions its own content below the status bar.
+            int avatarHeight = getCurrentActionBarHeight() + (occupyStatusBar ? AndroidUtilities.statusBarHeight : 0);
             forkHeaderAvatar.measure(MeasureSpec.makeMeasureSpec(Math.min(dp(232), available), MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(getCurrentActionBarHeight(), MeasureSpec.EXACTLY));
+                    MeasureSpec.makeMeasureSpec(avatarHeight, MeasureSpec.EXACTLY));
             if (backButtonImageView != null) backButtonImageView.measure(
                     MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY));
             if (menu != null) menu.measure(MeasureSpec.makeMeasureSpec(menu.getMeasuredWidth(), MeasureSpec.EXACTLY),
@@ -1849,8 +1851,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             int end = getWidth() - (menu == null ? 0 : menu.getMeasuredWidth()) - dp(6);
             int avatarLeft = dp(56) + Math.max(0, end - dp(56) - forkHeaderAvatar.getMeasuredWidth()) / 2;
             forkHeaderAvatar.setTranslationX(0);
-            forkHeaderAvatar.layout(avatarLeft, additionalTop, avatarLeft + forkHeaderAvatar.getMeasuredWidth(),
-                    additionalTop + getCurrentActionBarHeight());
+            forkHeaderAvatar.layout(avatarLeft, 0, avatarLeft + forkHeaderAvatar.getMeasuredWidth(),
+                    forkHeaderAvatar.getMeasuredHeight());
         }
     }
 

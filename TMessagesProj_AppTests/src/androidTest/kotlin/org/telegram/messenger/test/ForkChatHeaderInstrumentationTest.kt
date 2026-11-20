@@ -12,6 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.AndroidUtilities.dp
 import org.telegram.messenger.R
 import org.telegram.messenger.fork.panels.ForkPanelSettings
@@ -25,6 +26,54 @@ import org.telegram.utils.glass.source.GlassSourceColor
 
 @RunWith(AndroidJUnit4::class)
 class ForkChatHeaderInstrumentationTest {
+    @Test fun iosHeaderTitleAndStatusStayInsideTheCapsuleBelowTheStatusBar() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
+            SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val original = org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()
+        try {
+            instrumentation.runOnMainSync {
+                val previousInset = AndroidUtilities.statusBarHeight
+                try {
+                    AndroidUtilities.statusBarHeight = dp(32f)
+                    org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(true)
+                    Theme.createCommonResources(activity)
+                    val bar = ActionBar(activity).apply {
+                        setOccupyStatusBar(true)
+                        setBackButtonImage(R.drawable.ic_ab_back)
+                        compactChatGlass = true
+                    }
+                    val avatar = ChatAvatarContainer(activity, null, false).apply {
+                        setOccupyStatusBar(true)
+                        setGlassMode()
+                        setTitle("Тестова група")
+                        setSubtitle("12 учасників")
+                    }
+                    bar.addView(avatar, FrameLayout.LayoutParams(-1, -1))
+                    bar.setForkHeaderAvatar(avatar)
+                    val menu = bar.createMenu().apply { addItem(1, R.drawable.ic_ab_other) }
+                    bar.measure(View.MeasureSpec.makeMeasureSpec(dp(393f), View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(dp(88f), View.MeasureSpec.EXACTLY))
+                    bar.layout(0, 0, bar.measuredWidth, bar.measuredHeight)
+                    assertTrue(bar.isIosChatHeader)
+                    assertTrue("Title must start inside the header row",
+                        avatar.top + avatar.getTitleTextView().top >= menu.top)
+                    assertTrue("The status-bar inset must not move the title or subtitle below the capsule",
+                        avatar.top + avatar.getSubtitleTextView().bottom <= menu.bottom)
+                    assertTrue("Avatar must fit within the same visible header row",
+                        avatar.top + avatar.avatarImageView.bottom <= menu.bottom)
+                } finally {
+                    AndroidUtilities.statusBarHeight = previousInset
+                }
+            }
+        } finally {
+            instrumentation.runOnMainSync {
+                org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(original)
+                activity.finish()
+            }
+        }
+    }
+
     @Test fun iosHeaderUsesCircularSeparatedActionsAndRestoresTelegramLayout() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
