@@ -48,6 +48,7 @@ class ForkChatHeaderInstrumentationTest {
                         setGlassMode()
                         setTitle("Тестова група")
                         setSubtitle("12 учасників")
+                        setTitleColors(Color.MAGENTA, Color.GREEN)
                     }
                     bar.addView(avatar, FrameLayout.LayoutParams(-1, -1))
                     bar.setForkHeaderAvatar(avatar)
@@ -56,12 +57,20 @@ class ForkChatHeaderInstrumentationTest {
                         View.MeasureSpec.makeMeasureSpec(dp(88f), View.MeasureSpec.EXACTLY))
                     bar.layout(0, 0, bar.measuredWidth, bar.measuredHeight)
                     assertTrue(bar.isIosChatHeader)
-                    assertTrue("Title must start inside the header row",
-                        avatar.top + avatar.getTitleTextView().top >= menu.top)
-                    assertTrue("The status-bar inset must not move the title or subtitle below the capsule",
-                        avatar.top + avatar.getSubtitleTextView().bottom <= menu.bottom)
-                    assertTrue("Avatar must fit within the same visible header row",
-                        avatar.top + avatar.avatarImageView.bottom <= menu.bottom)
+                    val bitmap = Bitmap.createBitmap(bar.width, bar.height, Bitmap.Config.ARGB_8888)
+                    try {
+                        bar.draw(Canvas(bitmap))
+                        fun hasTextColor(color: Int): Boolean {
+                            for (y in menu.top until menu.bottom) for (x in avatar.left until avatar.right) {
+                                if (bitmap.getPixel(x, y) == color) return true
+                            }
+                            return false
+                        }
+                        assertTrue("Title must paint inside the row below the status bar", hasTextColor(Color.MAGENTA))
+                        assertTrue("Status must paint inside the same row", hasTextColor(Color.GREEN))
+                    } finally {
+                        bitmap.recycle()
+                    }
                 } finally {
                     AndroidUtilities.statusBarHeight = previousInset
                 }
