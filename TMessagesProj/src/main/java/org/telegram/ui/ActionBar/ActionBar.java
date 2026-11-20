@@ -48,6 +48,7 @@ import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
+import org.telegram.messenger.fork.panels.ForkChatHeaderSettings;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -208,10 +209,12 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     public boolean compactChatGlass;
     private ChatAvatarContainer forkHeaderAvatar;
     private boolean forkDrawingChatHeader;
+    private int forkBackLeft, forkTitleLeft, forkTitleWidth, forkMenuLeft;
     public void setForkHeaderAvatar(ChatAvatarContainer avatar) { forkHeaderAvatar = avatar; }
     public boolean usesBerrygramChatHeader() {
-        return compactChatGlass && forkHeaderAvatar != null && forkHeaderAvatar.getParent() == this
-                && forkHeaderAvatar.getVisibility() == VISIBLE && searchFactor == 0
+        return compactChatGlass && ForkChatHeaderSettings.isIosStyle()
+                && forkHeaderAvatar != null && forkHeaderAvatar.getParent() == this
+                && forkHeaderAvatar.getVisibility() == VISIBLE && !isSearchFieldVisible && searchFactor == 0
                 && (actionMode == null || actionMode.getVisibility() != VISIBLE || getActionModeFactor() == 0);
     }
 
@@ -1717,6 +1720,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         int childCount = getChildCount();
         final boolean berrygramHeader = usesBerrygramChatHeader();
+        if (!berrygramHeader && forkHeaderAvatar != null) {
+            forkHeaderAvatar.setForkHeaderLayout(0, -1, 0);
+        }
         for (int i = 0; i < childCount; i++) {
             View child = getChildAt(i);
             if (child.getVisibility() == GONE || child == titleTextView[0] || child == titleTextView[1] || child == additionalSubTitleOverlayContainer || child == subtitleTextView || child == menu || child == backButtonImageView || child == additionalSubtitleTextView || child == avatarSearchImageView || berrygramHeader && child == forkHeaderAvatar) {
@@ -1725,15 +1731,32 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             measureChildWithMargins(child, widthMeasureSpec, 0, MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY), 0);
         }
         if (berrygramHeader) {
-            int available = Math.max(0, getMeasuredWidth() - dp(68) - (menu == null ? 0 : menu.getMeasuredWidth()));
+            final int control = dp(44);
+            final int edge = dp(6);
+            final int gap = dp(6);
+            final boolean rtl = LocaleController.isRTL;
+            final boolean hasAvatar = forkHeaderAvatar.hasVisibleAvatar();
+            final boolean hasBack = backButtonImageView != null && backButtonImageView.getVisibility() == VISIBLE;
+            final int menuWidth = menu != null && menu.getVisibility() != GONE ? menu.getMeasuredWidth() : 0;
+            final int left = edge + (hasBack ? control + gap : 0);
+            final int avatarSlotLeft = width - edge - (hasAvatar ? control : 0);
+            final int menuLeft = avatarSlotLeft - (hasAvatar && menuWidth > 0 ? gap : 0) - menuWidth;
+            final int right = menuLeft - (hasAvatar || menuWidth > 0 ? gap : 0);
+            forkTitleWidth = Math.min(dp(232), Math.max(0, right - left));
+            final int titleLeft = Math.max(left, Math.min(right - forkTitleWidth, (width - forkTitleWidth) / 2));
+            forkTitleLeft = rtl ? width - titleLeft - forkTitleWidth : titleLeft;
+            forkBackLeft = rtl ? width - edge - control : edge;
+            forkMenuLeft = rtl ? width - menuLeft - menuWidth : menuLeft;
+            final int avatarLeft = rtl ? edge : avatarSlotLeft;
+            forkHeaderAvatar.setForkHeaderLayout(forkTitleLeft, forkTitleWidth, avatarLeft);
             // The avatar container positions its own content below the status bar.
             int avatarHeight = getCurrentActionBarHeight() + (occupyStatusBar ? AndroidUtilities.statusBarHeight : 0);
-            forkHeaderAvatar.measure(MeasureSpec.makeMeasureSpec(Math.min(dp(232), available), MeasureSpec.EXACTLY),
+            forkHeaderAvatar.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
                     MeasureSpec.makeMeasureSpec(avatarHeight, MeasureSpec.EXACTLY));
             if (backButtonImageView != null) backButtonImageView.measure(
-                    MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY));
-            if (menu != null) menu.measure(MeasureSpec.makeMeasureSpec(menu.getMeasuredWidth(), MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(dp(44), MeasureSpec.EXACTLY));
+                    MeasureSpec.makeMeasureSpec(control, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(control, MeasureSpec.EXACTLY));
+            if (menuWidth > 0) menu.measure(MeasureSpec.makeMeasureSpec(menuWidth, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(control, MeasureSpec.EXACTLY));
         }
     }
 
@@ -1855,15 +1878,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             int rowTop = additionalTop + (getCurrentActionBarHeight() - dp(44)) / 2;
             if (backButtonImageView != null) {
                 backButtonImageView.setTranslationX(0);
-                backButtonImageView.layout(dp(6), rowTop, dp(50), rowTop + dp(44));
+                backButtonImageView.layout(forkBackLeft, rowTop, forkBackLeft + dp(44), rowTop + dp(44));
             }
-            int menuRight = getWidth() - dp(6);
-            if (menu != null) menu.layout(menuRight - menu.getMeasuredWidth(), rowTop, menuRight, rowTop + dp(44));
-            int end = menuRight - (menu == null ? 0 : menu.getMeasuredWidth()) - dp(6);
-            int avatarLeft = dp(56) + Math.max(0, end - dp(56) - forkHeaderAvatar.getMeasuredWidth()) / 2;
+            if (menu != null && menu.getVisibility() != GONE) {
+                menu.layout(forkMenuLeft, rowTop, forkMenuLeft + menu.getMeasuredWidth(), rowTop + dp(44));
+            }
             forkHeaderAvatar.setTranslationX(0);
-            forkHeaderAvatar.layout(avatarLeft, 0, avatarLeft + forkHeaderAvatar.getMeasuredWidth(),
-                    forkHeaderAvatar.getMeasuredHeight());
+            forkHeaderAvatar.layout(0, 0, getWidth(), forkHeaderAvatar.getMeasuredHeight());
         }
     }
 
@@ -1878,6 +1899,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     public void onResume() {
         resumed = true;
+        if (compactChatGlass) requestLayout();
         updateAttachState();
     }
 
@@ -2118,6 +2140,12 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             if (ev.getAction() == MotionEvent.ACTION_DOWN) {
                 final int x = (int) ev.getX();
                 final int y = (int) ev.getY();
+                if (usesBerrygramChatHeader()) {
+                    // This avatar sits outside the title glass. Hit-test the controls,
+                    // not the drawable bounds, which may be empty in No Background.
+                    return (forkHeaderAvatar.isForkHeaderHit(x - forkHeaderAvatar.getX(), y - forkHeaderAvatar.getY())
+                            || findChildUnder(this, x, y, forkHeaderAvatar) != null) && super.dispatchTouchEvent(ev);
+                }
                 View child = findChildUnder(this, x, y, chatAvatarContainer);
                 if (child == null) {
                     child = findChildUnder(this, x, y, null);
@@ -2619,13 +2647,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private void drawBerrygramChatHeader(Canvas canvas) {
         int padding = dp(6);
         int top = (occupyStatusBar ? AndroidUtilities.statusBarHeight : 0) + (getCurrentActionBarHeight() - dp(44)) / 2;
-        if (glassDrawable != null && !glassOnlyBack && !doNotDrawCenterGlass) {
-            glassDrawable.setBounds(forkHeaderAvatar.getLeft() - padding, top - padding,
-                    forkHeaderAvatar.getRight() + padding, top + dp(44) + padding);
+        if (glassDrawable != null && !glassOnlyBack && !doNotDrawCenterGlass && forkTitleWidth > 0) {
+            glassDrawable.setBounds(forkTitleLeft - padding, top - padding,
+                    forkTitleLeft + forkTitleWidth + padding, top + dp(44) + padding);
             glassDrawable.draw(canvas);
         }
         if (glassDrawableBack != null && backButtonImageView != null && backButtonImageView.getVisibility() == VISIBLE) {
-            glassDrawableBack.setBounds(dp(6) - padding, top - padding, dp(50) + padding, top + dp(44) + padding);
+            glassDrawableBack.setBounds(forkBackLeft - padding, top - padding, forkBackLeft + dp(44) + padding, top + dp(44) + padding);
             glassDrawableBack.draw(canvas);
         }
         if (glassDrawableMenu != null && menu != null && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay()) {

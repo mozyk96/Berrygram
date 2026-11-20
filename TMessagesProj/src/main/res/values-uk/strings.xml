@@ -280,8 +280,8 @@
     <string name="ForkAppName">BerryGram</string>
     <string name="ForkCredentialsMissing">Для цієї збірки не налаштовано дані Telegram API. Додайте власні API ID та API hash і зберіть застосунок знову.</string>
     <string name="ForkChatHeaderStyle">Стиль верхньої панелі чату</string>
-    <string name="ForkChatHeaderStyleTelegram">Telegram</string>
-    <string name="ForkChatHeaderStyleIos">Стиль iOS</string>
+    <string name="ForkChatHeaderStyleTelegram">Класична</string>
+    <string name="ForkChatHeaderStyleIos">Плаваюча</string>
     <string name="ForkPreservedMessage">Локально збережене видалене повідомлення</string>
     <string name="ForkPreservedInfo">Інформація про збережене повідомлення</string>
     <string name="ForkPreservedSent">Надіслано</string>

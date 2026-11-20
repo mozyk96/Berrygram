@@ -27,17 +27,25 @@ import org.telegram.ui.Components.ChatAvatarContainer
 /** Exercises the production chat view using a synthetic peer on a logged-out emulator. */
 @RunWith(AndroidJUnit4::class)
 class ForkSyntheticChatInstrumentationTest {
-    @Test fun syntheticBotGroupAndChannelDisplayHeaders() {
+    @Test fun syntheticChatsDisplayBothHeaderStyles() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
             SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val oldHeaderStyle = org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()
+        val oldEffect = org.telegram.messenger.fork.panels.ForkPanelSettings.style()
         try {
-            for ((kind, ios) in listOf(false, true).flatMap { ios -> listOf("bot", "group", "channel").map { it to ios } }) {
+            val cases = listOf("glass", "blur", "none").flatMap { effect ->
+                listOf("private", "bot", "group", "channel").flatMap { kind ->
+                    listOf(false, true).map { floating -> Triple(kind, floating, effect) }
+                }
+            }
+            for ((kind, ios, effect) in cases) {
                 var chat: ChatActivity? = null
                 try {
                     instrumentation.runOnMainSync {
                         org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(ios)
+                        org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle(effect)
+                        org.telegram.utils.glass.GlassEngine.invalidateSettings()
                         for (account in 0 until UserConfig.MAX_ACCOUNT_COUNT) {
                             assertFalse("This fixture requires a logged-out emulator",
                                 UserConfig.getInstance(account).isClientActivated)
@@ -51,18 +59,18 @@ class ForkSyntheticChatInstrumentationTest {
                         AndroidUtilities.enableEdgeToEdge(activity)
                         val controller = MessagesController.getInstance(UserConfig.selectedAccount)
                         val args = Bundle()
-                        if (kind == "bot") {
+                        if (kind == "bot" || kind == "private") {
                             val peer = TLRPC.TL_user().apply {
-                                id = 987654322L
-                                first_name = "Тестовий бот"
-                                bot = true
+                                id = if (kind == "bot") 987654322L else 987654325L
+                                first_name = if (kind == "bot") "Тестовий бот" else "Тестова розмова з довгою назвою для перевірки шапки"
+                                bot = kind == "bot"
                             }
                             controller.putUser(peer, false)
                             args.putLong("user_id", peer.id)
                         } else {
                             val peer = if (kind == "group") TLRPC.TL_chat() else TLRPC.TL_channel()
                             peer.id = if (kind == "group") 987654323L else 987654324L
-                            peer.title = if (kind == "group") "Тестова група" else "Тестовий канал"
+                            peer.title = if (kind == "group") "Тестова група" else "Тестовий канал з довгою назвою для перевірки шапки"
                             if (kind == "channel") peer.broadcast = true
                             controller.putChat(peer, false)
                             args.putLong("chat_id", peer.id)
@@ -84,9 +92,20 @@ class ForkSyntheticChatInstrumentationTest {
                         assertTrue("Synthetic $kind title is missing", avatar.titleTextView.text.toString().contains("Тестов"))
                     }
                     ForkWait.idle(instrumentation)
+                    instrumentation.runOnMainSync {
+                        val fragment = checkNotNull(chat)
+                        val avatar = fragment.avatarContainer
+                        assertEquals("$kind should honor the saved style", ios, fragment.actionBar.usesBerrygramChatHeader())
+                        assertEquals(effect, org.telegram.messenger.fork.panels.ForkPanelSettings.style())
+                        if (ios) {
+                            assertTrue("Floating $kind avatar is not after the title", avatar.avatarImageView.left > avatar.titleTextView.right)
+                        } else {
+                            assertTrue("Classic $kind avatar is not before the title", avatar.avatarImageView.right < avatar.titleTextView.left)
+                        }
+                    }
                     val screenshot = ForkScreenshot.capture(activity)
                     try {
-                        java.io.File(activity.getExternalFilesDir(null), "berrygram-200-synthetic-$kind-${if (ios) "ios" else "telegram"}.png")
+                        java.io.File(activity.getExternalFilesDir(null), "berrygram-202-synthetic-$kind-${if (ios) "floating" else "classic"}-$effect.png")
                             .outputStream().use { screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
                     } finally { screenshot.recycle() }
                 } finally {
@@ -94,7 +113,12 @@ class ForkSyntheticChatInstrumentationTest {
                 }
             }
         } finally {
-            instrumentation.runOnMainSync { org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(oldHeaderStyle); activity.finish() }
+            instrumentation.runOnMainSync {
+                org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(oldHeaderStyle)
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle(oldEffect)
+                org.telegram.utils.glass.GlassEngine.invalidateSettings()
+                activity.finish()
+            }
         }
     }
 

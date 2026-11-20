@@ -11684,8 +11684,8 @@
     <string name="FpnvConsentPhoneNumber">Phone Number</string>
 
     <string name="ForkChatHeaderStyle">Chat header style</string>
-    <string name="ForkChatHeaderStyleTelegram">Telegram</string>
-    <string name="ForkChatHeaderStyleIos">iOS-style</string>
+    <string name="ForkChatHeaderStyleTelegram">Classic</string>
+    <string name="ForkChatHeaderStyleIos">Floating</string>
     <string name="ForkPreservedMessage">Locally preserved deleted message</string>
     <string name="ForkPreservedInfo">Preserved message information</string>
     <string name="ForkPreservedSent">Originally sent</string>

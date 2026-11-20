@@ -88,9 +88,11 @@ class ForkChatHeaderInstrumentationTest {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
             SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val original = org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()
+        val originalRtl = org.telegram.messenger.LocaleController.isRTL
         try {
             instrumentation.runOnMainSync {
                 Theme.createCommonResources(activity)
+                org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(true)
                 val bar = ActionBar(activity).apply {
                     setOccupyStatusBar(false)
                     setBackButtonImage(R.drawable.ic_ab_back)
@@ -102,7 +104,10 @@ class ForkChatHeaderInstrumentationTest {
                     setTitle("Довга назва 👩🏽‍💻 Україна — 日本語")
                     setSubtitle("був(ла) нещодавно")
                 }
-                bar.addView(avatar, FrameLayout.LayoutParams(-1, -1))
+                bar.addView(avatar, FrameLayout.LayoutParams(-1, -1).apply {
+                    leftMargin = dp(52f)
+                    rightMargin = dp(52f)
+                })
                 bar.setForkHeaderAvatar(avatar)
                 val menu = bar.createMenu().apply {
                     addItem(1, R.drawable.msg_calls)
@@ -120,12 +125,16 @@ class ForkChatHeaderInstrumentationTest {
                         View.MeasureSpec.makeMeasureSpec(dp(56f), View.MeasureSpec.EXACTLY))
                     bar.layout(0, 0, bar.measuredWidth, bar.measuredHeight)
                     assertTrue(bar.usesBerrygramChatHeader())
-                    assertTrue("Header overlaps back control", avatar.left >= dp(56f))
-                    assertTrue("Header overlaps actions", avatar.right <= menu.left - dp(6f))
+                    val titleRight = avatar.left + avatar.titleTextView.right
+                    val avatarLeft = avatar.left + avatar.avatarImageView.left
+                    assertTrue("Centering a long title must not crop its beginning",
+                        avatar.titleTextView.textWidth <= avatar.titleTextView.width)
+                    assertTrue("Title overlaps actions", titleRight < menu.left)
+                    assertTrue("Floating avatar belongs after the whole action group", avatarLeft > menu.right)
                     val bitmap = Bitmap.createBitmap(bar.width, bar.height, Bitmap.Config.ARGB_8888)
                     try {
                         bar.draw(Canvas(bitmap))
-                        for (x in avatar.right + dp(2f) until menu.left - dp(2f)) {
+                        for (x in titleRight + dp(16f) until menu.left - dp(2f)) {
                             for (y in dp(10f) until dp(28f)) {
                                 assertTrue("Title painted outside its island over the action gap",
                                     Color.alpha(bitmap.getPixel(x, y)) < 128)
@@ -147,8 +156,16 @@ class ForkChatHeaderInstrumentationTest {
                             .outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
                     } finally { bitmap.recycle() }
                     org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(false)
-                    assertTrue("The retired preference must not switch the layout", bar.usesBerrygramChatHeader())
+                    bar.requestLayout()
+                    bar.measure(View.MeasureSpec.makeMeasureSpec(dp(width), View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(dp(56f), View.MeasureSpec.EXACTLY))
+                    bar.layout(0, 0, bar.measuredWidth, bar.measuredHeight)
+                    assertTrue("Classic uses the historical ActionBar layout", !bar.usesBerrygramChatHeader())
+                    assertEquals("1.5.1 uses a 52dp container margin and an 8dp + 1px inner inset",
+                        dp(52f) + dp(8f) + 1, avatar.left + avatar.avatarImageView.left)
+                    assertTrue(avatar.titleTextView.left >= avatar.avatarImageView.right)
                 }
+                org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(true)
                 bar.setSearchFactor(1f)
                 assertTrue("Search owns the header while active", !bar.usesBerrygramChatHeader())
                 bar.setSearchFactor(0f)
@@ -158,9 +175,46 @@ class ForkChatHeaderInstrumentationTest {
                 assertTrue("Selection owns the header while active", !bar.usesBerrygramChatHeader())
                 selection.visibility = View.INVISIBLE
                 assertTrue(bar.usesBerrygramChatHeader())
+                org.telegram.messenger.LocaleController.isRTL = true
+                menu.getItem(1).visibility = View.GONE
+                bar.measure(View.MeasureSpec.makeMeasureSpec(dp(320f), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(dp(56f), View.MeasureSpec.EXACTLY))
+                bar.layout(0, 0, bar.measuredWidth, bar.measuredHeight)
+                assertTrue("RTL avatar belongs before actions", avatar.avatarImageView.right < menu.left)
+                assertTrue("RTL title must not touch the action", menu.right < avatar.titleTextView.left)
+                val rtlImage = Bitmap.createBitmap(bar.width, bar.height, Bitmap.Config.ARGB_8888)
+                try {
+                    bar.draw(Canvas(rtlImage))
+                    val field = ActionBar::class.java.getDeclaredField("glassDrawableMenu").apply { isAccessible = true }
+                    val drawable = field.get(bar) as org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable
+                    val bounds = android.graphics.Rect()
+                    drawable.getBoundsWithPaddingInset(bounds)
+                    assertEquals("Single action surface must be circular", bounds.height(), bounds.width())
+                } finally { rtlImage.recycle() }
+                // Comment threads register the container and filter toolbar touches.
+                bar.setChatAvatarContainer(avatar)
+                var avatarUps = 0
+                avatar.avatarImageView.setOnTouchListener { _, event ->
+                    if (event.actionMasked == android.view.MotionEvent.ACTION_UP) avatarUps++
+                    true
+                }
+                val x = avatar.avatarImageView.x + avatar.avatarImageView.width / 2f
+                val y = avatar.avatarImageView.y + avatar.avatarImageView.height / 2f
+                val now = android.os.SystemClock.uptimeMillis()
+                for (action in listOf(android.view.MotionEvent.ACTION_DOWN, android.view.MotionEvent.ACTION_UP)) {
+                    val event = android.view.MotionEvent.obtain(now, now, action, x, y, 0)
+                    try {
+                        assertTrue("Comment header must dispatch a tap on its separate avatar", bar.dispatchTouchEvent(event))
+                    } finally { event.recycle() }
+                }
+                assertEquals(1, avatarUps)
             }
         } finally {
-            instrumentation.runOnMainSync { org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(original); activity.finish() }
+            instrumentation.runOnMainSync {
+                org.telegram.messenger.LocaleController.isRTL = originalRtl
+                org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(original)
+                activity.finish()
+            }
         }
     }
 

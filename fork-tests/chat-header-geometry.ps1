@@ -16,6 +16,10 @@ foreach ($file in @($SourceFile,
 $appearance = Get-Content (Join-Path $root 'TMessagesProj/src/main/java/org/telegram/ui/ForkAppearanceSettingsActivity.java') -Raw
 if ($appearance -match 'ForkNewChatHeader|ForkChatHeaderSettings\.setEnabled') { throw 'Retired chat header setting remains visible' }
 $settings = Join-Path $root 'TMessagesProj/src/main/java/org/telegram/messenger/fork/panels/ForkChatHeaderSettings.java'
+$actionBar = Get-Content (Join-Path $root 'TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java') -Raw
+if ($actionBar -notmatch 'usesBerrygramChatHeader\(\)\s*\{[^}]*&&\s*ForkChatHeaderSettings\.isIosStyle\(\)') {
+    throw 'Normal chat header does not respect the saved style; historical Classic geometry is unreachable.'
+}
 $javac = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin/javac.exe' } else { (Get-Command javac -ErrorAction Stop).Source }
 $java = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin/java.exe' } else { (Get-Command java -ErrorAction Stop).Source }
 & $javac -encoding UTF-8 -sourcepath (Join-Path $PSScriptRoot 'stubs') -d $build $settings (Join-Path $PSScriptRoot 'FloatingChatHeaderGeometryTest.java')

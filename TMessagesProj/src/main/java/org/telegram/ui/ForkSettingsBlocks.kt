@@ -7,6 +7,7 @@ import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.R
 import org.telegram.messenger.fork.panels.ForkAnimationSettings
 import org.telegram.messenger.fork.panels.ForkComposerSettings
+import org.telegram.messenger.fork.panels.ForkChatHeaderSettings
 import org.telegram.messenger.fork.panels.ForkDockSettings
 import org.telegram.messenger.fork.panels.ForkPanelSettings
 import org.telegram.messenger.fork.panels.PanelPolicy
@@ -123,6 +124,23 @@ object ForkSettingsBlocks {
         section.addInfo(R.string.ForkGraphicsInfoUnified)
 
         section.addHeader(R.string.ForkSectionChatControls)
+        val headerStyles = arrayOf(
+            ForkLocale.get(R.string.ForkChatHeaderStyleTelegram),
+            ForkLocale.get(R.string.ForkChatHeaderStyleIos)
+        )
+        fun headerSelection() = if (ForkChatHeaderSettings.isIosStyle()) 1 else 0
+        lateinit var headerStyle: org.telegram.ui.Cells.TextSettingsCell
+        headerStyle = section.addRow(R.string.ForkChatHeaderStyle, headerStyles[headerSelection()]) { anchor ->
+            ForkChoicePopup.show(fragment, anchor, headerStyles, null, headerSelection()) { index ->
+                if (index != headerSelection()) {
+                    ForkChatHeaderSettings.setIosStyle(index == 1)
+                    section.refresh()
+                    org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
+                        org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false
+                    )
+                }
+            }
+        }
         val animations = section.addToggle(R.string.ForkAdvancedAnimations, ForkAnimationSettings.fluidPopupsEnabled()) { enabled ->
             ForkAnimationSettings.setFluidPopupsEnabled(enabled)
         }
@@ -135,6 +153,7 @@ object ForkSettingsBlocks {
         section.addInfo(R.string.ForkExperimentalComposerDescription)
 
         section.refreshState {
+            headerStyle.setTextAndValue(ForkLocale.get(R.string.ForkChatHeaderStyle), headerStyles[headerSelection()], false)
             style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false)
             radius.setTextAndValue(
                 ForkLocale.get(R.string.ForkAppearanceRadius),

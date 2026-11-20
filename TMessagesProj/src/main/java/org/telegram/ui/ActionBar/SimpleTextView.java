@@ -241,12 +241,13 @@ public class SimpleTextView extends View implements Drawable.Callback {
     }
 
     public void setEllipsizeByGradient(boolean value, Boolean forceLeft) {
-        if (scrollNonFitText == value) {
+        if (ellipsizeByGradient == value && java.util.Objects.equals(forceEllipsizeByGradientLeft, forceLeft)) {
             return;
         }
         ellipsizeByGradient = value;
         this.forceEllipsizeByGradientLeft = forceLeft;
         updateFadePaints();
+        requestLayout();
         checkUi_layerType();
     }
 
