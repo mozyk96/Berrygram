@@ -3,6 +3,7 @@ package org.telegram.messenger.test
 import android.content.Context
 import android.content.Intent
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -63,6 +64,27 @@ class ForkScreenRenderInstrumentationTest {
                     instance.onResume()
                 }
                 Thread.sleep(400)
+                if (name == "ForkArchiveActivity") {
+                    fun hasVisibleText(view: View, expected: String): Boolean {
+                        if (view is TextView && view.isShown && view.text.toString() == expected) return true
+                        if (view is ViewGroup) for (i in 0 until view.childCount) if (hasVisibleText(view.getChildAt(i), expected)) return true
+                        return false
+                    }
+                    val empty = org.telegram.ui.ForkLocale.get(org.telegram.messenger.R.string.ForkArchiveEmpty)
+                    val error = org.telegram.ui.ForkLocale.get(org.telegram.messenger.R.string.ForkArchiveLoadError)
+                    val deadline = SystemClock.elapsedRealtime() + 5_000
+                    var loadedEmpty = false
+                    var loadFailed = false
+                    do {
+                        instrumentation.runOnMainSync {
+                            loadedEmpty = hasVisibleText(activity.window.decorView, empty)
+                            loadFailed = hasVisibleText(activity.window.decorView, error)
+                        }
+                        if (loadedEmpty || loadFailed) break
+                        Thread.sleep(50)
+                    } while (SystemClock.elapsedRealtime() < deadline)
+                    if (!loadedEmpty) problems.add("$name: ${if (loadFailed) "archive load failed" else "empty archive state is missing"}")
+                }
                 fun inspect(view: View) {
                         if (!view.isShown || view.width == 0 || view.height == 0) return
                         if (view is TextView && view.layout != null) {
@@ -80,15 +102,6 @@ class ForkScreenRenderInstrumentationTest {
                     }
                 instrumentation.runOnMainSync {
                     inspect(activity.window.decorView)
-                    if (name == "ForkArchiveActivity") {
-                        fun hasVisibleText(view: View, expected: String): Boolean {
-                            if (view is TextView && view.isShown && view.text.toString() == expected) return true
-                            if (view is ViewGroup) for (i in 0 until view.childCount) if (hasVisibleText(view.getChildAt(i), expected)) return true
-                            return false
-                        }
-                        if (!hasVisibleText(activity.window.decorView, org.telegram.ui.ForkLocale.get(org.telegram.messenger.R.string.ForkArchiveEmpty)))
-                            problems.add("$name: empty archive state is missing")
-                    }
                     if (name == "ForkSettingsActivity") {
                         fun header(view: View): TextView? {
                             if (view is TextView && view.text.toString() == org.telegram.ui.ForkLocale.get(org.telegram.messenger.R.string.ForkSettingsTitle)) return view

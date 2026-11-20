@@ -40,12 +40,13 @@ class ForkPhotoViewerInstrumentationTest {
             ForkWait.idle(instrumentation)
             Thread.sleep(1500) // Allow the viewer transition and image loading to finish.
             assertTrue("Local photo viewer did not open", opened && viewer.isVisible)
-            val screenshot = ForkScreenshot.capture(activity)
+            val screenshot = ForkScreenshot.captureDisplay()
             var imageSeen = false
             for (y in 0 until screenshot.height step 8) for (x in 0 until screenshot.width step 8) {
                 val pixel = screenshot.getPixel(x, y)
                 if (Color.blue(pixel) > Color.red(pixel) + 30 && Color.blue(pixel) > Color.green(pixel) + 20) imageSeen = true
             }
+            screenshot.recycle()
             assertTrue("The local image was not rendered in the viewer", imageSeen)
             instrumentation.uiAutomation.executeShellCommand("screencap -p /sdcard/Download/Berrygram-photo-viewer.png").use {
                 ParcelFileDescriptor.AutoCloseInputStream(it).use { input -> input.readBytes() }

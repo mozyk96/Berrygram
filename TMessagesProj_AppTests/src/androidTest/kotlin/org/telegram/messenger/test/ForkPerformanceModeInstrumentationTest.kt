@@ -87,6 +87,15 @@ class ForkPerformanceModeInstrumentationTest {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
             SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         lateinit var section: ForkSettingsSection
+        fun findRow(view: View, title: String): org.telegram.ui.Cells.TextSettingsCell? {
+            if (view is org.telegram.ui.Cells.TextSettingsCell && view.textView.text.toString() == title) return view
+            if (view is android.view.ViewGroup) for (i in 0 until view.childCount) {
+                findRow(view.getChildAt(i), title)?.let { return it }
+            }
+            return null
+        }
+        val modeTitle = ForkLocale.get(R.string.ForkPerformanceConfigMode)
+        val levelTitle = ForkLocale.get(R.string.ForkPerformanceManualLevel)
         try {
             instrumentation.runOnMainSync {
                 PerformanceSettings.setConfigMode(PerformancePolicy.CONFIG_AUTO)
@@ -106,10 +115,12 @@ class ForkPerformanceModeInstrumentationTest {
                     }
                 }
                 assertTrue(navigation.presentFragment(INavigationLayout.NavigationParams(fragment).setNoAnimation(true)))
-                assertEquals(View.GONE, section.getChildAt(3).visibility)
+                assertEquals(View.GONE, findRow(section, levelTitle)?.visibility)
             }
             ForkWait.idle(instrumentation)
-            instrumentation.runOnMainSync { section.getChildAt(1).performClick() }
+            instrumentation.runOnMainSync {
+                assertTrue("Performance mode row is not clickable", findRow(section, modeTitle)?.performClick() == true)
+            }
             ForkWait.idle(instrumentation)
             val label = ForkLocale.get(R.string.ForkPerformanceManualMode)
             instrumentation.runOnMainSync {
@@ -130,7 +141,7 @@ class ForkPerformanceModeInstrumentationTest {
             ForkWait.idle(instrumentation)
             instrumentation.runOnMainSync {
                 assertEquals(PerformancePolicy.CONFIG_MANUAL, PerformanceSettings.configMode())
-                assertEquals("Manual level remains hidden after selecting Manual", View.VISIBLE, section.getChildAt(3).visibility)
+                assertEquals("Manual level remains hidden after selecting Manual", View.VISIBLE, findRow(section, levelTitle)?.visibility)
             }
         } finally {
             instrumentation.runOnMainSync {

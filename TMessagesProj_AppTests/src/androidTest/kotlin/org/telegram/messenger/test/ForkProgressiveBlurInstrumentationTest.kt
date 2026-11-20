@@ -84,7 +84,7 @@ class ForkProgressiveBlurInstrumentationTest {
                 frame.invalidate()
             }
             Thread.sleep(1200)
-            val screenshot = ForkScreenshot.capture(activity)
+            val screenshot = ForkScreenshot.captureDisplay()
             val position = IntArray(2)
             instrumentation.runOnMainSync { root!!.getLocationOnScreen(position) }
             val frame = root!!
@@ -99,6 +99,7 @@ class ForkProgressiveBlurInstrumentationTest {
                 return max - min
             }
             val samples = listOf(1, 3, 5, 7, 9).map { contrast(frame.height * it / 10) }
+            screenshot.recycle()
             assertTrue("Expected increasing blur: $samples", samples.first() > 100 && samples.last() < samples.first() * 0.8)
             for (index in 1 until samples.size) {
                 assertTrue("Blur progression is not smooth: $samples", samples[index] <= samples[index - 1] + 8 && samples[index - 1] - samples[index] < samples.first() * 0.6)
