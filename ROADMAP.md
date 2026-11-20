@@ -1,6 +1,21 @@
-## 2.0.0 / 2.1.0 — current owner scope
+## 2.0.0 — only active release
 
-Finish and validate the redesigned composer first for the stable 2.0.0 release. Preserve `org.berrygram.client`, the established generation-2 signer and Android 10 / API 29 minimum. Continue with independently verified 2.x releases; prefer Kotlin for new Berrygram code without requiring a Compose rewrite. See `CONTINUE.md` for the current release state.
+Finish and validate the stable 2.0.0 release. Preserve `org.berrygram.client`, the established generation-2 signer and Android 10 / API 29 minimum. Stop development after publication and verification; all later work requires the owner's approval. See `CONTINUE.md` for the release state.
+
+## Deferred design and feature plans
+
+- **Visual direction:** give Berrygram a recognizable identity: light, responsive, well-spaced floating surfaces and comfortable rounded controls. The taller composer capsule and its separate send/record circle set the direction. Retain most Telegram icons, minimize menus and GPU/battery cost, and adapt every glass surface to Liquid Glass, Blur or No Background.
+- **Main chat-list header (tentatively 2.3–2.5):** distinct from the individual-chat header. A responsive left capsule shows `Telegram` or a custom title of roughly 10–15 characters. The right group can contain Ghost Mode, lock or menu: a circle for one action, a capsule for multiple. Retain full-width search, style the filter tabs, collapse the large header while scrolling and reveal a smaller header on reverse scroll. Fade subtle blur into the list; support narrow layouts, rotation and larger text.
+- **Winter effect:** optional, subtle white particles in the header, chat list or whole app. Respect readability, power saving and rendering cost; this is not the future theme editor.
+- **Camera and media:** modest round-video refinements (controls, switching, supported wide/ultrawide lenses and zoom); separately redesign the attachment camera's real viewfinder, controls, modes and animations. Make player and viewer controls lighter and floating, with coherent gestures, fullscreen and appearance-mode support.
+- **Voice:** refine the compact recording, pause/resume, cancellation and send UI. Explore a few optional previewable effects and local STT or optional TTS. Do not build a Voice Studio or send private audio to external APIs without explicit choice. Do not reintroduce AI smart replies, AI archive Q&A or photo OCR.
+- **Local locks:** optional passcodes per account and chat, with optional chat-header quick lock. Relock immediately, after 3/5/10/15/30 seconds or 1 minute, or at the next app lock/session reset. Use a lower numeric keypad without T9 letters, animated PIN indicators and an obscured background that never exposes protected content. Use Android system biometrics where available without promising per-modality selection.
+- **Streamer Mode:** global optional text masking with a separately configurable shortcut. Mask names, usernames and phones; a tap reveals that field for about five seconds. Leave avatars visible; no per-person exceptions. Text masking does not guarantee screen-sharing privacy.
+- **Berry Timeline and bookmarks:** lightweight menu navigation to a date, month or first accessible message. Keep local private labels, colors, icons, notes and bookmarks distinct from Telegram server pins.
+- **Browser and Mini Apps:** preserve compatibility while improving browser controls, web-history Back, minimized web panels, supported Mini App fullscreen, insets and keyboard handling, and privacy controls.
+- **YummyKeys:** separate Android keyboard, with optional sharing of themes, colors, rounding and compatible effects. Keys remain rounded rectangles; do not embed the engine.
+- **Existing plans:** preserve Berry Archive, Ghost Mode, settings organization, customizable message gestures, the individual-chat header, animations and appearance, camera compatibility, media correctness, Telegram upstream synchronization and reliable updates.
+- **3.x and beyond:** the broader background/theme system is deferred. The owner plans to design the icon manually, potentially with Inkscape; no AI-generated replacement. Do not begin 3.x without approval.
 
 2.1.0 will separate app-wide named color palettes (a diagonal two-color circular preview), independent wallpapers (patterns/images/solid/theme-derived/gradients), and the existing effect mode. Palette changes must preserve a chosen wallpaper. No full theme-pack system; none of this is implemented in 2.0.0.
 
