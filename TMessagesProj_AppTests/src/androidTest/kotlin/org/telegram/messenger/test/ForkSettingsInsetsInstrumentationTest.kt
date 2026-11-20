@@ -44,7 +44,7 @@ class ForkSettingsInsetsInstrumentationTest {
                 activity.setContentView(root)
                 assertTrue(navigation.presentFragment(INavigationLayout.NavigationParams(fragment).setNoAnimation(true)))
             }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             Thread.sleep(1000)
             lateinit var list: RecyclerListView
             instrumentation.runOnMainSync {
@@ -58,7 +58,7 @@ class ForkSettingsInsetsInstrumentationTest {
             }
             instrumentation.uiAutomation.executeShellCommand("screencap -p /sdcard/Download/Berrygram-145-power-top.png").use { ParcelFileDescriptor.AutoCloseInputStream(it).use { input -> input.readBytes() } }
             instrumentation.runOnMainSync { list.scrollToPosition(list.adapter!!.itemCount - 1) }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             instrumentation.runOnMainSync { assertTrue("Last setting cannot be reached", list.findViewHolderForAdapterPosition(list.adapter!!.itemCount - 1)?.itemView?.isShown == true) }
             instrumentation.uiAutomation.executeShellCommand("screencap -p /sdcard/Download/Berrygram-145-power-bottom.png").use { ParcelFileDescriptor.AutoCloseInputStream(it).use { input -> input.readBytes() } }
         } finally { instrumentation.runOnMainSync { activity.finish() } }

@@ -62,7 +62,14 @@ public class UpdatePolicyTest {
   check(UpdatePolicy.validAssetUrl("owner/project","v1.0.0","BerryGram-1.0.0-org.berrygram.client-arm64-v8a.apk","https://github.com/owner/project/releases/download/v1.0.0/BerryGram-1.0.0-org.berrygram.client-arm64-v8a.apk"));
   check(!UpdatePolicy.validAssetUrl("owner/project","v1.0.0","BerryGram-1.0.0-org.berrygram.client-arm64-v8a.apk","https://github.com.evil.test/a"));
   String url="https://github.com/owner/project/releases/download/v1.4.1/BerryGram-1.4.1-org.berrygram.client-arm64-v8a.apk";
-  String digest="a".repeat(64);
+   String digest="a".repeat(64);
+   String shortAssetUrl="https://github.com/owner/project/releases/download/v2.0.1/Berrygram-2.0.1-arm64-v8a.apk";
+   check(UpdatePolicy.validSavedRelease("owner/project", "2.0.1", "2.0.0", shortAssetUrl, digest, 100),
+       "a discovered 2.x ARM64 update with the short filename must survive a restart");
+   check(!UpdatePolicy.validSavedRelease("owner/project", "2.0.1", "2.0.0",
+       shortAssetUrl.replace("/v2.0.1/", "/v2.0.2/"), digest, 100), "a different tag must remain rejected");
+   check(!UpdatePolicy.validSavedRelease("owner/project", "1.5.1", "1.5.0",
+       shortAssetUrl.replace("2.0.1", "1.5.1"), digest, 100), "a short legacy-generation name must remain rejected");
   check(UpdatePolicy.validSavedRelease("owner/project", "1.4.1", "1.4.0", url, digest, 100));
   check(UpdatePolicy.validSavedRelease("owner/project", "1.4.1", "1.4.0-beta.2", url, digest, 100), "a saved official release is offered to an older beta install");
   check(UpdatePolicy.validSavedRelease("owner/project", "1.4.1", "1.4.1-rc.1", url, digest, 100), "a saved final release replaces its RC");

@@ -150,6 +150,7 @@ import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.VideoEditedInfo;
+import org.telegram.messenger.fork.panels.ForkComposerSettings;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.messenger.camera.CameraController;
 import org.telegram.messenger.utils.DrawableUtils;
@@ -5069,6 +5070,8 @@ public class ChatActivityEnterView extends FrameLayout implements
         return t;
     }
 
+    private final Paint topViewBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         boolean clip = child == topView || child == textFieldContainer;
@@ -5080,6 +5083,17 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
             if (child == topView) {
                 canvas.clipRect(0, 0, getMeasuredWidth(), separatorY);
+                if (isChat && !shouldDrawBackground && ForkComposerSettings.isExperimentalComposerEnabled()) {
+                    // The modern island paints only the text field. Keep dense banner text
+                    // and actions readable without extending the backdrop over the send button.
+                    topViewBackgroundPaint.setColor(ColorUtils.setAlphaComponent(
+                            getThemedColor(Theme.key_chat_messagePanelBackground), 255));
+                    final float x = child.getX();
+                    final float y = child.getY();
+                    final float radius = Math.min(dp(22), child.getHeight() / 2f);
+                    canvas.drawRoundRect(x, y, x + child.getWidth(), y + child.getHeight(),
+                            radius, radius, topViewBackgroundPaint);
+                }
             }
         }
         boolean result = super.drawChild(canvas, child, drawingTime);

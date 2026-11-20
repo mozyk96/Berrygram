@@ -75,7 +75,7 @@ class ForkProgressiveBlurInstrumentationTest {
                 engine.registerDrawable(overlay, fade)
                 engine.setRoot(frame)
             }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             instrumentation.runOnMainSync {
                 val frame = root!!
                 source.setSize(frame.width, frame.height)
@@ -84,7 +84,7 @@ class ForkProgressiveBlurInstrumentationTest {
                 frame.invalidate()
             }
             Thread.sleep(1200)
-            val screenshot = instrumentation.uiAutomation.takeScreenshot()
+            val screenshot = ForkScreenshot.capture(activity)
             val position = IntArray(2)
             instrumentation.runOnMainSync { root!!.getLocationOnScreen(position) }
             val frame = root!!

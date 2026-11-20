@@ -1,6 +1,6 @@
 ## 2.0.0 / 2.1.0 — current owner scope
 
-2.0.0 is currently private: finish both chat-header styles, deletion/performance regressions and shared effects; deploy Stage 1, verify a pre-Kotlin backup, then migrate in buildable Kotlin/Compose milestones and deploy Stage 2. Preserve `org.berrygram.client` and the existing generation-2 signer. Android 10 / API 29 minimum. No publication or public-source push is authorized; owner acceptance is required before a future release.
+Finish and validate the redesigned composer first for the stable 2.0.0 release. Preserve `org.berrygram.client`, the established generation-2 signer and Android 10 / API 29 minimum. Continue with independently verified 2.x releases; prefer Kotlin for new Berrygram code without requiring a Compose rewrite. See `CONTINUE.md` for the current release state.
 
 2.1.0 will separate app-wide named color palettes (a diagonal two-color circular preview), independent wallpapers (patterns/images/solid/theme-derived/gradients), and the existing effect mode. Palette changes must preserve a chosen wallpaper. No full theme-pack system; none of this is implemented in 2.0.0.
 
@@ -54,4 +54,3 @@ Deferred work is preserved on branch `berrygram-pre-scope-20261030`; it is not a
 Backlog for 1.7.0 and later: photo OCR, local archive of ordinary messages, plugins, full theme engine, keyboard layout fix, external SRT/ASS subtitles, video-frame copying and saving, per-chat cache control, gesture-based multi-selection, crash protection, theme and phrase-pack catalogs, further optimizations and a future desktop client. Compatibility, privacy and platform rules require review before implementation.
 
 A large feature receives its own minor version; any number of patch releases can follow. Do not start the next minor version without the owner's explicit decision. The music player, standard photo sending and a separate iOS shell are out of scope.
-

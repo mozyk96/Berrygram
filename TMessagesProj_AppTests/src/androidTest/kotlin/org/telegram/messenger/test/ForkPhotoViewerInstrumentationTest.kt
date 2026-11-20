@@ -37,10 +37,10 @@ class ForkPhotoViewerInstrumentationTest {
                 viewer.setParentActivity(activity)
                 opened = viewer.openPhotoForSelect(photos, 0, 0, false, PhotoViewer.EmptyPhotoViewerProvider(), null)
             }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             Thread.sleep(1500) // Allow the viewer transition and image loading to finish.
             assertTrue("Local photo viewer did not open", opened && viewer.isVisible)
-            val screenshot = instrumentation.uiAutomation.takeScreenshot()
+            val screenshot = ForkScreenshot.capture(activity)
             var imageSeen = false
             for (y in 0 until screenshot.height step 8) for (x in 0 until screenshot.width step 8) {
                 val pixel = screenshot.getPixel(x, y)

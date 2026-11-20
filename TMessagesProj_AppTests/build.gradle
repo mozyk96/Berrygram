@@ -16,10 +16,13 @@ apply plugin: 'org.telegram.build-app-plugin'
 
 // Focus fork UI regressions without recompiling the unrelated generated TL scheme suite.
 // The default test build still includes every upstream test.
+// The filter is applied to the Kotlin compile task. Filtering the source set
+// itself removed every Kotlin instrumentation source and left the task with
+// NO-SOURCE, so the fork fixtures were silently missing from the test APK.
 if (project.hasProperty('forkFocusedTests')) {
-    kotlin.sourceSets.configureEach {
-        if (name.toLowerCase(Locale.ROOT).contains('androidtest')) {
-            kotlin.exclude('org/telegram/tgnet/**')
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { task ->
+        if (task.name.toLowerCase(Locale.ROOT).contains('androidtest')) {
+            task.exclude('org/telegram/tgnet/**')
         }
     }
 }

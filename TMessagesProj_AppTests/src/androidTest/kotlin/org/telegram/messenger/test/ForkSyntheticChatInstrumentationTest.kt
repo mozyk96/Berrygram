@@ -83,8 +83,8 @@ class ForkSyntheticChatInstrumentationTest {
                         assertTrue("Synthetic $kind avatar is not visible", avatar.avatarImageView.visibility == View.VISIBLE)
                         assertTrue("Synthetic $kind title is missing", avatar.titleTextView.text.toString().contains("Тестов"))
                     }
-                    instrumentation.waitForIdleSync()
-                    val screenshot = instrumentation.uiAutomation.takeScreenshot()
+                    ForkWait.idle(instrumentation)
+                    val screenshot = ForkScreenshot.capture(activity)
                     try {
                         java.io.File(activity.getExternalFilesDir(null), "berrygram-200-synthetic-$kind-${if (ios) "ios" else "telegram"}.png")
                             .outputStream().use { screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
@@ -144,8 +144,8 @@ class ForkSyntheticChatInstrumentationTest {
                 assertTrue("Synthetic title is missing", avatar.titleTextView.text.toString().contains("Тестова"))
                 assertTrue("Message composer is not visible", composer.visibility == View.VISIBLE)
             }
-            instrumentation.waitForIdleSync()
-            val screenshot = instrumentation.uiAutomation.takeScreenshot()
+            ForkWait.idle(instrumentation)
+            val screenshot = ForkScreenshot.capture(activity)
             try {
                 java.io.File(activity.getExternalFilesDir(null), "berrygram-151-synthetic-chat.png")
                     .outputStream().use { screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }

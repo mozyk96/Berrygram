@@ -14789,7 +14789,10 @@ public class MessagesStorage extends BaseController {
                     while (cursor.next()) {
                         long did = cursor.longValue(0);
                         int mid = cursor.intValue(5);
-                        if (mid > 0 && org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)) {
+                        // A deletion the owner started in Berrygram must not leave a
+                        // preserved bubble behind. Only remote deletions are archived.
+                        if (mid > 0 && !org.telegram.messenger.fork.storage.ForkDeletionPolicy.isLocal(currentAccount, did, mid)
+                                && org.telegram.messenger.fork.stealth.ForkStealthSettings.deletedMessagesEnabled(currentAccount)) {
                             org.telegram.messenger.fork.storage.ForkDeletedMessagesStorage.getInstance(currentAccount).recordDeletedMessage(did, mid, (int) (System.currentTimeMillis() / 1000));
                         }
                         unknownMessages.remove((Integer) mid);

@@ -23,6 +23,7 @@ import org.telegram.messenger.MessagesController
 import org.telegram.messenger.fork.panels.ForkComposerSettings
 import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.Components.ChatActivityEnterView
+import org.telegram.ui.Components.ChatActivityEnterTopView
 import org.telegram.ui.Components.SizeNotifierFrameLayout
 import org.telegram.ui.Components.chat.ChatInputViewsContainer
 import org.telegram.ui.Components.inset.WindowInsetsProvider
@@ -125,31 +126,46 @@ class ForkComposerInstrumentationTest {
                 activity.setContentView(root)
                 input.editField!!.requestFocus()
             }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             instrumentation.runOnMainSync {
                 (activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
                     .showSoftInput(composer!!.editField, InputMethodManager.SHOW_IMPLICIT)
             }
             var visible = false
+            var imeBottom = 0
             for (attempt in 0 until 30) {
                 Thread.sleep(100)
                 instrumentation.runOnMainSync {
-                    visible = ViewCompat.getRootWindowInsets(activity.window.decorView)
-                        ?.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime()) == true
+                    val metrics = android.util.DisplayMetrics()
+                    activity.windowManager.defaultDisplay.getRealMetrics(metrics)
+                    val screenHeight = metrics.heightPixels
+                    if (android.os.Build.VERSION.SDK_INT >= 30) {
+                        val insets = ViewCompat.getRootWindowInsets(activity.window.decorView)
+                        visible = insets?.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime()) == true
+                        imeBottom = insets?.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime())?.bottom ?: 0
+                    } else {
+                        // Android 10 has no IME inset type. The keyboard shrinks the
+                        // window and shortens the visible display frame instead.
+                        val frame = android.graphics.Rect()
+                        activity.window.decorView.getWindowVisibleDisplayFrame(frame)
+                        val decorHeight = activity.window.decorView.height
+                        val resized = decorHeight in 1 until screenHeight
+                        visible = resized || frame.bottom < screenHeight
+                        imeBottom = if (resized) screenHeight - decorHeight else screenHeight - frame.bottom
+                    }
                 }
                 if (visible) break
             }
             Thread.sleep(600)
             instrumentation.runOnMainSync {
                 assertTrue("The emulator IME must actually open", visible)
-                val insets = ViewCompat.getRootWindowInsets(activity.window.decorView)!!
                 val screen = android.graphics.Point()
                 activity.windowManager.defaultDisplay.getRealSize(screen)
                 val screenHeight = screen.y
                 val pos = IntArray(2)
                 composer!!.getLocationOnScreen(pos)
                 assertTrue("Composer overlaps the visible keyboard",
-                    pos[1] + composer!!.height <= screenHeight - insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom + dp(2f))
+                    pos[1] + composer!!.height <= screenHeight - imeBottom + dp(2f))
             }
         } finally {
             instrumentation.runOnMainSync {
@@ -318,6 +334,69 @@ class ForkComposerInstrumentationTest {
             instrumentation.runOnMainSync {
                 composer?.onDestroy()
                 ForkComposerSettings.setExperimentalComposerEnabled(original)
+                activity.finish()
+            }
+        }
+    }
+
+    @Test fun modernComposerKeepsContrastBehindReplyAndEditBanners() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
+            SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val previousComposer = ForkComposerSettings.isExperimentalComposerEnabled()
+        var composer: ChatActivityEnterView? = null
+        try {
+            instrumentation.runOnMainSync {
+                Theme.createCommonResources(activity)
+                ForkComposerSettings.setExperimentalComposerEnabled(true)
+                val root = SizeNotifierFrameLayout(activity)
+                val input = ChatActivityEnterView(activity, root, null, true).apply {
+                    shouldDrawBackground = false // As in ChatActivity: the parent paints the field.
+                }
+                composer = input
+                val banner = ChatActivityEnterTopView(activity).apply {
+                    addReplyView(View(activity), FrameLayout.LayoutParams(-1, -1))
+                    addEditView(ChatActivityEnterTopView.EditView(activity), FrameLayout.LayoutParams(-1, -1))
+                }
+                input.addTopView(banner, 48)
+                root.addView(input, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
+                activity.setContentView(root)
+                fun layout() {
+                    root.measure(View.MeasureSpec.makeMeasureSpec(dp(393f), View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(dp(720f), View.MeasureSpec.EXACTLY))
+                    root.layout(0, 0, root.measuredWidth, root.measuredHeight)
+                }
+                layout()
+                input.onSizeChanged(0, false)
+                input.setForceShowSendButton(true, false)
+                input.showTopView(false, false)
+                layout()
+                assertEquals(View.VISIBLE, banner.visibility)
+
+                val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
+                try {
+                    val x = banner.width / 2
+                    val y = input.top + banner.y.toInt() + dp(14f)
+                    for (editing in listOf(false, true, false)) {
+                        banner.setEditMode(editing)
+                        bitmap.eraseColor(Color.TRANSPARENT)
+                        root.draw(Canvas(bitmap))
+                        assertEquals("The ${if (editing) "edit" else "reply"} banner needs an opaque reading surface",
+                            255, Color.alpha(bitmap.getPixel(x, y)))
+                    }
+                    input.hideTopView(false)
+                    layout()
+                    bitmap.eraseColor(Color.TRANSPARENT)
+                    root.draw(Canvas(bitmap))
+                    assertEquals("Dismissing the banner must remove its surface", 0, Color.alpha(bitmap.getPixel(x, y)))
+                } finally {
+                    bitmap.recycle()
+                }
+            }
+        } finally {
+            instrumentation.runOnMainSync {
+                composer?.onDestroy()
+                ForkComposerSettings.setExperimentalComposerEnabled(previousComposer)
                 activity.finish()
             }
         }

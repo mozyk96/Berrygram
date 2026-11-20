@@ -121,7 +121,7 @@ class ForkScreenRenderInstrumentationTest {
                             if (canScroll) list.scrollBy(0, (list.height * 3 / 4).coerceAtLeast(1))
                         }
                         if (!canScroll) break
-                        instrumentation.waitForIdleSync()
+                        ForkWait.idle(instrumentation)
                         instrumentation.runOnMainSync { inspect(list) }
                     }
                 }

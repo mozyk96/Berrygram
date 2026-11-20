@@ -96,6 +96,10 @@ object ForkSettingsBlocks {
         radius = section.addRow(R.string.ForkAppearanceRadius, ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), R.drawable.fork_ic_glass) { anchor ->
             showRadius(fragment, anchor, radius)
         }
+        lateinit var headerStyle: org.telegram.ui.Cells.TextSettingsCell
+        headerStyle = section.addRow(R.string.ForkChatHeaderStyle, chatHeaderStyleLabel(), R.drawable.fork_ic_glass) { anchor ->
+            showChatHeaderStyle(fragment, anchor, headerStyle)
+        }
         val animations = section.addToggle(R.string.ForkAdvancedAnimations, ForkAnimationSettings.fluidPopupsEnabled()) { enabled ->
             ForkAnimationSettings.setFluidPopupsEnabled(enabled)
         }
@@ -112,6 +116,11 @@ object ForkSettingsBlocks {
             radius.setTextAndValue(
                 ForkLocale.get(R.string.ForkAppearanceRadius),
                 ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()),
+                false
+            )
+            headerStyle.setTextAndValue(
+                ForkLocale.get(R.string.ForkChatHeaderStyle),
+                chatHeaderStyleLabel(),
                 false
             )
             animations.isChecked = ForkAnimationSettings.fluidPopupsEnabled()
@@ -271,6 +280,35 @@ object ForkSettingsBlocks {
                 ForkLocale.get(R.string.ForkAppearanceRadius),
                 ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()),
                 false
+            )
+        }
+    }
+
+    /** The two chat header styles, Telegram and the iOS-style floating islands. */
+    private fun chatHeaderStyleLabel(): String {
+        return if (org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()) {
+            ForkLocale.get(R.string.ForkChatHeaderStyleIos)
+        } else {
+            ForkLocale.get(R.string.ForkChatHeaderStyleTelegram)
+        }
+    }
+
+    private fun showChatHeaderStyle(fragment: BaseFragment, anchor: View, cell: org.telegram.ui.Cells.TextSettingsCell) {
+        val labels = arrayOf(
+            ForkLocale.get(R.string.ForkChatHeaderStyleTelegram),
+            ForkLocale.get(R.string.ForkChatHeaderStyleIos)
+        )
+        val current = if (org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()) 1 else 0
+        ForkChoicePopup.show(fragment, anchor, labels, null, current) { index ->
+            org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(index == 1)
+            cell.setTextAndValue(
+                ForkLocale.get(R.string.ForkChatHeaderStyle),
+                chatHeaderStyleLabel(),
+                false
+            )
+            // The open chat rebuilds its header when the theme changes.
+            org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
+                org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false
             )
         }
     }

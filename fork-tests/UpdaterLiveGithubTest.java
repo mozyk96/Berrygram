@@ -5,9 +5,8 @@ import org.telegram.messenger.fork.updater.UpdatePolicy;
  * Validates the unified updater against the real public GitHub repository.
  *
  * <p>This test needs network access. It verifies that only official releases
- * are discovered, that the asset selection works with the real asset names and
- * that historical Beta/RC builds still receive official updates without any
- * downgrade path.</p>
+ * are discovered and that asset selection and checksums match the public
+ * artifacts. It does not install or verify compatibility with a legacy app.</p>
  */
 public class UpdaterLiveGithubTest {
     private static final String REPO = "mozyk96/Berrygram";
@@ -19,7 +18,16 @@ public class UpdaterLiveGithubTest {
     }
 
     public static void main(String[] args) throws Exception {
-        GithubUpdateClient.Release latest = GithubUpdateClient.latest(REPO);
+        boolean expectNone = args.length > 0 && args[0].equals("--no-compatible-release");
+        GithubUpdateClient.Release latest;
+        try {
+            latest = GithubUpdateClient.latest(REPO);
+        } catch (GithubUpdateClient.NoReleaseException noRelease) {
+            if (!expectNone) throw noRelease;
+            System.out.println("No compatible stable asset found for org.berrygram.client");
+            return;
+        }
+        check(!expectNone, "unexpected compatible release: " + latest.version);
         System.out.println("official release found: " + latest.version + " (" + latest.size + " bytes)");
         if (args.length > 0) {
             check(args[0].equals(latest.version), "expected release " + args[0] + ", got " + latest.version);
@@ -34,29 +42,10 @@ public class UpdaterLiveGithubTest {
                 "the official release url is not a release asset: " + latest.url);
         check(UpdatePolicy.validAssetUrl(REPO, "v" + latest.version, latest.url.substring(latest.url.lastIndexOf('/') + 1), latest.url),
                 "the official release url is rejected by the policy");
-        check(UpdatePolicy.compareVersions(latest.version, "1.4.0") >= 0,
-                "the official stream must include at least the published 1.4.0 release");
-
-        // Historical prerelease installs discover the newest official release.
-        check(UpdatePolicy.shouldShowRelease(latest.version, "1.4.0-beta.1"),
-                "a 1.4.0 beta install must discover the official release");
-        check(UpdatePolicy.shouldShowRelease(latest.version, "1.4.0-beta.2"),
-                "a 1.4.0 beta.2 install must discover the official release");
-        check(UpdatePolicy.shouldShowRelease(latest.version, "1.4.0-rc.1"),
-                "a 1.4.0 RC install must discover the official release");
-        if (UpdatePolicy.compareVersions(latest.version, "1.4.0") > 0) {
-            check(UpdatePolicy.shouldShowRelease(latest.version, "1.4.0"),
-                    "a 1.4.0 install must discover a newer official release");
-        }
+        check(UpdatePolicy.shouldShowRelease(latest.version, "1.5.1"),
+                "an older generation-2 install must be offered the release");
         check(!UpdatePolicy.shouldShowRelease(latest.version, latest.version),
                 "the installed version must not be offered to itself");
-        check(!UpdatePolicy.shouldShowRelease("1.3.0", "1.4.0-beta.2"),
-                "an older official release must not be offered to a newer beta build");
-        check(!UpdatePolicy.shouldShowRelease("1.3.0", "1.4.0-rc.1"),
-                "an older official release must not be offered to a newer RC build");
-        check(!UpdatePolicy.shouldShowRelease(latest.version + "-beta.1", "1.4.0"),
-                "a prerelease must never be offered by the official updater");
-
         System.out.println("UpdaterLiveGithubTest passed (unified official stream)");
     }
 }

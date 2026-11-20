@@ -55,9 +55,9 @@ class ForkUpdateUiInstrumentationTest {
             activity.setContentView(root)
             assertTrue(navigation.presentFragment(INavigationLayout.NavigationParams(fragment).setNoAnimation(true)))
         }
-        instrumentation.waitForIdleSync()
+        ForkWait.idle(instrumentation)
         instrumentation.runOnMainSync { fragment.onResume() }
-        instrumentation.waitForIdleSync()
+        ForkWait.idle(instrumentation)
         instrumentation.runOnMainSync {
             fun findButton(view: android.view.View): Button? {
                 if (view is Button) return view
@@ -99,7 +99,7 @@ class ForkUpdateUiInstrumentationTest {
         instrumentation.uiAutomation.executeShellCommand("screencap -p /sdcard/Download/Berrygram-update-test.png").use {
             android.os.ParcelFileDescriptor.AutoCloseInputStream(it).use { input -> input.readBytes() }
         }
-        val screenshot = instrumentation.uiAutomation.takeScreenshot()
+        val screenshot = ForkScreenshot.capture(activity)
         assertTrue("Screenshot is empty", screenshot != null && screenshot.width > 0 && screenshot.height > 0)
         val file = File(context.getExternalFilesDir(null), "update-center-instrumentation.png")
         file.outputStream().use { screenshot.compress(Bitmap.CompressFormat.PNG, 100, it) }

@@ -2,6 +2,7 @@ package org.telegram.messenger.fork.performance
 
 import android.app.ActivityManager
 import android.content.Context
+import android.opengl.EGL14
 import android.os.Build
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.ApplicationLoader
@@ -17,6 +18,10 @@ import java.util.Locale
 object ForkDeviceAnalyzer {
     @Volatile
     private var cachedAssessment: DeviceAnalyzerPolicy.Assessment? = null
+
+    /** Result of the one-off offscreen probe, empty when the probe is unavailable. */
+    @Volatile
+    private var probedGpuRenderer: String? = null
 
     @JvmStatic
     fun getAssessment(forceRescan: Boolean): DeviceAnalyzerPolicy.Assessment {
@@ -49,10 +54,8 @@ object ForkDeviceAnalyzer {
             Build.HARDWARE ?: ""
         }
         // GL_RENDERER requires a current context. A board/SoC name is not a GPU
-        // renderer; keep it unknown when diagnostics run outside a GL thread.
-        val gpu = if (android.opengl.EGL14.eglGetCurrentContext() != android.opengl.EGL14.EGL_NO_CONTEXT) {
-            android.opengl.GLES20.glGetString(android.opengl.GLES20.GL_RENDERER).orEmpty()
-        } else ""
+        // renderer, so only a real renderer string or a completed probe is used.
+        val gpu = currentGlRenderer().ifEmpty { probedGpuRenderer.orEmpty() }
 
         return DeviceAnalyzerPolicy.DeviceSpecs(
             cpuCores,
@@ -65,6 +68,92 @@ object ForkDeviceAnalyzer {
             gpu,
             soc
         )
+    }
+
+    /** The renderer of the current GL context, empty when there is none. */
+    private fun currentGlRenderer(): String = try {
+        if (EGL14.eglGetCurrentContext() != EGL14.EGL_NO_CONTEXT) {
+            android.opengl.GLES20.glGetString(android.opengl.GLES20.GL_RENDERER).orEmpty()
+        } else {
+            ""
+        }
+    } catch (error: Throwable) {
+        ""
+    }
+
+    /**
+     * Reads the real GPU renderer through a temporary offscreen EGL context.
+     * The probe never touches the visible surface, so it is safe to run from a
+     * background thread while the chat is rendered. The result is cached.
+     */
+    @JvmStatic
+    fun probeGpuRenderer(): String {
+        probedGpuRenderer?.let { return it }
+        val renderer = runOffscreenProbe()
+        probedGpuRenderer = renderer
+        return renderer
+    }
+
+    private fun runOffscreenProbe(): String = try {
+        val display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
+        if (display == EGL14.EGL_NO_DISPLAY) {
+            ""
+        } else {
+            val version = IntArray(2)
+            if (!EGL14.eglInitialize(display, version, 0, version, 1)) {
+                ""
+            } else {
+                try {
+                    val configs = arrayOfNulls<android.opengl.EGLConfig>(1)
+                    val configCount = IntArray(1)
+                    val attributes = intArrayOf(
+                        EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                        EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                        EGL14.EGL_NONE
+                    )
+                    if (!EGL14.eglChooseConfig(display, attributes, 0, configs, 0, 1, configCount, 0)
+                        || configCount[0] <= 0 || configs[0] == null) {
+                        ""
+                    } else {
+                        val contextAttributes = intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE)
+                        val context = EGL14.eglCreateContext(display, configs[0], EGL14.EGL_NO_CONTEXT, contextAttributes, 0)
+                        if (context == null || context == EGL14.EGL_NO_CONTEXT) {
+                            ""
+                        } else {
+                            try {
+                                val surfaceAttributes = intArrayOf(EGL14.EGL_WIDTH, 1, EGL14.EGL_HEIGHT, 1, EGL14.EGL_NONE)
+                                val surface = EGL14.eglCreatePbufferSurface(display, configs[0], surfaceAttributes, 0)
+                                if (surface == null || surface == EGL14.EGL_NO_SURFACE) {
+                                    ""
+                                } else {
+                                    try {
+                                        if (!EGL14.eglMakeCurrent(display, surface, surface, context)) {
+                                            ""
+                                        } else {
+                                            try {
+                                                android.opengl.GLES20.glGetString(android.opengl.GLES20.GL_RENDERER).orEmpty()
+                                            } finally {
+                                                EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE,
+                                                    EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
+                                            }
+                                        }
+                                    } finally {
+                                        EGL14.eglDestroySurface(display, surface)
+                                    }
+                                }
+                            } finally {
+                                EGL14.eglDestroyContext(display, context)
+                            }
+                        }
+                    }
+                } finally {
+                    EGL14.eglTerminate(display)
+                }
+            }
+        }
+    } catch (error: Throwable) {
+        FileLog.e(error)
+        ""
     }
 
     private fun readMaxCpuFreq(cores: Int): Int {

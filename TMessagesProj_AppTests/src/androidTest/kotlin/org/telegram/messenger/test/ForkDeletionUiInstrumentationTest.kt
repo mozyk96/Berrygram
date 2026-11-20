@@ -62,7 +62,7 @@ class ForkDeletionUiInstrumentationTest {
                 chat = ChatActivity(Bundle().apply { putLong("user_id", dialog) })
                 assertTrue(navigation.presentFragment(INavigationLayout.NavigationParams(chat!!).setNoAnimation(true)))
             }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             val manager = ForkArchiveManager.getInstance(account)
             assertTrue(manager.archiveMessage(dialog, 800201, 12345, owner, null, "synthetic voice caption", false))
             instrumentation.runOnMainSync {

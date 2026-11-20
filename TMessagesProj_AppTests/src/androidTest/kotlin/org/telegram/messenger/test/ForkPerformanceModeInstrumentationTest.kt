@@ -5,6 +5,7 @@ import android.view.View
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,8 +53,32 @@ class ForkPerformanceModeInstrumentationTest {
     @Test fun unavailableGpuRendererIsReportedAsUnknownRatherThanBoardName() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             assertEquals(android.opengl.EGL14.EGL_NO_CONTEXT, android.opengl.EGL14.eglGetCurrentContext())
-            assertEquals("", org.telegram.messenger.fork.performance.ForkDeviceAnalyzer.scanDevice().gpuRenderer)
+            val specs = org.telegram.messenger.fork.performance.ForkDeviceAnalyzer.scanDevice()
+            val board = boardName()
+            assertNotEquals("A board name must never be reported as the GPU renderer", board, specs.gpuRenderer)
         }
+    }
+
+    @Test fun offscreenProbeNeverReportsABoardNameAsGpu() {
+        val renderer = org.telegram.messenger.fork.performance.ForkDeviceAnalyzer.probeGpuRenderer()
+        val board = boardName()
+        if (board.isNotEmpty()) {
+            assertNotEquals("The offscreen probe must not report the board name", board, renderer)
+        }
+        // The probe may be unavailable on a headless or software renderer, but it
+        // must never fail the scan that uses it.
+        val specs = org.telegram.messenger.fork.performance.ForkDeviceAnalyzer.scanDevice()
+        assertNotEquals(board, specs.gpuRenderer)
+    }
+
+    /**
+     * The board or SoC name of the device. `Build.SOC_MODEL` only exists from
+     * Android 12, so the value is read through a version check.
+     */
+    private fun boardName(): String = try {
+        if (android.os.Build.VERSION.SDK_INT >= 31) android.os.Build.SOC_MODEL ?: "" else android.os.Build.HARDWARE ?: ""
+    } catch (error: Throwable) {
+        android.os.Build.HARDWARE ?: ""
     }
 
     @Test fun choosingManualImmediatelyRevealsLevelWithoutReopeningScreen() {
@@ -83,9 +108,9 @@ class ForkPerformanceModeInstrumentationTest {
                 assertTrue(navigation.presentFragment(INavigationLayout.NavigationParams(fragment).setNoAnimation(true)))
                 assertEquals(View.GONE, section.getChildAt(3).visibility)
             }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             instrumentation.runOnMainSync { section.getChildAt(1).performClick() }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             val label = ForkLocale.get(R.string.ForkPerformanceManualMode)
             instrumentation.runOnMainSync {
                 fun find(view: View): View? {
@@ -102,7 +127,7 @@ class ForkPerformanceModeInstrumentationTest {
                 while (choice != null && !choice!!.isClickable) choice = choice!!.parent as? View
                 assertTrue("Manual choice cannot be clicked", choice?.performClick() == true)
             }
-            instrumentation.waitForIdleSync()
+            ForkWait.idle(instrumentation)
             instrumentation.runOnMainSync {
                 assertEquals(PerformancePolicy.CONFIG_MANUAL, PerformanceSettings.configMode())
                 assertEquals("Manual level remains hidden after selecting Manual", View.VISIBLE, section.getChildAt(3).visibility)

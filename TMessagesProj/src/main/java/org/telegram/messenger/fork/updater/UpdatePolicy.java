@@ -83,11 +83,9 @@ public final class UpdatePolicy {
     }
     public static boolean validDigest(String digest) { return digest != null && digest.matches("sha256:[0-9a-fA-F]{64}"); }
     public static boolean validSavedRelease(String repo, String version, String installed, String url, String digest, long size) {
-        if (!shouldShowRelease(version, installed) || size <= 0 || size > 512L * 1024 * 1024 || !validDigest("sha256:" + digest)) return false;
-        String arm64 = "BerryGram-" + version + "-org.berrygram.client-arm64-v8a.apk";
-        String universal = "BerryGram-" + version + "-org.berrygram.client-universal.apk";
-        return validAssetUrl(repo, "v" + version, arm64, url) || validAssetUrl(repo, version, arm64, url)
-            || validAssetUrl(repo, "v" + version, universal, url) || validAssetUrl(repo, version, universal, url);
+        if (url == null || !shouldShowRelease(version, installed) || size <= 0 || size > 512L * 1024 * 1024 || !validDigest("sha256:" + digest)) return false;
+        String asset = url.substring(url.lastIndexOf('/') + 1);
+        return validAssetUrl(repo, "v" + version, asset, url) || validAssetUrl(repo, version, asset, url);
     }
     public static boolean validAssetUrl(String repo, String tag, String name, String url) {
         if (!validRepository(repo) || !validAsset(tag, name) || url == null) return false;

@@ -59,7 +59,17 @@ public final class ForkPerformanceSettingsActivity extends ForkSettingsFragment 
                 ForkLocale.get(R.string.ForkDeviceScanAction), false);
         scanButtonRow.setIcon(R.drawable.msg_settings);
         ForkSettingsLayout.interactive(scanButtonRow);
-        scanButtonRow.setOnClickListener(v -> scanDeviceAndShowResult(context));
+        scanButtonRow.setOnClickListener(v -> {
+            // The GPU renderer is read through a temporary offscreen context, so
+            // the probe runs off the UI thread and the result is shown after it.
+            org.telegram.messenger.Utilities.globalQueue.postRunnable(() -> {
+                ForkDeviceAnalyzer.probeGpuRenderer();
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (getParentActivity() == null) return;
+                    scanDeviceAndShowResult(context);
+                });
+            });
+        });
         rows.addView(scanButtonRow);
 
         // Performance Mode (Automatic vs Manual)
