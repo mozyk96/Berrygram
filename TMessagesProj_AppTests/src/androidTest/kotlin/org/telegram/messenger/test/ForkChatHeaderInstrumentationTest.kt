@@ -26,7 +26,7 @@ import org.telegram.utils.glass.source.GlassSourceColor
 
 @RunWith(AndroidJUnit4::class)
 class ForkChatHeaderInstrumentationTest {
-    @Test fun iosHeaderTitleAndStatusStayInsideTheCapsuleBelowTheStatusBar() {
+    @Test fun titleAndStatusStayInsideTheCapsuleBelowTheStatusBar() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
             SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -56,7 +56,7 @@ class ForkChatHeaderInstrumentationTest {
                     bar.measure(View.MeasureSpec.makeMeasureSpec(dp(393f), View.MeasureSpec.EXACTLY),
                         View.MeasureSpec.makeMeasureSpec(dp(88f), View.MeasureSpec.EXACTLY))
                     bar.layout(0, 0, bar.measuredWidth, bar.measuredHeight)
-                    assertTrue(bar.isIosChatHeader)
+                    assertTrue(bar.usesBerrygramChatHeader())
                     val bitmap = Bitmap.createBitmap(bar.width, bar.height, Bitmap.Config.ARGB_8888)
                     try {
                         bar.draw(Canvas(bitmap))
@@ -83,7 +83,7 @@ class ForkChatHeaderInstrumentationTest {
         }
     }
 
-    @Test fun iosHeaderUsesCircularSeparatedActionsAndRestoresTelegramLayout() {
+    @Test fun chatActionsShareOneSurfaceAtNarrowAndWideWidths() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
             SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -108,6 +108,9 @@ class ForkChatHeaderInstrumentationTest {
                     addItem(1, R.drawable.msg_calls)
                     addItem(2, R.drawable.ic_ab_other)
                 }
+                val selection = bar.createActionMode()
+                assertEquals(View.INVISIBLE, selection.visibility)
+                assertTrue("A hidden selection bar must not disable the chat header", bar.usesBerrygramChatHeader())
                 val source = GlassSourceColor().apply { setColor(Color.RED) }
                 bar.setupGlass(BlurredBackgroundDrawableViewFactory(source),
                     BlurredBackgroundColorProviderThemed(null, Theme.key_actionBarDefault, 1f))
@@ -116,7 +119,7 @@ class ForkChatHeaderInstrumentationTest {
                     bar.measure(View.MeasureSpec.makeMeasureSpec(dp(width), View.MeasureSpec.EXACTLY),
                         View.MeasureSpec.makeMeasureSpec(dp(56f), View.MeasureSpec.EXACTLY))
                     bar.layout(0, 0, bar.measuredWidth, bar.measuredHeight)
-                    assertTrue(bar.isIosChatHeader)
+                    assertTrue(bar.usesBerrygramChatHeader())
                     assertTrue("Header overlaps back control", avatar.left >= dp(56f))
                     assertTrue("Header overlaps actions", avatar.right <= menu.left - dp(6f))
                     val bitmap = Bitmap.createBitmap(bar.width, bar.height, Bitmap.Config.ARGB_8888)
@@ -132,10 +135,11 @@ class ForkChatHeaderInstrumentationTest {
                         val drawable = field.get(bar) as org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable
                         val bounds = android.graphics.Rect()
                         drawable.getBoundsWithPaddingInset(bounds)
-                        assertEquals("iOS action surface must be circular", bounds.height(), bounds.width())
+                        assertEquals("Both actions must share the same capsule",
+                            menu.getItem(2).right - menu.getItem(1).left, bounds.width())
                         assertEquals(dp(44f), bounds.height())
                         val callRect = android.graphics.RectF()
-                        assertTrue("Opening a separate iOS action must not take over the entire menu",
+                        assertTrue("Opening the popup must leave other actions visible",
                             !bar.getMenuItemGlassRect(menu.getItem(1), callRect))
                         assertEquals(menu.x + menu.getItem(1).x, callRect.left, 1f)
                         assertEquals(dp(44f).toFloat(), callRect.width(), 1f)
@@ -143,8 +147,17 @@ class ForkChatHeaderInstrumentationTest {
                             .outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
                     } finally { bitmap.recycle() }
                     org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(false)
-                    assertTrue(!bar.isIosChatHeader)
+                    assertTrue("The retired preference must not switch the layout", bar.usesBerrygramChatHeader())
                 }
+                bar.setSearchFactor(1f)
+                assertTrue("Search owns the header while active", !bar.usesBerrygramChatHeader())
+                bar.setSearchFactor(0f)
+                assertTrue(bar.usesBerrygramChatHeader())
+                selection.alpha = 1f
+                selection.visibility = View.VISIBLE
+                assertTrue("Selection owns the header while active", !bar.usesBerrygramChatHeader())
+                selection.visibility = View.INVISIBLE
+                assertTrue(bar.usesBerrygramChatHeader())
             }
         } finally {
             instrumentation.runOnMainSync { org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(original); activity.finish() }

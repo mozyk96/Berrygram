@@ -128,6 +128,14 @@ class ForkScreenRenderInstrumentationTest {
                 instrumentation.uiAutomation.executeShellCommand("screencap -p /sdcard/Download/Berrygram-$name.png").use {
                     ParcelFileDescriptor.AutoCloseInputStream(it).use { input -> input.readBytes() }
                 }
+                if (name == "ForkAboutActivity" || name == "ForkUpdateActivity") {
+                    val screenshot = ForkScreenshot.capture(activity)
+                    try {
+                        java.io.File(activity.getExternalFilesDir(null), "berrygram-201-$name.png").outputStream().use {
+                            screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+                        }
+                    } finally { screenshot.recycle() }
+                }
             } catch (error: Throwable) {
                 problems.add("$name: ${error.cause ?: error}")
             } finally {

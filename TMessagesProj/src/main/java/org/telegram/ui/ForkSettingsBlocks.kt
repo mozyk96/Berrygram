@@ -1,6 +1,9 @@
 package org.telegram.ui
 
 import android.view.View
+import android.content.res.ColorStateList
+import android.widget.SeekBar
+import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.R
 import org.telegram.messenger.fork.panels.ForkAnimationSettings
 import org.telegram.messenger.fork.panels.ForkComposerSettings
@@ -12,6 +15,7 @@ import org.telegram.messenger.fork.performance.PerformanceSettings
 import org.telegram.messenger.fork.stealth.ForkStealthSettings
 import org.telegram.messenger.fork.text.ForkTranslationSettings
 import org.telegram.ui.ActionBar.BaseFragment
+import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.fork.settings.ForkSettingsSection
 
 /**
@@ -92,14 +96,33 @@ object ForkSettingsBlocks {
         style = section.addRow(R.string.ForkGraphicsStyle, styleLabel(), R.drawable.fork_ic_glass) { anchor ->
             showStyle(fragment, anchor, style)
         }
-        lateinit var radius: org.telegram.ui.Cells.TextSettingsCell
-        radius = section.addRow(R.string.ForkAppearanceRadius, ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()), R.drawable.fork_ic_glass) { anchor ->
-            showRadius(fragment, anchor, radius)
+        val radius = section.addRow(R.string.ForkAppearanceRadius, ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()))
+        val radiusSlider = SeekBar(fragment.context).apply {
+            max = 20
+            minimumHeight = AndroidUtilities.dp(48f)
+            setPaddingRelative(AndroidUtilities.dp(24f), 0, AndroidUtilities.dp(24f), 0)
+            contentDescription = ForkLocale.get(R.string.ForkAppearanceRadius)
+            val accent = ColorStateList.valueOf(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText))
+            progressTintList = accent
+            thumbTintList = accent
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(bar: SeekBar, progress: Int, fromUser: Boolean) {
+                    if (!fromUser) return
+                    ForkPanelSettings.setRadiusDp(progress + 12)
+                    radius.setTextAndValue(
+                        ForkLocale.get(R.string.ForkAppearanceRadius),
+                        ForkLocale.get(R.string.ForkAppearanceRadiusValue, progress + 12),
+                        false
+                    )
+                }
+                override fun onStartTrackingTouch(bar: SeekBar) = Unit
+                override fun onStopTrackingTouch(bar: SeekBar) = section.refresh()
+            })
         }
-        lateinit var headerStyle: org.telegram.ui.Cells.TextSettingsCell
-        headerStyle = section.addRow(R.string.ForkChatHeaderStyle, chatHeaderStyleLabel(), R.drawable.fork_ic_glass) { anchor ->
-            showChatHeaderStyle(fragment, anchor, headerStyle)
-        }
+        section.addControl(radiusSlider)
+        section.addInfo(R.string.ForkGraphicsInfoUnified)
+
+        section.addHeader(R.string.ForkSectionChatControls)
         val animations = section.addToggle(R.string.ForkAdvancedAnimations, ForkAnimationSettings.fluidPopupsEnabled()) { enabled ->
             ForkAnimationSettings.setFluidPopupsEnabled(enabled)
         }
@@ -109,7 +132,7 @@ object ForkSettingsBlocks {
         val composerToggle = section.addToggle(R.string.ForkExperimentalComposer, ForkComposerSettings.isExperimentalComposerEnabled()) { enabled ->
             ForkComposerSettings.setExperimentalComposerEnabled(enabled)
         }
-        section.addInfo(R.string.ForkGraphicsInfoUnified)
+        section.addInfo(R.string.ForkExperimentalComposerDescription)
 
         section.refreshState {
             style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false)
@@ -118,11 +141,7 @@ object ForkSettingsBlocks {
                 ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()),
                 false
             )
-            headerStyle.setTextAndValue(
-                ForkLocale.get(R.string.ForkChatHeaderStyle),
-                chatHeaderStyleLabel(),
-                false
-            )
+            radiusSlider.progress = ForkPanelSettings.radiusDp() - 12
             animations.isChecked = ForkAnimationSettings.fluidPopupsEnabled()
             miniDock.isChecked = ForkDockSettings.miniDockEnabled()
             composerToggle.isChecked = ForkComposerSettings.isExperimentalComposerEnabled()
@@ -145,11 +164,11 @@ object ForkSettingsBlocks {
         section.addDetailRow(R.string.ForkCustomTextTitle, R.string.ForkTextSubtitle, R.drawable.msg_edit) {
             fragment.presentFragment(ForkCustomTextActivity())
         }
-
-        section.addHeader(R.string.ForkSectionMedia)
         section.addDetailRow(R.string.ForkGestureTitle, R.string.ForkGestureDoubleTap, R.drawable.menu_reply) {
             fragment.presentFragment(ForkGestureSettingsActivity())
         }
+
+        section.addHeader(R.string.ForkSectionMedia)
         section.addDetailRow(R.string.ForkVideoTitle, R.string.ForkVideoSubtitle, R.drawable.msg_video) {
             fragment.presentFragment(ForkVideoSettingsActivity())
         }
@@ -267,49 +286,6 @@ object ForkSettingsBlocks {
             val chosen = modes[index]
             org.telegram.messenger.LiteMode.setForkVisualMode(chosen)
             cell.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false)
-        }
-    }
-
-    private fun showRadius(fragment: BaseFragment, anchor: View, cell: org.telegram.ui.Cells.TextSettingsCell) {
-        val values = IntArray(21)
-        val labels = Array(values.size) { index -> "${index + 12}" }
-        val current = (ForkPanelSettings.radiusDp() - 12).coerceIn(0, values.size - 1)
-        ForkChoicePopup.show(fragment, anchor, labels, null, current) { index ->
-            ForkPanelSettings.setRadiusDp(index + 12)
-            cell.setTextAndValue(
-                ForkLocale.get(R.string.ForkAppearanceRadius),
-                ForkLocale.get(R.string.ForkAppearanceRadiusValue, ForkPanelSettings.radiusDp()),
-                false
-            )
-        }
-    }
-
-    /** The two chat header styles, Telegram and the iOS-style floating islands. */
-    private fun chatHeaderStyleLabel(): String {
-        return if (org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()) {
-            ForkLocale.get(R.string.ForkChatHeaderStyleIos)
-        } else {
-            ForkLocale.get(R.string.ForkChatHeaderStyleTelegram)
-        }
-    }
-
-    private fun showChatHeaderStyle(fragment: BaseFragment, anchor: View, cell: org.telegram.ui.Cells.TextSettingsCell) {
-        val labels = arrayOf(
-            ForkLocale.get(R.string.ForkChatHeaderStyleTelegram),
-            ForkLocale.get(R.string.ForkChatHeaderStyleIos)
-        )
-        val current = if (org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()) 1 else 0
-        ForkChoicePopup.show(fragment, anchor, labels, null, current) { index ->
-            org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(index == 1)
-            cell.setTextAndValue(
-                ForkLocale.get(R.string.ForkChatHeaderStyle),
-                chatHeaderStyleLabel(),
-                false
-            )
-            // The open chat rebuilds its header when the theme changes.
-            org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
-                org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false
-            )
         }
     }
 

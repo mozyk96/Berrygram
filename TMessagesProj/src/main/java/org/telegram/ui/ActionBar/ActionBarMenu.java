@@ -649,14 +649,14 @@ public class ActionBarMenu extends LinearLayout {
                     final ViewGroup.LayoutParams lp = view.getLayoutParams();
                     if (lp instanceof MarginLayoutParams) {
                         MarginLayoutParams mlp = (MarginLayoutParams) lp;
-                        boolean separate = parentActionBar != null && parentActionBar.isIosChatHeader();
-                        if (separate) {
+                        boolean grouped = !isActionMode && parentActionBar != null && parentActionBar.usesBerrygramChatHeader();
+                        if (grouped) {
                             if (!forkItemWidths.containsKey(view)) forkItemWidths.put(view, mlp.width);
                             mlp.width = dp(44);
                         } else if (forkItemWidths.containsKey(view)) {
                             mlp.width = forkItemWidths.remove(view);
                         }
-                        mlp.leftMargin = mlp.rightMargin = separate ? dp(3) : -dp(5);
+                        mlp.leftMargin = mlp.rightMargin = grouped ? 0 : -dp(5);
                     }
                 }
             }

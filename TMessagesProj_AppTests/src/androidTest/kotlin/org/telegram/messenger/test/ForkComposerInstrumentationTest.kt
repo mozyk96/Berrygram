@@ -323,6 +323,12 @@ class ForkComposerInstrumentationTest {
                     container.draw(Canvas(bitmap))
                     assertEquals("Shared backdrop must not bridge the independent controls", 0,
                         Color.alpha(bitmap.getPixel(field.right + dp(2f), field.bottom - dp(25f))))
+                    input.alpha = 0f
+                    bitmap.eraseColor(Color.TRANSPARENT)
+                    container.draw(Canvas(bitmap))
+                    assertTrue("A composer hidden by opacity must not narrow a restriction or channel notice",
+                        Color.alpha(bitmap.getPixel(container.width - dp(20f), field.bottom - dp(25f))) > 0)
+                    input.alpha = 1f
                     input.visibility = View.INVISIBLE
                     bitmap.eraseColor(Color.TRANSPARENT)
                     container.draw(Canvas(bitmap))
@@ -339,16 +345,48 @@ class ForkComposerInstrumentationTest {
         }
     }
 
+    @Test fun narrowMediaEditKeepsBothActionsReachable() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val context = instrumentation.targetContext
+            val edit = ChatActivityEnterTopView.EditView(context)
+            val labels = listOf("Редагувати відеоповідомлення", "Замінити відеоповідомлення")
+            for (label in labels) {
+                val button = object : ChatActivityEnterTopView.EditViewButton(context) {
+                    override fun updateColors() = Unit
+                }
+                button.setPadding(dp(12f), 0, dp(12f), 0)
+                button.addImageView(android.widget.ImageView(context), android.widget.LinearLayout.LayoutParams(dp(24f), -1))
+                button.addSpaceView(android.widget.Space(context), android.widget.LinearLayout.LayoutParams(dp(10f), -1))
+                button.addTextView(android.widget.TextView(context).apply {
+                    text = label
+                    isSingleLine = true
+                    ellipsize = android.text.TextUtils.TruncateAt.END
+                }, android.widget.LinearLayout.LayoutParams(-2, -1))
+                edit.addButton(button, android.widget.LinearLayout.LayoutParams(-2, -1))
+            }
+            edit.measure(View.MeasureSpec.makeMeasureSpec(dp(190f), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(dp(46f), View.MeasureSpec.EXACTLY))
+            edit.layout(0, 0, edit.measuredWidth, edit.measuredHeight)
+            for (button in edit.buttons) {
+                assertTrue("Action touch target cannot collapse", button.width >= dp(48f))
+                assertTrue("Both action targets must stay inside the row", button.right <= edit.width)
+            }
+        }
+    }
+
     @Test fun modernComposerKeepsContrastBehindReplyAndEditBanners() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
             SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val previousComposer = ForkComposerSettings.isExperimentalComposerEnabled()
+        val previousStyle = org.telegram.messenger.fork.panels.ForkPanelSettings.style()
         var composer: ChatActivityEnterView? = null
         try {
             instrumentation.runOnMainSync {
                 Theme.createCommonResources(activity)
                 ForkComposerSettings.setExperimentalComposerEnabled(true)
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle("none")
                 val root = SizeNotifierFrameLayout(activity)
                 val input = ChatActivityEnterView(activity, root, null, true).apply {
                     shouldDrawBackground = false // As in ChatActivity: the parent paints the field.
@@ -372,6 +410,8 @@ class ForkComposerInstrumentationTest {
                 input.showTopView(false, false)
                 layout()
                 assertEquals(View.VISIBLE, banner.visibility)
+                assertEquals("Context must stop at the field instead of spanning the send button",
+                    input.messageEditTextContainer.width, banner.width)
 
                 val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
                 try {
@@ -397,6 +437,7 @@ class ForkComposerInstrumentationTest {
             instrumentation.runOnMainSync {
                 composer?.onDestroy()
                 ForkComposerSettings.setExperimentalComposerEnabled(previousComposer)
+                org.telegram.messenger.fork.panels.ForkPanelSettings.setStyle(previousStyle)
                 activity.finish()
             }
         }

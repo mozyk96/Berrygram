@@ -2,17 +2,22 @@ package org.telegram.ui;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageInfo;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import androidx.core.content.pm.PackageInfoCompat;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
+import org.telegram.messenger.browser.Browser;
 import org.telegram.ui.ActionBar.ActionBar;
-import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.fork.settings.ForkSettingsSection;
 
-/** Basic attribution, installed-version information and the Update Center. */
+/** Installed build information and project attribution. */
 public final class ForkAboutActivity extends ForkSettingsFragment {
 
     @Override public View createView(Context context) {
@@ -22,31 +27,57 @@ public final class ForkAboutActivity extends ForkSettingsFragment {
             @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
         });
         ScrollView scroll = new ScrollView(context);
-        LinearLayout content = new LinearLayout(context);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(20), AndroidUtilities.dp(20), AndroidUtilities.dp(20));
-        content.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-        TextView title = new TextView(context);
-        title.setText(ForkLocale.get(R.string.ForkAppName));
-        title.setTextSize(22);
+        scroll.setFillViewport(true);
+        LinearLayout content = ForkSettingsLayout.page(context);
+        LinearLayout hero = new LinearLayout(context);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setGravity(Gravity.CENTER_HORIZONTAL);
+        hero.setPadding(AndroidUtilities.dp(24), AndroidUtilities.dp(32), AndroidUtilities.dp(24), AndroidUtilities.dp(18));
+        ImageView icon = new ImageView(context);
+        icon.setImageResource(R.mipmap.berrygram_launcher);
+        icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        hero.addView(icon, new LinearLayout.LayoutParams(AndroidUtilities.dp(76), AndroidUtilities.dp(76)));
+        TextView title = addCenteredText(hero, ForkLocale.get(R.string.ForkAppName), 28, Theme.key_windowBackgroundWhiteBlackText, 12);
         title.setTypeface(AndroidUtilities.bold());
-        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        content.addView(title);
-        TextView details = new TextView(context);
-        String version = "";
-        try { version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName; }
+        try {
+            PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            String build = info.versionName + " (" + PackageInfoCompat.getLongVersionCode(info) + ")";
+            addCenteredText(hero, ForkLocale.get(R.string.ForkAboutVersion, build), 14, Theme.key_windowBackgroundWhiteGrayText2, 4);
+        }
         catch (PackageManager.NameNotFoundException ignored) { }
-        details.setText(ForkLocale.get(R.string.ForkIntroDisclosure) + "\n\n" +
-            ForkLocale.get(R.string.ForkAboutVersion, version == null ? "" : version) + "\n\n" +
-            ForkLocale.get(R.string.ForkAboutAttribution));
-        details.setTextSize(16);
-        details.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        details.setPadding(0, AndroidUtilities.dp(12), 0, 0);
-        content.addView(details);
+        addCenteredText(hero, ForkLocale.get(R.string.ForkIntroDisclosure), 16, Theme.key_windowBackgroundWhiteBlackText, 16);
+        content.addView(hero);
+
+        ForkSettingsSection links = new ForkSettingsSection(context);
+        links.addRow(R.string.ForkAboutSource, "GitHub", R.drawable.msg_link, v -> {
+            Browser.openUrl(context, "https://github.com/mozyk96/Berrygram");
+            return kotlin.Unit.INSTANCE;
+        });
+        links.addRow(R.string.ForkAboutUpstream, null, R.drawable.msg_link, v -> {
+            Browser.openUrl(context, "https://github.com/DrKLO/Telegram");
+            return kotlin.Unit.INSTANCE;
+        });
+        links.addRow(R.string.ForkAboutLicense, "GNU GPL", R.drawable.msg_info, v -> {
+            Browser.openUrl(context, "https://github.com/mozyk96/Berrygram/blob/HEAD/LICENSE");
+            return kotlin.Unit.INSTANCE;
+        });
+        links.addInfo(R.string.ForkAboutAttribution);
+        content.addView(links);
 
         scroll.addView(content);
         fragmentView = ForkFloatingHeader.wrap(context, actionBar, scroll, ForkLocale.get(R.string.ForkAboutTitle), this::finishFragment);
         return fragmentView;
     }
 
+    private static TextView addCenteredText(LinearLayout parent, CharSequence value, int size, int colorKey, int top) {
+        TextView text = new TextView(parent.getContext());
+        text.setText(value);
+        text.setTextSize(size);
+        text.setTextColor(Theme.getColor(colorKey));
+        text.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.topMargin = AndroidUtilities.dp(top);
+        parent.addView(text, params);
+        return text;
+    }
 }

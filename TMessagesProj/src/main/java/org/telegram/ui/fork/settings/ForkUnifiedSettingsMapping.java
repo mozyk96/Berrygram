@@ -10,14 +10,15 @@ import java.util.Set;
  * Maps every Berrygram feature to the Telegram settings screen that owns it.
  *
  * The map is the single source of truth of the settings integration. The
- * Berrygram root of the settings screen only keeps the Update Center, every
+ * Berrygram root keeps the Update Center and About; every
  * other feature is a block inside the screen that owns it, so the application
  * has exactly one settings system.
  */
 public final class ForkUnifiedSettingsMapping {
 
-    /** Identifier of the Update Center row, the only Berrygram row of the root. */
+    /** Identifiers of the two project-level destinations. */
     public static final int ID_UPDATES = 108;
+    public static final int ID_ABOUT = 109;
 
     /**
      * Legacy identifiers of the 1.4.1 shortcut rows. The rows are gone, the
@@ -136,10 +137,10 @@ public final class ForkUnifiedSettingsMapping {
     }
 
     /**
-     * The root of the settings screen keeps the Update Center only, every other
+     * The root keeps the Update Center and About; every other
      * Berrygram feature lives inside the Telegram screen that owns it.
      */
     public static int rootRows() {
-        return 1;
+        return 2;
     }
 }

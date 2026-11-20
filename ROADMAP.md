@@ -1,6 +1,6 @@
-## 2.0.0 — only active release
+## 2.0.1 — єдиний активний реліз
 
-Finish and validate the stable 2.0.0 release. Preserve `org.berrygram.client`, the established generation-2 signer and Android 10 / API 29 minimum. Stop development after publication and verification; all later work requires the owner's approval. See `CONTINUE.md` for the release state.
+Уніфікувати шапку окремого чату, поліпшити контекст панелі введення та організацію налаштувань. Зберегти `org.berrygram.client`, чинний сертифікат і Android 10 / API 29. Після перевірки й публікації зупинитися; наступні релізи потребують окремого доручення.
 
 ## Deferred design and feature plans
 

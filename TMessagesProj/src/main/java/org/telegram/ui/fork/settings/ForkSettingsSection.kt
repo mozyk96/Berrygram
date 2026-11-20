@@ -1,16 +1,19 @@
 package org.telegram.ui.fork.settings
 
 import android.content.Context
+import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.LinearLayout
 import androidx.annotation.StringRes
 import org.telegram.messenger.AndroidUtilities
+import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.Cells.HeaderCell
 import org.telegram.ui.Cells.TextCheckCell
 import org.telegram.ui.Cells.TextDetailSettingsCell
 import org.telegram.ui.Cells.TextInfoPrivacyCell
 import org.telegram.ui.Cells.TextSettingsCell
 import org.telegram.ui.ForkLocale
+import org.telegram.ui.ForkSettingsLayout
 
 /**
  * A Berrygram settings block that lives inside a Telegram settings screen.
@@ -23,7 +26,8 @@ import org.telegram.ui.ForkLocale
  */
 class ForkSettingsSection(context: Context) : LinearLayout(context) {
 
-    private val rows = ArrayList<View>()
+    private val groups = ArrayList<LinearLayout>()
+    private var currentGroup: LinearLayout? = null
     private var stateBlock: (() -> Unit)? = null
 
     init {
@@ -44,11 +48,15 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
     /** Reloads the values of the rows. */
     fun refresh() {
         stateBlock?.invoke()
+        for (group in groups) {
+            ForkSettingsLayout.refreshSection(group, false)
+            (group.dividerDrawable as? GradientDrawable)?.setColor(Theme.getColor(Theme.key_divider))
+        }
     }
 
     /** Adds a grey section header, the same style the Telegram screens use. */
     fun addHeader(@StringRes titleRes: Int): HeaderCell {
-        rows.clear()
+        currentGroup = null
         val header = HeaderCell(context)
         header.setText(ForkLocale.get(titleRes))
         addView(header)
@@ -67,6 +75,7 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
             val enabled = !cell.isChecked
             cell.isChecked = enabled
             onChanged(enabled)
+            stateBlock?.invoke()
         }
         addRowView(cell)
         return cell
@@ -109,7 +118,7 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
 
     /** Adds an explanatory text under a group of rows. */
     fun addInfo(@StringRes textRes: Int): TextInfoPrivacyCell {
-        rows.clear()
+        currentGroup = null
         val info = TextInfoPrivacyCell(context)
         info.setText(ForkLocale.get(textRes))
         addView(info)
@@ -125,22 +134,29 @@ class ForkSettingsSection(context: Context) : LinearLayout(context) {
             val enabled = !cell.isChecked
             cell.isChecked = enabled
             onChanged(enabled)
+            stateBlock?.invoke()
         }
         addRowView(cell)
         return cell
     }
 
+    fun addControl(view: View) {
+        addRowView(view)
+    }
+
     private fun addRowView(view: View) {
-        // A hairline divider between the rows of the block, the host screen
-        // draws the same line between its own cells.
-        if (rows.isNotEmpty()) {
-            val divider = View(context)
-            divider.setBackgroundColor(org.telegram.ui.ActionBar.Theme.getColor(org.telegram.ui.ActionBar.Theme.key_divider))
-            val params = LayoutParams(LayoutParams.MATCH_PARENT, 1)
-            params.setMargins(AndroidUtilities.dp(16f), 0, AndroidUtilities.dp(16f), 0)
-            addView(divider, params)
+        val group = currentGroup ?: ForkSettingsLayout.section(context).also {
+            it.dividerDrawable = GradientDrawable().apply {
+                setColor(Theme.getColor(Theme.key_divider))
+                setSize(1, 1)
+            }
+            it.showDividers = SHOW_DIVIDER_MIDDLE
+            it.dividerPadding = AndroidUtilities.dp(16f)
+            ForkSettingsLayout.addSection(this, it)
+            groups.add(it)
+            currentGroup = it
         }
-        addView(view)
-        rows.add(view)
+        if (view.isClickable) view.background = Theme.getSelectorDrawable(false)
+        group.addView(view, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
     }
 }

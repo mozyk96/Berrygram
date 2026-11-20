@@ -279,10 +279,11 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
         tmpRect.offset(0, blurTop + (int) bubbleInputTranlationY);
 
         boolean modernComposerVisible = false;
+        float contextHeight = 0;
         if (ForkComposerSettings.isExperimentalComposerEnabled()) {
             for (int i = 0; i < inputIslandBubbleContainer.getChildCount(); i++) {
                 View child = inputIslandBubbleContainer.getChildAt(i);
-                if (child instanceof ChatActivityEnterView && child.getVisibility() == VISIBLE) {
+                if (child instanceof ChatActivityEnterView && child.getVisibility() == VISIBLE && child.getAlpha() > 0f) {
                     ChatActivityEnterView input = (ChatActivityEnterView) child;
                     // Insets move the island with translationY. Layout-only descendant offsets
                     // leave the glass at the unshifted bottom, underneath gesture navigation.
@@ -290,6 +291,7 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
                         continue;
                     }
                     modernComposerVisible = true;
+                    contextHeight = input.getVisibleContextHeight();
                     inputFieldBounds.round(tmpRect);
                     tmpRect.inset(-dp(7), -dp(7));
                     break;
@@ -299,8 +301,11 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
 
         blurredBackgroundDrawable.setRadius(modernComposerVisible
                 ? inputFieldBounds.height() / 2f : dp(INPUT_BUBBLE_RADIUS));
-        blurredBackgroundDrawable.setBounds(tmpRect);
         final boolean backgroundless = org.telegram.ui.ForkGraphicsSurface.backgroundless();
+        if (modernComposerVisible && !backgroundless) {
+            tmpRect.top -= Math.round(contextHeight);
+        }
+        blurredBackgroundDrawable.setBounds(tmpRect);
         if (drawInputBackground && (!backgroundless || !modernComposerVisible))
             blurredBackgroundDrawable.draw(canvas);
 

@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Space;
 import android.widget.TextView;
+import org.telegram.messenger.AndroidUtilities;
 
 public class ChatActivityEnterTopView extends FrameLayout {
 
@@ -76,6 +77,29 @@ public class ChatActivityEnterTopView extends FrameLayout {
 
         public EditViewButton[] getButtons() {
             return buttons;
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED) {
+                int visible = 0;
+                for (EditViewButton button : buttons) {
+                    if (button != null && button.getVisibility() != GONE) visible++;
+                }
+                if (visible > 0) {
+                    int budget = (MeasureSpec.getSize(widthMeasureSpec) - getPaddingLeft() - getPaddingRight()) / visible;
+                    for (EditViewButton button : buttons) {
+                        if (button == null || button.getVisibility() == GONE || button.textView == null) continue;
+                        int fixed = button.getPaddingLeft() + button.getPaddingRight();
+                        if (button.imageView != null) fixed += button.imageView.getLayoutParams().width;
+                        if (button.space != null && button.space.getVisibility() != GONE) fixed += button.space.getLayoutParams().width;
+                        int max = Math.max(0, budget - fixed);
+                        if (button.isEditButton()) max = Math.min(AndroidUtilities.dp(116), max);
+                        if (button.textView.getMaxWidth() != max) button.textView.setMaxWidth(max);
+                    }
+                }
+            }
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         public void updateColors() {

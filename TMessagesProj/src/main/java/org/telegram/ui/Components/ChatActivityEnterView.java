@@ -5072,6 +5072,18 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     private final Paint topViewBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
+    private boolean hasCompactComposerContext() {
+        return isChat && !shouldDrawBackground && ForkComposerSettings.isExperimentalComposerEnabled();
+    }
+
+    public float getVisibleContextHeight() {
+        if (!hasCompactComposerContext() || topView == null || topView.getVisibility() != VISIBLE) {
+            return 0;
+        }
+        return Math.max(0, Math.min(topView.getHeight(), getMeasuredHeight()
+                - animatorInputFieldHeight.getFactor() - topView.getY()));
+    }
+
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         boolean clip = child == topView || child == textFieldContainer;
@@ -5083,9 +5095,8 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
             if (child == topView) {
                 canvas.clipRect(0, 0, getMeasuredWidth(), separatorY);
-                if (isChat && !shouldDrawBackground && ForkComposerSettings.isExperimentalComposerEnabled()) {
-                    // The modern island paints only the text field. Keep dense banner text
-                    // and actions readable without extending the backdrop over the send button.
+                if (hasCompactComposerContext() && org.telegram.ui.ForkGraphicsSurface.backgroundless()) {
+                    // Match the field's non-blurred fallback in No Background mode.
                     topViewBackgroundPaint.setColor(ColorUtils.setAlphaComponent(
                             getThemedColor(Theme.key_chat_messagePanelBackground), 255));
                     final float x = child.getX();
@@ -15095,6 +15106,13 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (topView != null && messageEditTextContainer != null) {
+            MarginLayoutParams contextParams = (MarginLayoutParams) topView.getLayoutParams();
+            boolean compact = hasCompactComposerContext();
+            MarginLayoutParams fieldParams = (MarginLayoutParams) messageEditTextContainer.getLayoutParams();
+            contextParams.leftMargin = compact ? fieldParams.leftMargin : 0;
+            contextParams.rightMargin = compact ? fieldParams.rightMargin : 0;
+        }
         int wasHeight = textFieldContainer.getMeasuredHeight();
         if (botCommandsMenuButton != null && botCommandsMenuButton.getTag() != null) {
             botCommandsMenuButton.measure(widthMeasureSpec, heightMeasureSpec);

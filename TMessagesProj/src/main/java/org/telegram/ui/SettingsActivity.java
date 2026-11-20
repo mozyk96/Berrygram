@@ -111,6 +111,8 @@ import org.telegram.ui.Components.FloatingDebug.FloatingDebugController;
 import org.telegram.ui.Components.HintsController;
 import org.telegram.ui.Components.IconBackgroundColors;
 import org.telegram.ui.Components.ImageUpdater;
+import org.telegram.ui.fork.settings.ForkUnifiedSettings;
+import org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping;
 import org.telegram.ui.Components.InstantCameraView;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
@@ -844,10 +846,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         // Berrygram: the Update Center and the application information live in
         // the help section. Every other Berrygram control is part of the
         // Telegram section it belongs to, so the root has no duplicate rows.
-        try {
-            items.add(org.telegram.ui.fork.settings.ForkUnifiedSettings.buildUpdateEntry(getParentActivity()));
-        } catch (Throwable ignore) {
-        }
+        items.add(ForkUnifiedSettings.buildUpdateEntry());
+        items.add(ForkUnifiedSettings.buildAboutEntry());
 
         if (SharedSettings.experimentalSettingsAllowed.get()) {
             items.add(UItem.asShadow(null));
@@ -955,8 +955,11 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.LEGACY_ID_PERFORMANCE:
                 presentSettingFragment(new ForkPerformanceSettingsActivity());
                 break;
-            case org.telegram.ui.fork.settings.ForkUnifiedSettingsMapping.LEGACY_ID_ABOUT:
+            case ForkUnifiedSettingsMapping.ID_UPDATES:
                 presentSettingFragment(new ForkUpdateActivity());
+                break;
+            case ForkUnifiedSettingsMapping.ID_ABOUT:
+                presentSettingFragment(new ForkAboutActivity());
                 break;
             case 3:
                 presentSettingFragment(new PrivacySettingsActivity());

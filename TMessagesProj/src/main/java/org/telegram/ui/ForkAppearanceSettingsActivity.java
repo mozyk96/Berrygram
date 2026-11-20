@@ -87,25 +87,6 @@ public final class ForkAppearanceSettingsActivity extends ForkSettingsFragment {
             });
         });
 
-        TextSettingsCell headerStyleCell = new TextSettingsCell(context);
-        headerStyleCell.setTextAndValue(ForkLocale.get(R.string.ForkChatHeaderStyle),
-                org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle()
-                        ? ForkLocale.get(R.string.ForkChatHeaderStyleIos)
-                        : ForkLocale.get(R.string.ForkChatHeaderStyleTelegram), false);
-        ForkSettingsLayout.interactive(headerStyleCell);
-        headerStyleCell.setOnClickListener(v -> ForkChoicePopup.show(this, v,
-                new CharSequence[] {ForkLocale.get(R.string.ForkChatHeaderStyleTelegram),
-                        ForkLocale.get(R.string.ForkChatHeaderStyleIos)}, null,
-                org.telegram.messenger.fork.panels.ForkChatHeaderSettings.isIosStyle() ? 1 : 0, index -> {
-                    org.telegram.messenger.fork.panels.ForkChatHeaderSettings.setIosStyle(index == 1);
-                    headerStyleCell.setTextAndValue(ForkLocale.get(R.string.ForkChatHeaderStyle),
-                            index == 1 ? ForkLocale.get(R.string.ForkChatHeaderStyleIos)
-                                    : ForkLocale.get(R.string.ForkChatHeaderStyleTelegram), false);
-                    org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
-                            org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false);
-                }));
-        controls.addView(headerStyleCell);
-
         // Corner Radius Slider
         radiusCell = new TextSettingsCell(context);
         radiusCell.setTextAndValue(ForkLocale.get(R.string.ForkAppearanceRadius),

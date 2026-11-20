@@ -93,6 +93,10 @@
     <string name="ForkReactionEmptyChats">No chats with a custom double-tap action yet.</string>
     <string name="ForkIntroDisclosure">An unofficial Telegram client using the Telegram API.</string>
     <string name="ForkAboutTitle">About BerryGram</string>
+    <string name="ForkAboutSource">BerryGram source code</string>
+    <string name="ForkAboutUpstream">Telegram for Android</string>
+    <string name="ForkAboutLicense">License</string>
+    <string name="ForkSectionChatControls">Chat controls</string>
     <string name="ForkAboutVersion">Version: %1$s</string>
     <string name="ForkAboutAttribution">Based on Telegram for Android, licensed under GNU GPL version 2 or later.</string>
     <string name="ForkRoundCameraTitle">Video messages: starting camera</string>

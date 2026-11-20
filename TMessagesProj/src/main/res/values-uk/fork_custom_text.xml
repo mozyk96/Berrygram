@@ -93,6 +93,10 @@
     <string name="ForkReactionEmptyChats">Ще немає чатів із власною дією подвійного натискання.</string>
     <string name="ForkIntroDisclosure">Неофіційний клієнт Telegram, що використовує Telegram API.</string>
     <string name="ForkAboutTitle">Про BerryGram</string>
+    <string name="ForkAboutSource">Вихідний код BerryGram</string>
+    <string name="ForkAboutUpstream">Telegram для Android</string>
+    <string name="ForkAboutLicense">Ліцензія</string>
+    <string name="ForkSectionChatControls">Елементи інтерфейсу</string>
     <string name="ForkAboutVersion">Версія: %1$s</string>
     <string name="ForkAboutAttribution">На основі Telegram для Android, ліцензованого за GNU GPL версії 2 або пізнішої.</string>
     <string name="ForkRoundCameraTitle">Відеоповідомлення: початкова камера</string>

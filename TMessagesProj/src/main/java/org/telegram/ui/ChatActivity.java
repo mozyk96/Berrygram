@@ -8333,7 +8333,7 @@ public class ChatActivity extends BaseFragment implements
                 }
             }
         };
-        chatActivityEnterView.addTopView(chatActivityEnterTopView, 48);
+        chatActivityEnterView.addTopView(chatActivityEnterTopView, 46);
 
         if (chatMode == MODE_EDIT_BUSINESS_LINK) {
             chatActivityEnterView.setEditingBusinessLink(businessLink);
@@ -8409,8 +8409,9 @@ public class ChatActivity extends BaseFragment implements
         ThemeBind.colorFilter(replyCloseImageView, Theme.key_glass_defaultIcon, getResourceProvider(), PorterDuff.Mode.MULTIPLY);
         replyCloseImageView.setImageResource(R.drawable.input_clear);
         replyCloseImageView.setScaleType(ImageView.ScaleType.CENTER);
+        replyCloseImageView.setContentDescription(getString(R.string.Close));
         ThemeBind.selectorBackground(replyCloseImageView, Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), 1, AndroidUtilities.dp(19)), null, ThemeBind.of(Theme.key_listSelector), getResourceProvider());
-        chatActivityEnterTopView.addView(replyCloseImageView, LayoutHelper.createFrame(52, 46, Gravity.RIGHT | Gravity.TOP, 0, 0.5f, 0, 0));
+        chatActivityEnterTopView.addView(replyCloseImageView, LayoutHelper.createFrame(48, LayoutHelper.MATCH_PARENT, Gravity.RIGHT | Gravity.CENTER_VERTICAL));
         replyCloseImageView.setOnClickListener(v -> {
             messageSuggestionParams = null;
             if (fieldPanelShown == 2) {
@@ -8461,14 +8462,6 @@ public class ChatActivity extends BaseFragment implements
             final boolean firstButton = i == 0;
 
             final ChatActivityEnterTopView.EditViewButton button = new ChatActivityEnterTopView.EditViewButton(context) {
-                @Override
-                public void setEditButton(boolean editButton) {
-                    super.setEditButton(editButton);
-                    if (firstButton) {
-                        getTextView().setMaxWidth(editButton ? AndroidUtilities.dp(116) : Integer.MAX_VALUE);
-                    }
-                }
-
                 private Drawable appliedBackground;
                 private int appliedColor;
 
@@ -15650,10 +15643,12 @@ public class ChatActivity extends BaseFragment implements
                     final ChatActivityEnterTopView.EditViewButton[] buttons = chatActivityEnterTopView.getEditView().getButtons();
                     buttons[0].setEditButton(editButtonText != null);
                     buttons[0].getTextView().setText(editButtonText != null ? editButtonText : replaceButtonText);
+                    buttons[0].setContentDescription(editButtonText != null ? editButtonText : replaceButtonText);
                     buttons[0].getImageView().setImageResource(editButtonText != null ? R.drawable.msg_photoeditor : R.drawable.msg_replace);
                     buttons[1].setVisibility(editButtonText != null ? View.VISIBLE : View.GONE);
                     if (editButtonText != null) {
                         buttons[1].getTextView().setText(replaceButtonText);
+                        buttons[1].setContentDescription(replaceButtonText);
                     }
                     chatActivityEnterTopView.setEditMode(true);
                 } else {
@@ -15718,6 +15713,7 @@ public class ChatActivity extends BaseFragment implements
 
                         final ChatActivityEnterTopView.EditViewButton[] buttons = chatActivityEnterTopView.getEditView().getButtons();
                         buttons[0].getImageView().setImageResource(R.drawable.nav_edit_attach);
+                        buttons[0].setContentDescription(LocaleController.getString(R.string.AddMessageMedia));
                         buttons[0].setEditButton(false);
                         buttons[1].setVisibility(View.GONE);
                     }

@@ -11,7 +11,7 @@ import java.util.Set;
  * Verifies the unified settings integration.
  *
  * <p>Berrygram has exactly one settings system: the root of the settings screen
- * keeps the Update Center only and every other Berrygram feature is a block
+ * keeps separate Update Center and About entries; other features are blocks
  * inside the Telegram screen that owns it. The test fails when the root grows a
  * duplicate row again or when a host screen loses its block.</p>
  */
@@ -35,8 +35,8 @@ public class ForkUnifiedSettingsMappingTest {
         check(ForkUnifiedSettingsMapping.uniqueIdentifiers(), "The unified settings map has duplicate identifiers");
         check(ForkUnifiedSettingsMapping.knownHosts(), "A feature uses an unknown Telegram screen");
         check(hosts.size() >= 6, "Too few Telegram screens host a Berrygram block");
-        check(ForkUnifiedSettingsMapping.rootRows() == 1,
-                "The settings root must keep the Update Center only");
+        check(ForkUnifiedSettingsMapping.rootRows() == 2,
+                "The settings root must offer Update Center and About separately");
 
         Set<String> features = new HashSet<>();
         for (ForkUnifiedSettingsMapping.Entry entry : entries) {
@@ -54,8 +54,8 @@ public class ForkUnifiedSettingsMappingTest {
         // The root must not insert the Berrygram shortcut rows any more.
         check(!source.contains("ForkUnifiedSettings.applyTo"),
                 "The settings root still inserts the Berrygram shortcut rows");
-        check(!source.contains("ForkUnifiedSettings.buildAboutEntry"),
-                "The settings root still inserts the Berrygram about row");
+        check(source.contains("ForkUnifiedSettings.buildAboutEntry"),
+                "The settings root does not contain a standalone About row");
         check(source.contains("ForkUnifiedSettings.buildUpdateEntry"),
                 "The settings root does not contain the Update Center row");
         check(!source.contains("presentSettingFragment(new ForkSettingsActivity())"),

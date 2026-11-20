@@ -167,6 +167,6 @@ class ForkSettingsInstrumentationTest {
         assertTrue("The unified settings map is empty", hosts.isNotEmpty())
         assertTrue("The unified settings map has no features", entries.isNotEmpty())
         val rootRows = mapping.getMethod("rootRows").invoke(null) as Int
-        assertTrue("The settings root has more than the Update Center", rootRows == 1)
+        assertTrue("The settings root needs separate Update Center and About entries", rootRows == 2)
     }
 }

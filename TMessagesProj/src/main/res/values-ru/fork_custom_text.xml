@@ -85,6 +85,10 @@
     <string name="ForkTextImportedPack">Импортированные фразы</string>
     <string name="ForkIntroDisclosure">Неофициальный клиент Telegram, использующий Telegram API.</string>
     <string name="ForkAboutTitle">О BerryGram</string>
+    <string name="ForkAboutSource">Исходный код BerryGram</string>
+    <string name="ForkAboutUpstream">Telegram для Android</string>
+    <string name="ForkAboutLicense">Лицензия</string>
+    <string name="ForkSectionChatControls">Элементы интерфейса</string>
     <string name="ForkAboutVersion">Версия: %1$s</string>
     <string name="ForkAboutAttribution">Основано на Telegram для Android, лицензированном по GNU GPL версии 2 или более поздней.</string>
     <string name="ForkRoundCameraTitle">Видеосообщения: начальная камера</string>
