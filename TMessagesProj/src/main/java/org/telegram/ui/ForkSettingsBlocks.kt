@@ -124,22 +124,11 @@ object ForkSettingsBlocks {
         section.addInfo(R.string.ForkGraphicsInfoUnified)
 
         section.addHeader(R.string.ForkSectionChatControls)
-        val headerStyles = arrayOf(
-            ForkLocale.get(R.string.ForkChatHeaderStyleTelegram),
-            ForkLocale.get(R.string.ForkChatHeaderStyleIos)
-        )
-        fun headerSelection() = if (ForkChatHeaderSettings.isIosStyle()) 1 else 0
-        lateinit var headerStyle: org.telegram.ui.Cells.TextSettingsCell
-        headerStyle = section.addRow(R.string.ForkChatHeaderStyle, headerStyles[headerSelection()]) { anchor ->
-            ForkChoicePopup.show(fragment, anchor, headerStyles, null, headerSelection()) { index ->
-                if (index != headerSelection()) {
-                    ForkChatHeaderSettings.setIosStyle(index == 1)
-                    section.refresh()
-                    org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
-                        org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false
-                    )
-                }
-            }
+        val headerStyle = section.addToggle(R.string.ForkChatHeaderStyle, ForkChatHeaderSettings.isIosStyle()) { enabled ->
+            ForkChatHeaderSettings.setIosStyle(enabled)
+            org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
+                org.telegram.messenger.NotificationCenter.didSetNewTheme, false, false
+            )
         }
         val animations = section.addToggle(R.string.ForkAdvancedAnimations, ForkAnimationSettings.fluidPopupsEnabled()) { enabled ->
             ForkAnimationSettings.setFluidPopupsEnabled(enabled)
@@ -153,7 +142,7 @@ object ForkSettingsBlocks {
         section.addInfo(R.string.ForkExperimentalComposerDescription)
 
         section.refreshState {
-            headerStyle.setTextAndValue(ForkLocale.get(R.string.ForkChatHeaderStyle), headerStyles[headerSelection()], false)
+            headerStyle.isChecked = ForkChatHeaderSettings.isIosStyle()
             style.setTextAndValue(ForkLocale.get(R.string.ForkGraphicsStyle), styleLabel(), false)
             radius.setTextAndValue(
                 ForkLocale.get(R.string.ForkAppearanceRadius),

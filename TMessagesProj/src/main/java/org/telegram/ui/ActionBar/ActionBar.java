@@ -208,12 +208,15 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     public boolean doNotDrawCenterGlass;
     public boolean compactChatGlass;
     private ChatAvatarContainer forkHeaderAvatar;
+    private ActionBarMenuItem forkChatOverflow;
     private boolean forkDrawingChatHeader;
-    private int forkBackLeft, forkTitleLeft, forkTitleWidth, forkMenuLeft;
+    private int forkBackLeft, forkTitleLeft, forkTitleWidth, forkMenuLeft, forkAvatarLeft;
     public void setForkHeaderAvatar(ChatAvatarContainer avatar) { forkHeaderAvatar = avatar; }
+    public void setForkChatOverflow(ActionBarMenuItem item) { forkChatOverflow = item; }
     public boolean usesBerrygramChatHeader() {
         return compactChatGlass && ForkChatHeaderSettings.isIosStyle()
                 && forkHeaderAvatar != null && forkHeaderAvatar.getParent() == this
+                && (forkChatOverflow == null || forkHeaderAvatar.isClickable())
                 && forkHeaderAvatar.getVisibility() == VISIBLE && !isSearchFieldVisible && searchFactor == 0
                 && (actionMode == null || actionMode.getVisibility() != VISIBLE || getActionModeFactor() == 0);
     }
@@ -342,6 +345,16 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     @Override
     public boolean getMenuItemGlassRect(ActionBarMenuItem item, RectF out) {
         if (usesBerrygramChatHeader() && item.getParent() == menu) {
+            if (item == forkChatOverflow && item.isForkHiddenInChatHeader()) {
+                float top = (occupyStatusBar ? AndroidUtilities.statusBarHeight : 0)
+                        + (getCurrentActionBarHeight() - dp(44)) / 2f;
+                if (forkHeaderAvatar.hasVisibleAvatar()) {
+                    out.set(forkAvatarLeft, top, forkAvatarLeft + dp(44), top + dp(44));
+                } else {
+                    out.set(forkTitleLeft, top, forkTitleLeft + forkTitleWidth, top + dp(44));
+                }
+                return false;
+            }
             // Keep the other actions and their shared surface in the bar while
             // the popup animates from the pressed action.
             out.set(menu.getX() + item.getX(), menu.getY() + item.getY(),
@@ -1598,6 +1611,13 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (forkChatOverflow != null) {
+            final boolean hideOverflow = usesBerrygramChatHeader();
+            if (forkChatOverflow.isForkHiddenInChatHeader() != hideOverflow) {
+                forkChatOverflow.setForkHiddenInChatHeader(hideOverflow);
+                if (menu != null) menu.forceLayout();
+            }
+        }
         if (compactChatGlass && menu != null) menu.setTranslationX(usesBerrygramChatHeader() ? 0 : -dp(10));
         if (compactChatGlass && backButtonImageView != null) backButtonImageView.setTranslationX(usesBerrygramChatHeader() ? 0 : dp(2));
         int width = MeasureSpec.getSize(widthMeasureSpec);
@@ -1740,15 +1760,15 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             final int menuWidth = menu != null && menu.getVisibility() != GONE ? menu.getMeasuredWidth() : 0;
             final int left = edge + (hasBack ? control + gap : 0);
             final int avatarSlotLeft = width - edge - (hasAvatar ? control : 0);
-            final int menuLeft = avatarSlotLeft - (hasAvatar && menuWidth > 0 ? gap : 0) - menuWidth;
+            final int menuLeft = avatarSlotLeft - menuWidth;
             final int right = menuLeft - (hasAvatar || menuWidth > 0 ? gap : 0);
             forkTitleWidth = Math.min(dp(232), Math.max(0, right - left));
             final int titleLeft = Math.max(left, Math.min(right - forkTitleWidth, (width - forkTitleWidth) / 2));
             forkTitleLeft = rtl ? width - titleLeft - forkTitleWidth : titleLeft;
             forkBackLeft = rtl ? width - edge - control : edge;
             forkMenuLeft = rtl ? width - menuLeft - menuWidth : menuLeft;
-            final int avatarLeft = rtl ? edge : avatarSlotLeft;
-            forkHeaderAvatar.setForkHeaderLayout(forkTitleLeft, forkTitleWidth, avatarLeft);
+            forkAvatarLeft = rtl ? edge : avatarSlotLeft;
+            forkHeaderAvatar.setForkHeaderLayout(forkTitleLeft, forkTitleWidth, forkAvatarLeft);
             // The avatar container positions its own content below the status bar.
             int avatarHeight = getCurrentActionBarHeight() + (occupyStatusBar ? AndroidUtilities.statusBarHeight : 0);
             forkHeaderAvatar.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
@@ -2564,7 +2584,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         final int t = getHeight() - extraHeight - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
-        final boolean noChatBackground = compactChatGlass && org.telegram.ui.ForkGraphicsSurface.backgroundless();
+        final boolean solidChatHeader = compactChatGlass && org.telegram.ui.ForkGraphicsSurface.noEffects();
         if (forkDrawingChatHeader != usesBerrygramChatHeader()) {
             forkDrawingChatHeader = usesBerrygramChatHeader();
             if (glassDrawable != null) {
@@ -2575,9 +2595,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
 
         if (usesBerrygramChatHeader()) {
-            if (!noChatBackground && drawGlassTitle) drawBerrygramChatHeader(canvas);
+            if (drawGlassTitle) drawBerrygramChatHeader(canvas);
         } else {
-        if (glassDrawable != null && !glassOnlyBack && drawGlassTitle && !noChatBackground) {
+        if (glassDrawable != null && !glassOnlyBack && drawGlassTitle) {
             if (centerTitleAndGlass && titleTextView[0] != null && titleTextView[0].getVisibility() == View.VISIBLE) {
                 int titleWidth = (int) Math.ceil(titleTextView[0].getTextWidth()) + p * 2 + dp(48);
                 int titleLeft = (getWidth() - titleWidth) / 2 + Math.round(titleTextView[0].getTranslationX());
@@ -2615,18 +2635,18 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 }
             }
         }
-        if (glassDrawableBack != null && hasBackButton && !noChatBackground) {
+        if (glassDrawableBack != null && hasBackButton) {
             glassDrawableBack.setBounds(0, t, s + p * 2, b);
             glassDrawableBack.draw(canvas);
         }
-        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay() && !noChatBackground) {
+        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay()) {
             glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
             glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
             glassDrawableMenu.draw(canvas);
         }
 
         }
-        if (!usesBerrygramChatHeader() && blurredBackground && actionBarColor != Color.TRANSPARENT && drawGlassTitle && !noChatBackground) {
+        if (!usesBerrygramChatHeader() && blurredBackground && actionBarColor != Color.TRANSPARENT && drawGlassTitle && !solidChatHeader) {
             rectTmp.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
             blurScrimPaint.setColor(actionBarColor);
             if (adaptiveBackground) {
@@ -2656,17 +2676,24 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             glassDrawableBack.setBounds(forkBackLeft - padding, top - padding, forkBackLeft + dp(44) + padding, top + dp(44) + padding);
             glassDrawableBack.draw(canvas);
         }
-        if (glassDrawableMenu != null && menu != null && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay()) {
+        if (glassDrawableMenu != null && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay()) {
             int left = Integer.MAX_VALUE;
             int right = Integer.MIN_VALUE;
             float alpha = 0;
-            for (int i = 0; i < menu.getChildCount(); i++) {
-                View item = menu.getChildAt(i);
-                if (!(item instanceof ActionBarMenuItem) || item.getVisibility() != VISIBLE || item.getAlpha() == 0) continue;
-                int x = Math.round(menu.getX() + item.getX());
-                left = Math.min(left, x);
-                right = Math.max(right, x + item.getWidth());
-                alpha = Math.max(alpha, item.getAlpha());
+            if (forkHeaderAvatar.hasVisibleAvatar()) {
+                left = forkAvatarLeft;
+                right = forkAvatarLeft + dp(44);
+                alpha = forkHeaderAvatar.getAlpha();
+            }
+            if (menu != null && menu.getVisibility() == VISIBLE) {
+                for (int i = 0; i < menu.getChildCount(); i++) {
+                    View item = menu.getChildAt(i);
+                    if (!(item instanceof ActionBarMenuItem) || item.getVisibility() != VISIBLE || item.getAlpha() == 0 || item.getWidth() == 0) continue;
+                    int x = Math.round(menu.getX() + item.getX());
+                    left = Math.min(left, x);
+                    right = Math.max(right, x + item.getWidth());
+                    alpha = Math.max(alpha, item.getAlpha());
+                }
             }
             if (right > left) {
                 glassDrawableMenu.setBounds(left - padding, top - padding, right + padding, top + dp(44) + padding);

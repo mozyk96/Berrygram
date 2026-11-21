@@ -14,11 +14,6 @@ public class PanelPolicyTest { public static void main(String[] args) {
  check("none".equals(PanelPolicy.effectiveStyle("none", false, 33, true)));
  check("none".equals(PanelPolicy.effectiveStyle("none", true, 33, true)));
  check("none".equals(PanelPolicy.effectiveStyle("none", true, 26, false)));
- check(PanelPolicy.isBackgroundless("none"));
- check(!PanelPolicy.isBackgroundless("blur"));
- check(!PanelPolicy.isBackgroundless("liquid"));
- check(!PanelPolicy.isBackgroundless("invalid"));
- check(!PanelPolicy.isBackgroundless("material"));
  check(PanelPolicy.popupRadiusDp(true) == 26);
  check(PanelPolicy.captureMenuGlass(true, false, 33, true, false, true));
  check(!PanelPolicy.captureMenuGlass(true, false, 33, true, true, true));

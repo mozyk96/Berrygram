@@ -273,13 +273,14 @@ public class ActionBarPopupWindow extends PopupWindow {
                 forkStyleEligible = resId == R.drawable.popup_fixed_alert || resId == R.drawable.popup_fixed_alert2 || resId == R.drawable.popup_fixed_alert3 || resId == R.drawable.popup_fixed_alert4;
                 forkStockBackground = getResources().getDrawable(resId).mutate();
                 if (forkStyleEligible) refreshForkStyle();
-                forkGlassBackground = forkStyleEligible && !"material".equals(forkResolvedStyle);
+                forkGlassBackground = forkStyleEligible && !"material".equals(forkResolvedStyle)
+                        && !"none".equals(forkResolvedStyle);
                 if (forkGlassBackground) {
                     forkExperimentalRadius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
                     forkExperimentalBackground = Theme.createRoundRectDrawable(dp(forkExperimentalRadius), Color.WHITE);
                     backgroundDrawable = forkExperimentalBackground;
                 } else {
-                    forkMaterialApplied = forkStyleEligible && "material".equals(forkResolvedStyle);
+                    forkMaterialApplied = forkStyleEligible;
                     if (forkMaterialApplied) {
                         forkMaterialRadius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
                         forkMaterialBackground = Theme.createRoundRectDrawable(dp(forkMaterialRadius), Color.WHITE);
@@ -595,7 +596,8 @@ public class ActionBarPopupWindow extends PopupWindow {
             // Action-bar popup layouts are cached, so refresh the surface when the
             // preference or power/device policy changes instead of requiring the screen to reopen.
             if (forkStyleEligible) refreshForkStyle();
-            boolean glass = forkStyleEligible && !"material".equals(forkResolvedStyle);
+            boolean solid = "none".equals(forkResolvedStyle);
+            boolean glass = forkStyleEligible && !"material".equals(forkResolvedStyle) && !solid;
             boolean material = forkStyleEligible && !glass;
             int radius = org.telegram.messenger.fork.panels.ForkPanelSettings.radiusDp();
             boolean ownsSurface = backgroundDrawable == forkExperimentalBackground || backgroundDrawable == forkStockBackground || backgroundDrawable == forkMaterialBackground;
@@ -616,7 +618,8 @@ public class ActionBarPopupWindow extends PopupWindow {
                 backgroundDrawable.setColorFilter(new PorterDuffColorFilter(backgroundColor, PorterDuff.Mode.MULTIPLY));
             }
             if (material && backgroundDrawable == forkMaterialBackground) {
-                int tint = org.telegram.ui.ForkGraphicsSurface.materialColor(getContext(), backgroundColor);
+                int tint = solid ? backgroundColor | 0xff000000
+                        : org.telegram.ui.ForkGraphicsSurface.materialColor(getContext(), backgroundColor);
                 if (tint != forkMaterialColor) {
                     forkMaterialColor = tint;
                     backgroundDrawable.setColorFilter(new PorterDuffColorFilter(tint, PorterDuff.Mode.MULTIPLY));

@@ -19,6 +19,26 @@ import org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundProvider
 
 @RunWith(AndroidJUnit4::class)
 class ForkGlassModesInstrumentationTest {
+    @Test fun noEffectsKeepsTheThemeColorWithoutTranslucencyOrGlassEdges() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val original = ForkPanelSettings.style()
+        try {
+            instrumentation.runOnMainSync {
+                val surface = ForkGlassSurface.wrap(BlurredBackgroundProviderBuilder(null)
+                    .setBackgroundColor { _, _ -> 0x80345678.toInt() }
+                    .setStrokeColorTop(Color.WHITE, Color.WHITE)
+                    .build())
+                ForkPanelSettings.setStyle("none")
+                assertEquals(0xff345678.toInt(), surface.backgroundColor)
+                assertEquals(0, surface.strokeColorTop)
+                ForkPanelSettings.setStyle("blur")
+                assertEquals(0x80345678.toInt(), surface.backgroundColor)
+            }
+        } finally {
+            instrumentation.runOnMainSync { ForkPanelSettings.setStyle(original) }
+        }
+    }
+
     @Test fun modeTransitionsKeepPreferenceAndFlagsInSync() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val oldStyle = ForkPanelSettings.style()
@@ -55,7 +75,7 @@ class ForkGlassModesInstrumentationTest {
         }
     }
 
-    @Test fun noBackgroundSuppressesPlatesButKeepsMaterialFallback() {
+    @Test fun noEffectsSurvivesPowerSavingAndSkipsBlurCaptures() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val oldStyle = ForkPanelSettings.style()
         val oldAdaptive = ForkPanelSettings.adaptiveEffects()
@@ -67,27 +87,25 @@ class ForkGlassModesInstrumentationTest {
                 PerformanceSettings.setConfigMode("manual")
                 PerformanceSettings.setManualLevel("low")
                 LiteMode.setForkVisualMode("none")
-                assertEquals("No Background must survive power saving", "none",
+                assertEquals("No Effects must survive power saving", "none",
                     ForkGraphicsSurface.effectiveStyle())
-                assertTrue("No Background must suppress chrome plates",
-                    ForkGraphicsSurface.backgroundless())
-                assertTrue("No Background must not draw blur surfaces",
+                assertTrue(ForkGraphicsSurface.noEffects())
+                assertTrue("No Effects must not draw blur surfaces",
                     !ForkGraphicsSurface.blurSurfacesEnabled())
-                assertEquals("No Background menus must not capture a blur",
+                assertEquals("No Effects menus must not capture a blur",
                     0, ForkGlassSurface.captureBlurAmount(15))
                 assertEquals("none", ForkGraphicsSurface.effectiveStyle())
 
-                // The opaque material fallback is a plate, never "No Background".
+                // The material fallback doesn't change the user's selected mode.
                 ForkPanelSettings.setStyle("glass")
                 assertEquals("material", ForkGraphicsSurface.effectiveStyle())
-                assertTrue("Material fallback must keep its plate",
-                    !ForkGraphicsSurface.backgroundless())
+                assertTrue(!ForkGraphicsSurface.noEffects())
                 assertTrue("Material fallback must not enable blur surfaces",
                     !ForkGraphicsSurface.blurSurfacesEnabled())
 
                 LiteMode.setForkVisualMode("none")
                 assertEquals("none", ForkGraphicsSurface.effectiveStyle())
-                assertTrue(ForkGraphicsSurface.backgroundless())
+                assertTrue(ForkGraphicsSurface.noEffects())
             }
         } finally {
             instrumentation.runOnMainSync {

@@ -103,6 +103,7 @@ class ForkChatHeaderInstrumentationTest {
                     setGlassMode()
                     setTitle("Довга назва 👩🏽‍💻 Україна — 日本語")
                     setSubtitle("був(ла) нещодавно")
+                    setOnClickListener { }
                 }
                 bar.addView(avatar, FrameLayout.LayoutParams(-1, -1).apply {
                     leftMargin = dp(52f)
@@ -113,6 +114,7 @@ class ForkChatHeaderInstrumentationTest {
                     addItem(1, R.drawable.msg_calls)
                     addItem(2, R.drawable.ic_ab_other)
                 }
+                bar.setForkChatOverflow(menu.getItem(2))
                 val selection = bar.createActionMode()
                 assertEquals(View.INVISIBLE, selection.visibility)
                 assertTrue("A hidden selection bar must not disable the chat header", bar.usesBerrygramChatHeader())
@@ -128,9 +130,10 @@ class ForkChatHeaderInstrumentationTest {
                     val titleRight = avatar.left + avatar.titleTextView.right
                     val avatarLeft = avatar.left + avatar.avatarImageView.left
                     assertTrue("Centering a long title must not crop its beginning",
-                        avatar.titleTextView.textWidth <= avatar.titleTextView.width)
+                        avatar.titleTextView.textStartX >= avatar.titleTextView.left)
                     assertTrue("Title overlaps actions", titleRight < menu.left)
-                    assertTrue("Floating avatar belongs after the whole action group", avatarLeft > menu.right)
+                    assertTrue("The avatar must not overlap the call target", avatarLeft > menu.right)
+                    assertEquals("Floating overflow must be in the profile, not on the bar", 0, menu.getItem(2).width)
                     val bitmap = Bitmap.createBitmap(bar.width, bar.height, Bitmap.Config.ARGB_8888)
                     try {
                         bar.draw(Canvas(bitmap))
@@ -144,8 +147,9 @@ class ForkChatHeaderInstrumentationTest {
                         val drawable = field.get(bar) as org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable
                         val bounds = android.graphics.Rect()
                         drawable.getBoundsWithPaddingInset(bounds)
-                        assertEquals("Both actions must share the same capsule",
-                            menu.getItem(2).right - menu.getItem(1).left, bounds.width())
+                        assertEquals("The call and avatar slots must share one capsule",
+                            menu.width + dp(44f), bounds.width())
+                        assertTrue(bounds.right >= avatar.avatarImageView.right)
                         assertEquals(dp(44f), bounds.height())
                         val callRect = android.graphics.RectF()
                         assertTrue("Opening the popup must leave other actions visible",
@@ -161,6 +165,7 @@ class ForkChatHeaderInstrumentationTest {
                         View.MeasureSpec.makeMeasureSpec(dp(56f), View.MeasureSpec.EXACTLY))
                     bar.layout(0, 0, bar.measuredWidth, bar.measuredHeight)
                     assertTrue("Classic uses the historical ActionBar layout", !bar.usesBerrygramChatHeader())
+                    assertTrue("Classic retains the native overflow", menu.getItem(2).width > 0)
                     assertEquals("1.5.1 uses a 52dp container margin and an 8dp + 1px inner inset",
                         dp(52f) + dp(8f) + 1, avatar.left + avatar.avatarImageView.left)
                     assertTrue(avatar.titleTextView.left >= avatar.avatarImageView.right)
@@ -313,7 +318,7 @@ class ForkChatHeaderInstrumentationTest {
         } finally { instrumentation.runOnMainSync { activity.finish() } }
     }
 
-    @Test fun noBackgroundChatHeaderDrawsNoPlate() {
+    @Test fun noEffectsChatHeaderDrawsAnOpaqueThemePlate() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext,
             SettingsTestHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -327,7 +332,8 @@ class ForkChatHeaderInstrumentationTest {
                 bar.setTitle("Example")
                 val source = GlassSourceColor().apply { setColor(Color.RED) }
                 bar.setupGlass(BlurredBackgroundDrawableViewFactory(source),
-                    BlurredBackgroundColorProviderThemed(null, Theme.key_actionBarDefault, 1f))
+                    org.telegram.ui.ForkGlassSurface.wrap(
+                        BlurredBackgroundColorProviderThemed(null, Theme.key_actionBarDefault, 0.8f)))
                 bar.compactChatGlass = true
 
                 fun render(): Bitmap {
@@ -341,19 +347,20 @@ class ForkChatHeaderInstrumentationTest {
 
                 ForkPanelSettings.setStyle("none")
                 org.telegram.utils.glass.GlassEngine.invalidateSettings()
-                assertTrue("No Background must be active", ForkGraphicsSurface.backgroundless())
+                org.telegram.ui.ActionBar.ThemeBind.updateAll()
+                assertTrue("No Effects must be active", ForkGraphicsSurface.noEffects())
                 val plain = render()
                 try {
-                    assertEquals("No Background header must not draw a glass plate", 0,
-                        Color.alpha(plain.getPixel(dp(80f), bar.height - dp(12f))))
-                    assertEquals("No Background header gap must stay transparent", 0,
-                        Color.alpha(plain.getPixel(dp(56f), bar.height / 2)))
-                    java.io.File(activity.getExternalFilesDir(null), "berrygram-1.5-header-nobg.png")
+                    assertEquals("The center plate must use the opaque theme color",
+                        Theme.getColor(Theme.key_actionBarDefault) or Color.BLACK,
+                        plain.getPixel(dp(120f), bar.height - dp(12f)))
+                    java.io.File(activity.getExternalFilesDir(null), "berrygram-203-header-no-effects.png")
                         .outputStream().use { plain.compress(Bitmap.CompressFormat.PNG, 100, it) }
                 } finally { plain.recycle() }
 
                 ForkPanelSettings.setStyle("glass")
                 org.telegram.utils.glass.GlassEngine.invalidateSettings()
+                org.telegram.ui.ActionBar.ThemeBind.updateAll()
                 val glass = render()
                 try {
                     assertTrue("Liquid Glass header must draw its plate", Color.alpha(

@@ -295,6 +295,7 @@ public class ActionBarMenuItem extends FrameLayout {
 
     @Override
     public void draw(Canvas canvas) {
+        if (forkHiddenInChatHeader) return;
         if (fixBackground) {
             getBackground().draw(canvas);
         }
@@ -1082,7 +1083,7 @@ public class ActionBarMenuItem extends FrameLayout {
                 org.telegram.ui.ForkGraphicsSurface.effectsSuppressed(),
                 Build.VERSION.SDK_INT, org.telegram.messenger.fork.panels.ForkPanelSettings.deviceAllowsEffects(!org.telegram.messenger.SharedConfig.deviceIsLow()), subMenuFactory != null,
                 topView == null && popupLayout.hasForkStyleBackground());
-        if (captureGlass) AndroidUtilities.makeGlobalBlurBitmap(
+        if (captureGlass && !org.telegram.ui.ForkGraphicsSurface.noEffects()) AndroidUtilities.makeGlobalBlurBitmap(
                 bitmap -> capture[0] = org.telegram.ui.ForkGlassSurface.processBackdrop(bitmap),
                 org.telegram.ui.ForkGlassSurface.captureBlurAmount(15));
         updateOrShowPopup(true, container.getMeasuredWidth() == 0);
@@ -1127,6 +1128,26 @@ public class ActionBarMenuItem extends FrameLayout {
 
     public void toggleSubMenu() {
         toggleSubMenu(null, null);
+    }
+
+    private boolean forkHiddenInChatHeader;
+
+    void setForkHiddenInChatHeader(boolean hidden) {
+        if (forkHiddenInChatHeader == hidden) return;
+        forkHiddenInChatHeader = hidden;
+        setImportantForAccessibility(hidden ? IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+                : IMPORTANT_FOR_ACCESSIBILITY_AUTO);
+        forceLayout();
+    }
+
+    boolean isForkHiddenInChatHeader() {
+        return forkHiddenInChatHeader;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(forkHiddenInChatHeader ? MeasureSpec.makeMeasureSpec(0, MeasureSpec.EXACTLY)
+                : widthMeasureSpec, heightMeasureSpec);
     }
 
     public void setOnMenuDismiss(Utilities.Callback<Boolean> onMenuDismiss) {

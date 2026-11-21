@@ -462,6 +462,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private ActionBarMenuItem videoCallItem;
     private ActionBarMenuItem editItem;
     private ActionBarMenuItem otherItem;
+    private static final int fork_conversation_actions = 12003;
+    private ChatActivity forkConversationOrigin;
+
+    public void setForkConversationOrigin(ChatActivity origin) {
+        forkConversationOrigin = origin;
+    }
     private ActionBarMenuItem searchItem;
     private ActionBarMenuSubItem editColorItem;
     private ActionBarMenuSubItem linkItem;
@@ -7973,6 +7979,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         simpleActionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
+                if (id == fork_conversation_actions && forkConversationOrigin != null) {
+                    forkConversationOrigin.showForkConversationActionsFrom(ProfileActivity.this);
+                    return;
+                }
                 if (id != -1) {
                     // the profile's buttons and the items of its menu are in this header, the old bar keeps their handling
                     final ActionBar.ActionBarMenuOnItemClick profileClick = actionBar != null ? actionBar.getActionBarMenuOnItemClick() : null;
@@ -12323,6 +12333,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
         Context context = actionBar.getContext();
         otherItem.removeAllSubItems();
+        if (forkConversationOrigin != null) {
+            otherItem.addSubItem(fork_conversation_actions, R.drawable.msg_discussion, ForkLocale.get(R.string.ForkConversationActions));
+        }
         animatingItem = null;
 
         editItemVisible = false;

@@ -659,7 +659,7 @@ public class SimpleActionBarMenuOverlay extends FrameLayout {
         // come back while the items are still fading out on closing
         final float ia = 1f - Utilities.clamp01(m / (opened ? 0.3f : 0.7f));
         final View icon = startFromPill ? bar.getMenuView() : item.getIconView();
-        if (ia > 0.004f && icon != null) {
+        if (ia > 0.004f && icon != null && !item.isForkHiddenInChatHeader()) {
             computeViewRect(icon, tmpRect);
             final float s = 1f - 0.15f * Utilities.clamp01(m / 0.3f);
             saveFaded(canvas, tmpRect.left, tmpRect.top, tmpRect.right, tmpRect.bottom, ia);

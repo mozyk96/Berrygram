@@ -11683,9 +11683,8 @@
     <string name="FpnvConsentSimSlotValue">SIM %1$d</string>
     <string name="FpnvConsentPhoneNumber">Phone Number</string>
 
-    <string name="ForkChatHeaderStyle">Chat header style</string>
-    <string name="ForkChatHeaderStyleTelegram">Classic</string>
-    <string name="ForkChatHeaderStyleIos">Floating</string>
+    <string name="ForkChatHeaderStyle">New Chat Header</string>
+    <string name="ForkConversationActions">Conversation Actions</string>
     <string name="ForkPreservedMessage">Locally preserved deleted message</string>
     <string name="ForkPreservedInfo">Preserved message information</string>
     <string name="ForkPreservedSent">Originally sent</string>

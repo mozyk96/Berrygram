@@ -301,12 +301,11 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
 
         blurredBackgroundDrawable.setRadius(modernComposerVisible
                 ? inputFieldBounds.height() / 2f : dp(INPUT_BUBBLE_RADIUS));
-        final boolean backgroundless = org.telegram.ui.ForkGraphicsSurface.backgroundless();
-        if (modernComposerVisible && !backgroundless) {
+        if (modernComposerVisible) {
             tmpRect.top -= Math.round(contextHeight);
         }
         blurredBackgroundDrawable.setBounds(tmpRect);
-        if (drawInputBackground && (!backgroundless || !modernComposerVisible))
+        if (drawInputBackground)
             blurredBackgroundDrawable.draw(canvas);
 
         if (needDrawInAppKeyboard) {

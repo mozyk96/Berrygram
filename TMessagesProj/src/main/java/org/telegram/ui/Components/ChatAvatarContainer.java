@@ -405,6 +405,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
     public void setForkHeaderLayout(int titleLeft, int titleWidth, int avatarSlotLeft) {
         if (forkTitleLeft == titleLeft && forkTitleWidth == titleWidth && forkAvatarSlotLeft == avatarSlotLeft) return;
+        if (forkTitleWidth != titleWidth) titleTextView.resetScrolling();
         if ((forkTitleWidth < 0) != (titleWidth < 0)) {
             lastWidth = -1;
             SimpleTextView oldTitle = titleTextLargerCopyView.get();
@@ -414,7 +415,8 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
             int gravity = titleWidth < 0 ? Gravity.LEFT : Gravity.CENTER_HORIZONTAL;
             titleTextView.setGravity(gravity);
             titleTextView.setRightDrawableOutside(titleWidth < 0);
-            // Center the ellipsized text, not the full line behind a clipping mask.
+            titleTextView.setScrollNonFitText(titleWidth >= 0 && !LocaleController.isRTL
+                    && AndroidUtilities.getAnimatorDurationScale() > 0f);
             titleTextView.setEllipsizeByGradient(titleWidth < 0);
             // Keep the two lines inside the compact row at large system font scales.
             float fontScale = getResources().getConfiguration().fontScale;
@@ -648,7 +650,9 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
         if (parentFragment.isComments) {
             if (chat == null) return;
-            parentFragment.presentFragment(ProfileActivity.of(-chat.id), removeLast);
+            final ProfileActivity profile = ProfileActivity.of(-chat.id);
+            if (!removeLast && parentFragment.hasForkConversationActions()) profile.setForkConversationOrigin(parentFragment);
+            parentFragment.presentFragment(profile, removeLast);
             return;
         }
 
@@ -658,7 +662,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
             }
             Bundle args = new Bundle();
             if (UserObject.isUserSelf(user)) {
-                if (!sharedMediaPreloader.hasSharedMedia()) {
+                if (!sharedMediaPreloader.hasSharedMedia() && !parentFragment.hasForkConversationActions()) {
                     return;
                 }
                 args.putLong("dialog_id", parentFragment.getDialogId());
@@ -667,6 +671,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 }
                 MediaActivity fragment = new MediaActivity(args, sharedMediaPreloader);
                 fragment.setChatInfo(parentFragment.getCurrentChatInfo());
+                if (!removeLast && parentFragment.hasForkConversationActions()) fragment.setForkConversationOrigin(parentFragment);
                 parentFragment.presentFragment(fragment, removeLast);
             } else {
                 if (parentFragment.getChatMode() == ChatActivity.MODE_SAVED) {
@@ -689,6 +694,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 args.putBoolean("reportSpam", parentFragment.hasReportSpam());
                 args.putInt("actionBarColor", getThemedColor(Theme.key_actionBarDefault));
                 final ProfileActivity fragment = new ProfileActivity(args, sharedMediaPreloader);
+                if (!removeLast && parentFragment.hasForkConversationActions()) fragment.setForkConversationOrigin(parentFragment);
                 if (!monoforum) {
                     fragment.setUserInfo(parentFragment.getCurrentUserInfo(), parentFragment.profileChannelMessageFetcher, parentFragment.birthdayAssetsFetcher);
                 }
@@ -706,6 +712,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 args.putLong("topic_id", parentFragment.getThreadMessage().getId());
             }
             final ProfileActivity fragment = new ProfileActivity(args, sharedMediaPreloader);
+            if (!removeLast && parentFragment.hasForkConversationActions()) fragment.setForkConversationOrigin(parentFragment);
             if (!monoforum) {
                 fragment.setChatInfo(parentFragment.getCurrentChatInfo());
             }
@@ -736,7 +743,9 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         final int availableWidth = splitHeader ? Math.max(0, forkTitleWidth - dp(20))
                 : Math.max(0, width - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16));
         final int titleWidthSpec = MeasureSpec.makeMeasureSpec(availableWidth, splitHeader ? MeasureSpec.EXACTLY : MeasureSpec.AT_MOST);
-        avatarImageView.measure(MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY));
+        final int avatarSize = splitHeader ? dp(38) : dp(avatarSizeInDp) - 2;
+        avatarImageView.measure(MeasureSpec.makeMeasureSpec(avatarSize, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(avatarSize, MeasureSpec.EXACTLY));
         titleTextView.measure(titleWidthSpec, MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
             subtitleTextView.measure(titleWidthSpec, MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
@@ -747,7 +756,8 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
             communityItem.measure(MeasureSpec.makeMeasureSpec(dp(14), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(14), MeasureSpec.EXACTLY));
         }
         if (timeItem != null) {
-            timeItem.measure(MeasureSpec.makeMeasureSpec(dp(34), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(34), MeasureSpec.EXACTLY));
+            final int timerSize = MeasureSpec.makeMeasureSpec(dp(splitHeader ? 26 : 34), MeasureSpec.EXACTLY);
+            timeItem.measure(timerSize, timerSize);
         }
         if (starBgItem != null) {
             starBgItem.measure(MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.EXACTLY));
@@ -842,7 +852,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         final int subtitleTop = viewTop + dp(glassMode ? 23.66f : 24);
 
         final boolean splitHeader = forkTitleWidth >= 0;
-        final int avatarPadding = splitHeader ? forkAvatarSlotLeft + (dp(44) - avatarImageView.getMeasuredWidth()) / 2 - 1 : leftPadding;
+        final int avatarPadding = splitHeader ? forkAvatarSlotLeft + (dp(44) - avatarImageView.getMeasuredWidth()) / 2 : leftPadding;
         avatarImageView.layout(1 + avatarPadding, 1 + viewTop, 1 + avatarPadding + avatarImageView.getMeasuredWidth(), 1 + viewTop + avatarImageView.getMeasuredHeight());
         int l = splitHeader ? forkTitleLeft + dp(10)
                 : leftPadding + (avatarImageView.getVisibility() == VISIBLE ? dp(glassMode ? 49.66f : 55) : dp(glassMode ? 13 : 1)) + rightAvatarPadding;
@@ -866,12 +876,12 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 viewTop + dp(27.33f) + communityItem.getMeasuredHeight());
         }
         if (timeItem != null) {
-            timeItem.layout(
-                avatarPadding + dp(19.333f),
-                viewTop - dp(8),
-                avatarPadding + dp(19.333f) + timeItem.getMeasuredWidth(),
-                viewTop - dp(8) + timeItem.getMeasuredHeight()
-            );
+            final int timerLeft = splitHeader ? forkAvatarSlotLeft + dp(44) - timeItem.getMeasuredWidth()
+                    : avatarPadding + dp(19.333f);
+            final int timerTop = splitHeader ? (occupyStatusBar ? AndroidUtilities.statusBarHeight : 0)
+                    + (actionBarHeight - dp(44)) / 2 : viewTop - dp(8);
+            timeItem.layout(timerLeft, timerTop, timerLeft + timeItem.getMeasuredWidth(),
+                    timerTop + timeItem.getMeasuredHeight());
         }
         if (starBgItem != null) {
             starBgItem.layout(avatarPadding + dp(28), viewTop + dp(24), avatarPadding + dp(28) + starBgItem.getMeasuredWidth(), viewTop + dp(24) + starBgItem.getMeasuredHeight());

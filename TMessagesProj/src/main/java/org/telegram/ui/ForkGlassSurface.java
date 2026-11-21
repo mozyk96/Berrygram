@@ -50,8 +50,7 @@ public final class ForkGlassSurface {
             strokeWidth = AndroidUtilities.dpf2(GlassPolicy.strokeWidthDp(config.edge));
             shadowRadius = AndroidUtilities.dpf2(GlassPolicy.shadowRadiusDp(config.shadow));
         } else if (isNone) {
-            // No Background: menus keep Telegram's opaque material so they stay
-            // readable over the wallpaper, without a glass tint or hairline.
+            // Use the theme's menu color without a glass tint or hairline.
             opacity = 1f;
             strokeTop = 0;
             strokeBottom = 0;
@@ -66,13 +65,13 @@ public final class ForkGlassSurface {
             strokeWidth = AndroidUtilities.dpf2(2f / 3f);
             shadowRadius = AndroidUtilities.dpf2(5f);
         }
-        final Integer tint = config.customTintEnabled()
+        final Integer tint = !isNone && config.customTintEnabled()
                 ? GraphicsColorPolicy.parseHex(config.customTint) : null;
         return new BlurredBackgroundProviderBuilder(resourcesProvider)
                 .setBackgroundColor((r, dark) -> {
                     int base = Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground, r);
                     if (tint != null) base = ColorUtils.blendARGB(base, tint, 0.55f);
-                    return Theme.multAlpha(base, opacity);
+                    return isNone ? ColorUtils.setAlphaComponent(base, 255) : Theme.multAlpha(base, opacity);
                 })
                 .setStrokeColorTop(strokeTop, strokeTop)
                 .setStrokeColorBottom(strokeBottom, strokeBottom)
@@ -83,9 +82,8 @@ public final class ForkGlassSurface {
     }
 
     /**
-     * Adapts an existing Telegram provider (mini dock, reaction panel) without
-     * changing its base color. Outside Experimental Glass the delegate is
-     * returned untouched.
+     * Keeps the delegate's theme colors, opting into glass decoration or an
+     * opaque plate according to the current appearance mode.
      */
     public static BlurredBackgroundProvider wrap(final org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProvider delegate) {
         if (delegate == null) return null;
@@ -107,6 +105,7 @@ public final class ForkGlassSurface {
                 if (delegate instanceof org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProviderThemed) {
                     ((org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProviderThemed) delegate).updateColors();
                 }
+                if (ForkGraphicsSurface.noEffects()) return ColorUtils.setAlphaComponent(delegate.getBackgroundColor(), 255);
                 if (!experimental()) return delegate.getBackgroundColor();
                 ForkGlassSettings.Config config = ForkGlassSettings.config();
                 int base = delegate.getBackgroundColor();
@@ -116,6 +115,7 @@ public final class ForkGlassSurface {
             }
 
             @Override public int getStrokeColorTop() {
+                if (ForkGraphicsSurface.noEffects()) return 0;
                 if (!experimental()) return delegate.getStrokeColorTop();
                 ForkGlassSettings.Config config = ForkGlassSettings.config();
                 return colorWithAlpha(0xFFFFFFFF,
@@ -123,15 +123,16 @@ public final class ForkGlassSurface {
             }
 
             @Override public int getStrokeColorBottom() {
+                if (ForkGraphicsSurface.noEffects()) return 0;
                 if (!experimental()) return delegate.getStrokeColorBottom();
                 ForkGlassSettings.Config config = ForkGlassSettings.config();
                 return colorWithAlpha(0xFFFFFFFF,
                         GlassPolicy.strokeAlpha(config.edge, config.highlight, false));
             }
 
-            @Override public int getOutlineColor() { return experimental() ? 0 : delegate.getOutlineColor(); }
-            @Override public int getOutlineShadowColor() { return experimental() ? 0 : delegate.getOutlineShadowColor(); }
-            @Override public float getOutlineWidth() { return experimental() ? 0 : delegate.getOutlineWidth(); }
+            @Override public int getOutlineColor() { return ForkGraphicsSurface.noEffects() || experimental() ? 0 : delegate.getOutlineColor(); }
+            @Override public int getOutlineShadowColor() { return ForkGraphicsSurface.noEffects() || experimental() ? 0 : delegate.getOutlineShadowColor(); }
+            @Override public float getOutlineWidth() { return ForkGraphicsSurface.noEffects() || experimental() ? 0 : delegate.getOutlineWidth(); }
 
             @Override public float getStrokeWidthTop() {
                 if (!experimental()) return (delegate instanceof BlurredBackgroundProvider ? ((BlurredBackgroundProvider) delegate).getStrokeWidthTop() : 0);
@@ -164,7 +165,7 @@ public final class ForkGlassSurface {
     /** Blur intensity for one-shot popup captures; keeps the caller's base when not experimental. */
     public static int captureBlurAmount(int base) {
         String eff = ForkGraphicsSurface.effectiveStyle();
-        if (org.telegram.messenger.fork.panels.PanelPolicy.isBackgroundless(eff)) return 0;
+        if (PanelPolicy.STYLE_NONE.equals(eff)) return 0;
         if (!org.telegram.messenger.fork.panels.PanelPolicy.isGlassStyle(eff)) return base;
         return org.telegram.messenger.fork.performance.PerformancePolicy.captureDownscale(
                 ForkGlassSettings.captureBlurAmount(base),

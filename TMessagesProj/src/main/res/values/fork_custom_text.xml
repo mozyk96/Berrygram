@@ -277,8 +277,8 @@
     <string name="ForkArchiveClearConfirm">Are you sure you want to delete all archived messages on this device?</string>
     <string name="ForkArchiveEmpty">No archived messages yet.</string>
     <string name="ForkGraphicsGlass">Liquid Glass</string>
-    <string name="ForkGraphicsNone">No Background</string>
-    <string name="ForkGraphicsInfoUnified">Choose Liquid Glass, Blur, or no background.</string>
+    <string name="ForkGraphicsNone">No Effects</string>
+    <string name="ForkGraphicsInfoUnified">Choose Liquid Glass, Blur, or solid theme colors.</string>
     <string name="ForkDeviceScan">Device Analyzer</string>
     <string name="ForkDeviceScanAction">Scan hardware</string>
     <string name="ForkDeviceScanResults">Hardware Assessment</string>

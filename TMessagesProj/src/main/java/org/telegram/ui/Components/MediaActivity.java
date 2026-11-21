@@ -70,6 +70,12 @@ public class MediaActivity extends BaseFragment implements SharedMediaLayout.Sha
     private String username;
     private int storiesCount;
     private SimpleActionBarMenuItem optionsItem;
+    private static final int fork_conversation_actions = 12003;
+    private org.telegram.ui.ChatActivity forkConversationOrigin;
+
+    public void setForkConversationOrigin(org.telegram.ui.ChatActivity origin) {
+        forkConversationOrigin = origin;
+    }
     private SparseArray<MessageObject> actionModeMessageObjects;
     private ActionBarMenuSubItem showPhotosItem, showVideosItem;
     private boolean filterPhotos = true, filterVideos = true;
@@ -177,6 +183,8 @@ public class MediaActivity extends BaseFragment implements SharedMediaLayout.Sha
                     finishFragment();
                 } else if (id == 10) {
                     sharedMediaLayout.showMediaCalendar(sharedMediaLayout.getClosestTab(), false);
+                } else if (id == fork_conversation_actions && forkConversationOrigin != null) {
+                    forkConversationOrigin.showForkConversationActionsFrom(MediaActivity.this);
                 }
             }
         });
@@ -207,6 +215,11 @@ public class MediaActivity extends BaseFragment implements SharedMediaLayout.Sha
 
         if (isStoriesType()) {
             createStoriesOptions(context);
+        } else if (forkConversationOrigin != null) {
+            final SimpleActionBarMenuItem more = simpleActionBar.createMenu().addItem(12002, R.drawable.ic_ab_other);
+            more.setContentDescription(LocaleController.getString(R.string.AccDescrMoreOptions));
+            more.addSubItem(fork_conversation_actions, R.drawable.msg_discussion,
+                    org.telegram.ui.ForkLocale.get(R.string.ForkConversationActions));
         }
         if (type == TYPE_STORIES) {
             createStoriesBottom(context, frameLayout, glass);

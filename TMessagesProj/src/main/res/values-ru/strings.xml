@@ -263,9 +263,8 @@
     <string name="RemindTodayAt">\'Отправить сегодня в\' HH:mm</string>
     <string name="RemindDayAt">\'Отправить\' d MMM \'в\' HH:mm</string>
     <string name="RemindDayYearAt">\'Напомнить\' d MMM yyyy \'в\' HH:mm</string>
-    <string name="ForkChatHeaderStyle">Стиль верхней панели чата</string>
-    <string name="ForkChatHeaderStyleTelegram">Классическая</string>
-    <string name="ForkChatHeaderStyleIos">Плавающая</string>
+    <string name="ForkChatHeaderStyle">Новая верхняя панель чата</string>
+    <string name="ForkConversationActions">Действия чата</string>
     <string name="ForkPreservedMessage">Локально сохранённое удалённое сообщение</string>
     <string name="ForkPreservedInfo">Информация о сохранённом сообщении</string>
     <string name="ForkPreservedSent">Отправлено</string>

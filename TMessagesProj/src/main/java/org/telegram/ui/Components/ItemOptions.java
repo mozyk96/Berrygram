@@ -1368,9 +1368,9 @@ public class ItemOptions {
             forkAppliedMenuBackground = null;
             forkOwnedMenuBlur = false;
         }
-        blurForMenu = explicitBlurForMenu || ((fragment != null || container != null) && scrimView != null && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout
+        blurForMenu = !org.telegram.ui.ForkGraphicsSurface.noEffects() && (explicitBlurForMenu || ((fragment != null || container != null) && scrimView != null && layout instanceof ActionBarPopupWindow.ActionBarPopupWindowLayout
                 && lastLayout.hasForkStyleBackground()
-                && PanelPolicy.useGlass(ForkPanelSettings.enabled(), org.telegram.ui.ForkGraphicsSurface.effectsSuppressed(), Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!SharedConfig.deviceIsLow())));
+                && PanelPolicy.useGlass(ForkPanelSettings.enabled(), org.telegram.ui.ForkGraphicsSurface.effectsSuppressed(), Build.VERSION.SDK_INT, ForkPanelSettings.deviceAllowsEffects(!SharedConfig.deviceIsLow()))));
         setupSelectors();
 
         if (fixedWidthDp > 0) {
@@ -2178,7 +2178,7 @@ public class ItemOptions {
                 cachedBitmap = null;
             }
 
-            if (blur || blurForMenu) {
+            if ((blur || blurForMenu) && !org.telegram.ui.ForkGraphicsSurface.noEffects()) {
                 blurPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
                 final float originalScrimAlpha = scrimView.getAlpha();
                 scrimView.setAlpha(0.0f);

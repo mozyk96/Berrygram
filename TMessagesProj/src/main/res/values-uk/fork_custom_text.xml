@@ -276,9 +276,9 @@
     <string name="ForkArchiveClear">Очистити архів</string>
     <string name="ForkArchiveClearConfirm">Ви впевнені, що хочете видалити всі збережені архівні повідомлення на цьому пристрої?</string>
     <string name="ForkArchiveEmpty">В архіві поки немає повідомлень.</string>
-    <string name="ForkGraphicsGlass">Liquid Glass</string>
-    <string name="ForkGraphicsNone">Без фону</string>
-    <string name="ForkGraphicsInfoUnified">Оберіть Liquid Glass, розмиття або режим без фону.</string>
+    <string name="ForkGraphicsGlass">Рідке скло</string>
+    <string name="ForkGraphicsNone">Без ефектів</string>
+    <string name="ForkGraphicsInfoUnified">Оберіть рідке скло, розмиття або суцільні кольори теми.</string>
     <string name="ForkDeviceScan">Аналізатор заліза</string>
     <string name="ForkDeviceScanAction">Сканувати пристрій</string>
     <string name="ForkDeviceScanResults">Результати діагностики</string>

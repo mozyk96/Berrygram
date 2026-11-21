@@ -3540,7 +3540,8 @@ public class ChatActivityEnterView extends FrameLayout implements
 
                     canvas.save();
                     canvas.scale(s, s, backgroundRect.centerX(), backgroundRect.centerY());
-                    if (experimental && parentFragment != null && !org.telegram.ui.ForkGraphicsSurface.backgroundless()) {
+                    final boolean solid = experimental && org.telegram.ui.ForkGraphicsSurface.noEffects();
+                    if (experimental && parentFragment != null && !solid) {
                         if (recordingGlassBackground == null) {
                             recordingGlassBackground = parentFragment.getGlassHintFactory().create(this,
                                     org.telegram.ui.ForkGlassSurface.wrap(org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl.topPanelChatActivity(resourcesProvider)));
@@ -3550,6 +3551,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                                 (int) backgroundRect.right, (int) backgroundRect.bottom);
                         recordingGlassBackground.draw(canvas);
                     } else {
+                        if (solid) {
+                            paint.setColor(ColorUtils.setAlphaComponent(paint.getColor(), 255));
+                        }
                         canvas.drawRoundRect(backgroundRect, r, r, paint);
                     }
                     canvas.restore();
@@ -3895,7 +3899,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 lp.bottomMargin = bottomMargin;
                 messageEditTextContainer.setLayoutParams(lp);
             }
-            messageEditTextContainer.setBackground(exp && (!modernChat || org.telegram.ui.ForkGraphicsSurface.backgroundless())
+            messageEditTextContainer.setBackground(exp && !modernChat
                     ? Theme.createRoundRectDrawable(dp(24), getThemedColor(Theme.key_chat_messagePanelBackground))
                     : null);
             messageEditTextContainer.setMinimumHeight(modernChat ? dp(48) : 0);
@@ -5070,6 +5074,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         return t;
     }
 
+
     private final Paint topViewBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private boolean hasCompactComposerContext() {
@@ -5095,14 +5100,12 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
             if (child == topView) {
                 canvas.clipRect(0, 0, getMeasuredWidth(), separatorY);
-                if (hasCompactComposerContext() && org.telegram.ui.ForkGraphicsSurface.backgroundless()) {
-                    // Match the field's non-blurred fallback in No Background mode.
+                if (hasCompactComposerContext() && org.telegram.ui.ForkGraphicsSurface.noEffects()) {
                     topViewBackgroundPaint.setColor(ColorUtils.setAlphaComponent(
                             getThemedColor(Theme.key_chat_messagePanelBackground), 255));
-                    final float x = child.getX();
-                    final float y = child.getY();
                     final float radius = Math.min(dp(22), child.getHeight() / 2f);
-                    canvas.drawRoundRect(x, y, x + child.getWidth(), y + child.getHeight(),
+                    canvas.drawRoundRect(child.getX(), child.getY(),
+                            child.getX() + child.getWidth(), child.getY() + child.getHeight(),
                             radius, radius, topViewBackgroundPaint);
                 }
             }

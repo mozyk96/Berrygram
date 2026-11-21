@@ -348,6 +348,11 @@ public class ScrimOptions extends Dialog {
     }
 
     public static void makeGlobalBlurBitmaps(Utilities.Callback2<Bitmap, Bitmap> bitmaps) {
+        final int downscale = org.telegram.ui.ForkGlassSurface.captureBlurAmount(15);
+        if (downscale == 0) {
+            bitmaps.run(null, null);
+            return;
+        }
         AndroidUtilities.makeGlobalBlurBitmap(bitmap -> {
             if (bitmap == null) {
                 bitmaps.run(null, null);
@@ -370,7 +375,7 @@ public class ScrimOptions extends Dialog {
 
             bitmap.recycle();
             bitmaps.run(bitmapBg, bitmapOptions);
-        }, org.telegram.ui.ForkGlassSurface.captureBlurAmount(15));
+        }, downscale);
     }
 
     public static void makeGlobalBlurBitmaps(View cutToContainer, Utilities.Callback2<Bitmap, Bitmap> bitmaps) {
@@ -380,6 +385,11 @@ public class ScrimOptions extends Dialog {
     public static void makeGlobalBlurBitmaps(View cutToContainer, boolean includeBackground, Utilities.Callback2<Bitmap, Bitmap> bitmaps) {
         if (cutToContainer == null) {
             makeGlobalBlurBitmaps(bitmaps);
+            return;
+        }
+        final int downscale = org.telegram.ui.ForkGlassSurface.captureBlurAmount(15);
+        if (downscale == 0) {
+            bitmaps.run(null, null);
             return;
         }
         AndroidUtilities.makeGlobalBlurBitmap(bitmap -> {
@@ -419,7 +429,7 @@ public class ScrimOptions extends Dialog {
 
             bitmap.recycle();
             bitmaps.run(bitmapBg, bitmapOptions);
-        }, org.telegram.ui.ForkGlassSurface.captureBlurAmount(15));
+        }, downscale);
     }
 
     private void checkBitmapMatrix() {

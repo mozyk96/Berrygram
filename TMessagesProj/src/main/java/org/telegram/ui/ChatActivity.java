@@ -4669,6 +4669,9 @@ public class ChatActivity extends BaseFragment implements
         contentView.setOccupyStatusBar(!inBubbleMode && !isInsideContainer && !inPreviewMode);
 
         actionBar.compactChatGlass = true;
+        if (!inPreviewMode && !isInsideContainer && parentChatActivity == null) {
+            actionBar.setForkChatOverflow(headerItem);
+        }
         actionBar.setupGlass(
             glassBackgroundDrawableFactory,
             ForkGlassSurface.wrap(BlurredBackgroundProviderImpl.topPanelChatActivity(themeDelegate)),
@@ -11283,6 +11286,27 @@ public class ChatActivity extends BaseFragment implements
 
     public ActionBarMenuItem getHeaderItem() {
         return headerItem;
+    }
+
+    public boolean hasForkConversationActions() {
+        return headerItem != null && actionBar != null && actionBar.usesBerrygramChatHeader()
+                && !inPreviewMode && !isInsideContainer && parentChatActivity == null;
+    }
+
+    /** Run chat actions on their own screen (search, confirmation dialogs, topic navigation). */
+    public void showForkConversationActionsFrom(BaseFragment information) {
+        final INavigationLayout navigation = getParentLayout();
+        final INavigationLayout informationLayout = information.getParentLayout();
+        // On tablets the profile can be stacked in a different pane from its chat.
+        if (navigation == null || informationLayout == null
+                || informationLayout.getLastFragment() != information || !information.finishFragment(false)) return;
+        if (avatarContainer != null) {
+            avatarContainer.post(() -> {
+                if (navigation.getLastFragment() == this && hasForkConversationActions()) {
+                    headerItem.toggleSubMenu();
+                }
+            });
+        }
     }
 
     private void playReactionAnimation(Integer messageId) {
@@ -19159,7 +19183,7 @@ public class ChatActivity extends BaseFragment implements
             if (lastWidth != widthSize) {
                 globalIgnoreLayout = false;
                 lastWidth = widthMeasureSpec;
-                if (!inPreviewMode && currentUser != null && currentUser.self) {
+                if (!inPreviewMode && currentUser != null && currentUser.self && !hasForkConversationActions()) {
                     SimpleTextView textView = avatarContainer.getTitleTextView();
                     int textWidth = (int) textView.getPaint().measureText(textView.getText(), 0, textView.getText().length());
                     if (widthSize - AndroidUtilities.dp(96 + 56) > textWidth + AndroidUtilities.dp(10)) {

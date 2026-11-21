@@ -421,10 +421,6 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         tabsView.setBackground(new android.graphics.drawable.Drawable() {
             @Override
             public void draw(@NonNull Canvas canvas) {
-                // No Background: the tabs float over the page without a plate.
-                if (org.telegram.ui.ForkGraphicsSurface.backgroundless()) {
-                    return;
-                }
                 tabsViewBackground.setBounds(getBounds());
                 tabsViewBackground.draw(canvas);
             }
