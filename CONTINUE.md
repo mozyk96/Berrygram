@@ -1,4 +1,48 @@
-# Active public 2.0.0 release cycle — 2026-11-20
+# Berrygram 2.0.3 — опубліковано й перевірено
+
+- Робоча гілка `feature/berrygram-2.0.3`, база `v2.0.2` (`eec24132`), коміт збірки й тегу `9b848ea8e8cadd08bebff3fe1406f3d40a534c01`. SHA-256 локального підписаного APK 2.0.2 збігся з публічним GitHub-ресурсом; `aapt` підтвердив `org.berrygram.client`, ARM64 і код `73029`. Офіційні джерела Telegram перевірено один раз: 13.2.2, `21f7d109`, без змін.
+- Інструментальний тест відкрив справжні «Налаштування чатів» на Android 15. На базі 2.0.2 Logcat зафіксував `SIGABRT: unknown bitmap configuration`: `ItemOptions` запускав `ScrimOptions` із нульовим коефіцієнтом масштабу для режиму `none`, і до `Bitmap.createBitmap` надходили некоректні розміри. Повний журнал: `%TEMP%\opencode\berrygram203-selector-native-crash.log`. Виправлення пропускає захоплення знімка, а не перехоплює виняток.
+- «Без ефектів» використовує непрозорі поверхні кольорів поточної теми, не змінює шпалери й не вимикає функціональні анімації. Плаваюча панель має окремі «Назад» і капсулу назви зі статусом, а доступний дзвінок і аватар — спільну капсулу. Назва й аватар відкривають відомості; штатне меню розмови доступне через **Відомості → ⋯ → Дії чату** з тими самими обробниками. Чат кодів підтвердження не має екрана відомостей, тому зберігає класичні дії. Перемикач «Нова верхня панель чату» незалежний, зберігає попередній вибір стилю, а вимкнений стан повертає класичну геометрію 1.5.1 і штатне меню.
+- Фізичного пристрою в ADB не було. Для тестів використовувався ізольований `emulator-5562`; жодного реального акаунта не використано.
+- На Android 15 пройшли 41 інструментальний тест, 2 тести синтетичних чатів і обидві фази перевірки збереження після перезапуску процесу. Переглянуто 36 знімків для шести типів чатів, обох налаштувань панелі й усіх ефектів. Smoke, фікстури пакета й завантаження Центру оновлень пройшли. Журнали й знімки — `%TEMP%\opencode\berrygram203-*`.
+- Підписаний ARM64 APK: `org.berrygram.client`, 2.0.3 (`73039`), Android 10+, сертифікат `4d6aa81c4c2fe399854a3bb8c4fd6c4e989584c2298afdc7871d47c871759aec`, `zipalign -c -P 16 4` пройшов. SHA-256 `cd4de9641d940c2446dd56c1881be996bc295ad5e2ae7f8224c5c94ecfef1a01`.
+- Оновлення поверх 2.0.2 (`73029`) пройшло через `adb install --no-streaming -r`: код став `73039`, `firstInstallTime` не змінився, холодний запуск повернув `Status: ok`, процес лишився живий, аварій і ANR Berrygram не зафіксовано. Під час запуску емулятор показав системний діалог «Digital Wellbeing isn't responding»; це сторонній системний застосунок, не Berrygram.
+- Стабільний реліз: https://github.com/mozyk96/Berrygram/releases/tag/v2.0.3. Тег і гілка вказують на коміт збірки. Публічні APK і `SHA256SUMS` повторно завантажено без авторизації; хеші збігаються з локальними. Клієнт Центру оновлень знайшов 2.0.3, підтвердив розмір і SHA-256.
+- Не перевірено: фізичний телефон, реальні акаунти, дзвінки, запис, встановлення через UI Центру оновлень і планшетний сценарій на реальному пристрої. Візуальну різницю між склом і розмиттям програмний знімок імітатора не підтверджує; продуктивність і фізичну рефракцію не вимірювали.
+- Роботу над 2.0.3 завершено. Наступну версію не починати без окремого доручення.
+
+# Berrygram 2.0.2 — опубліковано й перевірено
+
+- База `v2.0.1` (`0e9ec594`); робоча гілка `feature/berrygram-2.0.2`. Офіційний Telegram 13.2.2 (`21f7d109`) не змінився.
+- Еталони коду: `608d2a86` (1.5.1 / база 7296) і `e54b27b5` (останній приватний 1.5.1 / база 7299). Обидва залишають аватар у штатному контейнері з лівим відступом 52 dp у звичайному чаті. У 2.0.1 цей шлях обходило примусове вимірювання й центрування контейнера.
+- Класичний стиль використовує штатне компонування. Плаваючий перевикористовує реальні аватар, назву, статус і кнопки, але резервує окремі зони для назви, групи дій і аватара. Налаштування читає старий `fork_panels/ios_chat_header`, типове значення — класичний стиль.
+- Фізичний телефон поки відсутній в `adb devices -l`. Оригінальне вкладення з еталоном iOS у поточній розмові недоступне. Це не підтвердження візуальної відповідності на телефоні.
+- На ізольованому API 35 пройшли 39 інструментальних тестів і 2 тести синтетичних чатів. Переглянуто 24 скриншоти: приватний чат, бот, група й канал, обидва стилі та всі три ефекти. На цьому офлайн-стенді Glass і Blur візуально не відрізнялися; No Background прибрав підкладки.
+- Стабільний реліз: https://github.com/mozyk96/Berrygram/releases/tag/v2.0.2. Тег і гілка вказують на `eec24132297863ea7e4be0243a9aae57aab34aea`. Перевірено `org.berrygram.client`, 2.0.2 (`73029`), ARM64, чинний сертифікат і вирівнювання APK. Оновлення поверх 2.0.1 пройшло через `adb install -r`: час першого встановлення не змінився, запуск успішний.
+- Публічні APK і `SHA256SUMS` завантажено без авторизації; обидва збігаються з локальними файлами. SHA-256 APK: `56a890ec97fbb34fe364c2fa1d2ad82a8dc49c742f224017c54c55c6eacceef6`. Клієнт Центру оновлень знайшов 2.0.2 і підтвердив контрольну суму; встановлення через сам Центр не перевірялося.
+- Роботу над 2.0.2 завершено. Наступну версію не починати без окремого доручення.
+
+# Berrygram 2.0.1 — опубліковано й перевірено
+
+- Гілка `feature/berrygram-2.0.1`, коміт збірки `0e9ec594`, база — опублікований `v2.0.0`. Вихідний код Telegram залишився 13.2.2 (`21f7d109`): перевірка офіційного джерела не виявила змін.
+- Єдина шапка розмови зі спільним тлом дій; контекст Composer вирівняно по полю вводу. В основних налаштуваннях окремі «Про BerryGram» і Центр оновлень. У згрупованих параметрах оформлення є повзунок радіуса меню.
+- Повний smoke-набір, підміни завантаження й перевірки пакета пройшли. Клієнт оновлень знаходить поточну публічну 2.0.0.
+- ARM64 APK підписано й перевірено: `org.berrygram.client`, 2.0.1 (`73019`), Android 10+, чинний сертифікат 2.0.0 і вирівнювання 16 КіБ. SHA-256 `7a930b87f21fa4d1d8aa2b25dd1947af02b237161dac98949ffd8132da4cf754`.
+- Стабільний реліз: https://github.com/mozyk96/Berrygram/releases/tag/v2.0.1. Тег вказує на коміт збірки. Публічні APK і `SHA256SUMS` повторно завантажено без авторизації; хеші збігаються з локальними. Клієнт Центру оновлень виявив 2.0.1 і підтвердив SHA-256.
+- На ізольованому API 35 пройшли 39 інструментальних тестів і 2 тести синтетичних чатів. Підписаний APK оновив 2.0.0 через `adb install -r`: `firstInstallTime` не змінився, запуск успішний, аварій або ANR під час запуску не зафіксовано.
+- Фізичний телефон не з’явився у `adb devices -l`. Реальний акаунт, дзвінки, запис та встановлення через Android Installer із самого Центру оновлень не перевірялися.
+- Роботу над релізом завершено. Наступну версію не починати без окремого доручення.
+
+# Berrygram 2.0.0 — published; development stopped
+
+- Stable public release: https://github.com/mozyk96/Berrygram/releases/tag/v2.0.0. Tag and release source: `e8f11e4e931c0e6285b654392dd6c530ded1bebd`, pushed to `feature/berrygram-2.0.0`.
+- Public `BerryGram-2.0.0-org.berrygram.client-arm64-v8a.apk` and `SHA256SUMS` were downloaded and matched the local verified files byte-for-byte. APK: 55,683,143 bytes, SHA-256 `e0b1f26c51865c4eacc0add26315446ef1c826a7de44c3f55ce19d3bd67e05ad`, code `73009`, ARM64, minSdk 29, targetSdk 36, established signer; APK integrity and 16 KiB alignment passed.
+- Smoke tests and 23 Android regression tests passed. The synthetic iOS chat screenshot shows visible avatar, title and status after fixing the doubled status-bar inset. Signed APK upgraded 1.5.1 (`72969`) in place and launched on API 35; installation timestamp and the separate public 1.5.0 package stayed unchanged. No real account or recording was exercised.
+- Update Center's production release client discovered public 2.0.0 and matched the verified APK hash. The full in-app Android Installer flow was not exercised; the compatible signed upgrade was tested separately by ADB.
+- Redmi 23021RAAEG (`5bf68684`, Android 15, ARM64) was authorized and compatible, but Android returned `INSTALL_FAILED_USER_RESTRICTED: Install canceled by user`. No app data was removed and the install was not retried or forced.
+- Future plans are documented in `ROADMAP.md`. Do not begin another version without the owner's instruction.
+
+# Public 2.0.0 release cycle — historical checkpoints
 
 - The owner authorizes only the public 2.0.0 release and a safe ADB installation of its verified APK on the connected phone. Do not automate a real account. Stop after the release checks and publication; all later work is deferred in `ROADMAP.md`. Last verified public release before this cycle: `v1.5.0`. The recovered work began at `61bfc843` on `codex/berrygram-200-private`.
 - Telegram upstream checked once: 13.2.2 / `21f7d109da6ab3506c9e9577f98c6a38771ab335` unchanged. Keep this upstream revision for 2.0.0.
